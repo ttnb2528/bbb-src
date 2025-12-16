@@ -28,31 +28,3 @@ Thumbs.db
 # Logs
 logs
 *.log
-# Node/npm
-node_modules
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-package-lock.json.*.backup
-
-# Build output
-dist
-public/bundle.*.js
-bundle*.js
-*.map
-
-# Cache/temp
-.cache
-.tmp
-coverage
-*.tsbuildinfo
-.browserslistrc
-.vscode
-.DS_Store
-Thumbs.db
-
-# Misc
-logs
-*.log
-.idea
