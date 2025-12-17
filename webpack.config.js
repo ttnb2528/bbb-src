@@ -77,8 +77,8 @@ const config = {
     fullySpecified: false,
     extensions: ['.mjs', '.js', '.jsx', '.tsx', '.ts', '...'],
     alias: {
-      '/client': path.resolve(__dirname, 'client/'),
-      '/imports': path.resolve(__dirname, '/imports/'),
+      '/client': path.resolve(__dirname, 'client'),
+      '/imports': path.resolve(__dirname, 'imports'),
     },
   },
   module: {

@@ -261,6 +261,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
       amIModerator={amIModerator}
       isFullscreenContext={isFullscreenContext}
       layoutContextDispatch={layoutContextDispatch}
+      isPresenter={isPresenter}
     />
   );
 
@@ -279,7 +280,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
       <Styled.TopBar>
         {raiseHand && <Styled.RaiseHand>✋</Styled.RaiseHand>}
       </Styled.TopBar>
-      <Styled.BottomBar>
+      <Styled.BottomBar $isPresenter={isPresenter}>
         <UserActions
           name={name}
           stream={stream}
@@ -297,6 +298,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
           videoContainer={videoContainer}
           isFullscreenContext={isFullscreenContext}
           layoutContextDispatch={layoutContextDispatch}
+          isPresenter={isPresenter}
         />
         <UserStatus
           voiceUser={voiceUser}
@@ -369,7 +371,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
           amIModerator={amIModerator}
         />
       </Styled.TopBar>
-      <Styled.BottomBar>
+      <Styled.BottomBar $isPresenter={isPresenter}>
         <UserActions
           name={name}
           stream={stream}
@@ -387,6 +389,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
           videoContainer={videoContainer}
           isFullscreenContext={isFullscreenContext}
           layoutContextDispatch={layoutContextDispatch}
+          isPresenter={isPresenter}
         />
         <UserStatus
           voiceUser={voiceUser}
@@ -403,6 +406,13 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
     onDrop,
   } = makeDragOperations(stream.userId);
 
+  // Kiểm tra xem user có phải presenter không
+  const isPresenter = stream.type === VIDEO_TYPES.STREAM 
+    ? stream.user?.presenter 
+    : stream.type === VIDEO_TYPES.GRID 
+      ? stream?.presenter 
+      : false;
+
   return (
     // @ts-expect-error -> Until everything in Typescript.
     <Styled.Content
@@ -413,6 +423,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
       data-test={talking ? 'webcamItemTalkingUser' : 'webcamItem'}
       animations={animations}
       isStream={isStream}
+      isPresenter={isPresenter}
       {...{
         onDragLeave,
         onDragOver,

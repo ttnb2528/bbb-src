@@ -240,25 +240,69 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     const gridGutter = parseInt(window.getComputedStyle(this.grid)
       .getPropertyValue('grid-row-gap'), 10);
 
+    // Kiểm tra xem có presenter không
+    const hasPresenter = streams.some((s) => {
+      const anyItem = s as any;
+      if (s.type === VIDEO_TYPES.STREAM) {
+        return anyItem?.user?.presenter;
+      }
+      if (s.type === VIDEO_TYPES.GRID) {
+        return anyItem?.presenter;
+      }
+      return false;
+    });
+
     const hasFocusedItem = streams.filter(
       (s) => s.type !== VIDEO_TYPES.GRID && s.stream === focusedId,
     ).length && numItems > 2;
 
-    // Has a focused item so we need +3 cells
-    if (hasFocusedItem) {
-      numItems += 3;
+    // Nếu có presenter, tính grid riêng: presenter chiếm 2x2, các cam còn lại xếp bên cạnh
+    let optimalGrid;
+    if (hasPresenter) {
+      const remainingCams = numItems - 1;
+      // Tính grid cho các cam còn lại (không tính presenter)
+      // Presenter chiếm 2 cột đầu, nên các cam còn lại cần ít nhất 2 cột để xếp gọn
+      const minColsForRemaining = Math.max(2, Math.ceil(Math.sqrt(remainingCams)));
+      const totalCols = 2 + minColsForRemaining; // 2 cột cho presenter + cột cho các cam còn lại
+      const totalRows = Math.max(2, Math.ceil((remainingCams + 4) / totalCols)); // +4 vì presenter chiếm 4 cells
+      
+      // Tính kích thước cell dựa trên grid mới
+      const gutterTotalWidth = (totalCols - 1) * gridGutter;
+      const gutterTotalHeight = (totalRows - 1) * gridGutter;
+      const usableWidth = canvasWidth - gutterTotalWidth;
+      const usableHeight = canvasHeight - gutterTotalHeight;
+      let cellWidth = Math.floor(usableWidth / totalCols);
+      let cellHeight = Math.ceil(cellWidth / ASPECT_RATIO);
+      if ((cellHeight * totalRows) > usableHeight) {
+        cellHeight = Math.floor(usableHeight / totalRows);
+        cellWidth = Math.ceil(cellHeight * ASPECT_RATIO);
+      }
+      
+      optimalGrid = {
+        columns: totalCols,
+        rows: totalRows,
+        width: (cellWidth * totalCols) + gutterTotalWidth,
+        height: (cellHeight * totalRows) + gutterTotalHeight,
+        filledArea: (cellWidth * cellHeight) * (remainingCams + 4),
+      };
+    } else {
+      // Logic cũ cho trường hợp không có presenter
+      let adjustedNumItems = numItems;
+      if (hasFocusedItem) {
+        adjustedNumItems += 3;
+      }
+      
+      optimalGrid = range(1, adjustedNumItems + 1)
+        .reduce((currentGrid, col) => {
+          const testGrid = findOptimalGrid(
+            canvasWidth, canvasHeight, gridGutter,
+            ASPECT_RATIO, adjustedNumItems, col,
+          );
+          const focusedConstraint = hasFocusedItem ? testGrid.rows > 1 && testGrid.columns > 1 : true;
+          const betterThanCurrent = testGrid.filledArea > currentGrid.filledArea;
+          return (focusedConstraint && betterThanCurrent) ? testGrid : currentGrid;
+        }, { filledArea: 0 });
     }
-    const optimalGrid = range(1, numItems + 1)
-      .reduce((currentGrid, col) => {
-        const testGrid = findOptimalGrid(
-          canvasWidth, canvasHeight, gridGutter,
-          ASPECT_RATIO, numItems, col,
-        );
-        // We need a minimum of 2 rows and columns for the focused
-        const focusedConstraint = hasFocusedItem ? testGrid.rows > 1 && testGrid.columns > 1 : true;
-        const betterThanCurrent = testGrid.filledArea > currentGrid.filledArea;
-        return focusedConstraint && betterThanCurrent ? testGrid : currentGrid;
-      }, { filledArea: 0 });
     layoutContextDispatch({
       type: ACTIONS.SET_CAMERA_DOCK_OPTIMAL_GRID_SIZE,
       value: {
@@ -360,6 +404,13 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     return streams.map((item) => {
       const { userId, name } = item;
       const isStream = item.type !== VIDEO_TYPES.GRID;
+      // Xác định đây có phải video của presenter hay không (nới lỏng kiểu để tránh lỗi TS)
+      const anyItem = item as any;
+      const isPresenter = isStream
+        ? anyItem?.user?.presenter
+        : item.type === VIDEO_TYPES.GRID
+          ? anyItem?.presenter
+          : false;
       const stream = isStream ? item.stream : null;
       const key = isStream ? stream : userId;
       const isFocused = isStream && focusedId === stream && numOfStreams > 2;
@@ -368,6 +419,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
         <Styled.VideoListItem
           key={key}
           $focused={isFocused}
+          $isPresenter={isPresenter}
           data-test="webcamVideoItem"
         >
           <VideoListItemContainer

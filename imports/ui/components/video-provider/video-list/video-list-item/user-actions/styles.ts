@@ -9,6 +9,7 @@ import Button from '/imports/ui/components/common/button/component';
 
 const DropdownTrigger = styled(DivElipsis)<{
   $isRTL: boolean;
+  $isPresenter?: boolean;
 }>`
   user-select: none;
   position: relative;
@@ -23,6 +24,13 @@ const DropdownTrigger = styled(DivElipsis)<{
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+
+  /* Điều chỉnh vị trí cho presenter - đảm bảo tag không bị thụt xuống */
+  ${({ $isPresenter }) => $isPresenter && `
+    position: relative;
+    transform: translateY(0);
+    margin-top: 0;
+  `}
 
   &::after {
     content: "\\203a";
@@ -40,6 +48,7 @@ const DropdownTrigger = styled(DivElipsis)<{
 
 const UserName = styled(TextElipsis)<{
   $noMenu: boolean;
+  $isPresenter?: boolean;
 }>`
   position: relative;
   // Keep the background with 0.5 opacity, but leave the text with 1
@@ -49,6 +58,13 @@ const UserName = styled(TextElipsis)<{
 
   ${({ $noMenu }) => $noMenu && `
     padding: 0 .5rem 0 .5rem !important;
+  `}
+
+  /* Điều chỉnh vị trí cho presenter - đảm bảo tag không bị thụt xuống */
+  ${({ $isPresenter }) => $isPresenter && `
+    position: relative;
+    transform: translateY(0);
+    margin-top: 0;
   `}
 `;
 

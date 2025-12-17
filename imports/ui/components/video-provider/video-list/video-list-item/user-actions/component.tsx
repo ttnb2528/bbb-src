@@ -98,13 +98,14 @@ interface UserActionProps {
   videoContainer?: MutableRefObject<HTMLDivElement | null>,
   isFullscreenContext: boolean;
   layoutContextDispatch: (...args: unknown[]) => void;
+  isPresenter?: boolean;
 }
 
 const UserActions: React.FC<UserActionProps> = (props) => {
   const {
     name, cameraId, numOfStreams, onHandleVideoFocus, stream, focused, onHandleMirror,
     isVideoSqueezed = false, videoContainer, isRTL, isStream, isSelfViewDisabled, isMirrored,
-    amIModerator, isFullscreenContext, layoutContextDispatch,
+    amIModerator, isFullscreenContext, layoutContextDispatch, isPresenter = false,
   } = props;
 
   const { pluginsExtensibleAreasAggregatedState } = useContext(PluginsContext);
@@ -310,6 +311,7 @@ const UserActions: React.FC<UserActionProps> = (props) => {
                 tabIndex={0}
                 data-test="dropdownWebcamButton"
                 $isRTL={isRTL}
+                $isPresenter={isPresenter}
                 role="button"
               >
                 {name}
@@ -331,7 +333,7 @@ const UserActions: React.FC<UserActionProps> = (props) => {
         )
         : (
           <Styled.Dropdown $isFirefox={isFirefox}>
-            <Styled.UserName $noMenu={numOfStreams < 3}>
+            <Styled.UserName $noMenu={numOfStreams < 3} $isPresenter={isPresenter}>
               {name}
             </Styled.UserName>
           </Styled.Dropdown>

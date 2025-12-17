@@ -60,6 +60,7 @@ const PreviousPageButton = styled(Button)`
 
 const VideoListItem = styled.div<{
   $focused: boolean;
+  $isPresenter?: boolean;
 }>`
   display: flex;
   overflow: hidden;
@@ -69,6 +70,14 @@ const VideoListItem = styled.div<{
   ${({ $focused }) => $focused && `
     grid-column: 1 / span 2;
     grid-row: 1 / span 2;
+  `}
+
+  /* PRESENTER CAM - TO HƠN VÀ NỔI BẬT HƠN */
+  ${({ $isPresenter }) => $isPresenter && `
+    grid-column: 1 / span 2;
+    grid-row: 1 / span 2;
+    order: -1;
+    z-index: 1;
   `}
 `;
 

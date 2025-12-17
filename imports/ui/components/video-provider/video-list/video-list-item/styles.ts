@@ -37,11 +37,20 @@ const Content = styled.div<{
   dragging: boolean;
   draggingOver: boolean;
   fullscreen: boolean;
+  isPresenter?: boolean;
 }>`
   position: relative;
   display: flex;
   min-width: 100%;
   border-radius: 10px;
+
+  /* PRESENTER CAM - TO HƠN VÀ NỔI BẬT HƠN */
+  ${({ isPresenter }) => isPresenter && `
+    transform: scale(1.05);
+    z-index: 10;
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+  `}
+
   &::after {
     content: "";
     position: absolute;
@@ -63,6 +72,12 @@ const Content = styled.div<{
 
     ${({ talking, customHighlight }) => talking && customHighlight && customHighlight.length > 0 && `
       border: 2px solid rgb(${customHighlight[0]}, ${customHighlight[1]}, ${customHighlight[2]});
+    `}
+
+    /* PRESENTER - VIỀN ĐẶC BIỆT */
+    ${({ isPresenter }) => isPresenter && `
+      border: 3px solid #FF6B35;
+      box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
     `}
 
     ${({ animations }) => animations && `
@@ -191,7 +206,9 @@ const TopBar = styled.div`
   justify-content: space-between;
 `;
 
-const BottomBar = styled.div`
+const BottomBar = styled.div<{
+  $isPresenter?: boolean;
+}>`
   position: absolute;
   display: flex;
   width: 100%;
@@ -199,6 +216,12 @@ const BottomBar = styled.div`
   bottom: 0;
   padding: 1px 7px;
   justify-content: space-between;
+
+  /* Điều chỉnh cho presenter - đảm bảo tag dropdown không bị thụt xuống */
+  ${({ $isPresenter }) => $isPresenter && `
+    align-items: flex-end;
+    padding-bottom: 4px;
+  `}
 `;
 
 const RaiseHand = styled.div`
