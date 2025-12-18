@@ -388,9 +388,9 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     );
   }
 
-  renderVideoList() {
+  // Render video item (dùng chung cho strip và stage)
+  renderVideoItem(item: VideoItem, isInStrip: boolean = false) {
     const {
-      streams,
       onVirtualBgDrop,
       onVideoItemMount,
       onVideoItemUnmount,
@@ -398,55 +398,103 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       setUserCamerasRequestedFromPlugin,
       focusedId,
       pluginUserCameraHelperPerPosition,
+      streams,
     } = this.props;
     const numOfStreams = streams.length;
+    const { userId, name } = item;
+    const isStream = item.type !== VIDEO_TYPES.GRID;
+    const anyItem = item as any;
+    const isPresenter = isStream
+      ? anyItem?.user?.presenter
+      : item.type === VIDEO_TYPES.GRID
+        ? anyItem?.presenter
+        : false;
+    const stream = isStream ? item.stream : null;
+    const key = isStream ? stream : userId;
+    const isFocused = isStream && focusedId === stream && numOfStreams > 2;
 
-    return streams.map((item) => {
-      const { userId, name } = item;
+    const videoItem = (
+      <VideoListItemContainer
+        pluginUserCameraHelperPerPosition={pluginUserCameraHelperPerPosition}
+        numOfStreams={numOfStreams}
+        cameraId={stream}
+        userId={userId}
+        name={name}
+        focused={isFocused}
+        isStream={isStream}
+        setUserCamerasRequestedFromPlugin={setUserCamerasRequestedFromPlugin}
+        onHandleVideoFocus={isStream ? handleVideoFocus : null}
+        onVideoItemMount={(videoRef) => {
+          this.handleCanvasResize();
+          if (isStream) onVideoItemMount(item.stream, videoRef);
+        }}
+        stream={item}
+        onVideoItemUnmount={onVideoItemUnmount}
+        onVirtualBgDrop={
+          (type, name, data) => {
+            return isStream ? onVirtualBgDrop(item.stream, type, name, data) : Promise.resolve(null);
+          }
+        }
+      />
+    );
+
+    // Nếu trong strip, bọc với VideoStripItem
+    if (isInStrip) {
+      return (
+        <Styled.VideoStripItem
+          key={key}
+          $isPresenter={isPresenter}
+        >
+          {videoItem}
+        </Styled.VideoStripItem>
+      );
+    }
+
+    // Nếu ở stage (presenter lớn), bọc với PresenterStageVideo
+    return (
+      <Styled.PresenterStageVideo key={key}>
+        {videoItem}
+      </Styled.PresenterStageVideo>
+    );
+  }
+
+  renderVideoList() {
+    const { streams } = this.props;
+
+    // Tìm presenter
+    const presenterStream = streams.find((item) => {
       const isStream = item.type !== VIDEO_TYPES.GRID;
-      // Xác định đây có phải video của presenter hay không (nới lỏng kiểu để tránh lỗi TS)
       const anyItem = item as any;
-      const isPresenter = isStream
+      return isStream
         ? anyItem?.user?.presenter
         : item.type === VIDEO_TYPES.GRID
           ? anyItem?.presenter
           : false;
-      const stream = isStream ? item.stream : null;
-      const key = isStream ? stream : userId;
-      const isFocused = isStream && focusedId === stream && numOfStreams > 2;
-
-      return (
-        <Styled.VideoListItem
-          key={key}
-          $focused={isFocused}
-          $isPresenter={isPresenter}
-          data-test="webcamVideoItem"
-        >
-          <VideoListItemContainer
-            pluginUserCameraHelperPerPosition={pluginUserCameraHelperPerPosition}
-            numOfStreams={numOfStreams}
-            cameraId={stream}
-            userId={userId}
-            name={name}
-            focused={isFocused}
-            isStream={isStream}
-            setUserCamerasRequestedFromPlugin={setUserCamerasRequestedFromPlugin}
-            onHandleVideoFocus={isStream ? handleVideoFocus : null}
-            onVideoItemMount={(videoRef) => {
-              this.handleCanvasResize();
-              if (isStream) onVideoItemMount(item.stream, videoRef);
-            }}
-            stream={item}
-            onVideoItemUnmount={onVideoItemUnmount}
-            onVirtualBgDrop={
-              (type, name, data) => {
-                return isStream ? onVirtualBgDrop(item.stream, type, name, data) : Promise.resolve(null);
-              }
-            }
-          />
-        </Styled.VideoListItem>
-      );
     });
+
+    // Tất cả streams (cho strip)
+    const allStreams = streams;
+
+    return (
+      <Styled.CustomLayoutContainer>
+        {/* Dải cam nhỏ ở trên */}
+        <Styled.VideoStrip>
+          {allStreams.map((item) => this.renderVideoItem(item, true))}
+        </Styled.VideoStrip>
+
+        {/* Khung trung tâm to - hiển thị presenter */}
+        {presenterStream && (
+          <Styled.MainStage>
+            {this.renderVideoItem(presenterStream, false)}
+          </Styled.MainStage>
+        )}
+        {!presenterStream && (
+          <Styled.MainStage>
+            <Styled.StagePlaceholder>Chờ presenter...</Styled.StagePlaceholder>
+          </Styled.MainStage>
+        )}
+      </Styled.CustomLayoutContainer>
+    );
   }
 
   render() {
@@ -456,7 +504,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       cameraDock,
       isGridEnabled,
     } = this.props;
-    const { optimalGrid, autoplayBlocked } = this.state;
+    const { autoplayBlocked } = this.state;
     const { position } = cameraDock;
 
     return (
@@ -469,24 +517,9 @@ class VideoList extends Component<VideoListProps, VideoListState> {
           minHeight: 'inherit',
         }}
       >
-        {this.renderPreviousPageButton()}
+        {/* Layout mới: Strip + Stage (không dùng grid cũ nữa) */}
+        {!streams.length && !isGridEnabled ? null : this.renderVideoList()}
 
-        {!streams.length && !isGridEnabled ? null : (
-          <Styled.VideoList
-            ref={(ref) => {
-              this.grid = ref;
-            }}
-            style={{
-              width: `${optimalGrid.width}px`,
-              height: `${optimalGrid.height}px`,
-              gridTemplateColumns: `repeat(${optimalGrid.columns}, 1fr)`,
-              gridTemplateRows: `repeat(${optimalGrid.rows}, 1fr)`,
-            }}
-            className="video-provider_list"
-          >
-            {this.renderVideoList()}
-          </Styled.VideoList>
-        )}
         {!autoplayBlocked ? null : (
           <AutoplayOverlay
             autoplayBlockedDesc={intl.formatMessage(intlMessages.autoplayBlockedDesc)}
@@ -494,13 +527,6 @@ class VideoList extends Component<VideoListProps, VideoListState> {
             handleAllowAutoplay={this.handleAllowAutoplay}
           />
         )}
-
-        {
-          (position === 'contentRight' || position === 'contentLeft')
-          && <Styled.Break />
-        }
-
-        {this.renderNextPageButton()}
       </Styled.VideoCanvas>
     );
   }

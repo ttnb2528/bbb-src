@@ -122,6 +122,80 @@ const Break = styled.div`
   height: 5px;
 `;
 
+// Layout mới: Container chính chia 2 vùng (strip trên + stage giữa)
+const CustomLayoutContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  gap: 8px;
+`;
+
+// Dải cam nhỏ ở trên (tất cả người tham gia)
+const VideoStrip = styled.div`
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 8px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  height: 120px;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+`;
+
+// Item trong dải cam (nhỏ, chiều rộng cố định)
+const VideoStripItem = styled.div<{
+  $isPresenter?: boolean;
+}>`
+  position: relative;
+  width: 160px;
+  height: 100%;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+
+  ${({ $isPresenter }) => $isPresenter && `
+    border: 2px solid #FF6B35;
+  `}
+`;
+
+// Khung trung tâm to (hiển thị presenter cam hoặc shared content)
+const MainStage = styled.div`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.95);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+`;
+
+// Container cho presenter cam trong stage (khi không có share)
+const PresenterStageVideo = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+// Placeholder khi chưa có presenter
+const StagePlaceholder = styled.div`
+  color: #ffffff;
+  font-size: 18px;
+  opacity: 0.6;
+`;
+
 export default {
   NextPageButton,
   PreviousPageButton,
@@ -129,4 +203,10 @@ export default {
   VideoCanvas,
   VideoList,
   Break,
+  CustomLayoutContainer,
+  VideoStrip,
+  VideoStripItem,
+  MainStage,
+  PresenterStageVideo,
+  StagePlaceholder,
 };
