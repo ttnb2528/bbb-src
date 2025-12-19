@@ -72,7 +72,7 @@ const VideoListItem = styled.div<{
     grid-row: 1 / span 2;
   `}
 
-  /* PRESENTER CAM - TO HƠN VÀ NỔI BẬT HƠN */
+  /* PRESENTER CAM - TO HON VÀ N?I B?T HON */
   ${({ $isPresenter }) => $isPresenter && `
     grid-column: 1 / span 2;
     grid-row: 1 / span 2;
@@ -122,7 +122,7 @@ const Break = styled.div`
   height: 5px;
 `;
 
-// Layout mới: Container chính chia 2 vùng (strip trên + stage giữa)
+// Layout m?i: Container chính chia 2 vùng (strip trên + stage gi?a)
 const CustomLayoutContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -131,16 +131,23 @@ const CustomLayoutContainer = styled.div`
   gap: 8px;
 `;
 
-// Dải cam nhỏ ở trên (tất cả người tham gia)
+// D?i cam nh? ? trên (t?t c? ngu?i tham gia)
 const VideoStrip = styled.div`
   display: flex;
   gap: 4px;
-  padding: 8px;
+  padding: 10px 10px 16px 10px;
   background: rgba(15, 23, 42, 0.8);
   border-radius: 8px;
   overflow-x: auto;
+  overflow-y: hidden;
   flex-shrink: 0;
-  height: 120px;
+  height: 150px;
+  scroll-behavior: smooth;
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
 
   &::-webkit-scrollbar {
     height: 6px;
@@ -150,9 +157,14 @@ const VideoStrip = styled.div`
     background: rgba(255, 255, 255, 0.3);
     border-radius: 3px;
   }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 3px;
+  }
 `;
 
-// Item trong dải cam (nhỏ, chiều rộng cố định)
+// Item trong d?i cam (nh?, chi?u r?ng c? d?nh)
 const VideoStripItem = styled.div<{
   $isPresenter?: boolean;
 }>`
@@ -165,10 +177,20 @@ const VideoStripItem = styled.div<{
 
   ${({ $isPresenter }) => $isPresenter && `
     border: 2px solid #FF6B35;
+    width: 190px; /* to hon theo chi?u ngang */
+    box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+    transform: scale(1.03); /* nh? d? không b? méo/c?t */
   `}
+
+  /* Thu nh? font name + status cho g?n nhung KHÔNG ?n */
+  [class*="userName"],
+  [class*="UserName"],
+  [class*="UserStatus"] {
+    font-size: 10px !important;
+  }
 `;
 
-// Khung trung tâm to (hiển thị presenter cam hoặc shared content)
+// Khung trung tâm to (hi?n th? presenter cam ho?c shared content)
 const MainStage = styled.div`
   flex: 1;
   display: flex;
@@ -182,14 +204,32 @@ const MainStage = styled.div`
 
 // Container cho presenter cam trong stage (khi không có share)
 const PresenterStageVideo = styled.div`
-  width: 100%;
-  height: 100%;
+  width: 80%;
+  max-width: 900px;
+  height: 85%;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 12px;
+  overflow: hidden;
+  
+  /* Ð?m b?o video item bên trong cung có border-radius */
+  > div {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 0; /* B? border-radius ? video, d? container x? lý */
+  }
 `;
 
-// Placeholder khi chưa có presenter
+// Placeholder khi chua có presenter
 const StagePlaceholder = styled.div`
   color: #ffffff;
   font-size: 18px;

@@ -240,7 +240,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     const gridGutter = parseInt(window.getComputedStyle(this.grid)
       .getPropertyValue('grid-row-gap'), 10);
 
-    // Kiểm tra xem có presenter không
+    // Ki?m tra xem có presenter không
     const hasPresenter = streams.some((s) => {
       const anyItem = s as any;
       if (s.type === VIDEO_TYPES.STREAM) {
@@ -256,17 +256,17 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       (s) => s.type !== VIDEO_TYPES.GRID && s.stream === focusedId,
     ).length && numItems > 2;
 
-    // Nếu có presenter, tính grid riêng: presenter chiếm 2x2, các cam còn lại xếp bên cạnh
+    // N?u có presenter, tính grid riêng: presenter chi?m 2x2, các cam còn l?i x?p bên c?nh
     let optimalGrid;
     if (hasPresenter) {
       const remainingCams = numItems - 1;
-      // Tính grid cho các cam còn lại (không tính presenter)
-      // Presenter chiếm 2 cột đầu, nên các cam còn lại cần ít nhất 2 cột để xếp gọn
+      // Tính grid cho các cam còn l?i (không tính presenter)
+      // Presenter chi?m 2 c?t d?u, nên các cam còn l?i c?n ít nh?t 2 c?t d? x?p g?n
       const minColsForRemaining = Math.max(2, Math.ceil(Math.sqrt(remainingCams)));
-      const totalCols = 2 + minColsForRemaining; // 2 cột cho presenter + cột cho các cam còn lại
-      const totalRows = Math.max(2, Math.ceil((remainingCams + 4) / totalCols)); // +4 vì presenter chiếm 4 cells
+      const totalCols = 2 + minColsForRemaining; // 2 c?t cho presenter + c?t cho các cam còn l?i
+      const totalRows = Math.max(2, Math.ceil((remainingCams + 4) / totalCols)); // +4 vì presenter chi?m 4 cells
       
-      // Tính kích thước cell dựa trên grid mới
+      // Tính kích thu?c cell d?a trên grid m?i
       const gutterTotalWidth = (totalCols - 1) * gridGutter;
       const gutterTotalHeight = (totalRows - 1) * gridGutter;
       const usableWidth = canvasWidth - gutterTotalWidth;
@@ -286,7 +286,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
         filledArea: (cellWidth * cellHeight) * (remainingCams + 4),
       };
     } else {
-      // Logic cũ cho trường hợp không có presenter
+      // Logic cu cho tru?ng h?p không có presenter
       let adjustedNumItems = numItems;
       if (hasFocusedItem) {
         adjustedNumItems += 3;
@@ -438,7 +438,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       />
     );
 
-    // Nếu trong strip, bọc với VideoStripItem
+    // N?u trong strip, b?c v?i VideoStripItem
     if (isInStrip) {
       return (
         <Styled.VideoStripItem
@@ -450,7 +450,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       );
     }
 
-    // Nếu ở stage (presenter lớn), bọc với PresenterStageVideo
+    // N?u ? stage (presenter l?n), b?c v?i PresenterStageVideo
     return (
       <Styled.PresenterStageVideo key={key}>
         {videoItem}
@@ -458,39 +458,66 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     );
   }
 
-  renderVideoList() {
-    const { streams } = this.props;
+  // Handler cho wheel scroll trên strip
+  handleStripWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const strip = e.currentTarget;
+    e.preventDefault();
+    strip.scrollLeft += e.deltaY;
+  };
 
-    // Tìm presenter
-    const presenterStream = streams.find((item) => {
-      const isStream = item.type !== VIDEO_TYPES.GRID;
+  renderVideoList() {
+    const { streams, focusedId } = this.props;
+
+    // 1) Uu tiên focusedId làm ngu?n stage (d?m b?o m?i client th?y gi?ng nhau)
+    let stageStream = streams.find((item) => {
       const anyItem = item as any;
-      return isStream
-        ? anyItem?.user?.presenter
-        : item.type === VIDEO_TYPES.GRID
-          ? anyItem?.presenter
-          : false;
+      return item.type !== VIDEO_TYPES.GRID && anyItem?.stream === focusedId;
     });
 
-    // Tất cả streams (cho strip)
-    const allStreams = streams;
+    // 2) N?u chua có, fallback sang presenter / moderator / stream d?u tiên
+    if (!stageStream) {
+      stageStream = streams.find((item) => {
+        const anyItem = item as any;
+        if (item.type === VIDEO_TYPES.STREAM && anyItem?.user?.presenter) return true;
+        if (item.type === VIDEO_TYPES.GRID && anyItem?.presenter) return true;
+        if (anyItem?.user?.role === 'MODERATOR' || anyItem?.role === 'MODERATOR') return true;
+        return false;
+      }) || streams[0];
+    }
+
+    // 3) Strip: gi? t?t c? streams, s?p x?p presenter lên d?u
+    const sortedStripStreams = [...streams].sort((a, b) => {
+      const anyA = a as any;
+      const anyB = b as any;
+
+      const aIsPresenter = (a.type === VIDEO_TYPES.STREAM && anyA?.user?.presenter)
+        || (a.type === VIDEO_TYPES.GRID && anyA?.presenter)
+        || (anyA?.user?.role === 'MODERATOR' || anyA?.role === 'MODERATOR');
+
+      const bIsPresenter = (b.type === VIDEO_TYPES.STREAM && anyB?.user?.presenter)
+        || (b.type === VIDEO_TYPES.GRID && anyB?.presenter)
+        || (anyB?.user?.role === 'MODERATOR' || anyB?.role === 'MODERATOR');
+
+      if (aIsPresenter && !bIsPresenter) return -1;
+      if (!aIsPresenter && bIsPresenter) return 1;
+      return 0;
+    });
 
     return (
       <Styled.CustomLayoutContainer>
-        {/* Dải cam nhỏ ở trên */}
-        <Styled.VideoStrip>
-          {allStreams.map((item) => this.renderVideoItem(item, true))}
+        {/* D?i cam nh? ? trên */}
+        <Styled.VideoStrip onWheel={this.handleStripWheel}>
+          {sortedStripStreams.map((item) => this.renderVideoItem(item, true))}
         </Styled.VideoStrip>
 
-        {/* Khung trung tâm to - hiển thị presenter */}
-        {presenterStream && (
+        {/* Khung trung tâm to */}
+        {stageStream ? (
           <Styled.MainStage>
-            {this.renderVideoItem(presenterStream, false)}
+            {this.renderVideoItem(stageStream, false)}
           </Styled.MainStage>
-        )}
-        {!presenterStream && (
+        ) : (
           <Styled.MainStage>
-            <Styled.StagePlaceholder>Chờ presenter...</Styled.StagePlaceholder>
+            <Styled.StagePlaceholder>Ch? presenter...</Styled.StagePlaceholder>
           </Styled.MainStage>
         )}
       </Styled.CustomLayoutContainer>
@@ -517,7 +544,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
           minHeight: 'inherit',
         }}
       >
-        {/* Layout mới: Strip + Stage (không dùng grid cũ nữa) */}
+        {/* Layout m?i: Strip + Stage (không dùng grid cu n?a) */}
         {!streams.length && !isGridEnabled ? null : this.renderVideoList()}
 
         {!autoplayBlocked ? null : (

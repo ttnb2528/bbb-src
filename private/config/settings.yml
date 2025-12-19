@@ -534,7 +534,7 @@ public:
       # A page size of 0 (zero) means that the page size is unlimited (disabled).
       desktopPageSizes:
         moderator: 0
-        viewer: 5
+        viewer: 0  # Đặt 0 để hiển thị tất cả cam (không giới hạn)
       # video page sizes for MOBILE endpoints
       mobilePageSizes:
         moderator: 2
