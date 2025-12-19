@@ -58,6 +58,13 @@ const SidebarContent = (props) => {
   const [resizeStartWidth, setResizeStartWidth] = useState(0);
   const [resizeStartHeight, setResizeStartHeight] = useState(0);
 
+  // Fallback: nếu panel bị set về NONE (khi bấm nút back trong header chat),
+  // ta vẫn giữ CHÁT làm mặc định để không bị mất panel
+  let activePanel = sidebarContentPanel;
+  if (!activePanel || activePanel === PANELS.NONE) {
+    activePanel = PANELS.CHAT;
+  }
+
   useEffect(() => {
     if (!isResizing) {
       setResizableWidth(width);
@@ -151,14 +158,14 @@ const SidebarContent = (props) => {
           <Styled.TabButton
             type="button"
             onClick={() => handleSelectPanel(PANELS.CHAT)}
-            data-active={sidebarContentPanel === PANELS.CHAT}
+            data-active={activePanel === PANELS.CHAT}
           >
             Public Chat
           </Styled.TabButton>
           <Styled.TabButton
             type="button"
             onClick={() => handleSelectPanel(PANELS.SHARED_NOTES)}
-            data-active={sidebarContentPanel === PANELS.SHARED_NOTES}
+            data-active={activePanel === PANELS.SHARED_NOTES}
           >
             Shared Notes
           </Styled.TabButton>
@@ -170,7 +177,7 @@ const SidebarContent = (props) => {
         
         {/* Content panels */}
         <Styled.ContentArea>
-          {sidebarContentPanel === PANELS.CHAT
+          {activePanel === PANELS.CHAT
             && (
               <ErrorBoundary
                 Fallback={FallbackView}
@@ -180,13 +187,13 @@ const SidebarContent = (props) => {
             )}
           {!isSharedNotesPinned && (
             <NotesContainer
-              isToSharedNotesBeShow={sidebarContentPanel === PANELS.SHARED_NOTES}
+              isToSharedNotesBeShow={activePanel === PANELS.SHARED_NOTES}
             />
           )}
-          {sidebarContentPanel === PANELS.BREAKOUT && <BreakoutRoomContainer />}
-          {sidebarContentPanel === PANELS.TIMER && <TimerContainer isModerator={amIModerator} />}
-          {sidebarContentPanel === PANELS.WAITING_USERS && <GuestUsersManagementPanel />}
-          {sidebarContentPanel === PANELS.POLL && (
+          {activePanel === PANELS.BREAKOUT && <BreakoutRoomContainer />}
+          {activePanel === PANELS.TIMER && <TimerContainer isModerator={amIModerator} />}
+          {activePanel === PANELS.WAITING_USERS && <GuestUsersManagementPanel />}
+          {activePanel === PANELS.POLL && (
             <Styled.Poll
               style={{ minWidth, top: '0', display: pollDisplay }}
               id="pollPanel"
@@ -198,9 +205,9 @@ const SidebarContent = (props) => {
               />
             </Styled.Poll>
           )}
-          {sidebarContentPanel.includes(PANELS.GENERIC_CONTENT_SIDEKICK) && (
+          {activePanel.includes && activePanel.includes(PANELS.GENERIC_CONTENT_SIDEKICK) && (
             <GenericContentSidekickContainer
-              genericSidekickContentId={sidebarContentPanel}
+              genericSidekickContentId={activePanel}
             />
           )}
         </Styled.ContentArea>

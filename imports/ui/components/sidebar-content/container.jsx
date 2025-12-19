@@ -28,7 +28,8 @@ const SidebarContentContainer = (props) => {
 
   const currentSlideId = presentationPage?.pageId;
 
-  if (sidebarContentOutput.display === false) return null;
+  // Với layout mới, luôn hiển thị thanh Chat/Notes ngang phía dưới,
+  // nên bỏ chặn display === false (tránh bị ẩn khi user bấm nút Back trong header chat)
 
   return (
     <SidebarContent

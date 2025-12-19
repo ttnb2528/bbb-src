@@ -691,7 +691,8 @@ const CustomLayout = (props) => {
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_CONTENT_OUTPUT,
       value: {
-        display: sidebarContentInput.isOpen,
+        // Luôn hiển thị panel Chat/Notes ở dạng thanh ngang, tránh bị ẩn khi user bấm nút Back
+        display: true,
         minWidth: minChatNotesWidth,
         width: sidebarContentNewWidth,
         maxWidth: windowWidth() - minUserListWidth, // Max width is screen width minus min user list width
