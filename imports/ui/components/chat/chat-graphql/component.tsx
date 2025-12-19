@@ -19,9 +19,10 @@ import { ChatEvents } from '/imports/ui/core/enums/chat';
 
 interface ChatProps {
   isRTL: boolean;
+  mode?: 'sidebar' | 'modal';
 }
 
-const Chat: React.FC<ChatProps> = ({ isRTL }) => {
+const Chat: React.FC<ChatProps> = ({ isRTL, mode = 'sidebar' }) => {
   const { isChrome } = browserInfo;
   const isEditingMessage = useRef(false);
 
@@ -70,7 +71,7 @@ const Chat: React.FC<ChatProps> = ({ isRTL }) => {
 
   return (
     <Styled.Chat isRTL={isRTL} isChrome={isChrome}>
-      <ChatHeader />
+      <ChatHeader mode={mode} />
       <ChatMessageListContainer />
       <ChatMessageFormContainer />
       <ChatTypingIndicatorContainer />
@@ -131,7 +132,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ mode = 'sidebar' }) => {
 
   if (respectSidebarPanel && sidebarContent.sidebarContentPanel !== PANELS.CHAT) return null;
   if (!idChatOpen && !isLocked) return <ChatLoading isRTL={isRTL} />;
-  return <Chat isRTL={isRTL} />;
+  return <Chat isRTL={isRTL} mode={mode} />;
 };
 
 export default ChatContainer;

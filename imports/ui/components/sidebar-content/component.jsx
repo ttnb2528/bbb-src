@@ -153,15 +153,8 @@ const SidebarContent = (props) => {
       }}
     >
       <Styled.SidebarContentWrapper>
-        {/* Messages and Notes navigation buttons */}
+        {/* Chỉ dùng panel ngang để hiển thị Shared Notes, không còn Public Chat */}
         <Styled.TabBar>
-          <Styled.TabButton
-            type="button"
-            onClick={() => handleSelectPanel(PANELS.CHAT)}
-            data-active={activePanel === PANELS.CHAT}
-          >
-            Public Chat
-          </Styled.TabButton>
           <Styled.TabButton
             type="button"
             onClick={() => handleSelectPanel(PANELS.SHARED_NOTES)}
@@ -171,20 +164,12 @@ const SidebarContent = (props) => {
           </Styled.TabButton>
         </Styled.TabBar>
         <Styled.TabNavContent>
-          <ChatListContainer />
+          {/* Danh sách chat không cần hiện ở panel ngang nữa */}
           <UserNotesContainer />
         </Styled.TabNavContent>
         
-        {/* Content panels */}
+        {/* Content panels: chỉ còn Shared Notes và các panel khác, không hiển thị Public/Private chat ở đây */}
         <Styled.ContentArea>
-          {activePanel === PANELS.CHAT
-            && (
-              <ErrorBoundary
-                Fallback={FallbackView}
-              >
-                <ChatContainer width={width} />
-              </ErrorBoundary>
-            )}
           {!isSharedNotesPinned && (
             <NotesContainer
               isToSharedNotesBeShow={activePanel === PANELS.SHARED_NOTES}

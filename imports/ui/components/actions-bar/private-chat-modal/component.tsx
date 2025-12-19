@@ -43,7 +43,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
         <Styled.Header>
           <Styled.Title>
             <Icon iconName="chat" />
-            <span>{intl.formatMessage(intlMessages.privateChatTitle)}</span>
+            <span>Message</span>
           </Styled.Title>
           <Button
             icon="close"

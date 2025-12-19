@@ -15,6 +15,8 @@ interface ChatHeaderProps {
   isPublicChat: boolean;
   title: string;
   isRTL: boolean;
+  // 'sidebar' cho panel dưới, 'modal' cho popup Message
+  mode?: 'sidebar' | 'modal';
 }
 
 const intlMessages = defineMessages({
@@ -37,7 +39,7 @@ const intlMessages = defineMessages({
 });
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
-  chatId, isPublicChat, title, isRTL,
+  chatId, isPublicChat, title, isRTL, mode = 'sidebar',
 }) => {
   const HIDE_CHAT_AK = useShortcut('hideprivatechat');
   const CLOSE_CHAT_AK = useShortcut('closeprivatechat');
@@ -54,6 +56,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         'data-test': isPublicChat ? 'hidePublicChat' : 'hidePrivateChat',
         label: title,
         onClick: () => {
+          // Trong popup (mode modal), nút back không làm gì
+          if (mode === 'modal') return;
           // Với public chat, không ẩn panel nữa để tránh thanh Chat/Notes biến mất.
           // Vẫn giữ behavior cũ cho private chat.
           if (!isPublicChat) {
@@ -79,6 +83,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         icon: 'close',
         label: intl.formatMessage(intlMessages.closeChatLabel, { chatName: title }),
         onClick: () => {
+          // Trong popup, không đóng panel khi bấm X trên header
+          if (mode === 'modal') return;
           updateVisible({ variables: { chatId, visible: false } });
           closePrivateChat(chatId);
           layoutContextDispatch({
@@ -104,7 +110,11 @@ const isChatResponse = (data: unknown): data is GetChatDataResponse => {
   return (data as GetChatDataResponse).chat !== undefined;
 };
 
-const ChatHeaderContainer: React.FC = () => {
+interface ChatHeaderContainerProps {
+  mode?: 'sidebar' | 'modal';
+}
+
+const ChatHeaderContainer: React.FC<ChatHeaderContainerProps> = ({ mode = 'sidebar' }) => {
   const intl = useIntl();
   const idChatOpen = layoutSelect((i: Layout) => i.idChatOpen);
   const isRTL = layoutSelect((i: Layout) => i.isRTL);
@@ -145,6 +155,7 @@ const ChatHeaderContainer: React.FC = () => {
         isPublicChat={isPublicChat}
         title={title}
         isRTL={isRTL}
+        mode={mode}
       />
     </>
   );
