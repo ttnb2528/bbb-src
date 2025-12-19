@@ -207,6 +207,10 @@ const CustomLayout = (props) => {
             overrideOpenSidebarPanel = true;
             sidebarContentPanelOverride = PANELS.CHAT;
           }
+          // Ensure sidebar navigation is open when sidebar content is open
+          if (overrideOpenSidebarPanel) {
+            overrideOpenSidebarNavigation = true;
+          }
           return defaultsDeep(
             {
               sidebarNavigation: {
@@ -439,9 +443,11 @@ const CustomLayout = (props) => {
 
     const { height: actionBarHeight } = calculatesActionbarHeight();
     const navBarHeight = calculatesNavbarHeight();
+    // sidebarPanelHeight is defined in calculatesLayout, use a local constant here
+    const localSidebarPanelHeight = 300; // Height of horizontal sidebar panel above footer
     const mediaAreaHeight =
-      windowHeight() - (DEFAULT_VALUES.navBarHeight + actionBarHeight + bannerAreaHeight());
-    const mediaAreaWidth = windowWidth() - (sidebarNavWidth + sidebarContentWidth);
+      windowHeight() - (DEFAULT_VALUES.navBarHeight + actionBarHeight + bannerAreaHeight() + localSidebarPanelHeight);
+    const mediaAreaWidth = windowWidth(); // Full width, no sidebars on left
     const mediaBounds = {};
     const { element: fullscreenElement } = fullscreen;
     const { camerasMargin } = DEFAULT_VALUES;
@@ -475,8 +481,6 @@ const CustomLayout = (props) => {
       return mediaBounds;
     }
 
-    const sidebarSize = sidebarNavWidth + sidebarContentWidth;
-
     if (cameraDockInput.numCameras > 0 && !cameraDockInput.isDragging) {
       switch (cameraDockInput.position) {
         case CAMERADOCK_POSITION.CONTENT_TOP: {
@@ -484,42 +488,40 @@ const CustomLayout = (props) => {
           mediaBounds.height = mediaAreaHeight - cameraDockBounds.height - camerasMargin;
           mediaBounds.top =
             navBarHeight + cameraDockBounds.height + camerasMargin + bannerAreaHeight();
-          mediaBounds.left = !isRTL ? sidebarSize : null;
-          mediaBounds.right = isRTL ? sidebarSize : null;
+          mediaBounds.left = !isRTL ? 0 : null;
+          mediaBounds.right = isRTL ? 0 : null;
           break;
         }
         case CAMERADOCK_POSITION.CONTENT_RIGHT: {
           mediaBounds.width = mediaAreaWidth - cameraDockBounds.width - camerasMargin * 2;
           mediaBounds.height = mediaAreaHeight;
           mediaBounds.top = navBarHeight + bannerAreaHeight();
-          mediaBounds.left = !isRTL ? sidebarSize : null;
-          mediaBounds.right = isRTL ? sidebarSize - camerasMargin * 2 : null;
+          mediaBounds.left = !isRTL ? 0 : null;
+          mediaBounds.right = isRTL ? -camerasMargin * 2 : null;
           break;
         }
         case CAMERADOCK_POSITION.CONTENT_BOTTOM: {
           mediaBounds.width = mediaAreaWidth;
           mediaBounds.height = mediaAreaHeight - cameraDockBounds.height - camerasMargin;
           mediaBounds.top = navBarHeight - camerasMargin + bannerAreaHeight();
-          mediaBounds.left = !isRTL ? sidebarSize : null;
-          mediaBounds.right = isRTL ? sidebarSize : null;
+          mediaBounds.left = !isRTL ? 0 : null;
+          mediaBounds.right = isRTL ? 0 : null;
           break;
         }
         case CAMERADOCK_POSITION.CONTENT_LEFT: {
           mediaBounds.width = mediaAreaWidth - cameraDockBounds.width - camerasMargin * 2;
           mediaBounds.height = mediaAreaHeight;
           mediaBounds.top = navBarHeight + bannerAreaHeight();
-          const sizeValue =
-            sidebarNavWidth + sidebarContentWidth + mediaAreaWidth - mediaBounds.width;
-          mediaBounds.left = !isRTL ? sizeValue : null;
-          mediaBounds.right = isRTL ? sidebarSize : null;
+          mediaBounds.left = !isRTL ? (mediaAreaWidth - mediaBounds.width) : null;
+          mediaBounds.right = isRTL ? 0 : null;
           break;
         }
         case CAMERADOCK_POSITION.SIDEBAR_CONTENT_BOTTOM: {
           mediaBounds.width = mediaAreaWidth;
           mediaBounds.height = mediaAreaHeight;
           mediaBounds.top = navBarHeight + bannerAreaHeight();
-          mediaBounds.left = !isRTL ? sidebarSize : null;
-          mediaBounds.right = isRTL ? sidebarSize : null;
+          mediaBounds.left = !isRTL ? 0 : null;
+          mediaBounds.right = isRTL ? 0 : null;
           break;
         }
         default: {
@@ -531,8 +533,8 @@ const CustomLayout = (props) => {
       mediaBounds.width = mediaAreaWidth;
       mediaBounds.height = mediaAreaHeight;
       mediaBounds.top = navBarHeight + bannerAreaHeight();
-      mediaBounds.left = !isRTL ? sidebarSize : null;
-      mediaBounds.right = isRTL ? sidebarSize : null;
+      mediaBounds.left = !isRTL ? 0 : null;
+      mediaBounds.right = isRTL ? 0 : null;
     }
 
     return mediaBounds;
@@ -553,34 +555,38 @@ const CustomLayout = (props) => {
     const { position: cameraPosition } = cameraDockInput;
     const { camerasMargin, captionsMargin } = DEFAULT_VALUES;
 
+    // Fixed height for horizontal sidebar panel above footer (reduced for more video space)
+    const sidebarPanelHeight = 250;
+
     const sidebarNavWidth = calculatesSidebarNavWidth();
     const sidebarNavHeight = calculatesSidebarNavHeight();
     const sidebarContentWidth = calculatesSidebarContentWidth();
-    const sidebarNavBounds = calculatesSidebarNavBounds();
-    const sidebarContentBounds = calculatesSidebarContentBounds(sidebarNavWidth.width);
-    const mediaAreaBounds = calculatesMediaAreaBounds(
-      sidebarNavWidth.width,
-      sidebarContentWidth.width
-    );
+    // Media area bounds: full width, no sidebars on left (they're horizontal at bottom now)
+    // Hide navbar to give more space for video and allow sidebar to span full width
+    const mediaAreaBounds = {
+      width: windowWidth(),
+      height: windowHeight() - calculatesActionbarHeight().height - sidebarPanelHeight - bannerAreaHeight(),
+      top: bannerAreaHeight(), // Start from banner, no navbar
+      left: 0,
+    };
     const navbarBounds = calculatesNavbarBounds(mediaAreaBounds);
     const actionbarBounds = calculatesActionbarBounds(mediaAreaBounds);
     const cameraDockBounds = calculatesCameraDockBounds(
-      sidebarNavWidth.width,
-      sidebarContentWidth.width,
+      0,
+      0,
       mediaAreaBounds
     );
     const dropZoneAreas = calculatesDropAreas(
-      sidebarNavWidth.width,
-      sidebarContentWidth.width,
+      0,
+      0,
       cameraDockBounds
     );
     const sidebarContentHeight = calculatesSidebarContentHeight(cameraDockBounds.height);
     const mediaBounds = calculatesMediaBounds(
-      sidebarNavWidth.width,
-      sidebarContentWidth.width,
+      0,
+      0,
       cameraDockBounds
     );
-    const sidebarSize = sidebarContentWidth.width + sidebarNavWidth.width;
     const { height: actionBarHeight } = calculatesActionbarHeight();
 
     let horizontalCameraDiff = 0;
@@ -593,10 +599,11 @@ const CustomLayout = (props) => {
       horizontalCameraDiff = camerasMargin * 2;
     }
 
+    // Hide navbar to give more space for video and allow sidebar to span full width
     layoutContextDispatch({
       type: ACTIONS.SET_NAVBAR_OUTPUT,
       value: {
-        display: navbarInput.hasNavBar,
+        display: false, // Hide navbar
         width: navbarBounds.width,
         height: navbarBounds.height,
         top: navbarBounds.top,
@@ -624,26 +631,33 @@ const CustomLayout = (props) => {
     layoutContextDispatch({
       type: ACTIONS.SET_CAPTIONS_OUTPUT,
       value: {
-        left: !isRTL ? sidebarSize + captionsMargin : null,
-        right: isRTL ? sidebarSize + captionsMargin : null,
-        maxWidth: mediaAreaBounds.width - captionsMargin * 2,
+        left: !isRTL ? captionsMargin : null,
+        right: isRTL ? captionsMargin : null,
+        maxWidth: windowWidth() - captionsMargin * 2,
       },
     });
+
+    // Calculate new position for sidebar navigation (horizontal, above footer, full width)
+    const sidebarNavTop = windowHeight() - actionBarHeight - sidebarPanelHeight;
+    const sidebarNavLeft = 0;
+    const sidebarNavNewHeight = sidebarPanelHeight;
+    // Make sidebar nav take about 30% of width when horizontal
+    const sidebarNavNewWidth = Math.min(Math.max(windowWidth() * 0.3, 200), 300);
 
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_NAVIGATION_OUTPUT,
       value: {
         display: sidebarNavigationInput.isOpen,
-        minWidth: sidebarNavWidth.minWidth,
-        width: sidebarNavWidth.width,
-        maxWidth: sidebarNavWidth.maxWidth,
-        height: sidebarNavHeight,
-        top: sidebarNavBounds.top,
-        left: sidebarNavBounds.left,
-        right: sidebarNavBounds.right,
+        minWidth: sidebarNavNewWidth,
+        width: sidebarNavNewWidth,
+        maxWidth: sidebarNavNewWidth,
+        height: sidebarNavNewHeight,
+        top: sidebarNavTop,
+        left: sidebarNavLeft,
+        right: null,
         tabOrder: DEFAULT_VALUES.sidebarNavTabOrder,
-        isResizable: !isMobile && !isTablet,
-        zIndex: sidebarNavBounds.zIndex,
+        isResizable: false, // Disable resize for horizontal layout
+        zIndex: 10,
       },
     });
 
@@ -657,21 +671,27 @@ const CustomLayout = (props) => {
       },
     });
 
+    // Calculate new position for sidebar content (horizontal, next to sidebar nav, above footer, takes remaining width)
+    const sidebarContentTop = sidebarNavTop;
+    const sidebarContentLeft = sidebarNavNewWidth;
+    const sidebarContentNewWidth = windowWidth() - sidebarNavNewWidth;
+    const sidebarContentNewHeight = sidebarPanelHeight;
+
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_CONTENT_OUTPUT,
       value: {
         display: sidebarContentInput.isOpen,
-        minWidth: sidebarContentWidth.minWidth,
-        width: sidebarContentWidth.width,
-        maxWidth: sidebarContentWidth.maxWidth,
-        height: sidebarContentHeight,
-        top: sidebarContentBounds.top,
-        left: sidebarContentBounds.left,
-        right: sidebarContentBounds.right,
+        minWidth: sidebarContentNewWidth,
+        width: sidebarContentNewWidth,
+        maxWidth: sidebarContentNewWidth,
+        height: sidebarContentNewHeight,
+        top: sidebarContentTop,
+        left: sidebarContentLeft,
+        right: null,
         currentPanelType,
         tabOrder: DEFAULT_VALUES.sidebarContentTabOrder,
-        isResizable: !isMobile && !isTablet,
-        zIndex: sidebarContentBounds.zIndex,
+        isResizable: false, // Disable resize for horizontal layout
+        zIndex: 10,
       },
     });
 
@@ -685,11 +705,15 @@ const CustomLayout = (props) => {
       },
     });
 
+    // Media area now takes full width (no sidebars on left), but subtract height for horizontal sidebar panel
+    // No navbar height since we hide it
+    const mediaAreaNewHeight = windowHeight() - actionBarHeight - sidebarPanelHeight - bannerAreaHeight();
+
     layoutContextDispatch({
       type: ACTIONS.SET_MEDIA_AREA_SIZE,
       value: {
-        width: windowWidth() - sidebarNavWidth.width - sidebarContentWidth.width,
-        height: windowHeight() - DEFAULT_VALUES.navBarHeight - actionBarHeight,
+        width: windowWidth(),
+        height: mediaAreaNewHeight,
       },
     });
 
