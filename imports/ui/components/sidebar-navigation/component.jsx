@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Resizable } from 're-resizable';
 import { ACTIONS } from '../layout/enums';
-import UserListContainer from '../user-list/container';
+import UserListParticipantsContainer from '../user-list/user-list-content/user-participants/user-list-participants/component';
+import UserTitleContainer from '../user-list/user-list-graphql/user-participants-title/component';
+import Styled from './styles';
 
 const propTypes = {
   top: PropTypes.number.isRequired,
@@ -93,7 +95,10 @@ const SidebarNavigation = ({
         height,
       }}
     >
-      <UserListContainer />
+      <Styled.SidebarNavigationWrapper>
+        <UserTitleContainer />
+        <UserListParticipantsContainer />
+      </Styled.SidebarNavigationWrapper>
     </Resizable>
   );
 };

@@ -444,9 +444,11 @@ const CustomLayout = (props) => {
     const { height: actionBarHeight } = calculatesActionbarHeight();
     const navBarHeight = calculatesNavbarHeight();
     // sidebarPanelHeight is defined in calculatesLayout, use a local constant here
-    const localSidebarPanelHeight = 300; // Height of horizontal sidebar panel above footer
+    // Use responsive height matching calculatesLayout
+    const windowH = windowHeight();
+    const localSidebarPanelHeight = windowH < 800 ? 180 : windowH < 1080 ? 200 : 220;
     const mediaAreaHeight =
-      windowHeight() - (DEFAULT_VALUES.navBarHeight + actionBarHeight + bannerAreaHeight() + localSidebarPanelHeight);
+      windowHeight() - (actionBarHeight + bannerAreaHeight() + localSidebarPanelHeight); // No navbar height
     const mediaAreaWidth = windowWidth(); // Full width, no sidebars on left
     const mediaBounds = {};
     const { element: fullscreenElement } = fullscreen;
@@ -555,8 +557,10 @@ const CustomLayout = (props) => {
     const { position: cameraPosition } = cameraDockInput;
     const { camerasMargin, captionsMargin } = DEFAULT_VALUES;
 
-    // Fixed height for horizontal sidebar panel above footer (reduced for more video space)
-    const sidebarPanelHeight = 250;
+    // Fixed height for horizontal sidebar panel above footer (optimized for better video space)
+    // Use responsive height: smaller on smaller screens, but not too small to be unusable
+    const windowH = windowHeight();
+    const sidebarPanelHeight = windowH < 800 ? 180 : windowH < 1080 ? 200 : 220;
 
     const sidebarNavWidth = calculatesSidebarNavWidth();
     const sidebarNavHeight = calculatesSidebarNavHeight();
@@ -637,26 +641,31 @@ const CustomLayout = (props) => {
       },
     });
 
-    // Calculate new position for sidebar navigation (horizontal, above footer, full width)
+    // Calculate new position for sidebar navigation (User List panel - separate panel)
     const sidebarNavTop = windowHeight() - actionBarHeight - sidebarPanelHeight;
     const sidebarNavLeft = 0;
     const sidebarNavNewHeight = sidebarPanelHeight;
-    // Make sidebar nav take about 30% of width when horizontal
-    const sidebarNavNewWidth = Math.min(Math.max(windowWidth() * 0.3, 200), 300);
+    // User List panel: responsive width, allow resize
+    const windowW = windowWidth();
+    const defaultUserListWidth = windowW < 1280 ? 260 : windowW < 1920 ? 300 : 350;
+    // Use existing width if available, otherwise use default
+    const sidebarNavNewWidth = sidebarNavigationInput.width || defaultUserListWidth;
+    const minUserListWidth = 200;
+    const maxUserListWidth = Math.min(windowW * 0.4, 450);
 
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_NAVIGATION_OUTPUT,
       value: {
         display: sidebarNavigationInput.isOpen,
-        minWidth: sidebarNavNewWidth,
+        minWidth: minUserListWidth,
         width: sidebarNavNewWidth,
-        maxWidth: sidebarNavNewWidth,
+        maxWidth: maxUserListWidth,
         height: sidebarNavNewHeight,
         top: sidebarNavTop,
         left: sidebarNavLeft,
         right: null,
         tabOrder: DEFAULT_VALUES.sidebarNavTabOrder,
-        isResizable: false, // Disable resize for horizontal layout
+        isResizable: !isMobile && !isTablet, // Allow resize for desktop
         zIndex: 10,
       },
     });
@@ -665,32 +674,34 @@ const CustomLayout = (props) => {
       type: ACTIONS.SET_SIDEBAR_NAVIGATION_RESIZABLE_EDGE,
       value: {
         top: false,
-        right: !isRTL,
+        right: !isRTL, // Allow resize from right edge
         bottom: false,
         left: isRTL,
       },
     });
 
-    // Calculate new position for sidebar content (horizontal, next to sidebar nav, above footer, takes remaining width)
+    // Calculate new position for sidebar content (Chat/Notes panel - separate panel, next to User List)
     const sidebarContentTop = sidebarNavTop;
     const sidebarContentLeft = sidebarNavNewWidth;
+    // Chat/Notes panel: takes remaining width, allow resize
     const sidebarContentNewWidth = windowWidth() - sidebarNavNewWidth;
     const sidebarContentNewHeight = sidebarPanelHeight;
+    const minChatNotesWidth = 300; // Minimum width for chat/notes to be usable
 
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_CONTENT_OUTPUT,
       value: {
         display: sidebarContentInput.isOpen,
-        minWidth: sidebarContentNewWidth,
+        minWidth: minChatNotesWidth,
         width: sidebarContentNewWidth,
-        maxWidth: sidebarContentNewWidth,
+        maxWidth: windowWidth() - minUserListWidth, // Max width is screen width minus min user list width
         height: sidebarContentNewHeight,
         top: sidebarContentTop,
         left: sidebarContentLeft,
         right: null,
         currentPanelType,
         tabOrder: DEFAULT_VALUES.sidebarContentTabOrder,
-        isResizable: false, // Disable resize for horizontal layout
+        isResizable: !isMobile && !isTablet, // Allow resize for desktop
         zIndex: 10,
       },
     });
@@ -701,7 +712,7 @@ const CustomLayout = (props) => {
         top: false,
         right: !isRTL,
         bottom: false,
-        left: isRTL,
+        left: !isRTL, // Allow resize from left edge (adjacent to User List)
       },
     });
 

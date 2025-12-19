@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Resizable } from 're-resizable';
 import { ACTIONS, PANELS } from '../layout/enums';
+import { layoutSelectInput, layoutDispatch } from '../layout/context';
+import ChatListContainer from '../user-list/user-list-content/user-messages/chat-list/component';
+import UserNotesContainer from '../user-list/user-list-graphql/user-list-content/user-notes/component';
 import ChatContainer from '/imports/ui/components/chat/chat-graphql/component';
 import NotesContainer from '/imports/ui/components/notes/component';
 import PollContainer from '/imports/ui/components/poll/container';
@@ -83,6 +86,13 @@ const SidebarContent = (props) => {
   const smallSidebar = width < (maxWidth / 2);
   const pollDisplay = sidebarContentPanel === PANELS.POLL ? 'inherit' : 'none';
 
+  const handleSelectPanel = (panel) => {
+    contextDispatch({
+      type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
+      value: panel,
+    });
+  };
+
   return (
     <Resizable
       minWidth={minWidth}
@@ -135,39 +145,66 @@ const SidebarContent = (props) => {
         },
       }}
     >
-      {sidebarContentPanel === PANELS.CHAT
-        && (
-          <ErrorBoundary
-            Fallback={FallbackView}
+      <Styled.SidebarContentWrapper>
+        {/* Messages and Notes navigation buttons */}
+        <Styled.TabBar>
+          <Styled.TabButton
+            type="button"
+            onClick={() => handleSelectPanel(PANELS.CHAT)}
+            data-active={sidebarContentPanel === PANELS.CHAT}
           >
-            <ChatContainer width={width} />
-          </ErrorBoundary>
-        )}
-      {!isSharedNotesPinned && (
-        <NotesContainer
-          isToSharedNotesBeShow={sidebarContentPanel === PANELS.SHARED_NOTES}
-        />
-      )}
-      {sidebarContentPanel === PANELS.BREAKOUT && <BreakoutRoomContainer />}
-      {sidebarContentPanel === PANELS.TIMER && <TimerContainer isModerator={amIModerator} />}
-      {sidebarContentPanel === PANELS.WAITING_USERS && <GuestUsersManagementPanel />}
-      {sidebarContentPanel === PANELS.POLL && (
-        <Styled.Poll
-          style={{ minWidth, top: '0', display: pollDisplay }}
-          id="pollPanel"
-        >
-          <PollContainer
-            smallSidebar={smallSidebar}
-            amIPresenter={amIPresenter}
-            currentSlideId={currentSlideId}
-          />
-        </Styled.Poll>
-      )}
-      {sidebarContentPanel.includes(PANELS.GENERIC_CONTENT_SIDEKICK) && (
-        <GenericContentSidekickContainer
-          genericSidekickContentId={sidebarContentPanel}
-        />
-      )}
+            Public Chat
+          </Styled.TabButton>
+          <Styled.TabButton
+            type="button"
+            onClick={() => handleSelectPanel(PANELS.SHARED_NOTES)}
+            data-active={sidebarContentPanel === PANELS.SHARED_NOTES}
+          >
+            Shared Notes
+          </Styled.TabButton>
+        </Styled.TabBar>
+        <Styled.TabNavContent>
+          <ChatListContainer />
+          <UserNotesContainer />
+        </Styled.TabNavContent>
+        
+        {/* Content panels */}
+        <Styled.ContentArea>
+          {sidebarContentPanel === PANELS.CHAT
+            && (
+              <ErrorBoundary
+                Fallback={FallbackView}
+              >
+                <ChatContainer width={width} />
+              </ErrorBoundary>
+            )}
+          {!isSharedNotesPinned && (
+            <NotesContainer
+              isToSharedNotesBeShow={sidebarContentPanel === PANELS.SHARED_NOTES}
+            />
+          )}
+          {sidebarContentPanel === PANELS.BREAKOUT && <BreakoutRoomContainer />}
+          {sidebarContentPanel === PANELS.TIMER && <TimerContainer isModerator={amIModerator} />}
+          {sidebarContentPanel === PANELS.WAITING_USERS && <GuestUsersManagementPanel />}
+          {sidebarContentPanel === PANELS.POLL && (
+            <Styled.Poll
+              style={{ minWidth, top: '0', display: pollDisplay }}
+              id="pollPanel"
+            >
+              <PollContainer
+                smallSidebar={smallSidebar}
+                amIPresenter={amIPresenter}
+                currentSlideId={currentSlideId}
+              />
+            </Styled.Poll>
+          )}
+          {sidebarContentPanel.includes(PANELS.GENERIC_CONTENT_SIDEKICK) && (
+            <GenericContentSidekickContainer
+              genericSidekickContentId={sidebarContentPanel}
+            />
+          )}
+        </Styled.ContentArea>
+      </Styled.SidebarContentWrapper>
     </Resizable>
   );
 };
