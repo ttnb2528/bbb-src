@@ -86,7 +86,12 @@ export const ChatLoading: React.FC<ChatProps> = ({ isRTL }) => {
   );
 };
 
-const ChatContainer: React.FC = () => {
+interface ChatContainerProps {
+  // 'sidebar' dùng cho panel dưới; 'modal' dùng cho popup private chat
+  mode?: 'sidebar' | 'modal';
+}
+
+const ChatContainer: React.FC<ChatContainerProps> = ({ mode = 'sidebar' }) => {
   const idChatOpen = layoutSelect((i: Layout) => i.idChatOpen);
   const isRTL = layoutSelect((i: Layout) => i.isRTL);
   const sidebarContent = layoutSelectInput((i: Input) => i.sidebarContent);
@@ -107,7 +112,9 @@ const ChatContainer: React.FC = () => {
 
   const isLocked = currentUser?.locked || currentUser?.userLockSettings?.disablePublicChat;
 
-  if (pendingChat && chats) {
+  // Giữ lại pendingChat cho các flow cũ, nhưng không được dispatch layout trong quá trình render.
+  React.useEffect(() => {
+    if (!pendingChat || !chats) return;
     const chat = chats.find((c) => {
       return c.participant?.userId === pendingChat;
     });
@@ -118,9 +125,11 @@ const ChatContainer: React.FC = () => {
         value: chat.chatId,
       });
     }
-  }
+  }, [pendingChat, chats, layoutContextDispatch, setPendingChat]);
 
-  if (sidebarContent.sidebarContentPanel !== PANELS.CHAT) return null;
+  const respectSidebarPanel = mode === 'sidebar';
+
+  if (respectSidebarPanel && sidebarContent.sidebarContentPanel !== PANELS.CHAT) return null;
   if (!idChatOpen && !isLocked) return <ChatLoading isRTL={isRTL} />;
   return <Chat isRTL={isRTL} />;
 };

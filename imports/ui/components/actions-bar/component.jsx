@@ -43,11 +43,20 @@ class ActionsBar extends PureComponent {
     this.renderPluginsActionBarItems = this.renderPluginsActionBarItems.bind(this);
     this.setModalIsOpen = this.setModalIsOpen.bind(this);
     this.handleTogglePrivateChat = this.handleTogglePrivateChat.bind(this);
+    this.handleExternalOpenPrivateChat = this.handleExternalOpenPrivateChat.bind(this);
 
     this.state = {
       isModalOpen: false,
       isPrivateChatModalOpen: false,
     };
+  }
+
+  componentDidMount() {
+    window.addEventListener('openPrivateChatModal', this.handleExternalOpenPrivateChat);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('openPrivateChatModal', this.handleExternalOpenPrivateChat);
   }
 
   setModalIsOpen(isOpen) {
@@ -58,6 +67,12 @@ class ActionsBar extends PureComponent {
     this.setState((prevState) => ({
       isPrivateChatModalOpen: !prevState.isPrivateChatModalOpen,
     }));
+  }
+
+  handleExternalOpenPrivateChat() {
+    this.setState({
+      isPrivateChatModalOpen: true,
+    });
   }
 
   renderModal(isOpen, setIsOpen, priority, Component, otherOptions) {

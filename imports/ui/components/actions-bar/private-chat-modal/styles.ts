@@ -6,10 +6,10 @@ import { smPaddingX, smPaddingY, borderSize } from '/imports/ui/stylesheets/styl
 const Modal = styled.div`
   display: flex;
   flex-direction: column;
-  width: 600px;
-  max-width: 90vw;
+  width: 900px;
+  max-width: 95vw;
   height: 70vh;
-  max-height: 600px;
+  max-height: 650px;
   background-color: ${colorWhite};
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -39,8 +39,24 @@ const Title = styled.div`
 
 const Content = styled.div`
   flex: 1;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+`;
+
+const LeftPane = styled.div`
+  flex: 0 0 260px;
+  border-right: ${borderSize} solid ${colorGrayLight};
+  padding: ${smPaddingY} ${smPaddingX};
   overflow-y: auto;
-  padding: ${smPaddingX};
+`;
+
+const RightPane = styled.div`
+  flex: 1;
+  padding: ${smPaddingY} ${smPaddingX};
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `;
 
 export default {
@@ -48,5 +64,7 @@ export default {
   Header,
   Title,
   Content,
+  LeftPane,
+  RightPane,
 };
 

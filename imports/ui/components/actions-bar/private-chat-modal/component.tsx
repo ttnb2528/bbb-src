@@ -4,6 +4,7 @@ import { defineMessages, useIntl } from 'react-intl';
 import ReactModal from 'react-modal';
 import Styled from './styles';
 import ChatListContainer from '/imports/ui/components/user-list/user-list-content/user-messages/chat-list/component';
+import ChatContainer from '/imports/ui/components/chat/chat-graphql/component';
 import Icon from '/imports/ui/components/common/icon/icon-ts/component';
 import Button from '/imports/ui/components/common/button/component';
 
@@ -55,7 +56,14 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
           />
         </Styled.Header>
         <Styled.Content>
-          <ChatListContainer />
+          {/* Bên trái: danh sách các cuộc chat (public + private) */}
+          <Styled.LeftPane>
+            <ChatListContainer disableLayoutInteractions />
+          </Styled.LeftPane>
+          {/* Bên phải: nội dung chat, dùng ChatContainer ở chế độ modal */}
+          <Styled.RightPane>
+            <ChatContainer mode="modal" />
+          </Styled.RightPane>
         </Styled.Content>
       </Styled.Modal>
     </ReactModal>

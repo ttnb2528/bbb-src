@@ -21,9 +21,15 @@ const intlMessages = defineMessages({
 
 interface ChatListProps {
   chats: Chat[],
+  // Khi true, chỉ dùng trong popup/private modal, không tác động tới layout/sidebar
+  disableLayoutInteractions?: boolean;
 }
 
-const getActiveChats = (chats: Chat[], chatNodeRef: React.Ref<HTMLButtonElement>) => chats.map((chat, idx) => (
+const getActiveChats = (
+  chats: Chat[],
+  chatNodeRef: React.Ref<HTMLButtonElement>,
+  disableLayoutInteractions: boolean,
+) => chats.map((chat, idx) => (
   <CSSTransition
     classNames="transition"
     appear
@@ -39,12 +45,13 @@ const getActiveChats = (chats: Chat[], chatNodeRef: React.Ref<HTMLButtonElement>
         chat={chat}
         chatNodeRef={chatNodeRef}
         index={idx}
+        disableLayoutInteractions={disableLayoutInteractions}
       />
     </Styled.ListTransition>
   </CSSTransition>
 ));
 
-const ChatList: React.FC<ChatListProps> = ({ chats }) => {
+const ChatList: React.FC<ChatListProps> = ({ chats, disableLayoutInteractions = false }) => {
   const messageListRef = React.useRef<HTMLDivElement | null>(null);
   const messageItemsRef = React.useRef<HTMLDivElement | null>(null);
   const chatNodeRef = React.useRef<HTMLButtonElement | null>(null);
@@ -68,17 +75,21 @@ const ChatList: React.FC<ChatListProps> = ({ chats }) => {
         >
           <Styled.List ref={messageItemsRef}>
             <TransitionGroup>
-              {getActiveChats(chats, chatNodeRef) ?? null}
+              {getActiveChats(chats, chatNodeRef, disableLayoutInteractions) ?? null}
             </TransitionGroup>
           </Styled.List>
         </Styled.ScrollableList>
       )
-        : (getActiveChats(chats, chatNodeRef) ?? null) }
+        : (getActiveChats(chats, chatNodeRef, disableLayoutInteractions) ?? null) }
     </Styled.Messages>
   );
 };
 
-const ChatListContainer: React.FC = () => {
+interface ChatListContainerProps {
+  disableLayoutInteractions?: boolean;
+}
+
+const ChatListContainer: React.FC<ChatListContainerProps> = ({ disableLayoutInteractions = false }) => {
   const { data: chats } = useChat((chat) => chat) as GraphqlDataHookSubscriptionResponse<Chat[]>;
   const isChatEnabled = useIsChatEnabled();
   const CHAT_CONFIG = window.meetingClientSettings.public.chat;
@@ -86,9 +97,13 @@ const ChatListContainer: React.FC = () => {
   const allowedChats = isChatEnabled ? chats : chats?.filter((c) => c.chatId !== PUBLIC_GROUP_CHAT_ID);
   if (allowedChats && allowedChats.length) {
     return (
-      <ChatList chats={allowedChats} />
+      <ChatList
+        chats={allowedChats}
+        disableLayoutInteractions={disableLayoutInteractions}
+      />
     );
-  } return <></>;
+  }
+  return <></>;
 };
 
 export default ChatListContainer;

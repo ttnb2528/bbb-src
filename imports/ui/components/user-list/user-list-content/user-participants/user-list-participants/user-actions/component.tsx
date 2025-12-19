@@ -409,18 +409,8 @@ const UserActions: React.FC<UserActionsProps> = ({
             userId: user.userId,
           },
         });
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
-          value: true,
-        });
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
-          value: PANELS.CHAT,
-        });
-        layoutContextDispatch({
-          type: ACTIONS.SET_ID_CHAT_OPEN,
-          value: '',
-        });
+        // Thay vì mở panel chat ở sidebar, phát event để mở popup Private Chat
+        window.dispatchEvent(new CustomEvent('openPrivateChatModal'));
       },
       icon: 'chat',
       dataTest: 'startPrivateChat',
