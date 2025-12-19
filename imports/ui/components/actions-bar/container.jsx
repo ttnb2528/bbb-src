@@ -25,6 +25,7 @@ import {
 import MediaService from '../media/service';
 import useMeeting from '/imports/ui/core/hooks/useMeeting';
 import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
+import useChat from '/imports/ui/core/hooks/useChat';
 import { EXTERNAL_VIDEO_STOP } from '../external-video-player/mutations';
 import useDeduplicatedSubscription from '../../core/hooks/useDeduplicatedSubscription';
 import connectionStatus from '../../core/graphql/singletons/connectionStatus';
@@ -112,12 +113,29 @@ const ActionsBarContainer = (props) => {
   const ariaHidden = sidebarNavigationIsOpen
     && sidebarContentIsOpen
     && (deviceInfo.isPhone || isLayeredView.matches);
+
+  // Lấy danh sách các chat để tính tổng unread private
+  const { data: chats } = useChat((chat) => ({
+    chatId: chat.chatId,
+    totalUnread: chat.totalUnread,
+  }));
+
   if (actionsBarStyle.display === false) return null;
   if (!currentMeeting) return null;
 
   const isSharedNotesPinnedFromGraphql = currentMeeting?.componentsFlags?.isSharedNotesPinned;
 
   const isSharedNotesPinned = isSharedNotesPinnedFromGraphql;
+
+  // Tính tổng số tin nhắn private chưa đọc (không tính public chat) dựa trên GraphQL chat
+  const privateUnreadCount = React.useMemo(() => {
+    if (!chats) return 0;
+    const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+    const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+    return chats
+      .filter((c) => c.chatId && c.chatId !== PUBLIC_GROUP_CHAT_ID)
+      .reduce((sum, c) => sum + (c.totalUnread || 0), 0);
+  }, [chats]);
 
   const PUBLIC_CONFIG = window.meetingClientSettings.public;
   const isDirectLeaveButtonEnabled = getFromUserSettings(
@@ -165,6 +183,7 @@ const ActionsBarContainer = (props) => {
         sidebarContent,
         currentUserId: currentUser?.userId,
         isDirectLeaveButtonEnabled,
+        privateUnreadCount,
       }
     }
     />

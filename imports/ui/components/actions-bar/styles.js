@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
 import { smPaddingX, smPaddingY, barsPadding } from '/imports/ui/stylesheets/styled-components/general';
-import { colorWhite, colorBackground } from '/imports/ui/stylesheets/styled-components/palette';
+import { colorWhite, colorBackground, colorDanger } from '/imports/ui/stylesheets/styled-components/palette';
 import { fontSizeBase } from '/imports/ui/stylesheets/styled-components/typography';
 import Button from '/imports/ui/components/common/button/component';
 
@@ -121,6 +121,27 @@ const Gap = styled.div`
   align-items: center;
 `;
 
+const BadgeWrapper = styled.div`
+  position: relative;
+  display: inline-flex;
+`;
+
+const UnreadBadge = styled.div`
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background-color: ${colorDanger};
+  color: ${colorWhite};
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const RoomInfo = styled.div`
   display: flex;
   align-items: center;
@@ -171,4 +192,6 @@ export default {
   Separator,
   RoomInfo,
   RoomName,
+  BadgeWrapper,
+  UnreadBadge,
 };

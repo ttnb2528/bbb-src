@@ -2,6 +2,7 @@ import React, { PureComponent } from 'react';
 import { defineMessages } from 'react-intl';
 import { ActionsBarItemType, ActionsBarPosition } from 'bigbluebutton-html-plugin-sdk/dist/cjs/extensible-areas/actions-bar-item/enums';
 import Styled from './styles';
+import getFromUserSettings from '/imports/ui/services/users-settings';
 import ActionsDropdown from './actions-dropdown/container';
 import AudioCaptionsButtonContainer from '/imports/ui/components/audio/audio-graphql/audio-captions/button/component';
 import ScreenshareButtonContainer from '/imports/ui/components/actions-bar/screenshare/container';
@@ -215,6 +216,7 @@ class ActionsBar extends PureComponent {
       sidebarContent,
       currentUserId,
       isDirectLeaveButtonEnabled,
+      privateUnreadCount,
     } = this.props;
 
     const Settings = getSettingsSingletonInstance();
@@ -298,16 +300,21 @@ class ActionsBar extends PureComponent {
           </Styled.Center>
           <Styled.Right>
             <Styled.Gap>
-              <Button
-                label={intl.formatMessage({ id: 'app.chat.titlePrivate' })}
-                icon="chat"
-                color="primary"
-                size="md"
-                onClick={this.handleTogglePrivateChat}
-                data-test="privateChatButton"
-                hideLabel
-                circle
-              />
+              <Styled.BadgeWrapper>
+                <Button
+                  label="Message"
+                  icon="chat"
+                  color="primary"
+                  size="md"
+                  onClick={this.handleTogglePrivateChat}
+                  data-test="privateChatButton"
+                  hideLabel
+                  circle
+                />
+                {privateUnreadCount > 0 && (
+                  <Styled.UnreadBadge>{privateUnreadCount}</Styled.UnreadBadge>
+                )}
+              </Styled.BadgeWrapper>
               {ConnectionStatusService.isEnabled() ? (
                 <ConnectionStatusButtonContainer />
               ) : null}
