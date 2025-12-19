@@ -78,6 +78,26 @@ const GlobalStyle = createGlobalStyle`
     bottom: 0;
   }
 
+  // Private Chat Modal
+  .PrivateChatModal__overlay {
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: ${colorOverlay};
+    animation: fade-in 0.2s ease-in;
+  }
+
+  .PrivateChatModal__content {
+    position: relative;
+    outline: none;
+  }
+
   // toast
   .toastClass {
     position: relative;

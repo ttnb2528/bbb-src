@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
 import { smPaddingX, smPaddingY, barsPadding } from '/imports/ui/stylesheets/styled-components/general';
 import { colorWhite, colorBackground } from '/imports/ui/stylesheets/styled-components/palette';
+import { fontSizeBase } from '/imports/ui/stylesheets/styled-components/typography';
 import Button from '/imports/ui/components/common/button/component';
 
 const ActionsBar = styled.div`
@@ -111,11 +112,49 @@ const Separator = styled.div`
   border: 1px solid ${colorWhite};
   align-self: center;
   opacity: .75;
+  margin: 0 ${smPaddingX};
 `;
 
 const Gap = styled.div`
   display: flex;
   gap: .5rem;
+  align-items: center;
+`;
+
+const RoomInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${smPaddingX};
+`;
+
+const RoomName = styled.h1`
+  font-weight: 400;
+  color: ${colorWhite};
+  font-size: ${fontSizeBase};
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+
+  > [class^="icon-bbb-"] {
+    font-size: 75%;
+  }
+
+  & span i {
+    margin-left: .5rem;
+    margin-right: .5rem;
+    font-size: .75rem;
+  }
+
+  &:hover {
+    opacity: 0.8;
+  }
 `;
 
 export default {
@@ -130,4 +169,6 @@ export default {
   ActionsBarWrapper,
   Gap,
   Separator,
+  RoomInfo,
+  RoomName,
 };

@@ -11,12 +11,22 @@ import PresentationOptionsContainer from './presentation-options/component';
 import SwapPresentationButton from './swap-presentation/component';
 import Button from '/imports/ui/components/common/button/component';
 import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
-import { LAYOUT_TYPE } from '../layout/enums';
+import { LAYOUT_TYPE, PANELS, ACTIONS } from '../layout/enums';
 import ReactionsButtonContainer from '/imports/ui/components/actions-bar/reactions-button/container';
 import RaiseHandButtonContainer from '/imports/ui/components/actions-bar/raise-hand-button/container';
 import Selector from '/imports/ui/components/common/selector/component';
 import ToggleGroup from '/imports/ui/components/common/toggle-group/component';
 import Separator from '/imports/ui/components/common/separator/component';
+import RecordingIndicatorContainer from '../nav-bar/nav-bar-graphql/recording-indicator/component';
+import LiveIndicator from './live-indicator/component';
+import LeaveMeetingButtonContainer from '../nav-bar/leave-meeting-button/container';
+import OptionsDropdownContainer from '../nav-bar/options-dropdown/container';
+import ConnectionStatusButtonContainer from '../connection-status/button/container';
+import ConnectionStatusService from '../connection-status/service';
+import Icon from '/imports/ui/components/common/icon/icon-ts/component';
+import Tooltip from '/imports/ui/components/common/tooltip/component';
+import SessionDetailsModal from '/imports/ui/components/session-details/component';
+import PrivateChatModal from './private-chat-modal/component';
 
 const intlMessages = defineMessages({
   actionsBarLabel: {
@@ -31,6 +41,37 @@ class ActionsBar extends PureComponent {
 
     this.actionsBarRef = React.createRef();
     this.renderPluginsActionBarItems = this.renderPluginsActionBarItems.bind(this);
+    this.setModalIsOpen = this.setModalIsOpen.bind(this);
+    this.handleTogglePrivateChat = this.handleTogglePrivateChat.bind(this);
+
+    this.state = {
+      isModalOpen: false,
+      isPrivateChatModalOpen: false,
+    };
+  }
+
+  setModalIsOpen(isOpen) {
+    this.setState({ isModalOpen: isOpen });
+  }
+
+  handleTogglePrivateChat() {
+    this.setState((prevState) => ({
+      isPrivateChatModalOpen: !prevState.isPrivateChatModalOpen,
+    }));
+  }
+
+  renderModal(isOpen, setIsOpen, priority, Component, otherOptions) {
+    return isOpen ? (
+      <Component
+        {...{
+          ...otherOptions,
+          onRequestClose: () => setIsOpen(false),
+          priority,
+          setIsOpen,
+          isOpen,
+        }}
+      />
+    ) : null;
   }
 
   renderPluginsActionBarItems(position) {
@@ -154,6 +195,11 @@ class ActionsBar extends PureComponent {
       showScreenshareQuickSwapButton,
       isReactionsButtonEnabled,
       isRaiseHandEnabled,
+      meetingName,
+      presentationTitle,
+      sidebarContent,
+      currentUserId,
+      isDirectLeaveButtonEnabled,
     } = this.props;
 
     const Settings = getSettingsSingletonInstance();
@@ -194,25 +240,26 @@ class ActionsBar extends PureComponent {
           }
         >
           <Styled.Left>
-            <ActionsDropdown {...{
-              amIPresenter,
-              amIModerator,
-              isPollingEnabled,
-              allowExternalVideo,
-              intl,
-              isSharingVideo,
-              stopExternalVideoShare,
-              isTimerActive,
-              isTimerEnabled,
-              isMeteorConnected,
-              setMeetingLayout,
-              setPushLayout,
-              presentationIsOpen,
-              showPushLayout,
-              hasCameraAsContent,
-              setPresentationFitToWidth,
-            }}
-            />
+            <Styled.RoomInfo>
+              <Styled.RoomName
+                onClick={() => this.setModalIsOpen(true)}
+                data-test="roomName"
+              >
+                <Tooltip title={intl.formatMessage({ id: 'app.navBar.openDetailsTooltip' })}>
+                  <span>
+                    {presentationTitle || meetingName || 'Room'}
+                    <Icon iconName="device_list_selector" />
+                  </span>
+                </Tooltip>
+              </Styled.RoomName>
+              {this.renderModal(this.state.isModalOpen, this.setModalIsOpen, 'low', SessionDetailsModal)}
+              <Styled.Separator aria-hidden="true">|</Styled.Separator>
+              <RecordingIndicatorContainer
+                amIModerator={amIModerator}
+                currentUserId={currentUserId}
+              />
+              <LiveIndicator />
+            </Styled.RoomInfo>
           </Styled.Left>
           <Styled.Center>
             {this.renderPluginsActionBarItems(ActionsBarPosition.LEFT)}
@@ -236,27 +283,33 @@ class ActionsBar extends PureComponent {
           </Styled.Center>
           <Styled.Right>
             <Styled.Gap>
-              {
-                showScreenshareQuickSwapButton && <SwapPresentationButton />
-              }
-              {shouldShowPresentationButton && shouldShowOptionsButton
-                ? (
-                  <PresentationOptionsContainer
-                    presentationIsOpen={presentationIsOpen}
-                    setPresentationIsOpen={setPresentationIsOpen}
-                    layoutContextDispatch={layoutContextDispatch}
-                    hasPresentation={isThereCurrentPresentation}
-                    hasExternalVideo={isSharingVideo}
-                    hasScreenshare={hasScreenshare}
-                    hasPinnedSharedNotes={isSharedNotesPinned}
-                    hasGenericContent={hasGenericContent}
-                    hasCameraAsContent={hasCameraAsContent}
-                  />
-                )
-                : null}
+              <Button
+                label={intl.formatMessage({ id: 'app.chat.titlePrivate' })}
+                icon="chat"
+                color="primary"
+                size="md"
+                onClick={this.handleTogglePrivateChat}
+                data-test="privateChatButton"
+                hideLabel
+                circle
+              />
+              {ConnectionStatusService.isEnabled() ? (
+                <ConnectionStatusButtonContainer />
+              ) : null}
+              {isDirectLeaveButtonEnabled && isMeteorConnected ? (
+                <LeaveMeetingButtonContainer amIModerator={amIModerator} />
+              ) : null}
+              <OptionsDropdownContainer
+                amIModerator={amIModerator}
+                isDirectLeaveButtonEnabled={isDirectLeaveButtonEnabled}
+              />
             </Styled.Gap>
           </Styled.Right>
         </Styled.ActionsBar>
+        <PrivateChatModal
+          isOpen={this.state.isPrivateChatModalOpen}
+          onRequestClose={this.handleTogglePrivateChat}
+        />
       </Styled.ActionsBarWrapper>
     );
   }

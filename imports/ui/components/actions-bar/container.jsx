@@ -59,9 +59,13 @@ const ActionsBarContainer = (props) => {
   const { data: currentMeeting } = useMeeting((m) => ({
     externalVideo: m.externalVideo,
     componentsFlags: m.componentsFlags,
+    name: m.name,
+    meetingId: m.meetingId,
   }));
 
   const isSharingVideo = !!currentMeeting?.externalVideo?.externalVideoUrl;
+  const meetingName = currentMeeting?.name || '';
+  const presentationTitle = meetingName;
 
   const {
     pluginsExtensibleAreasAggregatedState,
@@ -114,6 +118,13 @@ const ActionsBarContainer = (props) => {
   const isSharedNotesPinnedFromGraphql = currentMeeting?.componentsFlags?.isSharedNotesPinned;
 
   const isSharedNotesPinned = isSharedNotesPinnedFromGraphql;
+
+  const PUBLIC_CONFIG = window.meetingClientSettings.public;
+  const isDirectLeaveButtonEnabled = getFromUserSettings(
+    'bbb_direct_leave_button',
+    PUBLIC_CONFIG.app.defaultSettings.application.directLeaveButton,
+  );
+
   return (
     <ActionsBar {
       ...{
@@ -149,6 +160,11 @@ const ActionsBarContainer = (props) => {
         setMeetingLayout,
         showPushLayout: showPushLayoutButton && applicationSettings.selectedLayout === 'custom',
         ariaHidden,
+        meetingName,
+        presentationTitle,
+        sidebarContent,
+        currentUserId: currentUser?.userId,
+        isDirectLeaveButtonEnabled,
       }
     }
     />
