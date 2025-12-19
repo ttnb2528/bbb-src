@@ -120,14 +120,8 @@ const ActionsBarContainer = (props) => {
     totalUnread: chat.totalUnread,
   }));
 
-  if (actionsBarStyle.display === false) return null;
-  if (!currentMeeting) return null;
-
-  const isSharedNotesPinnedFromGraphql = currentMeeting?.componentsFlags?.isSharedNotesPinned;
-
-  const isSharedNotesPinned = isSharedNotesPinnedFromGraphql;
-
   // Tính tổng số tin nhắn private chưa đọc (không tính public chat) dựa trên GraphQL chat
+  // Phải đặt TRƯỚC các conditional return để tuân thủ Rules of Hooks
   const privateUnreadCount = React.useMemo(() => {
     if (!chats) return 0;
     const CHAT_CONFIG = window.meetingClientSettings.public.chat;
@@ -136,6 +130,13 @@ const ActionsBarContainer = (props) => {
       .filter((c) => c.chatId && c.chatId !== PUBLIC_GROUP_CHAT_ID)
       .reduce((sum, c) => sum + (c.totalUnread || 0), 0);
   }, [chats]);
+
+  if (actionsBarStyle.display === false) return null;
+  if (!currentMeeting) return null;
+
+  const isSharedNotesPinnedFromGraphql = currentMeeting?.componentsFlags?.isSharedNotesPinned;
+
+  const isSharedNotesPinned = isSharedNotesPinnedFromGraphql;
 
   const PUBLIC_CONFIG = window.meetingClientSettings.public;
   const isDirectLeaveButtonEnabled = getFromUserSettings(

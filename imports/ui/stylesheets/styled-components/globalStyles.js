@@ -89,7 +89,8 @@ const GlobalStyle = createGlobalStyle`
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: ${colorOverlay};
+    /* Bỏ nền đen mờ phía sau popup */
+    background-color: transparent;
     animation: fade-in 0.2s ease-in;
   }
 
