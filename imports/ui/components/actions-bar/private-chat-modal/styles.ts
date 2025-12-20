@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import { colorWhite, colorGrayLight, colorGrayDark, colorDanger } from '/imports/ui/stylesheets/styled-components/palette';
 import { fontSizeBase, fontSizeLarge } from '/imports/ui/stylesheets/styled-components/typography';
 import { smPaddingX, smPaddingY, borderSize } from '/imports/ui/stylesheets/styled-components/general';
+import { smallOnly, hasPhoneWidth } from '/imports/ui/stylesheets/styled-components/breakpoints';
 
 const Modal = styled.div<{ $minimized: boolean }>`
   display: flex;
@@ -23,6 +24,24 @@ const Modal = styled.div<{ $minimized: boolean }>`
     align-items: center;
     justify-content: center;
   `}
+
+  /* Mobile responsive */
+  @media ${smallOnly} {
+    width: ${({ $minimized }) => ($minimized ? '48px' : '100vw')};
+    height: ${({ $minimized }) => ($minimized ? '48px' : '100vh')};
+    max-width: ${({ $minimized }) => ($minimized ? '48px' : '100vw')};
+    max-height: ${({ $minimized }) => ($minimized ? '48px' : '100vh')};
+    min-height: ${({ $minimized }) => ($minimized ? '48px' : '100vh')};
+    border-radius: ${({ $minimized }) => ($minimized ? '50%' : '0')};
+  }
+
+  @media ${hasPhoneWidth} {
+    width: ${({ $minimized }) => ($minimized ? '44px' : '100vw')};
+    height: ${({ $minimized }) => ($minimized ? '44px' : '100vh')};
+    max-width: ${({ $minimized }) => ($minimized ? '44px' : '100vw')};
+    max-height: ${({ $minimized }) => ($minimized ? '44px' : '100vh')};
+    min-height: ${({ $minimized }) => ($minimized ? '44px' : '100vh')};
+  }
 `;
 
 const Header = styled.div`
@@ -55,6 +74,11 @@ const Content = styled.div`
   display: flex;
   flex-direction: row;
   overflow: hidden;
+
+  /* Mobile: stack vertically */
+  @media ${smallOnly} {
+    flex-direction: column;
+  }
 `;
 
 const LeftPane = styled.div`
@@ -64,6 +88,16 @@ const LeftPane = styled.div`
   border-right: ${borderSize} solid ${colorGrayLight};
   padding: ${smPaddingY} ${smPaddingX};
   overflow-y: auto;
+
+  /* Mobile: full width, border bottom instead of right */
+  @media ${smallOnly} {
+    flex: 0 0 auto;
+    max-width: 100%;
+    width: 100%;
+    border-right: none;
+    border-bottom: ${borderSize} solid ${colorGrayLight};
+    max-height: 40vh;
+  }
 `;
 
 const RightPane = styled.div`
@@ -86,6 +120,11 @@ const HeaderActions = styled.div`
   display: flex;
   align-items: center;
   gap: ${smPaddingX};
+
+  /* Mobile: smaller gap */
+  @media ${smallOnly} {
+    gap: 4px;
+  }
 `;
 
 const MinimizedClose = styled.button`

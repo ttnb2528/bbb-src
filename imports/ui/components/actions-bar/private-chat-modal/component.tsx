@@ -39,12 +39,22 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   // Khởi tạo vị trí giữa màn hình khi mở modal
   useEffect(() => {
     if (isOpen && position === null) {
-      const modalWidth = 900; // Luôn dùng width mặc định khi khởi tạo
-      const modalHeight = window.innerHeight * 0.7;
-      setPosition({
-        left: window.innerWidth / 2 - modalWidth / 2,
-        top: window.innerHeight / 2 - modalHeight / 2,
-      });
+      const isMobile = window.innerWidth <= 640; // smallOnly breakpoint
+      if (isMobile) {
+        // Mobile: fullscreen, top-left corner
+        setPosition({
+          left: 0,
+          top: 0,
+        });
+      } else {
+        // Desktop: center
+        const modalWidth = 900;
+        const modalHeight = window.innerHeight * 0.7;
+        setPosition({
+          left: window.innerWidth / 2 - modalWidth / 2,
+          top: window.innerHeight / 2 - modalHeight / 2,
+        });
+      }
     }
   }, [isOpen, position]);
 
@@ -107,20 +117,32 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
 
     if (!position) return;
     
+    const isMobile = window.innerWidth <= 640; // smallOnly breakpoint
+    
     if (!isMinimized) {
       // Khi minimize: di chuyển về góc dưới bên phải, thu nhỏ thành icon
+      const iconSize = isMobile ? 44 : 56;
       setPosition({
-        left: window.innerWidth - 60, // 60px width cho icon
-        top: window.innerHeight - 60 - 80, // 60px height + 80px để tránh footer
+        left: window.innerWidth - iconSize - 8, // icon size + padding
+        top: window.innerHeight - iconSize - 80, // icon size + 80px để tránh footer
       });
     } else {
-      // Khi expand: về lại giữa màn hình
-      const modalWidth = 900;
-      const modalHeight = window.innerHeight * 0.7;
-      setPosition({
-        left: window.innerWidth / 2 - modalWidth / 2,
-        top: window.innerHeight / 2 - modalHeight / 2,
-      });
+      // Khi expand: về lại vị trí phù hợp
+      if (isMobile) {
+        // Mobile: fullscreen
+        setPosition({
+          left: 0,
+          top: 0,
+        });
+      } else {
+        // Desktop: center
+        const modalWidth = 900;
+        const modalHeight = window.innerHeight * 0.7;
+        setPosition({
+          left: window.innerWidth / 2 - modalWidth / 2,
+          top: window.innerHeight / 2 - modalHeight / 2,
+        });
+      }
     }
     setIsMinimized((prev) => !prev);
   };
@@ -141,7 +163,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       onRequestClose={onRequestClose}
       contentLabel={intl.formatMessage(intlMessages.privateChatTitle)}
       className="PrivateChatModal__content"
-      overlayClassName="PrivateChatModal__overlay"
+      overlayClassName={`PrivateChatModal__overlay ${isMinimized ? 'PrivateChatModal__overlay--minimized' : ''}`}
       appElement={document.getElementById('app') || undefined}
       shouldCloseOnOverlayClick={false}
       shouldCloseOnEsc={false}

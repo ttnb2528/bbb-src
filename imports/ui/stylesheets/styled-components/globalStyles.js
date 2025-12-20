@@ -94,6 +94,16 @@ const GlobalStyle = createGlobalStyle`
     animation: fade-in 0.2s ease-in;
   }
 
+  /* Khi minimized, overlay không chặn click vào các element khác */
+  .PrivateChatModal__overlay--minimized {
+    pointer-events: none;
+  }
+
+  /* Nhưng icon vẫn có thể click được */
+  .PrivateChatModal__overlay--minimized .PrivateChatModal__content {
+    pointer-events: auto;
+  }
+
   .PrivateChatModal__content {
     position: relative;
     outline: none;

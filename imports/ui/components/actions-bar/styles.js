@@ -1,8 +1,8 @@
 import styled from 'styled-components';
-import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
-import { smPaddingX, smPaddingY, barsPadding } from '/imports/ui/stylesheets/styled-components/general';
-import { colorWhite, colorBackground, colorDanger } from '/imports/ui/stylesheets/styled-components/palette';
-import { fontSizeBase } from '/imports/ui/stylesheets/styled-components/typography';
+import { smallOnly, hasPhoneWidth } from '/imports/ui/stylesheets/styled-components/breakpoints';
+import { smPaddingX, smPaddingY, barsPadding, xsPadding, borderSize } from '/imports/ui/stylesheets/styled-components/general';
+import { colorWhite, colorBackground, colorDanger, colorGrayLight, colorGrayDark } from '/imports/ui/stylesheets/styled-components/palette';
+import { fontSizeBase, fontSizeSmall } from '/imports/ui/stylesheets/styled-components/typography';
 import Button from '/imports/ui/components/common/button/component';
 
 const ActionsBar = styled.div`
@@ -17,6 +17,15 @@ const ActionsBarWrapper = styled.section`
   background-color: ${colorBackground};
   position: relative;
   order: 3;
+
+  /* Mobile: giảm padding */
+  @media ${smallOnly} {
+    padding: ${xsPadding} ${smPaddingX};
+  }
+
+  @media ${hasPhoneWidth} {
+    padding: 4px ${xsPadding};
+  }
 `;
 
 const Left = styled.div`
@@ -36,17 +45,58 @@ const Left = styled.div`
       right: ${smPaddingX};
     }
   }
+
+  /* Mobile: ẩn một số phần không cần thiết */
+  @media ${hasPhoneWidth} {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
 `;
 
 const Center = styled.div`
   display: flex;
   flex-direction: row;
-  gap: ${smPaddingX};
+  gap: 12px; /* Tăng gap để buttons không dính nhau */
   flex: 1;
   justify-content: center;
-  > *:not(span):not(:last-child) {
-    @media ${smallOnly} {
-      margin: 0 ${smPaddingY};
+  align-items: center;
+
+  /* Desktop: gap hợp lý */
+  @media (min-width: 1024px) {
+    gap: 16px;
+  }
+
+  /* Mobile: giảm gap nhưng vẫn đủ để không dính */
+  @media ${smallOnly} {
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Buttons trên mobile */
+    button {
+      min-width: 40px !important;
+      min-height: 40px !important;
+      width: 40px !important;
+      height: 40px !important;
+    }
+  }
+
+  @media ${hasPhoneWidth} {
+    gap: 6px; /* Tăng từ 2px lên 6px để không dính */
+
+    /* Buttons trên phone */
+    button {
+      min-width: 36px !important;
+      min-height: 36px !important;
+      width: 36px !important;
+      height: 36px !important;
     }
   }
 `;
@@ -55,19 +105,47 @@ const Right = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: center;
+  align-items: center;
   position: relative;
+  gap: 12px; /* Tăng gap để buttons không dính nhau */
+
   [dir="rtl"] & {
     right: auto;
     left: ${smPaddingX};
   }
+
+  @media (min-width: 1024px) {
+    gap: 16px;
+  }
+
   @media ${smallOnly} {
     right: 0;
     left: 0;
     display: contents;
   }
-  > *:not(span) {
-    @media ${smallOnly} {
-      margin: 0 ${smPaddingY};
+
+  /* Mobile: gap hợp lý */
+  @media ${smallOnly} {
+    gap: 8px;
+
+    /* Buttons trên mobile */
+    button {
+      min-width: 40px !important;
+      min-height: 40px !important;
+      width: 40px !important;
+      height: 40px !important;
+    }
+  }
+
+  @media ${hasPhoneWidth} {
+    gap: 6px; /* Tăng từ 2px lên 6px để không dính */
+
+    /* Buttons trên phone */
+    button {
+      min-width: 36px !important;
+      min-height: 36px !important;
+      width: 36px !important;
+      height: 36px !important;
     }
   }
 `;
@@ -113,12 +191,26 @@ const Separator = styled.div`
   align-self: center;
   opacity: .75;
   margin: 0 ${smPaddingX};
+
+  /* Mobile: ẩn separator trên phone */
+  @media ${hasPhoneWidth} {
+    display: none;
+  }
 `;
 
 const Gap = styled.div`
   display: flex;
   gap: .5rem;
   align-items: center;
+
+  /* Mobile: giảm gap */
+  @media ${smallOnly} {
+    gap: 4px;
+  }
+
+  @media ${hasPhoneWidth} {
+    gap: 2px;
+  }
 `;
 
 const BadgeWrapper = styled.div`
@@ -142,10 +234,50 @@ const UnreadBadge = styled.div`
   justify-content: center;
 `;
 
+const ChatNotesTabs = styled.div`
+  display: flex;
+  border-bottom: ${borderSize} solid ${colorGrayLight};
+  background-color: ${colorWhite};
+  flex-shrink: 0;
+`;
+
+const TabButton = styled.button`
+  flex: 1;
+  padding: ${smPaddingY} ${smPaddingX};
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font-size: ${fontSizeBase};
+  font-weight: 600;
+  color: ${colorGrayDark};
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &[data-active="true"] {
+    color: ${colorDanger};
+    border-bottom-color: ${colorDanger};
+    background-color: ${colorGrayLight};
+  }
+
+  &:hover {
+    background-color: ${colorGrayLight};
+  }
+`;
+
 const RoomInfo = styled.div`
   display: flex;
   align-items: center;
   gap: ${smPaddingX};
+
+  /* Mobile: giảm gap và ẩn một số phần */
+  @media ${smallOnly} {
+    gap: 4px;
+  }
+
+  @media ${hasPhoneWidth} {
+    gap: 2px;
+    display: none; /* Ẩn RoomInfo trên mobile để giải phóng không gian */
+  }
 `;
 
 const RoomName = styled.h1`
@@ -176,6 +308,22 @@ const RoomName = styled.h1`
   &:hover {
     opacity: 0.8;
   }
+
+  /* Mobile: giảm font size và max-width */
+  @media ${smallOnly} {
+    font-size: ${fontSizeSmall};
+    max-width: 120px;
+  }
+
+  @media ${hasPhoneWidth} {
+    font-size: 11px;
+    max-width: 80px;
+    
+    /* Ẩn icon dropdown trên phone */
+    > [class^="icon-bbb-"] {
+      display: none;
+    }
+  }
 `;
 
 export default {
@@ -194,4 +342,6 @@ export default {
   RoomName,
   BadgeWrapper,
   UnreadBadge,
+  ChatNotesTabs,
+  TabButton,
 };

@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import { colorWhite } from '/imports/ui/stylesheets/styled-components/palette';
-import { mediumUp } from '/imports/ui/stylesheets/styled-components/breakpoints';
+import { mediumUp, smallOnly, hasPhoneWidth } from '/imports/ui/stylesheets/styled-components/breakpoints';
 import { actionsBarHeight, navbarHeight, mdPaddingX } from '/imports/ui/stylesheets/styled-components/general';
 import Button from '/imports/ui/components/common/button/component';
 
@@ -162,6 +162,18 @@ const VideoStrip = styled.div`
     background: rgba(15, 23, 42, 0.5);
     border-radius: 3px;
   }
+
+  /* Mobile responsive */
+  @media ${smallOnly} {
+    height: 100px;
+    padding: 6px 6px 10px 6px;
+    gap: 3px;
+  }
+
+  @media ${hasPhoneWidth} {
+    height: 80px;
+    padding: 4px 4px 8px 4px;
+  }
 `;
 
 // Item trong d?i cam (nh?, chi?u r?ng c? d?nh)
@@ -187,6 +199,33 @@ const VideoStripItem = styled.div<{
   [class*="UserName"],
   [class*="UserStatus"] {
     font-size: 10px !important;
+  }
+
+  /* Mobile responsive */
+  @media ${smallOnly} {
+    width: 100px;
+    border-radius: 6px;
+
+    ${({ $isPresenter }) => $isPresenter && `
+      width: 120px;
+      transform: scale(1.02);
+    `}
+
+    [class*="userName"],
+    [class*="UserName"],
+    [class*="UserStatus"] {
+      font-size: 8px !important;
+    }
+  }
+
+  @media ${hasPhoneWidth} {
+    width: 80px;
+    border-radius: 4px;
+
+    ${({ $isPresenter }) => $isPresenter && `
+      width: 100px;
+      transform: scale(1.01);
+    `}
   }
 `;
 

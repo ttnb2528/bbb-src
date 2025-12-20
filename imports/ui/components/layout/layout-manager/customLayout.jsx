@@ -442,13 +442,15 @@ const CustomLayout = (props) => {
     const { isPinned: isSharedNotesPinned } = sharedNotesInput;
 
     const { height: actionBarHeight } = calculatesActionbarHeight();
-    const navBarHeight = calculatesNavbarHeight();
+    const navBarHeight = 0; // NavBar is always hidden now - features moved to footer
     // sidebarPanelHeight is defined in calculatesLayout, use a local constant here
     // Use responsive height matching calculatesLayout
     const windowH = windowHeight();
     const localSidebarPanelHeight = windowH < 800 ? 180 : windowH < 1080 ? 200 : 220;
+    const bannerHeight = isMobile ? 0 : bannerAreaHeight(); // Mobile: no banner space
+    const panelButtonsHeight = isMobile ? 70 : 0; // Space for mobile panel buttons (tăng lên để phù hợp với padding mới)
     const mediaAreaHeight =
-      windowHeight() - (actionBarHeight + bannerAreaHeight() + localSidebarPanelHeight); // No navbar height
+      windowHeight() - (actionBarHeight + bannerHeight + localSidebarPanelHeight + panelButtonsHeight); // No navbar height, add panel buttons space on mobile
     const mediaAreaWidth = windowWidth(); // Full width, no sidebars on left
     const mediaBounds = {};
     const { element: fullscreenElement } = fullscreen;
@@ -489,7 +491,7 @@ const CustomLayout = (props) => {
           mediaBounds.width = mediaAreaWidth;
           mediaBounds.height = mediaAreaHeight - cameraDockBounds.height - camerasMargin;
           mediaBounds.top =
-            navBarHeight + cameraDockBounds.height + camerasMargin + bannerAreaHeight();
+            navBarHeight + cameraDockBounds.height + camerasMargin + bannerHeight;
           mediaBounds.left = !isRTL ? 0 : null;
           mediaBounds.right = isRTL ? 0 : null;
           break;
@@ -497,7 +499,7 @@ const CustomLayout = (props) => {
         case CAMERADOCK_POSITION.CONTENT_RIGHT: {
           mediaBounds.width = mediaAreaWidth - cameraDockBounds.width - camerasMargin * 2;
           mediaBounds.height = mediaAreaHeight;
-          mediaBounds.top = navBarHeight + bannerAreaHeight();
+          mediaBounds.top = navBarHeight + bannerHeight;
           mediaBounds.left = !isRTL ? 0 : null;
           mediaBounds.right = isRTL ? -camerasMargin * 2 : null;
           break;
@@ -505,7 +507,7 @@ const CustomLayout = (props) => {
         case CAMERADOCK_POSITION.CONTENT_BOTTOM: {
           mediaBounds.width = mediaAreaWidth;
           mediaBounds.height = mediaAreaHeight - cameraDockBounds.height - camerasMargin;
-          mediaBounds.top = navBarHeight - camerasMargin + bannerAreaHeight();
+          mediaBounds.top = navBarHeight - camerasMargin + bannerHeight;
           mediaBounds.left = !isRTL ? 0 : null;
           mediaBounds.right = isRTL ? 0 : null;
           break;
@@ -513,7 +515,7 @@ const CustomLayout = (props) => {
         case CAMERADOCK_POSITION.CONTENT_LEFT: {
           mediaBounds.width = mediaAreaWidth - cameraDockBounds.width - camerasMargin * 2;
           mediaBounds.height = mediaAreaHeight;
-          mediaBounds.top = navBarHeight + bannerAreaHeight();
+          mediaBounds.top = navBarHeight + bannerHeight;
           mediaBounds.left = !isRTL ? (mediaAreaWidth - mediaBounds.width) : null;
           mediaBounds.right = isRTL ? 0 : null;
           break;
@@ -521,7 +523,7 @@ const CustomLayout = (props) => {
         case CAMERADOCK_POSITION.SIDEBAR_CONTENT_BOTTOM: {
           mediaBounds.width = mediaAreaWidth;
           mediaBounds.height = mediaAreaHeight;
-          mediaBounds.top = navBarHeight + bannerAreaHeight();
+          mediaBounds.top = navBarHeight + bannerHeight;
           mediaBounds.left = !isRTL ? 0 : null;
           mediaBounds.right = isRTL ? 0 : null;
           break;
@@ -534,7 +536,7 @@ const CustomLayout = (props) => {
     } else {
       mediaBounds.width = mediaAreaWidth;
       mediaBounds.height = mediaAreaHeight;
-      mediaBounds.top = navBarHeight + bannerAreaHeight();
+      mediaBounds.top = navBarHeight + bannerHeight;
       mediaBounds.left = !isRTL ? 0 : null;
       mediaBounds.right = isRTL ? 0 : null;
     }
@@ -560,17 +562,28 @@ const CustomLayout = (props) => {
     // Fixed height for horizontal sidebar panel above footer (optimized for better video space)
     // Use responsive height: smaller on smaller screens, but not too small to be unusable
     const windowH = windowHeight();
-    const sidebarPanelHeight = windowH < 800 ? 180 : windowH < 1080 ? 200 : 220;
+    // Mobile: ẩn hoặc giảm height đáng kể
+    let sidebarPanelHeight;
+    if (isMobile) {
+      // Mobile: ẩn panel hoặc dùng height rất nhỏ
+      sidebarPanelHeight = 0; // Hoặc có thể dùng 120 nếu muốn hiện nhưng nhỏ
+    } else {
+      sidebarPanelHeight = windowH < 800 ? 180 : windowH < 1080 ? 200 : 220;
+    }
 
     const sidebarNavWidth = calculatesSidebarNavWidth();
     const sidebarNavHeight = calculatesSidebarNavHeight();
     const sidebarContentWidth = calculatesSidebarContentWidth();
     // Media area bounds: full width, no sidebars on left (they're horizontal at bottom now)
     // Hide navbar to give more space for video and allow sidebar to span full width
+    // Mobile: start from absolute top (0), no banner or navbar space
+    // Mobile: subtract extra space for panel buttons (approximately 70px với padding mới)
+    const bannerHeight = isMobile ? 0 : bannerAreaHeight();
+    const panelButtonsHeight = isMobile ? 70 : 0; // Space for mobile panel buttons (tăng lên để phù hợp với padding mới)
     const mediaAreaBounds = {
       width: windowWidth(),
-      height: windowHeight() - calculatesActionbarHeight().height - sidebarPanelHeight - bannerAreaHeight(),
-      top: bannerAreaHeight(), // Start from banner, no navbar
+      height: windowHeight() - calculatesActionbarHeight().height - sidebarPanelHeight - bannerHeight - panelButtonsHeight,
+      top: bannerHeight, // Mobile: 0, Desktop: bannerAreaHeight()
       left: 0,
     };
     const navbarBounds = calculatesNavbarBounds(mediaAreaBounds);
@@ -603,11 +616,11 @@ const CustomLayout = (props) => {
       horizontalCameraDiff = camerasMargin * 2;
     }
 
-    // Hide navbar to give more space for video and allow sidebar to span full width
+    // Hide navbar completely - all features moved to footer
     layoutContextDispatch({
       type: ACTIONS.SET_NAVBAR_OUTPUT,
       value: {
-        display: false, // Hide navbar
+        display: false, // Always hide navbar - features are in footer now
         width: navbarBounds.width,
         height: navbarBounds.height,
         top: navbarBounds.top,
@@ -647,16 +660,24 @@ const CustomLayout = (props) => {
     const sidebarNavNewHeight = sidebarPanelHeight;
     // User List panel: responsive width, allow resize
     const windowW = windowWidth();
-    const defaultUserListWidth = windowW < 1280 ? 260 : windowW < 1920 ? 300 : 350;
+    let defaultUserListWidth, minUserListWidth, maxUserListWidth;
+    if (isMobile) {
+      // Mobile: full width hoặc ẩn
+      defaultUserListWidth = windowW;
+      minUserListWidth = windowW;
+      maxUserListWidth = windowW;
+    } else {
+      defaultUserListWidth = windowW < 1280 ? 260 : windowW < 1920 ? 300 : 350;
+      minUserListWidth = 200;
+      maxUserListWidth = Math.min(windowW * 0.4, 450);
+    }
     // Use existing width if available, otherwise use default
     const sidebarNavNewWidth = sidebarNavigationInput.width || defaultUserListWidth;
-    const minUserListWidth = 200;
-    const maxUserListWidth = Math.min(windowW * 0.4, 450);
 
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_NAVIGATION_OUTPUT,
       value: {
-        display: sidebarNavigationInput.isOpen,
+        display: isMobile ? false : sidebarNavigationInput.isOpen, // Mobile: ẩn User List panel
         minWidth: minUserListWidth,
         width: sidebarNavNewWidth,
         maxWidth: maxUserListWidth,
@@ -682,20 +703,20 @@ const CustomLayout = (props) => {
 
     // Calculate new position for sidebar content (Chat/Notes panel - separate panel, next to User List)
     const sidebarContentTop = sidebarNavTop;
-    const sidebarContentLeft = sidebarNavNewWidth;
+    const sidebarContentLeft = isMobile ? 0 : sidebarNavNewWidth; // Mobile: stack vertically
     // Chat/Notes panel: takes remaining width, allow resize
-    const sidebarContentNewWidth = windowWidth() - sidebarNavNewWidth;
+    const sidebarContentNewWidth = isMobile ? windowWidth() : (windowWidth() - sidebarNavNewWidth);
     const sidebarContentNewHeight = sidebarPanelHeight;
-    const minChatNotesWidth = 300; // Minimum width for chat/notes to be usable
+    const minChatNotesWidth = isMobile ? windowWidth() : 300; // Mobile: full width
 
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_CONTENT_OUTPUT,
       value: {
-        // Luôn hiển thị panel Chat/Notes ở dạng thanh ngang, tránh bị ẩn khi user bấm nút Back
-        display: true,
+        // Mobile: ẩn panel Chat/Notes ở dưới, user có thể mở qua private chat modal
+        display: isMobile ? false : true,
         minWidth: minChatNotesWidth,
         width: sidebarContentNewWidth,
-        maxWidth: windowWidth() - minUserListWidth, // Max width is screen width minus min user list width
+        maxWidth: isMobile ? windowWidth() : (windowWidth() - minUserListWidth), // Mobile: full width
         height: sidebarContentNewHeight,
         top: sidebarContentTop,
         left: sidebarContentLeft,
@@ -719,7 +740,10 @@ const CustomLayout = (props) => {
 
     // Media area now takes full width (no sidebars on left), but subtract height for horizontal sidebar panel
     // No navbar height since we hide it
-    const mediaAreaNewHeight = windowHeight() - actionBarHeight - sidebarPanelHeight - bannerAreaHeight();
+    // Mobile: no banner height either
+    // Mobile: subtract extra space for panel buttons (approximately 60px)
+    // bannerHeight and panelButtonsHeight already declared above (line 579, 582), reuse them
+    const mediaAreaNewHeight = windowHeight() - actionBarHeight - sidebarPanelHeight - bannerHeight - panelButtonsHeight;
 
     layoutContextDispatch({
       type: ACTIONS.SET_MEDIA_AREA_SIZE,

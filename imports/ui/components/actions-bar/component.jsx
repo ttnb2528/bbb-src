@@ -28,6 +28,7 @@ import Icon from '/imports/ui/components/common/icon/icon-ts/component';
 import Tooltip from '/imports/ui/components/common/tooltip/component';
 import SessionDetailsModal from '/imports/ui/components/session-details/component';
 import PrivateChatModal from './private-chat-modal/component';
+import deviceInfo from '/imports/utils/deviceInfo';
 
 const intlMessages = defineMessages({
   actionsBarLabel: {
@@ -219,6 +220,8 @@ class ActionsBar extends PureComponent {
       privateUnreadCount,
     } = this.props;
 
+    const { isPrivateChatModalOpen } = this.state;
+
     const Settings = getSettingsSingletonInstance();
     const { selectedLayout } = Settings.application;
     const shouldShowPresentationButton = selectedLayout !== LAYOUT_TYPE.CAMERAS_ONLY
@@ -300,21 +303,24 @@ class ActionsBar extends PureComponent {
           </Styled.Center>
           <Styled.Right>
             <Styled.Gap>
-              <Styled.BadgeWrapper>
-                <Button
-                  label="Message"
-                  icon="chat"
-                  color="primary"
-                  size="md"
-                  onClick={this.handleTogglePrivateChat}
-                  data-test="privateChatButton"
-                  hideLabel
-                  circle
-                />
-                {privateUnreadCount > 0 && (
-                  <Styled.UnreadBadge>{privateUnreadCount}</Styled.UnreadBadge>
-                )}
-              </Styled.BadgeWrapper>
+              {/* Mobile: ẩn private chat button ở footer, sẽ có trong panel buttons */}
+              {!deviceInfo.isMobile && (
+                <Styled.BadgeWrapper>
+                  <Button
+                    label="Message"
+                    icon="chat"
+                    color="primary"
+                    size="md"
+                    onClick={this.handleTogglePrivateChat}
+                    data-test="privateChatButton"
+                    hideLabel
+                    circle
+                  />
+                  {privateUnreadCount > 0 && (
+                    <Styled.UnreadBadge>{privateUnreadCount}</Styled.UnreadBadge>
+                  )}
+                </Styled.BadgeWrapper>
+              )}
               {ConnectionStatusService.isEnabled() ? (
                 <ConnectionStatusButtonContainer />
               ) : null}

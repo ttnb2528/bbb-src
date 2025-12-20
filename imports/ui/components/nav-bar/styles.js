@@ -9,7 +9,7 @@ import {
   colorGray,
 } from '/imports/ui/stylesheets/styled-components/palette';
 import { fontSizeBase } from '/imports/ui/stylesheets/styled-components/typography';
-import { phoneLandscape, smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
+import { phoneLandscape, smallOnly, hasPhoneWidth } from '/imports/ui/stylesheets/styled-components/breakpoints';
 import Button from '/imports/ui/components/common/button/component';
 
 const Navbar = styled.header`
@@ -20,6 +20,9 @@ const Navbar = styled.header`
   font-size: 1.5rem;
   background-color: ${colorBackground};
   padding: ${barsPadding} ${barsPadding} 0 ${barsPadding};
+
+  /* Ẩn NavBar hoàn toàn - features đã chuyển xuống footer */
+  display: none !important;
 `;
 
 const Top = styled.div`
