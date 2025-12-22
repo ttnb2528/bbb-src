@@ -55,6 +55,9 @@ const SidebarContent = (props) => {
   const [resizeStartWidth, setResizeStartWidth] = useState(0);
   const [resizeStartHeight, setResizeStartHeight] = useState(0);
 
+  const COLLAPSED_HEIGHT = 52;
+  const [isCollapsed, setIsCollapsed] = useState(height <= COLLAPSED_HEIGHT + 4);
+
   // Fallback: nếu panel bị set về NONE (khi bấm nút back trong header chat),
   // ta vẫn giữ CHÁT làm mặc định để không bị mất panel
   let activePanel = sidebarContentPanel;
@@ -66,6 +69,7 @@ const SidebarContent = (props) => {
     if (!isResizing) {
       setResizableWidth(width);
       setResizableHeight(height);
+      setIsCollapsed(height <= COLLAPSED_HEIGHT + 4);
     }
   }, [width, height]);
 
@@ -109,6 +113,38 @@ const SidebarContent = (props) => {
     });
   };
 
+  const expandedHeight = Math.min(Math.max(minHeight * 2, 260), maxHeight || window.innerHeight * 0.5);
+  // Tính toán khoảng cách để panel trượt xuống sát footer khi collapsed
+  // Footer có chiều cao khoảng 80px (actionbar), nút handle cao 28px và ở top: -16px
+  // Khi collapsed, mình muốn top của nút handle sát footer (footer top = viewportHeight - actionBarHeight)
+  const actionBarHeight = 80; // Chiều cao footer/actionbar
+  const handleOffset = 16; // Nút handle nhô lên 16px từ top của panel
+  const viewportHeight = window.innerHeight;
+  // Top của nút handle khi expanded = top - handleOffset
+  // Top của nút handle khi collapsed = top - handleOffset + translateY
+  // Footer top = viewportHeight - actionBarHeight
+  // Khi collapsed, mình muốn: top - handleOffset + translateY = viewportHeight - actionBarHeight
+  // Vậy translateY = viewportHeight - actionBarHeight - top + handleOffset
+  // Nhưng cần đảm bảo translateY dương để trượt xuống
+  const translateYOffset = Math.max(0, viewportHeight - actionBarHeight - top + handleOffset);
+
+  const toggleCollapsed = () => {
+    const targetCollapsed = !isCollapsed;
+    setIsCollapsed(targetCollapsed);
+
+    const targetHeight = targetCollapsed ? COLLAPSED_HEIGHT : expandedHeight;
+
+    contextDispatch({
+      type: ACTIONS.SET_SIDEBAR_CONTENT_SIZE,
+      value: {
+        width,
+        height: targetHeight,
+        browserWidth: window.innerWidth,
+        browserHeight: window.innerHeight,
+      },
+    });
+  };
+
   return (
     <Resizable
       minWidth={minWidth}
@@ -117,7 +153,7 @@ const SidebarContent = (props) => {
       maxHeight={maxHeight}
       size={{
         width,
-        height,
+        height: resizableHeight,
       }}
       enable={{
         top: isResizable && resizableEdge.top,
@@ -144,7 +180,13 @@ const SidebarContent = (props) => {
         right,
         zIndex,
         width,
-        height,
+        height: resizableHeight,
+        // Transform được ưu tiên trước, sau đó mới animate height để tránh cảm giác "kéo lên rồi mới hạ xuống"
+        transition: isCollapsed 
+          ? 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), height 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0s'
+          : 'height 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
+        willChange: 'height, transform',
+        transform: isCollapsed ? `translateY(${translateYOffset}px)` : 'translateY(0)',
       }}
       handleStyles={{
         left: {
@@ -161,9 +203,15 @@ const SidebarContent = (props) => {
         },
       }}
     >
-      <Styled.SidebarContentWrapper>
+      <Styled.SidebarContentWrapper data-collapsed={isCollapsed}>
+        {/* Thanh handle ở mép dưới để kéo panel lên / xuống */}
+        <Styled.BottomHandle type="button" onClick={toggleCollapsed}>
+          <span>Public Chat</span>
+          <i className={`icon-bbb-${isCollapsed ? 'up_arrow' : 'down_arrow'}`} />
+        </Styled.BottomHandle>
+
         {/* Panel ngang: chỉ hiển thị Public Chat */}
-        <Styled.TabBar>
+        <Styled.TabBar data-collapsed={isCollapsed}>
           <Styled.TabButton
             type="button"
             onClick={() => handleSelectPanel(PANELS.CHAT)}
@@ -172,32 +220,32 @@ const SidebarContent = (props) => {
             Public Chat
           </Styled.TabButton>
         </Styled.TabBar>
-        <Styled.ContentArea>
+        <Styled.ContentArea data-collapsed={isCollapsed}>
           {activePanel === PANELS.CHAT && (
             <ErrorBoundary fallbackComponent={() => <FallbackView />} from="sidebar-content">
               <ChatContainer mode="sidebar" />
-            </ErrorBoundary>
-          )}
+          </ErrorBoundary>
+        )}
           {activePanel === PANELS.BREAKOUT && <BreakoutRoomContainer />}
           {activePanel === PANELS.TIMER && <TimerContainer isModerator={amIModerator} />}
           {activePanel === PANELS.WAITING_USERS && <GuestUsersManagementPanel />}
           {activePanel === PANELS.POLL && (
-            <Styled.Poll
-              style={{ minWidth, top: '0', display: pollDisplay }}
-              id="pollPanel"
-            >
-              <PollContainer
-                smallSidebar={smallSidebar}
-                amIPresenter={amIPresenter}
-                currentSlideId={currentSlideId}
-              />
-            </Styled.Poll>
-          )}
+        <Styled.Poll
+          style={{ minWidth, top: '0', display: pollDisplay }}
+          id="pollPanel"
+        >
+          <PollContainer
+            smallSidebar={smallSidebar}
+            amIPresenter={amIPresenter}
+            currentSlideId={currentSlideId}
+          />
+        </Styled.Poll>
+      )}
           {activePanel.includes && activePanel.includes(PANELS.GENERIC_CONTENT_SIDEKICK) && (
-            <GenericContentSidekickContainer
+        <GenericContentSidekickContainer
               genericSidekickContentId={activePanel}
-            />
-          )}
+        />
+      )}
         </Styled.ContentArea>
       </Styled.SidebarContentWrapper>
     </Resizable>

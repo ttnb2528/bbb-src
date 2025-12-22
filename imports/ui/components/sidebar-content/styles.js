@@ -15,28 +15,74 @@ const SidebarContentWrapper = styled.div`
   height: 100%;
   background-color: ${colorWhite};
   border-radius: ${borderRadius} ${borderRadius} 0 0;
-  border: ${borderSize} solid ${colorGrayLight};
-  border-bottom: none;
-  border-left: none; // No left border since it's adjacent to User List panel
-  overflow: hidden;
+  border: none; /* Bỏ border theo yêu cầu */
+  overflow: visible; /* cho phép nút handle lộ ra phía trên */
   display: flex;
   flex-direction: column;
   position: relative; /* Needed for absolute TabBar on the right */
+
+  /* Hiệu ứng bottom-sheet mượt mà - trượt xuống khi ẩn, kéo lên khi hiện */
+  transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: height, transform;
+
+  ${({ 'data-collapsed': collapsed }) => collapsed && `
+    background: transparent;
+    border: none;
+  `}
 `;
 
-// Tab bar for switching between Chat and Notes
-const TabBar = styled.div`
+// Thanh handle ở mép trên của panel để kéo panel lên / xuống (bottom sheet)
+const BottomHandle = styled.button`
+  appearance: none;
+  border: none;
+  background: #ff6b35;
+  color: ${colorWhite};
+
+  /* Nút hình “nửa hình tròn” dính vào mép trên panel */
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 68px;
+  top: -28px;
+  right: 24px; /* gần sát góc phải */
+  left: auto;
+  transform: none;
+  z-index: 10;
+
+  height: 28px;
+  min-width: 80px;
+  padding: 0 ${smPaddingX};
+  border-radius: 999px 999px 0 0;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.35);
+
   display: flex;
-  flex-direction: column;
-  gap: ${xsPadding};
-  padding: ${smPaddingY} ${xsPadding};
-  border-left: ${borderSize} solid ${colorGrayLight};
-  background: ${colorWhite};
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+
+  &:focus {
+    outline: none;
+  }
+
+  i[class^="icon-bbb-"] {
+    font-size: 14px;
+    line-height: 1;
+    transition: transform 0.3s ease-out;
+  }
+
+  &:hover {
+    background: #ff8555;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;
+
+// Tab bar không còn dùng (đã có handle mới) – giữ lại để tránh lỗi import nhưng ẩn hoàn toàn
+const TabBar = styled.div`
+  display: none;
 `;
 
 const TabButton = styled.button`
@@ -64,12 +110,23 @@ const TabNavContent = styled.div`
 const ContentArea = styled.div`
   flex: 1;
   overflow: auto;
-  padding: 0 ${smPaddingX} ${smPaddingY} ${smPaddingX};
-  /* Leave room for right-side TabBar */
-  padding-right: calc(68px + ${smPaddingX});
+  padding: ${smPaddingY} ${smPaddingX} ${smPaddingY} ${smPaddingX};
+  /* Không cần chừa chỗ cho TabBar bên phải nữa */
+  padding-right: ${smPaddingX};
   display: flex;
   flex-direction: column;
   gap: ${smPaddingY};
+  opacity: 1;
+  transition: max-height 0.7s cubic-bezier(0.4, 0, 0.2, 1), padding 0.7s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out;
+
+  ${({ 'data-collapsed': collapsed }) => collapsed && `
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-right: ${smPaddingX};
+    overflow: hidden;
+    opacity: 0;
+  `}
 `;
 
 const Poll = styled.div`
@@ -109,6 +166,7 @@ const Poll = styled.div`
 
 export default {
   SidebarContentWrapper,
+  BottomHandle,
   TabBar,
   TabButton,
   TabNavContent,

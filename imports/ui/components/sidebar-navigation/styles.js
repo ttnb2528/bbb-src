@@ -7,8 +7,7 @@ const SidebarNavigationWrapper = styled.div`
   height: 100%;
   background-color: ${colorWhite};
   border-radius: ${borderRadius} ${borderRadius} 0 0;
-  border: ${borderSize} solid ${colorGrayLight};
-  border-bottom: none;
+  border: none; /* Bỏ border theo yêu cầu */
   overflow: hidden;
   display: flex;
   flex-direction: column;
