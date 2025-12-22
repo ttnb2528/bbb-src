@@ -53,6 +53,30 @@ const Header = styled.div`
   flex-shrink: 0; /* Prevent header from shrinking */
 `;
 
+const TabBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${smPaddingX};
+  padding: 6px ${smPaddingX};
+  border-bottom: ${borderSize} solid ${colorGrayLight};
+  flex-shrink: 0;
+`;
+
+const TabButton = styled.button<{ 'data-active'?: boolean }>`
+  border: none;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  color: ${({ 'data-active': active }) => (active ? colorGrayDark : '#777')};
+  background-color: ${({ 'data-active': active }) => (active ? 'rgba(0,0,0,0.05)' : 'transparent')};
+
+  &:hover {
+    background-color: rgba(0,0,0,0.06);
+  }
+`;
+
 const Title = styled.div`
   display: flex;
   align-items: center;
@@ -194,5 +218,7 @@ export default {
   HeaderActions,
   MinimizedIcon,
   MinimizedClose,
+  TabBar,
+  TabButton,
 };
 

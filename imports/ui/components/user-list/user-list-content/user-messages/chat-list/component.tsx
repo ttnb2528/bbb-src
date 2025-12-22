@@ -89,12 +89,18 @@ interface ChatListContainerProps {
   disableLayoutInteractions?: boolean;
 }
 
-const ChatListContainer: React.FC<ChatListContainerProps> = ({ disableLayoutInteractions = false }) => {
+const ChatListContainer: React.FC<ChatListContainerProps & { filterPrivateOnly?: boolean }> = ({
+  disableLayoutInteractions = false,
+  filterPrivateOnly = false,
+}) => {
   const { data: chats } = useChat((chat) => chat) as GraphqlDataHookSubscriptionResponse<Chat[]>;
   const isChatEnabled = useIsChatEnabled();
   const CHAT_CONFIG = window.meetingClientSettings.public.chat;
   const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
-  const allowedChats = isChatEnabled ? chats : chats?.filter((c) => c.chatId !== PUBLIC_GROUP_CHAT_ID);
+  let allowedChats = isChatEnabled ? chats : chats?.filter((c) => c.chatId !== PUBLIC_GROUP_CHAT_ID);
+  if (filterPrivateOnly) {
+    allowedChats = allowedChats?.filter((c) => c.chatId !== PUBLIC_GROUP_CHAT_ID);
+  }
   if (allowedChats && allowedChats.length) {
     return (
       <ChatList

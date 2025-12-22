@@ -5,6 +5,7 @@ import ReactModal from 'react-modal';
 import Styled from './styles';
 import ChatListContainer from '/imports/ui/components/user-list/user-list-content/user-messages/chat-list/component';
 import ChatContainer from '/imports/ui/components/chat/chat-graphql/component';
+import NotesContainer from '/imports/ui/components/notes/component';
 import Icon from '/imports/ui/components/common/icon/icon-ts/component';
 import Button from '/imports/ui/components/common/button/component';
 
@@ -35,6 +36,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   const dragState = useRef<{ startX: number; startY: number; originLeft: number; originTop: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const hasDragged = useRef(false);
+  const [activeTab, setActiveTab] = useState<'private' | 'notes'>('private');
 
   // Khởi tạo vị trí giữa màn hình khi mở modal
   useEffect(() => {
@@ -208,7 +210,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
             <Styled.Header>
               <Styled.Title onMouseDown={handleDragStart}>
                 <Icon iconName="chat" />
-                <span>Message</span>
+                <span>{activeTab === 'private' ? 'Message' : 'Shared Notes'}</span>
               </Styled.Title>
               <Styled.HeaderActions>
                 <Button
@@ -231,15 +233,38 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
                 />
               </Styled.HeaderActions>
             </Styled.Header>
+            <Styled.TabBar>
+              <Styled.TabButton
+                type="button"
+                data-active={activeTab === 'private'}
+                onClick={() => setActiveTab('private')}
+              >
+                Private
+              </Styled.TabButton>
+              <Styled.TabButton
+                type="button"
+                data-active={activeTab === 'notes'}
+                onClick={() => setActiveTab('notes')}
+              >
+                Notes
+              </Styled.TabButton>
+            </Styled.TabBar>
             <Styled.Content>
-              {/* Bên trái: danh sách các cuộc chat (public + private) */}
-              <Styled.LeftPane>
-                <ChatListContainer disableLayoutInteractions />
-              </Styled.LeftPane>
-              {/* Bên phải: nội dung chat, dùng ChatContainer ở chế độ modal */}
-              <Styled.RightPane>
-                <ChatContainer mode="modal" />
-              </Styled.RightPane>
+              {activeTab === 'private' && (
+                <>
+                  <Styled.LeftPane>
+                    <ChatListContainer disableLayoutInteractions filterPrivateOnly />
+                  </Styled.LeftPane>
+                  <Styled.RightPane>
+                    <ChatContainer mode="modal" />
+                  </Styled.RightPane>
+                </>
+              )}
+              {activeTab === 'notes' && (
+                <Styled.RightPane>
+                  <NotesContainer isToSharedNotesBeShow />
+                </Styled.RightPane>
+              )}
             </Styled.Content>
           </>
         )}

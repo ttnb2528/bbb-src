@@ -3,10 +3,7 @@ import PropTypes from 'prop-types';
 import { Resizable } from 're-resizable';
 import { ACTIONS, PANELS } from '../layout/enums';
 import { layoutSelectInput, layoutDispatch } from '../layout/context';
-import ChatListContainer from '../user-list/user-list-content/user-messages/chat-list/component';
-import UserNotesContainer from '../user-list/user-list-graphql/user-list-content/user-notes/component';
 import ChatContainer from '/imports/ui/components/chat/chat-graphql/component';
-import NotesContainer from '/imports/ui/components/notes/component';
 import PollContainer from '/imports/ui/components/poll/container';
 import BreakoutRoomContainer from '../breakout-room/breakout-room/component';
 import TimerContainer from '/imports/ui/components/timer/panel/component';
@@ -93,6 +90,18 @@ const SidebarContent = (props) => {
   const smallSidebar = width < (maxWidth / 2);
   const pollDisplay = sidebarContentPanel === PANELS.POLL ? 'inherit' : 'none';
 
+  // Luôn ép mở Public Chat khi ở panel CHÁT để tránh mở private chat trong panel ngang
+  useEffect(() => {
+    const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+    const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+    if (activePanel === PANELS.CHAT) {
+      contextDispatch({
+        type: ACTIONS.SET_ID_CHAT_OPEN,
+        value: PUBLIC_GROUP_CHAT_ID,
+      });
+    }
+  }, [activePanel, contextDispatch]);
+
   const handleSelectPanel = (panel) => {
     contextDispatch({
       type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
@@ -153,27 +162,21 @@ const SidebarContent = (props) => {
       }}
     >
       <Styled.SidebarContentWrapper>
-        {/* Chỉ dùng panel ngang để hiển thị Shared Notes, không còn Public Chat */}
+        {/* Panel ngang: chỉ hiển thị Public Chat */}
         <Styled.TabBar>
           <Styled.TabButton
             type="button"
-            onClick={() => handleSelectPanel(PANELS.SHARED_NOTES)}
-            data-active={activePanel === PANELS.SHARED_NOTES}
+            onClick={() => handleSelectPanel(PANELS.CHAT)}
+            data-active={activePanel === PANELS.CHAT}
           >
-            Shared Notes
+            Public Chat
           </Styled.TabButton>
         </Styled.TabBar>
-        <Styled.TabNavContent>
-          {/* Danh sách chat không cần hiện ở panel ngang nữa */}
-          <UserNotesContainer />
-        </Styled.TabNavContent>
-        
-        {/* Content panels: chỉ còn Shared Notes và các panel khác, không hiển thị Public/Private chat ở đây */}
         <Styled.ContentArea>
-          {!isSharedNotesPinned && (
-            <NotesContainer
-              isToSharedNotesBeShow={activePanel === PANELS.SHARED_NOTES}
-            />
+          {activePanel === PANELS.CHAT && (
+            <ErrorBoundary fallbackComponent={() => <FallbackView />} from="sidebar-content">
+              <ChatContainer mode="sidebar" />
+            </ErrorBoundary>
           )}
           {activePanel === PANELS.BREAKOUT && <BreakoutRoomContainer />}
           {activePanel === PANELS.TIMER && <TimerContainer isModerator={amIModerator} />}
