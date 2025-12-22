@@ -38,6 +38,8 @@ const propTypes = {
     }),
   ).isRequired,
   isPresentationManagementDisabled: PropTypes.bool,
+  /** Kích thước trigger button, mặc định 'lg' (dùng mobile set 'md') */
+  triggerSize: PropTypes.oneOf(['md', 'lg']),
 };
 
 const defaultProps = {
@@ -46,6 +48,7 @@ const defaultProps = {
   isPresentationManagementDisabled: false,
   amIPresenter: false,
   amIModerator: false,
+  triggerSize: 'lg',
 };
 
 const intlMessages = defineMessages({
@@ -426,7 +429,7 @@ class ActionsDropdown extends PureComponent {
               label={intl.formatMessage(intlMessages.actionsLabel)}
               icon="plus"
               color="primary"
-              size="lg"
+              size={this.props.triggerSize || 'lg'}
               circle
               onClick={() => null}
             />

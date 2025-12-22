@@ -10,6 +10,21 @@ import { ACTIONS, PANELS } from '../layout/enums';
 import Styled from '../actions-bar/styles';
 import deviceInfo from '/imports/utils/deviceInfo';
 import useChat from '/imports/ui/core/hooks/useChat';
+import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
+import useMeeting from '/imports/ui/core/hooks/useMeeting';
+import { useMutation } from '@apollo/client';
+import { EXTERNAL_VIDEO_STOP } from '../external-video-player/mutations';
+import {
+  useIsExternalVideoEnabled,
+  useIsPollingEnabled,
+  useIsPresentationEnabled,
+  useIsTimerFeatureEnabled,
+} from '/imports/ui/services/features';
+import connectionStatus from '/imports/ui/core/graphql/singletons/connectionStatus';
+import { useReactiveVar } from '@apollo/client';
+import { useMeetingLayoutUpdater, usePushLayoutUpdater } from '../layout/push-layout/hooks';
+import useSettings from '/imports/ui/services/settings/hooks/useSettings';
+import { SETTINGS } from '/imports/ui/services/settings/enums';
 import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
 import { Chat } from '/imports/ui/Types/chat';
 
@@ -18,10 +33,50 @@ const MobilePanelButtonsContainer: React.FC = () => {
   const [isChatNotesDrawerOpen, setIsChatNotesDrawerOpen] = useState(false);
   const [isPrivateChatModalOpen, setIsPrivateChatModalOpen] = useState(false);
   
-  const sidebarContent = layoutSelectInput((i) => i.sidebarContent);
-  const actionBarOutput = layoutSelectOutput((i) => i.actionBar);
+  const sidebarContent = layoutSelectInput((i: any) => i.sidebarContent);
+  const actionBarOutput = layoutSelectOutput((i: any) => i.actionBar);
   const layoutContextDispatch = layoutDispatch();
   const activeChatNotesPanel = sidebarContent?.sidebarContentPanel || PANELS.CHAT;
+
+  // Lấy thông tin user và meeting để truyền vào ActionsDropdown
+  const { data: currentUserData } = useCurrentUser((user) => ({
+    presenter: user.presenter,
+    isModerator: user.isModerator,
+  }));
+  const amIPresenter = currentUserData?.presenter;
+  const amIModerator = currentUserData?.isModerator;
+
+  const { data: currentMeeting } = useMeeting((m) => ({
+    externalVideo: m.externalVideo,
+    componentsFlags: m.componentsFlags,
+  }));
+  const isSharingVideo = !!currentMeeting?.externalVideo?.externalVideoUrl;
+  const hasCameraAsContent = currentMeeting?.componentsFlags?.hasCameraAsContent;
+  const isTimerActive = currentMeeting?.componentsFlags?.hasTimer;
+
+  const [stopExternalVideoShare] = useMutation(EXTERNAL_VIDEO_STOP);
+  const allowExternalVideo = useIsExternalVideoEnabled();
+  const isPresentationEnabled = useIsPresentationEnabled();
+  const isPollingEnabled = useIsPollingEnabled() && isPresentationEnabled;
+  const isTimerFeatureEnabled = useIsTimerFeatureEnabled();
+  const connected = useReactiveVar(connectionStatus.getConnectedStatusVar());
+  const isMeteorConnected = connected;
+
+  const applicationSettings = useSettings(SETTINGS.APPLICATION) as { pushLayout?: boolean; selectedLayout?: string };
+  const { pushLayout } = applicationSettings || {};
+  const setPushLayout = usePushLayoutUpdater(pushLayout ?? false);
+  const cameraDockOutput = layoutSelectOutput((i: any) => i.cameraDock);
+  const cameraDockInput = layoutSelectInput((i: any) => i.cameraDock);
+  const presentationInput = layoutSelectInput((i: any) => i.presentation);
+  const setMeetingLayout = useMeetingLayoutUpdater(
+    cameraDockOutput,
+    cameraDockInput,
+    presentationInput,
+    applicationSettings as any,
+  );
+  const LAYOUT_CONFIG = window.meetingClientSettings.public.layout;
+  const { showPushLayoutButton } = LAYOUT_CONFIG;
+  const showPushLayout = showPushLayoutButton && applicationSettings?.selectedLayout === 'custom';
 
   // Lấy danh sách các chat để tính tổng unread private
   const { data: chats } = useChat((chat) => ({
@@ -48,7 +103,7 @@ const MobilePanelButtonsContainer: React.FC = () => {
 
   // Listen for external private chat modal open event
   useEffect(() => {
-    const handleExternalOpenPrivateChat = (e: CustomEvent) => {
+    const handleExternalOpenPrivateChat = () => {
       setIsPrivateChatModalOpen(true);
     };
     window.addEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
@@ -64,6 +119,20 @@ const MobilePanelButtonsContainer: React.FC = () => {
         onToggleChatNotes={() => setIsChatNotesDrawerOpen((prev) => !prev)}
         onTogglePrivateChat={() => setIsPrivateChatModalOpen((prev) => !prev)}
         privateUnreadCount={privateUnreadCount}
+        // Props cho ActionsDropdown - chỉ hiển thị khi là presenter
+        amIPresenter={amIPresenter}
+        amIModerator={amIModerator}
+        isMeteorConnected={isMeteorConnected}
+        isSharingVideo={isSharingVideo}
+        isPollingEnabled={isPollingEnabled}
+        isTimerActive={isTimerActive}
+        isTimerEnabled={isTimerFeatureEnabled}
+        allowExternalVideo={allowExternalVideo}
+        stopExternalVideoShare={stopExternalVideoShare}
+        hasCameraAsContent={hasCameraAsContent}
+        setMeetingLayout={setMeetingLayout}
+        setPushLayout={setPushLayout}
+        showPushLayout={showPushLayout}
       />
       
       <MobileDrawer

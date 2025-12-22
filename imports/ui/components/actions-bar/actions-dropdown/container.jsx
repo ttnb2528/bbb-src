@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { useMutation } from '@apollo/client';
+import { useIntl } from 'react-intl';
 import ActionsDropdown from './component';
 import { layoutSelectInput, layoutDispatch, layoutSelect } from '../../layout/context';
 import { SMALL_VIEWPORT_BREAKPOINT, ACTIONS, PANELS } from '../../layout/enums';
@@ -92,10 +93,12 @@ const ActionsDropdownContainer = (props) => {
   const isTimerFeatureEnabled = useIsTimerFeatureEnabled();
   const isCameraAsContentEnabled = useIsCameraAsContentEnabled();
   const isQuizEnabled = useIsQuizEnabled();
+  const intl = useIntl(); // Thêm useIntl để truyền vào component
 
   return (
     <ActionsDropdown
       {...{
+        intl, // Truyền intl vào component
         layoutContextDispatch,
         sidebarContent,
         sidebarNavigation,

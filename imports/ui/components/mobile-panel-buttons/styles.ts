@@ -117,6 +117,26 @@ const ExpandedButtons = styled.div`
   gap: 8px;
   animation: fadeInSlide 0.3s ease;
 
+  /* Tùy chỉnh riêng kích thước nút dấu cộng (actionsButton) cho nhỏ bằng các icon còn lại */
+  button[data-test="actionsButton"] {
+    min-width: 40px !important;
+    min-height: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+
+    /* Icon bên trong */
+    [class^="icon-bbb-"],
+    i[class^="icon-bbb-"] {
+      font-size: 18px !important;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+
   @keyframes fadeInSlide {
     from {
       opacity: 0;

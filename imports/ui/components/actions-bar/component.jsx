@@ -279,6 +279,27 @@ class ActionsBar extends PureComponent {
                 currentUserId={currentUserId}
               />
               <LiveIndicator />
+              {/* ActionsDropdown (nút dấu cộng) - chỉ hiển thị trên desktop, sau LiveIndicator */}
+              {!deviceInfo.isMobile && (
+                <>
+                  <Styled.Separator aria-hidden="true">|</Styled.Separator>
+                  <ActionsDropdown
+                    amIPresenter={amIPresenter}
+                    amIModerator={amIModerator}
+                    isMeteorConnected={isMeteorConnected}
+                    isSharingVideo={isSharingVideo}
+                    isPollingEnabled={isPollingEnabled}
+                    isTimerActive={isTimerActive}
+                    isTimerEnabled={isTimerEnabled}
+                    allowExternalVideo={allowExternalVideo}
+                    stopExternalVideoShare={stopExternalVideoShare}
+                    hasCameraAsContent={hasCameraAsContent}
+                    setMeetingLayout={setMeetingLayout}
+                    setPushLayout={setPushLayout}
+                    showPushLayout={showPushLayout}
+                  />
+                </>
+              )}
             </Styled.RoomInfo>
           </Styled.Left>
           <Styled.Center>
@@ -328,7 +349,7 @@ class ActionsBar extends PureComponent {
                 isDirectLeaveButtonEnabled={isDirectLeaveButtonEnabled}
                 showConnectionStatus={ConnectionStatusService.isEnabled()}
                 showLeaveButton={isDirectLeaveButtonEnabled && isMeteorConnected}
-              />
+                  />
             </Styled.Gap>
           </Styled.Right>
         </Styled.ActionsBar>

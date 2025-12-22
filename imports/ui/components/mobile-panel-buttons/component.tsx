@@ -3,11 +3,27 @@ import Button from '/imports/ui/components/common/button/component';
 import deviceInfo from '/imports/utils/deviceInfo';
 import Styled from './styles';
 
+import ActionsDropdownContainer from '../actions-bar/actions-dropdown/container';
+
 interface MobilePanelButtonsProps {
   onToggleUserList: () => void;
   onToggleChatNotes: () => void;
   onTogglePrivateChat: () => void;
   privateUnreadCount: number;
+  // Props cho ActionsDropdown
+  amIPresenter?: boolean;
+  amIModerator?: boolean;
+  isMeteorConnected?: boolean;
+  isSharingVideo?: boolean;
+  isPollingEnabled?: boolean;
+  isTimerActive?: boolean;
+  isTimerEnabled?: boolean;
+  allowExternalVideo?: boolean;
+  stopExternalVideoShare?: () => void;
+  hasCameraAsContent?: boolean;
+  setMeetingLayout?: (layout: string) => void;
+  setPushLayout?: (layout: string) => void;
+  showPushLayout?: boolean;
 }
 
 const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
@@ -15,6 +31,19 @@ const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
   onToggleChatNotes,
   onTogglePrivateChat,
   privateUnreadCount,
+  amIPresenter,
+  amIModerator,
+  isMeteorConnected,
+  isSharingVideo,
+  isPollingEnabled,
+  isTimerActive,
+  isTimerEnabled,
+  allowExternalVideo,
+  stopExternalVideoShare,
+  hasCameraAsContent,
+  setMeetingLayout,
+  setPushLayout,
+  showPushLayout,
 }) => {
   if (!deviceInfo.isMobile) return null;
 
@@ -60,6 +89,23 @@ const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
               hideLabel
               circle
               data-test="mobileChatNotesButton"
+            />
+            {/* Nút dấu cộng đặt trong panel xổ trái để gọn gàng */}
+            <ActionsDropdownContainer
+              triggerSize="md"
+              amIPresenter={amIPresenter}
+              amIModerator={amIModerator}
+              isMeteorConnected={isMeteorConnected}
+              isSharingVideo={isSharingVideo}
+              isPollingEnabled={isPollingEnabled}
+              isTimerActive={isTimerActive}
+              isTimerEnabled={isTimerEnabled}
+              allowExternalVideo={allowExternalVideo}
+              stopExternalVideoShare={stopExternalVideoShare}
+              hasCameraAsContent={hasCameraAsContent}
+              setMeetingLayout={setMeetingLayout}
+              setPushLayout={setPushLayout}
+              showPushLayout={showPushLayout}
             />
           </Styled.ExpandedButtons>
         )}
