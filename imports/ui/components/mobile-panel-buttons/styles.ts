@@ -40,12 +40,16 @@ const Container = styled.div`
     }
 
     /* Căn chỉnh icon tốt hơn */
-    [class^="icon-bbb-"] {
+    [class^="icon-bbb-"],
+    i[class^="icon-bbb-"] {
       display: flex;
       align-items: center;
       justify-content: center;
       line-height: 1;
       margin: 0;
+      position: relative;
+      left: 50%;
+      transform: translateX(-50%);
     }
   }
 
@@ -63,6 +67,20 @@ const Container = styled.div`
     right: 22px;
     gap: 8px;
     padding: 6px 8px;
+  }
+`;
+
+const ToggleButtonWrapper = styled.div`
+  /* Target vào icon bên trong toggle button */
+  button {
+    [class*="icon-bbb-right_arrow"],
+    [class*="icon-bbb-left_arrow"],
+    i[class*="icon-bbb-right_arrow"],
+    i[class*="icon-bbb-left_arrow"] {
+      position: relative !important;
+      left: 50% !important;
+      transform: translateX(-20%) !important;
+    }
   }
 `;
 
@@ -89,14 +107,6 @@ const LeftGroup = styled.div`
     &:active {
       transform: scale(0.95);
       transition: transform 0.1s ease;
-    }
-
-    /* Căn chỉnh icon */
-    [class^="icon-bbb-"] {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      line-height: 1;
     }
   }
 `;
@@ -191,5 +201,6 @@ export default {
   BadgeWrapper,
   UnreadBadge,
   ExpandedButtons,
+  ToggleButtonWrapper,
 };
 

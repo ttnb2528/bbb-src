@@ -128,14 +128,15 @@ const CustomLayoutContainer = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
-  gap: 8px;
+  gap: 4px; /* Giảm gap để đẩy video lên */
+  padding-top: 0; /* Bỏ padding trên để đẩy video lên */
 `;
 
 // D?i cam nh? ? trên (t?t c? ngu?i tham gia)
 const VideoStrip = styled.div`
   display: flex;
   gap: 4px;
-  padding: 10px 10px 16px 10px;
+  padding: 4px 10px 16px 10px; /* Giảm padding-top từ 10px xuống 4px để đẩy lên */
   background: rgba(15, 23, 42, 0.8);
   border-radius: 8px;
   overflow-x: auto;
@@ -166,13 +167,13 @@ const VideoStrip = styled.div`
   /* Mobile responsive */
   @media ${smallOnly} {
     height: 100px;
-    padding: 6px 6px 10px 6px;
+    padding: 2px 6px 10px 6px; /* Giảm padding-top từ 6px xuống 2px */
     gap: 3px;
   }
 
   @media ${hasPhoneWidth} {
     height: 80px;
-    padding: 4px 4px 8px 4px;
+    padding: 2px 4px 8px 4px; /* Giảm padding-top từ 4px xuống 2px */
   }
 `;
 

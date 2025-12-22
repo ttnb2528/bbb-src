@@ -27,16 +27,18 @@ const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
   return (
     <Styled.Container>
       <Styled.LeftGroup>
-        <Button
-          label={isExpanded ? 'Hide tools' : 'Show tools'}
-          icon={isExpanded ? 'left_arrow' : 'right_arrow'}
-          color="default"
-          size="md"
-          onClick={handleToggleExpand}
-          hideLabel
-          circle
-          data-test="mobilePanelToggleButton"
-        />
+        <Styled.ToggleButtonWrapper>
+          <Button
+            label={isExpanded ? 'Hide tools' : 'Show tools'}
+            icon={isExpanded ? 'left_arrow' : 'right_arrow'}
+            color="default"
+            size="md"
+            onClick={handleToggleExpand}
+            hideLabel
+            circle
+            data-test="mobilePanelToggleButton"
+          />
+        </Styled.ToggleButtonWrapper>
         {isExpanded && (
           <Styled.ExpandedButtons>
             <Button
