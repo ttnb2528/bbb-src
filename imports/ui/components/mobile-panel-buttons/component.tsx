@@ -29,7 +29,7 @@ const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
       <Styled.LeftGroup>
         <Button
           label={isExpanded ? 'Hide tools' : 'Show tools'}
-          icon={isExpanded ? 'chevron-up' : 'chevron-down'}
+          icon={isExpanded ? 'left_arrow' : 'right_arrow'}
           color="default"
           size="md"
           onClick={handleToggleExpand}
@@ -38,7 +38,7 @@ const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
           data-test="mobilePanelToggleButton"
         />
         {isExpanded && (
-          <>
+          <Styled.ExpandedButtons>
             <Button
               label="Users"
               icon="user"
@@ -59,7 +59,7 @@ const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
               circle
               data-test="mobileChatNotesButton"
             />
-          </>
+          </Styled.ExpandedButtons>
         )}
       </Styled.LeftGroup>
 

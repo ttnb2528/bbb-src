@@ -17,6 +17,37 @@ const Container = styled.div`
   border-radius: ${borderRadius};
   box-shadow: none; /* bỏ đổ bóng để panel không nổi lên quá nhiều */
   z-index: 50;
+  transition: all 0.3s ease; /* Transition mượt cho expanded state */
+
+  /* Global styles cho tất cả buttons trong Container */
+  button {
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Giảm focus ring - nhỏ hơn và mềm hơn */
+    &:focus,
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25) !important;
+    }
+
+    /* Active state mượt mà với scale nhẹ */
+    &:active {
+      transform: scale(0.92);
+      transition: transform 0.1s ease;
+    }
+
+    /* Căn chỉnh icon tốt hơn */
+    [class^="icon-bbb-"] {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      margin: 0;
+    }
+  }
 
   @media ${smallOnly} {
     bottom: calc(var(--actionbar-height, 70px) + 10px);
@@ -39,12 +70,88 @@ const LeftGroup = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+
+  /* Custom styles cho buttons trong LeftGroup */
+  button {
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Giảm focus ring */
+    &:focus,
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3) !important;
+    }
+
+    /* Active state mượt mà */
+    &:active {
+      transform: scale(0.95);
+      transition: transform 0.1s ease;
+    }
+
+    /* Căn chỉnh icon */
+    [class^="icon-bbb-"] {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+  }
+`;
+
+const ExpandedButtons = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeInSlide 0.3s ease;
+
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
 `;
 
 const RightGroup = styled.div`
   display: flex;
   align-items: center;
   margin-left: auto; /* Đẩy nút chat sang bên phải */
+
+  /* Custom styles cho buttons trong RightGroup */
+  button {
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    /* Giảm focus ring */
+    &:focus,
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3) !important;
+    }
+
+    /* Active state mượt mà */
+    &:active {
+      transform: scale(0.95);
+      transition: transform 0.1s ease;
+    }
+
+    /* Căn chỉnh icon */
+    [class^="icon-bbb-"] {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+  }
 `;
 
 const BadgeWrapper = styled.div`
@@ -83,5 +190,6 @@ export default {
   RightGroup,
   BadgeWrapper,
   UnreadBadge,
+  ExpandedButtons,
 };
 
