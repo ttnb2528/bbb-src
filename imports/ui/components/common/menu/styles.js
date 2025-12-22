@@ -101,7 +101,7 @@ const CloseButton = styled(Button)`
   padding: 1rem;
 
   border-radius: 0;
-  z-index: 1011;
+  z-index: 1100 !important; /* Tăng z-index cao hơn footer (1000) */
   font-size: calc(${fontSizeLarge} * 1.1);
   box-shadow: 0 0 0 2rem ${colorWhite} !important;
   border: ${colorWhite} !important;

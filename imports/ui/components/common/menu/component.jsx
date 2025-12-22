@@ -242,7 +242,8 @@ class BBBMenu extends React.Component {
     const actionsItems = this.makeMenuItems();
 
     const roundedCornersStyles = { borderRadius: '3rem' };
-    let menuStyles = { zIndex: 999 };
+    // Tăng z-index cao hơn footer (1000) để menu không bị che
+    let menuStyles = { zIndex: 1100 };
 
     if (customStyles) {
       menuStyles = { ...menuStyles, ...customStyles };
