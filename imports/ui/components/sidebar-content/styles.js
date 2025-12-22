@@ -40,35 +40,32 @@ const BottomHandle = styled.button`
 
   /* Nút hình “nửa hình tròn” dính vào mép trên panel */
   position: absolute;
-  top: -28px;
+  top: -36px; /* Đẩy button lên cao hơn */
   right: 24px; /* gần sát góc phải */
   left: auto;
   transform: none;
   z-index: 10;
 
-  height: 28px;
-  min-width: 80px;
-  padding: 0 ${smPaddingX};
+  height: 32px;
+  min-width: 48px;
+  padding: 0 16px;
   border-radius: 999px 999px 0 0;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.35);
 
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 11px;
-  letter-spacing: 0.02em;
 
   &:focus {
     outline: none;
   }
 
-  i[class^="icon-bbb-"] {
-    font-size: 14px;
+  /* Icon chat bubble */
+  i.icon-bbb-chat {
+    font-size: 18px;
     line-height: 1;
-    transition: transform 0.3s ease-out;
   }
 
   &:hover {
