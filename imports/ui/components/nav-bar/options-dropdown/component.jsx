@@ -147,6 +147,8 @@ const propTypes = {
     type: PropTypes.string,
   })).isRequired,
   userLeaveMeeting: PropTypes.func.isRequired,
+  showConnectionStatus: PropTypes.bool,
+  showLeaveButton: PropTypes.bool,
 };
 
 const defaultProps = {
@@ -275,6 +277,7 @@ class OptionsDropdown extends PureComponent {
       intl, amIModerator, isBreakoutRoom, isMeteorConnected, audioCaptionsEnabled,
       audioCaptionsActive, audioCaptionsSet, isMobile, optionsDropdownItems,
       isDirectLeaveButtonEnabled, isLayoutsEnabled, away, handleToggleAFK,
+      showConnectionStatus, showLeaveButton,
     } = this.props;
 
     const { isIos } = deviceInfo;
@@ -437,6 +440,42 @@ class OptionsDropdown extends PureComponent {
       }
     });
 
+    // Thêm Connection Status và Leave Meeting vào menu nếu được yêu cầu
+    if (showConnectionStatus || showLeaveButton) {
+      this.menuItems.push({
+        key: 'separator-actions',
+        isSeparator: true,
+      });
+    }
+
+    if (showConnectionStatus) {
+      this.menuItems.push({
+        key: 'list-item-connection-status',
+        icon: 'connection_status',
+        label: 'Connection Status',
+        onClick: () => {
+          // Connection status sẽ được hiển thị tự động khi có vấn đề
+        },
+      });
+    }
+
+    if (showLeaveButton && isMeteorConnected) {
+      const leaveLabel = isBreakoutRoom
+        ? intlMessages.leaveBreakoutLabel
+        : intlMessages.leaveSessionLabel;
+      const leaveDesc = isBreakoutRoom
+        ? intlMessages.leaveBreakoutDesc
+        : intlMessages.leaveSessionDesc;
+
+      this.menuItems.push({
+        key: 'list-item-leave-session',
+        icon: 'logout',
+        label: intl.formatMessage(leaveLabel),
+        description: intl.formatMessage(leaveDesc),
+        onClick: () => this.leaveSession(),
+      });
+    }
+
     if (isMeteorConnected && !isDirectLeaveButtonEnabled) {
       const bottomItems = [{
         key: 'list-item-separator',
@@ -538,6 +577,10 @@ class OptionsDropdown extends PureComponent {
             fullwidth: 'true',
             anchorOrigin: { vertical: 'bottom', horizontal: isRTL ? 'left' : 'right' },
             transformorigin: { vertical: 'top', horizontal: isRTL ? 'left' : 'right' },
+          }}
+          onCloseCallback={() => {
+            // Set dropdownOpen = false khi đóng menu để có thể tắt được
+            Session.setItem('dropdownOpen', false);
           }}
         />
         {this.renderModal(isAboutModalOpen, this.setAboutModalIsOpen, "low",

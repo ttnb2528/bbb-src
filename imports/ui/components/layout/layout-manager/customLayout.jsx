@@ -448,7 +448,7 @@ const CustomLayout = (props) => {
     const windowH = windowHeight();
     const localSidebarPanelHeight = windowH < 800 ? 180 : windowH < 1080 ? 200 : 220;
     const bannerHeight = isMobile ? 0 : bannerAreaHeight(); // Mobile: no banner space
-    const panelButtonsHeight = isMobile ? 70 : 0; // Space for mobile panel buttons (tăng lên để phù hợp với padding mới)
+    const panelButtonsHeight = isMobile ? 80 : 0; // Space for mobile panel buttons (tăng lên để phù hợp với padding và gap mới)
     const mediaAreaHeight =
       windowHeight() - (actionBarHeight + bannerHeight + localSidebarPanelHeight + panelButtonsHeight); // No navbar height, add panel buttons space on mobile
     const mediaAreaWidth = windowWidth(); // Full width, no sidebars on left
@@ -577,13 +577,18 @@ const CustomLayout = (props) => {
     // Media area bounds: full width, no sidebars on left (they're horizontal at bottom now)
     // Hide navbar to give more space for video and allow sidebar to span full width
     // Mobile: start from absolute top (0), no banner or navbar space
-    // Mobile: subtract extra space for panel buttons (approximately 70px với padding mới)
+    // Mobile: subtract extra space for panel buttons (khoảng 80px với padding và gap mới)
     const bannerHeight = isMobile ? 0 : bannerAreaHeight();
-    const panelButtonsHeight = isMobile ? 70 : 0; // Space for mobile panel buttons (tăng lên để phù hợp với padding mới)
+    const panelButtonsHeight = isMobile ? 80 : 0; // Space for mobile panel buttons (tăng lên để phù hợp với padding và gap mới)
+    // Tính actionBarFinalHeight trước để dùng cho mediaAreaBounds
+    const tempActionBarHeight = calculatesActionbarHeight();
+    const tempActionBarFinalHeight = isMobile 
+      ? Math.max(tempActionBarHeight.height, windowWidth() < 480 ? 72 : 75) // Phone: 72px, Tablet/Mobile: 75px
+      : tempActionBarHeight.height;
     const mediaAreaBounds = {
       width: windowWidth(),
-      height: windowHeight() - calculatesActionbarHeight().height - sidebarPanelHeight - bannerHeight - panelButtonsHeight,
-      top: bannerHeight, // Mobile: 0, Desktop: bannerAreaHeight()
+      height: windowHeight() - tempActionBarFinalHeight - sidebarPanelHeight - bannerHeight - panelButtonsHeight,
+      top: 0, // Bỏ khoảng trống trên, bắt đầu từ top 0
       left: 0,
     };
     const navbarBounds = calculatesNavbarBounds(mediaAreaBounds);
@@ -630,18 +635,31 @@ const CustomLayout = (props) => {
       },
     });
 
+    // Tăng height và z-index cho mobile để không bị che
+    // Tính padding bottom thực tế trên mobile (16px cho tablet, 14px cho phone)
+    const mobilePaddingBottom = isMobile ? (windowWidth() < 480 ? 14 : 16) : 0;
+    const actionBarFinalHeight = isMobile 
+      ? Math.max(actionbarBounds.height, windowWidth() < 480 ? 72 : 75) // Phone (< 480px): 72px, Tablet/Mobile: 75px (tăng thêm)
+      : actionbarBounds.height;
+    
+    // Điều chỉnh top position để tính đến padding bottom thực tế trên mobile
+    // Nếu height tăng lên, cần điều chỉnh top để footer không bị thụt
+    const actionBarFinalTop = isMobile 
+      ? windowHeight() - actionBarFinalHeight // Tính lại top dựa trên height mới
+      : actionbarBounds.top;
+    
     layoutContextDispatch({
       type: ACTIONS.SET_ACTIONBAR_OUTPUT,
       value: {
         display: actionbarInput.hasActionBar,
         width: actionbarBounds.width,
-        height: actionbarBounds.height,
+        height: actionBarFinalHeight, // Sử dụng height đã điều chỉnh
         innerHeight: actionbarBounds.innerHeight,
-        top: actionbarBounds.top,
+        top: actionBarFinalTop, // Sử dụng top đã điều chỉnh
         left: actionbarBounds.left,
         padding: actionbarBounds.padding,
         tabOrder: DEFAULT_VALUES.actionBarTabOrder,
-        zIndex: actionbarBounds.zIndex,
+        zIndex: 1000, // Tăng z-index cao để không bị che
       },
     });
 
@@ -741,9 +759,11 @@ const CustomLayout = (props) => {
     // Media area now takes full width (no sidebars on left), but subtract height for horizontal sidebar panel
     // No navbar height since we hide it
     // Mobile: no banner height either
-    // Mobile: subtract extra space for panel buttons (approximately 60px)
+    // Mobile: subtract extra space for panel buttons (approximately 80px)
+    // Sử dụng actionBarFinalHeight thay vì actionBarHeight để tính đúng height của footer
     // bannerHeight and panelButtonsHeight already declared above (line 579, 582), reuse them
-    const mediaAreaNewHeight = windowHeight() - actionBarHeight - sidebarPanelHeight - bannerHeight - panelButtonsHeight;
+    const finalActionBarHeight = isMobile ? actionBarFinalHeight : actionBarHeight;
+    const mediaAreaNewHeight = windowHeight() - finalActionBarHeight - sidebarPanelHeight - bannerHeight - panelButtonsHeight;
 
     layoutContextDispatch({
       type: ACTIONS.SET_MEDIA_AREA_SIZE,

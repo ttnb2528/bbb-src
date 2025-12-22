@@ -321,15 +321,13 @@ class ActionsBar extends PureComponent {
                   )}
                 </Styled.BadgeWrapper>
               )}
-              {ConnectionStatusService.isEnabled() ? (
-                <ConnectionStatusButtonContainer />
-              ) : null}
-              {isDirectLeaveButtonEnabled && isMeteorConnected ? (
-                <LeaveMeetingButtonContainer amIModerator={amIModerator} />
-              ) : null}
+              {/* Ẩn 3 nút bên phải, đưa vào options dropdown */}
+              {/* ConnectionStatus, LeaveMeeting, OptionsDropdown sẽ được thêm vào options dropdown menu */}
               <OptionsDropdownContainer
                 amIModerator={amIModerator}
                 isDirectLeaveButtonEnabled={isDirectLeaveButtonEnabled}
+                showConnectionStatus={ConnectionStatusService.isEnabled()}
+                showLeaveButton={isDirectLeaveButtonEnabled && isMeteorConnected}
               />
             </Styled.Gap>
           </Styled.Right>

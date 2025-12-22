@@ -5,13 +5,13 @@ import { hasPhoneWidth, smallOnly } from '/imports/ui/stylesheets/styled-compone
 
 const Container = styled.div`
   position: fixed;
-  bottom: calc(var(--actionbar-height, 80px) + 12px); /* Tăng khoảng cách với footer */
+  bottom: calc(var(--actionbar-height, 80px) + 16px); /* Tăng khoảng cách với footer để không hụt */
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px; /* Tăng gap để buttons không dính nhau */
-  padding: 10px 16px; /* Tăng padding để đẹp hơn */
+  gap: 16px; /* Tăng gap để buttons không dính nhau */
+  padding: 12px 20px; /* Tăng padding để đẹp hơn */
   background-color: ${colorBackground};
   border-radius: ${borderRadius};
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -19,15 +19,15 @@ const Container = styled.div`
   border: ${borderSize} solid rgba(255, 255, 255, 0.1);
 
   @media ${smallOnly} {
-    bottom: calc(var(--actionbar-height, 70px) + 10px);
-    gap: 10px; /* Tăng từ 6px */
-    padding: 8px 12px; /* Tăng padding */
+    bottom: calc(var(--actionbar-height, 70px) + 14px); /* Tăng khoảng cách để không hụt */
+    gap: 14px; /* Tăng gap để buttons không dính */
+    padding: 10px 16px; /* Tăng padding */
   }
 
   @media ${hasPhoneWidth} {
-    bottom: calc(var(--actionbar-height, 60px) + 8px);
-    gap: 8px; /* Tăng từ 4px */
-    padding: 6px 10px; /* Tăng padding */
+    bottom: calc(var(--actionbar-height, 60px) + 12px); /* Tăng khoảng cách để không hụt */
+    gap: 12px; /* Tăng gap để buttons không dính */
+    padding: 8px 14px; /* Tăng padding */
   }
 `;
 

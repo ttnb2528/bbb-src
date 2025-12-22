@@ -9,22 +9,29 @@ const ActionsBar = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
+  min-height: 100%; /* Đảm bảo ActionsBar chiếm hết chiều cao của wrapper */
 `;
 
 const ActionsBarWrapper = styled.section`
   flex: 1;
   padding: ${barsPadding};
   background-color: ${colorBackground};
-  position: relative;
+  position: absolute; /* Giữ absolute để layout manager có thể điều khiển */
   order: 3;
+  z-index: 1000 !important; /* Tăng z-index cao hơn để không bị che */
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2); /* Thêm shadow để tách biệt */
+  overflow: visible; /* Đảm bảo không bị clip */
+  padding-bottom: ${barsPadding}; /* Đảm bảo padding bottom đủ để không bị thụt */
 
-  /* Mobile: giảm padding */
+  /* Mobile: tăng padding và min-height để buttons có không gian và không bị thụt */
   @media ${smallOnly} {
-    padding: ${xsPadding} ${smPaddingX};
+    padding: 10px 16px 16px 16px; /* Tăng padding bottom thêm để không bị thụt */
+    min-height: 75px !important; /* Tăng chiều cao tối thiểu lên 75px */
   }
 
   @media ${hasPhoneWidth} {
-    padding: 4px ${xsPadding};
+    padding: 0px 4px 14px 0px !important; /* Tăng padding bottom thêm để không bị thụt */
+    min-height: 72px !important; /* Tăng chiều cao tối thiểu lên 72px */
   }
 `;
 
@@ -66,9 +73,9 @@ const Center = styled.div`
     gap: 16px;
   }
 
-  /* Mobile: giảm gap nhưng vẫn đủ để không dính */
+  /* Mobile: tăng gap để buttons giãn ra thêm nữa */
   @media ${smallOnly} {
-    gap: 8px;
+    gap: 18px; /* Tăng thêm gap để buttons giãn ra hơn nữa */
     flex: 1;
     justify-content: center;
     overflow-x: auto;
@@ -79,24 +86,27 @@ const Center = styled.div`
       display: none;
     }
 
-    /* Buttons trên mobile */
+    /* Buttons trên mobile - không cho shrink */
     button {
       min-width: 40px !important;
       min-height: 40px !important;
       width: 40px !important;
       height: 40px !important;
+      flex-shrink: 0 !important; /* Không cho buttons shrink */
     }
   }
 
   @media ${hasPhoneWidth} {
-    gap: 6px; /* Tăng từ 2px lên 6px để không dính */
+    gap: 20px; /* Tăng thêm gap để buttons giãn ra hơn nữa */
+    height: 62px !important;
 
-    /* Buttons trên phone */
+    /* Buttons trên phone - không cho shrink */
     button {
       min-width: 36px !important;
       min-height: 36px !important;
       width: 36px !important;
       height: 36px !important;
+      flex-shrink: 0 !important; /* Không cho buttons shrink */
     }
   }
 `;
@@ -124,28 +134,30 @@ const Right = styled.div`
     display: contents;
   }
 
-  /* Mobile: gap hợp lý */
+  /* Mobile: giảm gap cho Right section (status, leave, options) */
   @media ${smallOnly} {
-    gap: 8px;
+    gap: 6px; /* Giảm gap thêm để không giãn quá */
 
-    /* Buttons trên mobile */
+    /* Buttons trên mobile - không cho shrink */
     button {
       min-width: 40px !important;
       min-height: 40px !important;
       width: 40px !important;
       height: 40px !important;
+      flex-shrink: 0 !important; /* Không cho buttons shrink */
     }
   }
 
   @media ${hasPhoneWidth} {
-    gap: 6px; /* Tăng từ 2px lên 6px để không dính */
+    gap: 0px; /* Giảm gap thêm để không giãn quá */
 
-    /* Buttons trên phone */
+    /* Buttons trên phone - không cho shrink */
     button {
       min-width: 36px !important;
       min-height: 36px !important;
       width: 36px !important;
       height: 36px !important;
+      flex-shrink: 0 !important; /* Không cho buttons shrink */
     }
   }
 `;
@@ -203,13 +215,13 @@ const Gap = styled.div`
   gap: .5rem;
   align-items: center;
 
-  /* Mobile: giảm gap */
+  /* Mobile: giảm gap cho Gap section (status, leave, options) */
   @media ${smallOnly} {
-    gap: 4px;
+    gap: 6px; /* Giảm gap thêm để không giãn quá */
   }
 
   @media ${hasPhoneWidth} {
-    gap: 2px;
+    gap: 0px; /* Giảm gap thêm trên phone */
   }
 `;
 
