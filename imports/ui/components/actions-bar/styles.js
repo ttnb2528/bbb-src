@@ -97,7 +97,7 @@ const Center = styled.div`
   }
 
   @media ${hasPhoneWidth} {
-    gap: 20px; /* Tăng thêm gap để buttons giãn ra hơn nữa */
+    gap: 38px; /* Tăng thêm gap để buttons giãn ra  hơn nữa */
     height: 62px !important;
 
     /* Buttons trên phone - không cho shrink */

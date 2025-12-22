@@ -5,30 +5,46 @@ import { hasPhoneWidth, smallOnly } from '/imports/ui/stylesheets/styled-compone
 
 const Container = styled.div`
   position: fixed;
-  bottom: calc(var(--actionbar-height, 80px) + 16px); /* Tăng khoảng cách với footer để không hụt */
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: calc(var(--actionbar-height, 80px) + 12px);
+  left: 8px;
+  right: 8px;
+  transform: none;
   display: flex;
   align-items: center;
-  gap: 16px; /* Tăng gap để buttons không dính nhau */
-  padding: 12px 20px; /* Tăng padding để đẹp hơn */
+  gap: 12px;
+  padding: 8px 10px;
   background-color: ${colorBackground};
   border-radius: ${borderRadius};
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  z-index: 50; /* Thấp hơn video để không đè lên */
-  border: ${borderSize} solid rgba(255, 255, 255, 0.1);
+  box-shadow: none; /* bỏ đổ bóng để panel không nổi lên quá nhiều */
+  z-index: 50;
 
   @media ${smallOnly} {
-    bottom: calc(var(--actionbar-height, 70px) + 14px); /* Tăng khoảng cách để không hụt */
-    gap: 14px; /* Tăng gap để buttons không dính */
-    padding: 10px 16px; /* Tăng padding */
+    bottom: calc(var(--actionbar-height, 70px) + 10px);
+    left: 6px;
+    right: 6px;
+    gap: 10px;
+    padding: 8px 10px;
   }
 
   @media ${hasPhoneWidth} {
-    bottom: calc(var(--actionbar-height, 60px) + 12px); /* Tăng khoảng cách để không hụt */
-    gap: 12px; /* Tăng gap để buttons không dính */
-    padding: 8px 14px; /* Tăng padding */
+    bottom: calc(var(--actionbar-height, 60px) + 8px);
+    left: 22px;
+    right: 22px;
+    gap: 8px;
+    padding: 6px 8px;
   }
+`;
+
+const LeftGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const RightGroup = styled.div`
+  display: flex;
+  align-items: center;
+  margin-left: auto; /* Đẩy nút chat sang bên phải */
 `;
 
 const BadgeWrapper = styled.div`
@@ -63,6 +79,8 @@ const UnreadBadge = styled.div`
 
 export default {
   Container,
+  LeftGroup,
+  RightGroup,
   BadgeWrapper,
   UnreadBadge,
 };

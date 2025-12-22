@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Button from '/imports/ui/components/common/button/component';
 import deviceInfo from '/imports/utils/deviceInfo';
 import Styled from './styles';
@@ -18,43 +18,68 @@ const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
 }) => {
   if (!deviceInfo.isMobile) return null;
 
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleToggleExpand = () => {
+    setIsExpanded((prev) => !prev);
+  };
+
   return (
     <Styled.Container>
-      <Button
-        label="Users"
-        icon="user"
-        color="default"
-        size="md"
-        onClick={onToggleUserList}
-        hideLabel
-        circle
-        data-test="mobileUserListButton"
-      />
-      <Styled.BadgeWrapper>
+      <Styled.LeftGroup>
         <Button
-          label="Message"
-          icon="chat"
-          color="primary"
+          label={isExpanded ? 'Hide tools' : 'Show tools'}
+          icon={isExpanded ? 'chevron-up' : 'chevron-down'}
+          color="default"
           size="md"
-          onClick={onTogglePrivateChat}
+          onClick={handleToggleExpand}
           hideLabel
           circle
-          data-test="mobilePrivateChatButton"
+          data-test="mobilePanelToggleButton"
         />
-        {privateUnreadCount > 0 && (
-          <Styled.UnreadBadge>{privateUnreadCount}</Styled.UnreadBadge>
+        {isExpanded && (
+          <>
+            <Button
+              label="Users"
+              icon="user"
+              color="default"
+              size="md"
+              onClick={onToggleUserList}
+              hideLabel
+              circle
+              data-test="mobileUserListButton"
+            />
+            <Button
+              label="Chat & Notes"
+              icon="note"
+              color="default"
+              size="md"
+              onClick={onToggleChatNotes}
+              hideLabel
+              circle
+              data-test="mobileChatNotesButton"
+            />
+          </>
         )}
-      </Styled.BadgeWrapper>
-      <Button
-        label="Chat & Notes"
-        icon="note"
-        color="default"
-        size="md"
-        onClick={onToggleChatNotes}
-        hideLabel
-        circle
-        data-test="mobileChatNotesButton"
-      />
+      </Styled.LeftGroup>
+
+      <Styled.RightGroup>
+        <Styled.BadgeWrapper>
+          <Button
+            label="Message"
+            icon="chat"
+            color="primary"
+            size="md"
+            onClick={onTogglePrivateChat}
+            hideLabel
+            circle
+            data-test="mobilePrivateChatButton"
+          />
+          {privateUnreadCount > 0 && (
+            <Styled.UnreadBadge>{privateUnreadCount}</Styled.UnreadBadge>
+          )}
+        </Styled.BadgeWrapper>
+      </Styled.RightGroup>
     </Styled.Container>
   );
 };

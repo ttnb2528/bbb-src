@@ -82,7 +82,15 @@ class BBBMenu extends React.Component {
   handleClick(event) {
     const { disabled } = this.props;
     if (disabled) return;
-    this.setState({ anchorEl: event.currentTarget });
+    // Toggle: nếu đang mở thì đóng, nếu đang đóng thì mở
+    const { anchorEl } = this.state;
+    if (anchorEl) {
+      // Đang mở, đóng lại
+      this.handleClose(event);
+    } else {
+      // Đang đóng, mở ra
+      this.setState({ anchorEl: event.currentTarget });
+    }
   }
 
   handleClose(event) {

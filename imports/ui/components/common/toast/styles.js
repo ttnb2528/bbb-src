@@ -197,7 +197,8 @@ const ToastifyContainer = styled(Toastify)`
   }
 
   @media ${smallOnly} {
-    width: 75%;
+    width: 90%;
+    top: 3rem;
   }
 `;
 

@@ -18,6 +18,8 @@ import Session from '/imports/ui/services/storage/in-memory';
 import { LAYOUT_TYPE } from '/imports/ui/components/layout/enums';
 import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
 import Toggle from '/imports/ui/components/common/switch/component';
+import ConnectionStatusModalContainer from '/imports/ui/components/connection-status/modal/container';
+import ConfirmationModal from '/imports/ui/components/common/modal/confirmation/component';
 
 const intlMessages = defineMessages({
   optionsLabel: {
@@ -124,6 +126,21 @@ const intlMessages = defineMessages({
     id: 'app.navBar.optionsDropdown.presenceLabel',
     description: 'Presence Label',
   },
+  leaveSessionConfirmTitle: {
+    id: 'app.navBar.optionsDropdown.leaveSessionConfirmTitle',
+    description: 'Leave session confirmation title',
+    defaultMessage: 'Leave Session',
+  },
+  leaveSessionConfirmDescription: {
+    id: 'app.navBar.optionsDropdown.leaveSessionConfirmDescription',
+    description: 'Leave session confirmation description',
+    defaultMessage: 'Are you sure you want to leave this session?',
+  },
+  leaveSessionConfirmButton: {
+    id: 'app.navBar.optionsDropdown.leaveSessionConfirmButton',
+    description: 'Leave session confirm button label',
+    defaultMessage: 'Leave',
+  },
 });
 
 const propTypes = {
@@ -175,6 +192,8 @@ class OptionsDropdown extends PureComponent {
       isMobileAppModalOpen: false,
       isFullscreen: false,
       isLayoutModalOpen: false,
+      isConnectionStatusModalOpen: false,
+      isLeaveSessionConfirmationModalOpen: false,
     };
 
     // Set the logout code to 680 because it's not a real code and can be matched on the other side
@@ -188,6 +207,8 @@ class OptionsDropdown extends PureComponent {
     this.setAboutModalIsOpen = this.setAboutModalIsOpen.bind(this);
     this.setShortcutHelpModalIsOpen = this.setShortcutHelpModalIsOpen.bind(this);
     this.setLayoutModalIsOpen = this.setLayoutModalIsOpen.bind(this);
+    this.setConnectionStatusModalIsOpen = this.setConnectionStatusModalIsOpen.bind(this);
+    this.setLeaveSessionConfirmationModalIsOpen = this.setLeaveSessionConfirmationModalIsOpen.bind(this);
   }
 
   componentDidMount() {
@@ -270,6 +291,14 @@ class OptionsDropdown extends PureComponent {
 
   setLayoutModalIsOpen(value) {
     this.setState({ isLayoutModalOpen: value });
+  }
+
+  setConnectionStatusModalIsOpen(value) {
+    this.setState({ isConnectionStatusModalOpen: value });
+  }
+
+  setLeaveSessionConfirmationModalIsOpen(value) {
+    this.setState({ isLeaveSessionConfirmationModalOpen: value });
   }
 
   renderMenuItems() {
@@ -451,10 +480,11 @@ class OptionsDropdown extends PureComponent {
     if (showConnectionStatus) {
       this.menuItems.push({
         key: 'list-item-connection-status',
-        icon: 'connection_status',
+        icon: 'network',
         label: 'Connection Status',
         onClick: () => {
-          // Connection status sẽ được hiển thị tự động khi có vấn đề
+          // Mở Connection Status modal
+          this.setConnectionStatusModalIsOpen(true);
         },
       });
     }
@@ -472,7 +502,10 @@ class OptionsDropdown extends PureComponent {
         icon: 'logout',
         label: intl.formatMessage(leaveLabel),
         description: intl.formatMessage(leaveDesc),
-        onClick: () => this.leaveSession(),
+        onClick: () => {
+          // Mở confirm modal thay vì thoát luôn
+          this.setLeaveSessionConfirmationModalIsOpen(true);
+        },
       });
     }
 
@@ -543,6 +576,7 @@ class OptionsDropdown extends PureComponent {
     const {
       isAboutModalOpen, isShortcutHelpModalOpen, isOptionsMenuModalOpen,
       isEndMeetingConfirmationModalOpen, isMobileAppModalOpen, isLayoutModalOpen,
+      isConnectionStatusModalOpen, isLeaveSessionConfirmationModalOpen,
     } = this.state;
 
     const customStyles = { top: '1rem' };
@@ -598,6 +632,30 @@ class OptionsDropdown extends PureComponent {
           this.setLayoutModalIsOpen,
           'low',
           LayoutModalContainer,
+        )}
+        {/* Connection Status modal: dùng trực tiếp container với props chuẩn */}
+        {isConnectionStatusModalOpen && (
+          <ConnectionStatusModalContainer
+            isModalOpen={isConnectionStatusModalOpen}
+            setModalIsOpen={this.setConnectionStatusModalIsOpen}
+          />
+        )}
+        {isLeaveSessionConfirmationModalOpen && (
+          <ConfirmationModal
+            intl={intl}
+            isOpen={isLeaveSessionConfirmationModalOpen}
+            onRequestClose={() => this.setLeaveSessionConfirmationModalIsOpen(false)}
+            setIsOpen={this.setLeaveSessionConfirmationModalIsOpen}
+            onConfirm={() => {
+              this.setLeaveSessionConfirmationModalIsOpen(false);
+              this.leaveSession();
+            }}
+            title={intl.formatMessage(intlMessages.leaveSessionConfirmTitle)}
+            description={intl.formatMessage(intlMessages.leaveSessionConfirmDescription)}
+            confirmButtonColor="danger"
+            confirmButtonLabel={intl.formatMessage(intlMessages.leaveSessionConfirmButton)}
+            priority="low"
+          />
         )}
 
       </>
