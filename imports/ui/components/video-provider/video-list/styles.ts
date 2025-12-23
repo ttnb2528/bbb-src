@@ -132,11 +132,14 @@ const CustomLayoutContainer = styled.div`
   padding-top: 0; /* Bỏ padding trên để đẩy video lên */
 `;
 
-// D?i cam nh? ? trên (t?t c? ngu?i tham gia)
-const VideoStrip = styled.div`
+// Dải cam nhỏ ở trên (tất cả người tham gia)
+// Nhận prop $hasSharedContent để chỉnh padding-top: khi share thì sát trên hơn
+const VideoStrip = styled.div<{
+  $hasSharedContent?: boolean;
+}>`
   display: flex;
   gap: 4px;
-  padding: 12px 10px 16px 10px; /* Tăng padding-top để hạ cam nhỏ xuống */
+  padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 10px 16px 10px' : '12px 10px 16px 10px')};
   background: rgba(15, 23, 42, 0.8);
   border-radius: 8px;
   overflow-x: auto;
@@ -167,13 +170,13 @@ const VideoStrip = styled.div`
   /* Mobile responsive */
   @media ${smallOnly} {
     height: 100px;
-    padding: 8px 6px 10px 6px; /* Tăng padding-top để hạ cam nhỏ xuống */
+    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 6px 10px 6px' : '8px 6px 10px 6px')};
     gap: 3px;
   }
 
   @media ${hasPhoneWidth} {
     height: 80px;
-    padding: 6px 4px 8px 4px; /* Tăng padding-top để hạ cam nhỏ xuống */
+    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 4px 8px 4px' : '6px 4px 8px 4px')};
   }
 `;
 

@@ -1,10 +1,14 @@
 import React from 'react';
-import { layoutSelectOutput } from '/imports/ui/components/layout/context';
+import { layoutSelectInput, layoutSelectOutput } from '/imports/ui/components/layout/context';
 import { Output } from '/imports/ui/components/layout/layoutTypes';
 import DropArea from './component';
 
 const DropAreaContainer = () => {
+  const cameraDockInput = layoutSelectInput((i: any) => i.cameraDock);
   const dropZoneAreas = layoutSelectOutput((i: Output) => i.dropZoneAreas);
+
+  // Chỉ hiển thị overlay drop zone khi đang kéo camera dock
+  if (!cameraDockInput?.isDragging) return null;
 
   return (
     Object.keys(dropZoneAreas).map((objectKey) => (

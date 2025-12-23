@@ -77,6 +77,8 @@ interface VideoListProps {
   focusedId: string;
   handleVideoFocus: (id: string) => void;
   isGridEnabled: boolean;
+  // Đang share nội dung (presentation hoặc screen share)
+  hasSharedContent: boolean;
   streams: VideoItem[];
   intl: IntlShape;
   setUserCamerasRequestedFromPlugin: React.Dispatch<React.SetStateAction<UpdatedDataForUserCameraDomElement[]>>;
@@ -466,7 +468,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   };
 
   renderVideoList() {
-    const { streams, focusedId } = this.props;
+    const { streams, focusedId, hasSharedContent } = this.props;
 
     // 1) Uu tiên focusedId làm ngu?n stage (d?m b?o m?i client th?y gi?ng nhau)
     let stageStream = streams.find((item) => {
@@ -505,21 +507,22 @@ class VideoList extends Component<VideoListProps, VideoListState> {
 
     return (
       <Styled.CustomLayoutContainer>
-        {/* D?i cam nh? ? trên */}
-        <Styled.VideoStrip onWheel={this.handleStripWheel}>
+        {/* Dải cam nhỏ ở trên */}
+        <Styled.VideoStrip
+          $hasSharedContent={hasSharedContent}
+          onWheel={this.handleStripWheel}
+        >
           {sortedStripStreams.map((item) => this.renderVideoItem(item, true))}
         </Styled.VideoStrip>
 
         {/* Khung trung tâm to */}
-        {stageStream ? (
-          <Styled.MainStage>
-            {this.renderVideoItem(stageStream, false)}
-          </Styled.MainStage>
-        ) : (
-          <Styled.MainStage>
-            <Styled.StagePlaceholder>Ch? presenter...</Styled.StagePlaceholder>
-          </Styled.MainStage>
-        )}
+        <Styled.MainStage>
+          {/* Khi đang share document / screen thì không hiển thị cam lớn để nhường chỗ cho nội dung share */}
+          {!hasSharedContent && stageStream && this.renderVideoItem(stageStream, false)}
+          {!hasSharedContent && !stageStream && (
+            <Styled.StagePlaceholder>Chờ presenter...</Styled.StagePlaceholder>
+          )}
+        </Styled.MainStage>
       </Styled.CustomLayoutContainer>
     );
   }

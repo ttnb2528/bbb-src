@@ -203,7 +203,8 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
 
   return (
     <>
-      {isDragging ? <DropAreaContainer /> : null}
+      {/* Tắt overlay drop-zone của hệ thống để không bị ép layout cam nhỏ */}
+      {/* {isDragging ? <DropAreaContainer /> : null} */}
       <Styled.ResizableWrapper
         $horizontal={cameraDock.position === CAMERADOCK_POSITION.CONTENT_TOP
           || cameraDock.position === CAMERADOCK_POSITION.CONTENT_BOTTOM}
