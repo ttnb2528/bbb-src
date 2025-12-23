@@ -485,13 +485,21 @@ const CustomLayout = (props) => {
       return mediaBounds;
     }
 
+    const sharedContentOpen = hasPresentation || hasExternalVideo || hasScreenShare || genericContentId;
+    // Khi share + cam dock ở trên, đẩy media xuống thêm chút giống khoảng cách của cam lớn
+    const extraTopPadding = (
+      cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP
+      && cameraDockInput.numCameras > 0
+      && sharedContentOpen
+    ) ? 32 : 0;
+
     if (cameraDockInput.numCameras > 0 && !cameraDockInput.isDragging) {
       switch (cameraDockInput.position) {
         case CAMERADOCK_POSITION.CONTENT_TOP: {
           mediaBounds.width = mediaAreaWidth;
-          mediaBounds.height = mediaAreaHeight - cameraDockBounds.height - camerasMargin;
+          mediaBounds.height = mediaAreaHeight - cameraDockBounds.height - camerasMargin - extraTopPadding;
           mediaBounds.top =
-            navBarHeight + cameraDockBounds.height + camerasMargin + bannerHeight;
+            navBarHeight + cameraDockBounds.height + camerasMargin + bannerHeight + extraTopPadding;
           mediaBounds.left = !isRTL ? 0 : null;
           mediaBounds.right = isRTL ? 0 : null;
           break;

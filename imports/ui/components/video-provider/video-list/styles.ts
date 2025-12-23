@@ -190,6 +190,7 @@ const VideoStripItem = styled.div<{
   flex-shrink: 0;
   border-radius: 8px;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.35); /* Border để dễ nhìn trạng thái cam nhỏ */
 
   ${({ $isPresenter }) => $isPresenter && `
     /* Bỏ border cho presenter */

@@ -208,7 +208,7 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
 
   // Khi share: ép camera dock sát top (loại bỏ offset nav/toolbar của BBB)
   const dockTop = (hasSharedContent && cameraDock.position === CAMERADOCK_POSITION.CONTENT_TOP)
-    ? 16
+    ? 24
     : cameraDock.top;
 
   return (
