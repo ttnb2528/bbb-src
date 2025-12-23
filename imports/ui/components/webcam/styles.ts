@@ -32,7 +32,28 @@ const ResizableWrapper = styled.div<{
   `}
 `;
 
+// PIP cố định cho cam nhỏ khi share
+const PipWrapper = styled.div`
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  width: 220px;
+  height: 132px;
+  z-index: 500;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  background: #000;
+
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
 export default {
   Draggable,
   ResizableWrapper,
+  PipWrapper,
 };

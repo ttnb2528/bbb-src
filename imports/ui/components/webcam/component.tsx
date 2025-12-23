@@ -12,7 +12,6 @@ import {
 import { LAYOUT_TYPE, ACTIONS, CAMERADOCK_POSITION } from '/imports/ui/components/layout/enums';
 import { CURRENT_PRESENTATION_PAGE_SUBSCRIPTION, CurrentPresentationPagesSubscriptionResponse } from '/imports/ui/components/whiteboard/queries';
 import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
-import DropAreaContainer from './drop-areas/container';
 import VideoProviderContainer from '/imports/ui/components/video-provider/container';
 import Storage from '/imports/ui/services/storage/session';
 import Styled from './styles';
@@ -54,6 +53,12 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
   cameraOptimalGridSize: cameraSize,
   isRTL,
 }) => {
+  // Xác định đang share nội dung hay không
+  // Xác định đang share (screen hoặc presentation) để chuyển PIP
+  const screenShareInput = layoutSelectInput((i: any) => i.screenShare);
+  const { hasScreenShare } = screenShareInput || {};
+  const hasSharedContent = !!(hasScreenShare || displayPresentation);
+
   const [isResizing, setIsResizing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -200,6 +205,23 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
   const isDesktopWidth = isDragging ? cameraSize?.width : cameraDock.width;
   const isDesktopHeight = isDragging ? cameraSize?.height : cameraDock.height;
   const camOpacity = isDragging ? 0.5 : undefined;
+  const disableDrag = false; // cho phép kéo như mặc định, nhưng đã tắt overlay drop-zone
+
+  // Nếu đang share (screen/presentation): hiển thị PIP cố định, không render dock lớn
+  if (hasSharedContent) {
+    return (
+      <Styled.PipWrapper>
+        <VideoProviderContainer
+          {...{
+            swapLayout,
+            cameraDock,
+            focusedId,
+            handleVideoFocus,
+          }}
+        />
+      </Styled.PipWrapper>
+    );
+  }
 
   return (
     <>
@@ -211,35 +233,15 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
         $vertical={cameraDock.position === CAMERADOCK_POSITION.CONTENT_LEFT
           || cameraDock.position === CAMERADOCK_POSITION.CONTENT_RIGHT}
       >
-        <Draggable
-          handle="video"
-          bounds="html"
-          onStart={handleWebcamDragStart}
-          onDrag={() => {
-            if (!draggedAtLeastOneTime) {
-              setDraggedAtLeastOneTime(true);
-            }
-          }}
-          onStop={handleWebcamDragStop}
-          onMouseDown={
-            cameraDock.isDraggable ? (e) => e.preventDefault() : undefined
-          }
-          disabled={!cameraDock.isDraggable || isResizing || isFullScreen}
-          position={
-            {
-              x: cameraDock.left - cameraDock.right + draggableOffset.left,
-              y: cameraDock.top + draggableOffset.top,
-            }
-          }
-        >
+        {disableDrag ? (
           <Resizable
-            minWidth={isDragging ? cameraSize?.width : cameraDock.minWidth}
-            minHeight={isDragging ? cameraSize?.height : cameraDock.minHeight}
-            maxWidth={isDragging ? cameraSize?.width : cameraMaxWidth}
-            maxHeight={isDragging ? cameraSize?.height : cameraDock.maxHeight}
+            minWidth={cameraDock.minWidth}
+            minHeight={cameraDock.minHeight}
+            maxWidth={cameraMaxWidth}
+            maxHeight={cameraDock.maxHeight}
             size={{
-              width: isDragging ? cameraSize?.width : cameraDock.width,
-              height: isDragging ? cameraSize?.height : cameraDock.height,
+              width: cameraDock.width,
+              height: cameraDock.height,
             }}
             onResizeStart={() => {
               setIsResizing(true);
@@ -262,11 +264,10 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
               });
             }}
             enable={{
-              top: !isFullScreen && !isDragging && !swapLayout && cameraDock?.resizableEdge?.top,
-              bottom: !isFullScreen && !isDragging && !swapLayout
-              && cameraDock?.resizableEdge?.bottom,
-              left: !isFullScreen && !isDragging && !swapLayout && cameraDock?.resizableEdge?.left,
-              right: !isFullScreen && !isDragging && !swapLayout && cameraDock?.resizableEdge?.right,
+              top: !isFullScreen && !swapLayout && cameraDock?.resizableEdge?.top,
+              bottom: !isFullScreen && !swapLayout && cameraDock?.resizableEdge?.bottom,
+              left: !isFullScreen && !swapLayout && cameraDock?.resizableEdge?.left,
+              right: !isFullScreen && !swapLayout && cameraDock?.resizableEdge?.right,
               topLeft: false,
               topRight: false,
               bottomLeft: false,
@@ -274,20 +275,23 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
             }}
             style={{
               position: 'absolute',
-              zIndex: isCameraSidebar && !isDragging ? 0 : cameraDock?.zIndex,
+              zIndex: isCameraSidebar ? 0 : cameraDock?.zIndex,
+              top: cameraDock.top + draggableOffset.top,
+              left: cameraDock.left - cameraDock.right + draggableOffset.left,
             }}
           >
             <Styled.Draggable
-              $isDraggable={!!cameraDock.isDraggable && !isFullScreen && !isDragging}
-              $isDragging={isDragging}
+              $isDraggable={false}
+              $isDragging={false}
               id="cameraDock"
               role="region"
-              draggable={cameraDock.isDraggable && !isFullScreen ? 'true' : undefined}
+              draggable={false}
               style={{
                 width: isIphone ? mobileWidth : isDesktopWidth,
                 height: isIphone ? mobileHeight : isDesktopHeight,
                 opacity: camOpacity,
                 background: 'none',
+                cursor: 'default',
               }}
             >
               <>
@@ -303,7 +307,101 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
               </>
             </Styled.Draggable>
           </Resizable>
-        </Draggable>
+        ) : (
+          <Draggable
+            handle="video"
+            bounds="html"
+            onStart={handleWebcamDragStart}
+            onDrag={() => {
+              if (!draggedAtLeastOneTime) {
+                setDraggedAtLeastOneTime(true);
+              }
+            }}
+            onStop={handleWebcamDragStop}
+            onMouseDown={
+              cameraDock.isDraggable ? (e) => e.preventDefault() : undefined
+            }
+            disabled={!cameraDock.isDraggable || isResizing || isFullScreen}
+            position={
+              {
+                x: cameraDock.left - cameraDock.right + draggableOffset.left,
+                y: cameraDock.top + draggableOffset.top,
+              }
+            }
+          >
+            <Resizable
+              minWidth={isDragging ? cameraSize?.width : cameraDock.minWidth}
+              minHeight={isDragging ? cameraSize?.height : cameraDock.minHeight}
+              maxWidth={isDragging ? cameraSize?.width : cameraMaxWidth}
+              maxHeight={isDragging ? cameraSize?.height : cameraDock.maxHeight}
+              size={{
+                width: isDragging ? cameraSize?.width : cameraDock.width,
+                height: isDragging ? cameraSize?.height : cameraDock.height,
+              }}
+              onResizeStart={() => {
+                setIsResizing(true);
+                setResizeStart({ width: cameraDock.width, height: cameraDock.height });
+                onResizeHandle(cameraDock.width, cameraDock.height);
+                layoutContextDispatch({
+                  type: ACTIONS.SET_CAMERA_DOCK_IS_RESIZING,
+                  value: true,
+                });
+              }}
+              onResize={(_, __, ___, d) => {
+                onResizeHandle(d.width, d.height);
+              }}
+              onResizeStop={() => {
+                setResizeStart({ width: 0, height: 0 });
+                setTimeout(() => setIsResizing(false), 500);
+                layoutContextDispatch({
+                  type: ACTIONS.SET_CAMERA_DOCK_IS_RESIZING,
+                  value: false,
+                });
+              }}
+              enable={{
+                top: !isFullScreen && !isDragging && !swapLayout && cameraDock?.resizableEdge?.top,
+                bottom: !isFullScreen && !isDragging && !swapLayout
+                && cameraDock?.resizableEdge?.bottom,
+                left: !isFullScreen && !isDragging && !swapLayout && cameraDock?.resizableEdge?.left,
+                right: !isFullScreen && !isDragging && !swapLayout && cameraDock?.resizableEdge?.right,
+                topLeft: false,
+                topRight: false,
+                bottomLeft: false,
+                bottomRight: false,
+              }}
+              style={{
+                position: 'absolute',
+                zIndex: isCameraSidebar && !isDragging ? 0 : cameraDock?.zIndex,
+              }}
+            >
+              <Styled.Draggable
+                $isDraggable={!!cameraDock.isDraggable && !isFullScreen && !isDragging}
+                $isDragging={isDragging}
+                id="cameraDock"
+                role="region"
+                draggable={cameraDock.isDraggable && !isFullScreen ? 'true' : undefined}
+                style={{
+                  width: isIphone ? mobileWidth : isDesktopWidth,
+                  height: isIphone ? mobileHeight : isDesktopHeight,
+                  opacity: camOpacity,
+                  background: 'none',
+                }}
+              >
+                <>
+                  <h2 className="sr-only">{intl.formatMessage(intlMessages.camerasAriaLabel)}</h2>
+                  <VideoProviderContainer
+                    {...{
+                      swapLayout,
+                      cameraDock,
+                      focusedId,
+                      handleVideoFocus,
+                    }}
+                  />
+                </>
+              </Styled.Draggable>
+            </Resizable>
+          </Draggable>
+        )}
       </Styled.ResizableWrapper>
     </>
   );
