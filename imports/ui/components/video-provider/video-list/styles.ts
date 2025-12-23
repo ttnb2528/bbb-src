@@ -189,7 +189,7 @@ const VideoStripItem = styled.div<{
   overflow: hidden;
 
   ${({ $isPresenter }) => $isPresenter && `
-    border: 2px solid #FF6B35;
+    /* Bỏ border cho presenter */
     width: 190px; /* to hon theo chi?u ngang */
     box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
     transform: scale(1.03); /* nh? d? không b? méo/c?t */

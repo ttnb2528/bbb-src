@@ -568,6 +568,7 @@ const CustomLayout = (props) => {
       // Mobile: ẩn panel hoặc dùng height rất nhỏ
       sidebarPanelHeight = 0; // Hoặc có thể dùng 120 nếu muốn hiện nhưng nhỏ
     } else {
+      // User panel giữ nguyên chiều cao cũ
       sidebarPanelHeight = windowH < 800 ? 180 : windowH < 1080 ? 200 : 220;
     }
 
@@ -707,7 +708,7 @@ const CustomLayout = (props) => {
         maxHeight: maxUserListHeight,
         top: sidebarNavTop,
         left: sidebarNavLeft,
-        right: null,
+        right: sidebarContentRight,
         tabOrder: DEFAULT_VALUES.sidebarNavTabOrder,
         isResizable: !isMobile && !isTablet, // Allow resize for desktop
         zIndex: 10,
@@ -724,16 +725,26 @@ const CustomLayout = (props) => {
       },
     });
 
-    // Calculate new position for sidebar content (Chat/Notes panel - separate panel, next to User List)
-    const sidebarContentTop = sidebarNavTop;
-    const sidebarContentLeft = isMobile ? 0 : sidebarNavNewWidth; // Mobile: stack vertically
-    // Chat/Notes panel: takes remaining width, allow resize
-    const sidebarContentNewWidth = isMobile ? windowWidth() : (windowWidth() - sidebarNavNewWidth);
-    const sidebarContentNewHeight = sidebarPanelHeight;
+    // Calculate new position for sidebar content (Chat/Notes panel - separate panel, on the right side)
+    // Chat panel cao hơn user panel để hiển thị nhiều tin nhắn hơn
+    // Dùng lại windowH đã được tính ở trên (dòng 564)
+    // Tăng chiều cao lên cao hơn nữa
+    const chatPanelHeight = isMobile ? 0 : (windowH < 800 ? 400 : windowH < 1080 ? 500 : 600);
+    // Chat panel có thể cao hơn user panel, nên tính top dựa trên chat panel height
+    const sidebarContentTop = windowHeight() - actionBarHeight - chatPanelHeight;
+    // Chat panel nằm ở bên phải màn hình, tách biệt với user panel
+    const sidebarContentLeft = isMobile ? 0 : null; // Desktop: đặt từ right edge
+    const sidebarContentRight = isMobile ? null : 0; // Desktop: nằm sát bên phải
+    // Chat/Notes panel: width cố định nhỏ gọn
+    const sidebarContentNewWidth = isMobile ? windowWidth() : 350; // Width cố định cho desktop
+    const sidebarContentNewHeight = chatPanelHeight;
     const minChatNotesWidth = isMobile ? windowWidth() : 300; // Mobile: full width
+    const maxChatNotesWidth = isMobile ? windowWidth() : 450; // Max width cho desktop
     // Calculate minHeight and maxHeight for collapse/expand functionality
     const minChatNotesHeight = 52; // Collapsed height
-    const maxChatNotesHeight = Math.min(windowHeight() * 0.5, windowHeight() - actionBarHeight - 20);
+    // Tăng chiều cao tối đa để hiển thị nhiều tin nhắn hơn
+    // Tăng chiều cao tối đa lên cao hơn nữa để hiển thị nhiều tin nhắn hơn
+    const maxChatNotesHeight = Math.min(windowHeight() * 0.85, windowHeight() - actionBarHeight - 10);
 
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_CONTENT_OUTPUT,
@@ -742,13 +753,13 @@ const CustomLayout = (props) => {
         display: isMobile ? false : true,
         minWidth: minChatNotesWidth,
         width: sidebarContentNewWidth,
-        maxWidth: isMobile ? windowWidth() : (windowWidth() - minUserListWidth), // Mobile: full width
+        maxWidth: maxChatNotesWidth, // Max width cố định cho desktop
         minHeight: minChatNotesHeight,
         height: sidebarContentNewHeight,
         maxHeight: maxChatNotesHeight,
         top: sidebarContentTop,
         left: sidebarContentLeft,
-        right: null,
+        right: sidebarContentRight,
         currentPanelType,
         tabOrder: DEFAULT_VALUES.sidebarContentTabOrder,
         isResizable: !isMobile && !isTablet, // Allow resize for desktop
