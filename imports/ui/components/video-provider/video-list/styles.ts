@@ -136,7 +136,7 @@ const CustomLayoutContainer = styled.div`
 const VideoStrip = styled.div`
   display: flex;
   gap: 4px;
-  padding: 4px 10px 16px 10px; /* Giảm padding-top từ 10px xuống 4px để đẩy lên */
+  padding: 12px 10px 16px 10px; /* Tăng padding-top để hạ cam nhỏ xuống */
   background: rgba(15, 23, 42, 0.8);
   border-radius: 8px;
   overflow-x: auto;
@@ -167,13 +167,13 @@ const VideoStrip = styled.div`
   /* Mobile responsive */
   @media ${smallOnly} {
     height: 100px;
-    padding: 2px 6px 10px 6px; /* Giảm padding-top từ 6px xuống 2px */
+    padding: 8px 6px 10px 6px; /* Tăng padding-top để hạ cam nhỏ xuống */
     gap: 3px;
   }
 
   @media ${hasPhoneWidth} {
     height: 80px;
-    padding: 2px 4px 8px 4px; /* Giảm padding-top từ 4px xuống 2px */
+    padding: 6px 4px 8px 4px; /* Tăng padding-top để hạ cam nhỏ xuống */
   }
 `;
 
@@ -191,7 +191,7 @@ const VideoStripItem = styled.div<{
   ${({ $isPresenter }) => $isPresenter && `
     /* Bỏ border cho presenter */
     width: 190px; /* to hon theo chi?u ngang */
-    box-shadow: 0 0 10px rgba(255, 107, 53, 0.6);
+    /* Bỏ box-shadow màu cam phát sáng */
     transform: scale(1.03); /* nh? d? không b? méo/c?t */
   `}
 
@@ -210,6 +210,7 @@ const VideoStripItem = styled.div<{
     ${({ $isPresenter }) => $isPresenter && `
       width: 120px;
       transform: scale(1.02);
+      /* Bỏ box-shadow màu cam phát sáng */
     `}
 
     [class*="userName"],
@@ -286,6 +287,13 @@ const PresenterStageVideo = styled.div`
     justify-content: center;
     background: transparent;
     position: relative; /* Để tag dropdown có thể hiển thị */
+
+    /* Xóa hiệu ứng glow màu cam cho cam lớn (main stage) */
+    box-shadow: none !important;
+
+    &::after {
+      box-shadow: none !important;
+    }
   }
   
   video {
