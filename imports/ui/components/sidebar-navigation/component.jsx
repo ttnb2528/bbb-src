@@ -161,7 +161,7 @@ const SidebarNavigation = ({
       <Styled.SidebarNavigationWrapper data-collapsed={isCollapsed}>
         {/* Thanh handle ở mép dưới để kéo panel lên / xuống */}
         <Styled.BottomHandle type="button" onClick={toggleCollapsed} data-collapsed={isCollapsed}>
-          <i className="icon-bbb-up_arrow" />
+          <i className="icon-bbb-right_arrow" />
         </Styled.BottomHandle>
 
         <Styled.ContentArea data-collapsed={isCollapsed}>

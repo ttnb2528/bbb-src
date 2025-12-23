@@ -6,7 +6,7 @@ const SidebarNavigationWrapper = styled.div`
   width: 100%;
   height: 100%;
   background-color: ${colorWhite};
-  border-radius: ${borderRadius} ${borderRadius} 0 0;
+  border-radius: ${borderRadius} 0 0 0;
   border: none; /* Bỏ border theo yêu cầu */
   overflow: visible; /* cho phép nút handle lộ ra phía trên */
   display: flex;
@@ -32,13 +32,13 @@ const BottomHandle = styled.button`
 
   /* Nút hình "nửa hình tròn" dính vào mép trên panel */
   position: absolute;
-  top: -32px; /* Đẩy button lên cao hơn */
+  top: -24px; /* Hạ xuống một chút cho đẹp hơn */
   right: auto;
   left: 10px;
   transform: none;
   z-index: 10;
 
-  height: 32px;
+  height: 24px;
   min-width: 48px;
   padding: 0 16px;
   border-radius: 999px 999px 0 0;
@@ -54,17 +54,19 @@ const BottomHandle = styled.button`
     outline: none;
   }
 
-  /* Icon arrow */
-  i[class*="icon-bbb-up_arrow"] {
+  /* Icon mũi tên > xoay để chỉ lên/xuống */
+  i[class*="icon-bbb-right_arrow"] {
     font-size: 18px;
     line-height: 1;
+    display: inline-block;
     transition: transform 0.3s ease;
+    transform: rotate(-90deg); /* Xoay -90 độ để chỉ lên khi collapsed */
   }
 
-  /* Xoay mũi tên khi expanded (để chỉ xuống) */
+  /* Xoay mũi tên 90 độ để chỉ xuống khi expanded */
   ${({ 'data-collapsed': collapsed }) => !collapsed && `
-    i[class*="icon-bbb-up_arrow"] {
-      transform: rotate(180deg);
+    i[class*="icon-bbb-right_arrow"] {
+      transform: translateY(6px) translateX(-1px) rotate(90deg);
     }
   `}
 
