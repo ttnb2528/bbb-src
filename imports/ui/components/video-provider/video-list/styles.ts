@@ -238,34 +238,64 @@ const MainStage = styled.div`
   justify-content: center;
   background: rgba(15, 23, 42, 0.95);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible; /* visible để tag dropdown không bị cắt */
   position: relative;
+
+  /* Video trong MainStage dùng contain để hiển thị đầy đủ nội dung */
+  video {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  /* Container video tự động fit với nội dung */
+  > div {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+  }
 `;
 
 // Container cho presenter cam trong stage (khi không có share)
+// Điều chỉnh để container vừa khớp với video, không bị zoom
 const PresenterStageVideo = styled.div`
-  width: 80%;
-  max-width: 900px;
-  height: 85%;
-  display: flex;
+  display: inline-flex; /* inline-flex để container vừa khớp với nội dung */
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible; /* visible để tag dropdown không bị cắt */
+  background: transparent; /* Background trong suốt để không thấy màu đen */
+  width: auto; /* Tự động điều chỉnh theo video */
+  height: auto; /* Tự động điều chỉnh theo video */
+  max-width: 100%; /* Không vượt quá container cha */
+  max-height: 100%; /* Không vượt quá container cha */
   
   /* Ð?m b?o video item bên trong cung có border-radius */
   > div {
-    width: 100%;
-    height: 100%;
+    width: auto; /* Tự động điều chỉnh theo video */
+    height: auto; /* Tự động điều chỉnh theo video */
+    max-width: 100%; /* Không vượt quá container cha */
+    max-height: 100%; /* Không vượt quá container cha */
     border-radius: 12px;
-    overflow: hidden;
+    overflow: hidden; /* Chỉ overflow hidden ở video container, không phải ở wrapper */
+    display: inline-flex; /* inline-flex để vừa khớp với video */
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    position: relative; /* Để tag dropdown có thể hiển thị */
   }
   
   video {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    width: auto; /* Tự động theo kích thước thực của video */
+    height: auto; /* Tự động theo kích thước thực của video */
+    max-width: 100%; /* Không vượt quá container */
+    max-height: 100%; /* Không vượt quá container */
+    object-fit: contain; /* contain để hiển thị đầy đủ, không bị crop */
     border-radius: 0; /* B? border-radius ? video, d? container x? lý */
+    display: block; /* Để video không có khoảng trống */
   }
 `;
 
