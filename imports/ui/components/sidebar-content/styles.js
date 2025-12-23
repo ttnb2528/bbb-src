@@ -40,7 +40,7 @@ const BottomHandle = styled.button`
 
   /* Nút hình “nửa hình tròn” dính vào mép trên panel */
   position: absolute;
-  top: -36px; /* Đẩy button lên cao hơn */
+  top: -32px; /* Đẩy button lên cao hơn */
   right: 24px; /* gần sát góc phải */
   left: auto;
   transform: none;
@@ -62,11 +62,19 @@ const BottomHandle = styled.button`
     outline: none;
   }
 
-  /* Icon chat bubble */
-  i.icon-bbb-chat {
+  /* Icon arrow */
+  i[class*="icon-bbb-up_arrow"] {
     font-size: 18px;
     line-height: 1;
+    transition: transform 0.3s ease;
   }
+
+  /* Xoay mũi tên khi expanded (để chỉ xuống) */
+  ${({ 'data-collapsed': collapsed }) => !collapsed && `
+    i[class*="icon-bbb-up_arrow"] {
+      transform: rotate(180deg);
+    }
+  `}
 
   &:hover {
     background: #ff8555;

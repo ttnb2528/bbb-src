@@ -691,6 +691,9 @@ const CustomLayout = (props) => {
     }
     // Use existing width if available, otherwise use default
     const sidebarNavNewWidth = sidebarNavigationInput.width || defaultUserListWidth;
+    // Calculate minHeight and maxHeight for collapse/expand functionality
+    const minUserListHeight = 52; // Collapsed height
+    const maxUserListHeight = Math.min(windowHeight() * 0.5, windowHeight() - actionBarHeight - 20);
 
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_NAVIGATION_OUTPUT,
@@ -699,7 +702,9 @@ const CustomLayout = (props) => {
         minWidth: minUserListWidth,
         width: sidebarNavNewWidth,
         maxWidth: maxUserListWidth,
+        minHeight: minUserListHeight,
         height: sidebarNavNewHeight,
+        maxHeight: maxUserListHeight,
         top: sidebarNavTop,
         left: sidebarNavLeft,
         right: null,
@@ -726,6 +731,9 @@ const CustomLayout = (props) => {
     const sidebarContentNewWidth = isMobile ? windowWidth() : (windowWidth() - sidebarNavNewWidth);
     const sidebarContentNewHeight = sidebarPanelHeight;
     const minChatNotesWidth = isMobile ? windowWidth() : 300; // Mobile: full width
+    // Calculate minHeight and maxHeight for collapse/expand functionality
+    const minChatNotesHeight = 52; // Collapsed height
+    const maxChatNotesHeight = Math.min(windowHeight() * 0.5, windowHeight() - actionBarHeight - 20);
 
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_CONTENT_OUTPUT,
@@ -735,7 +743,9 @@ const CustomLayout = (props) => {
         minWidth: minChatNotesWidth,
         width: sidebarContentNewWidth,
         maxWidth: isMobile ? windowWidth() : (windowWidth() - minUserListWidth), // Mobile: full width
+        minHeight: minChatNotesHeight,
         height: sidebarContentNewHeight,
+        maxHeight: maxChatNotesHeight,
         top: sidebarContentTop,
         left: sidebarContentLeft,
         right: null,

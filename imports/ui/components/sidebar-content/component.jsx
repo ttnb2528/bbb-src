@@ -117,7 +117,7 @@ const SidebarContent = (props) => {
   // Tính toán khoảng cách để panel trượt xuống sát footer khi collapsed
   // Footer có chiều cao khoảng 80px (actionbar), nút handle cao 32px và ở top: -36px
   // Khi collapsed, mình muốn top của nút handle sát footer (footer top = viewportHeight - actionBarHeight)
-  const actionBarHeight = 80; // Chiều cao footer/actionbar
+  const actionBarHeight = 100; // Chiều cao footer/actionbar
   const handleOffset = 36; // Nút handle nhô lên 36px từ top của panel
   const viewportHeight = window.innerHeight;
   // Top của nút handle khi expanded = top - handleOffset
@@ -175,7 +175,7 @@ const SidebarContent = (props) => {
       }}
       style={{
         position: 'absolute',
-        top: top - 8, // Đẩy panel lên cao hơn 8px để button handle không bị lún sâu
+        top,
         left,
         right,
         zIndex,
@@ -205,8 +205,8 @@ const SidebarContent = (props) => {
     >
       <Styled.SidebarContentWrapper data-collapsed={isCollapsed}>
         {/* Thanh handle ở mép dưới để kéo panel lên / xuống */}
-        <Styled.BottomHandle type="button" onClick={toggleCollapsed}>
-          <i className="icon-bbb-chat" />
+        <Styled.BottomHandle type="button" onClick={toggleCollapsed} data-collapsed={isCollapsed}>
+          <i className="icon-bbb-up_arrow" />
         </Styled.BottomHandle>
 
         {/* Panel ngang: chỉ hiển thị Public Chat */}
