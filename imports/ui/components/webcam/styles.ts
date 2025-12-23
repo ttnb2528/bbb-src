@@ -39,11 +39,19 @@ const PipWrapper = styled.div`
   left: 16px;
   width: 220px;
   height: 132px;
-  z-index: 500;
+  z-index: 300;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   background: #000;
+
+  /* Ngăn react-draggable áp transform đẩy cam xuống và ép translate 0, 8px */
+  > div {
+    position: relative !important;
+    transform: translate(0px, 8px) !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
 
   video {
     width: 100%;

@@ -53,8 +53,7 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
   cameraOptimalGridSize: cameraSize,
   isRTL,
 }) => {
-  // Xác định đang share nội dung hay không
-  // Xác định đang share (screen hoặc presentation) để chuyển PIP
+  // Xác định đang share để tắt draggable (tránh react-draggable áp translate làm hụt khoảng cách)
   const screenShareInput = layoutSelectInput((i: any) => i.screenShare);
   const { hasScreenShare } = screenShareInput || {};
   const hasSharedContent = !!(hasScreenShare || displayPresentation);
@@ -205,23 +204,12 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
   const isDesktopWidth = isDragging ? cameraSize?.width : cameraDock.width;
   const isDesktopHeight = isDragging ? cameraSize?.height : cameraDock.height;
   const camOpacity = isDragging ? 0.5 : undefined;
-  const disableDrag = false; // cho phép kéo như mặc định, nhưng đã tắt overlay drop-zone
+  const disableDrag = hasSharedContent; // khi share thì tắt drag để tránh transform đẩy strip xuống
 
-  // Nếu đang share (screen/presentation): hiển thị PIP cố định, không render dock lớn
-  if (hasSharedContent) {
-    return (
-      <Styled.PipWrapper>
-        <VideoProviderContainer
-          {...{
-            swapLayout,
-            cameraDock,
-            focusedId,
-            handleVideoFocus,
-          }}
-        />
-      </Styled.PipWrapper>
-    );
-  }
+  // Khi share: ép camera dock sát top (loại bỏ offset nav/toolbar của BBB)
+  const dockTop = (hasSharedContent && cameraDock.position === CAMERADOCK_POSITION.CONTENT_TOP)
+    ? 16
+    : cameraDock.top;
 
   return (
     <>
@@ -276,7 +264,7 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
             style={{
               position: 'absolute',
               zIndex: isCameraSidebar ? 0 : cameraDock?.zIndex,
-              top: cameraDock.top + draggableOffset.top,
+              top: dockTop + draggableOffset.top,
               left: cameraDock.left - cameraDock.right + draggableOffset.left,
             }}
           >
@@ -325,7 +313,7 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
             position={
               {
                 x: cameraDock.left - cameraDock.right + draggableOffset.left,
-                y: cameraDock.top + draggableOffset.top,
+                y: dockTop + draggableOffset.top,
               }
             }
           >
