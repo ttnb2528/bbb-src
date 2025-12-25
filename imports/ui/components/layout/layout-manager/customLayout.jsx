@@ -314,7 +314,7 @@ const CustomLayout = (props) => {
     let { width: lastWidth, height: lastHeight } = lastSize;
 
     if (cameraDockInput.isDragging) cameraDockBounds.zIndex = 99;
-    else cameraDockBounds.zIndex = 1;
+    else cameraDockBounds.zIndex = 10; // Tăng z-index để camera hiển thị trên document
 
     const isCameraTop = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP;
     const isCameraBottom = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_BOTTOM;
@@ -486,67 +486,85 @@ const CustomLayout = (props) => {
     }
 
     const sharedContentOpen = hasPresentation || hasExternalVideo || hasScreenShare || genericContentId;
-    // Khi share + cam dock ở trên, đẩy media xuống thêm chút giống khoảng cách của cam lớn
-    const extraTopPadding = (
-      cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP
-      && cameraDockInput.numCameras > 0
-      && sharedContentOpen
-    ) ? 32 : 0;
-
-    if (cameraDockInput.numCameras > 0 && !cameraDockInput.isDragging) {
-      switch (cameraDockInput.position) {
-        case CAMERADOCK_POSITION.CONTENT_TOP: {
-          mediaBounds.width = mediaAreaWidth;
-          mediaBounds.height = mediaAreaHeight - cameraDockBounds.height - camerasMargin - extraTopPadding;
-          mediaBounds.top =
-            navBarHeight + cameraDockBounds.height + camerasMargin + bannerHeight + extraTopPadding;
-          mediaBounds.left = !isRTL ? 0 : null;
+    
+    // Khi có camera và document: giữ camera ở vị trí cũ, di chuyển document xuống dưới camera
+    // Document giữ kích thước tối đa, không bị bóp
+    if (cameraDockInput.numCameras > 0 && !cameraDockInput.isDragging && sharedContentOpen) {
+      const isCameraTop = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP;
+      const isCameraBottom = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_BOTTOM;
+      const isCameraSidebar = cameraDockInput.position === CAMERADOCK_POSITION.SIDEBAR_CONTENT_BOTTOM;
+      const isCameraLeft = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_LEFT;
+      const isCameraRight = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_RIGHT;
+      
+      if (isCameraTop) {
+        // Camera ở trên: document đặt xuống dưới camera, giữ kích thước đầy đủ (không bị bóp)
+        // Document được đặt dưới camera để không bị che
+        const cameraTop = cameraDockBounds.top || navBarHeight;
+        const cameraHeight = cameraDockBounds.height || 0;
+        mediaBounds.width = mediaAreaWidth;
+        mediaBounds.height = mediaAreaHeight;
+        // Đặt document xuống dưới camera với margin đủ để không bị che
+        mediaBounds.top = cameraTop + cameraHeight + camerasMargin + bannerHeight;
+        mediaBounds.left = !isRTL ? 0 : null;
+        mediaBounds.right = isRTL ? 0 : null;
+        // Z-index cao hơn camera để đảm bảo document hiển thị đúng
+        mediaBounds.zIndex = 2;
+      } else if (isCameraBottom) {
+        // Camera ở dưới: document chiếm phần trên, camera ở dưới
+        mediaBounds.width = mediaAreaWidth;
+        mediaBounds.height = mediaAreaHeight - cameraDockBounds.height - camerasMargin;
+        mediaBounds.top = navBarHeight + bannerHeight;
+        mediaBounds.left = !isRTL ? 0 : null;
+        mediaBounds.right = isRTL ? 0 : null;
+        mediaBounds.zIndex = 1;
+      } else if (isCameraLeft || isCameraRight) {
+        // Camera ở bên trái hoặc phải: document chiếm phần còn lại, giữ kích thước tối đa
+        mediaBounds.width = mediaAreaWidth - cameraDockBounds.width - camerasMargin * 2;
+        mediaBounds.height = mediaAreaHeight;
+        mediaBounds.top = navBarHeight + bannerHeight;
+        if (isCameraLeft) {
+          mediaBounds.left = !isRTL ? (cameraDockBounds.width + camerasMargin * 2) : null;
           mediaBounds.right = isRTL ? 0 : null;
-          break;
-        }
-        case CAMERADOCK_POSITION.CONTENT_RIGHT: {
-          mediaBounds.width = mediaAreaWidth - cameraDockBounds.width - camerasMargin * 2;
-          mediaBounds.height = mediaAreaHeight;
-          mediaBounds.top = navBarHeight + bannerHeight;
+        } else {
           mediaBounds.left = !isRTL ? 0 : null;
-          mediaBounds.right = isRTL ? -camerasMargin * 2 : null;
-          break;
+          mediaBounds.right = isRTL ? (cameraDockBounds.width + camerasMargin * 2) : null;
         }
-        case CAMERADOCK_POSITION.CONTENT_BOTTOM: {
-          mediaBounds.width = mediaAreaWidth;
-          mediaBounds.height = mediaAreaHeight - cameraDockBounds.height - camerasMargin;
-          mediaBounds.top = navBarHeight - camerasMargin + bannerHeight;
-          mediaBounds.left = !isRTL ? 0 : null;
-          mediaBounds.right = isRTL ? 0 : null;
-          break;
-        }
-        case CAMERADOCK_POSITION.CONTENT_LEFT: {
-          mediaBounds.width = mediaAreaWidth - cameraDockBounds.width - camerasMargin * 2;
-          mediaBounds.height = mediaAreaHeight;
-          mediaBounds.top = navBarHeight + bannerHeight;
-          mediaBounds.left = !isRTL ? (mediaAreaWidth - mediaBounds.width) : null;
-          mediaBounds.right = isRTL ? 0 : null;
-          break;
-        }
-        case CAMERADOCK_POSITION.SIDEBAR_CONTENT_BOTTOM: {
-          mediaBounds.width = mediaAreaWidth;
-          mediaBounds.height = mediaAreaHeight;
-          mediaBounds.top = navBarHeight + bannerHeight;
-          mediaBounds.left = !isRTL ? 0 : null;
-          mediaBounds.right = isRTL ? 0 : null;
-          break;
-        }
-        default: {
-          console.log('presentation - camera default');
-        }
+        mediaBounds.zIndex = 1;
+      } else if (isCameraSidebar) {
+        // Camera ở sidebar: document chiếm toàn bộ không gian (camera không ảnh hưởng)
+        mediaBounds.width = mediaAreaWidth;
+        mediaBounds.height = mediaAreaHeight;
+        mediaBounds.top = navBarHeight + bannerHeight;
+        mediaBounds.left = !isRTL ? 0 : null;
+        mediaBounds.right = isRTL ? 0 : null;
+        mediaBounds.zIndex = 1;
+      } else {
+        // Vị trí khác: document giữ nguyên kích thước đầy đủ
+        mediaBounds.width = mediaAreaWidth;
+        mediaBounds.height = mediaAreaHeight;
+        mediaBounds.top = navBarHeight + bannerHeight;
+        mediaBounds.left = !isRTL ? 0 : null;
+        mediaBounds.right = isRTL ? 0 : null;
+        mediaBounds.zIndex = 1;
       }
-      mediaBounds.zIndex = 1;
-    } else {
+    } else if (cameraDockInput.numCameras > 0 && !cameraDockInput.isDragging) {
+      // Có camera nhưng không có document: giữ nguyên logic cũ
       mediaBounds.width = mediaAreaWidth;
       mediaBounds.height = mediaAreaHeight;
       mediaBounds.top = navBarHeight + bannerHeight;
       mediaBounds.left = !isRTL ? 0 : null;
       mediaBounds.right = isRTL ? 0 : null;
+      mediaBounds.zIndex = 1;
+    } else {
+      // Không có camera: đưa document về giữa màn hình
+      mediaBounds.width = mediaAreaWidth;
+      mediaBounds.height = mediaAreaHeight;
+      const verticalMargin = (mediaAreaHeight - mediaBounds.height) / 2;
+      const horizontalMargin = (mediaAreaWidth - mediaBounds.width) / 2;
+      mediaBounds.top = navBarHeight + bannerHeight + verticalMargin;
+      mediaBounds.left = !isRTL ? horizontalMargin : null;
+      mediaBounds.right = isRTL ? horizontalMargin : null;
+      mediaBounds.zIndex = 1;
     }
 
     return mediaBounds;
@@ -566,6 +584,7 @@ const CustomLayout = (props) => {
     } = props;
     const { position: cameraPosition } = cameraDockInput;
     const { camerasMargin, captionsMargin } = DEFAULT_VALUES;
+
 
     // Fixed height for horizontal sidebar panel above footer (optimized for better video space)
     // Use responsive height: smaller on smaller screens, but not too small to be unusable
