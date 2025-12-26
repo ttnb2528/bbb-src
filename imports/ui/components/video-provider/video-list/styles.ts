@@ -150,7 +150,7 @@ const VideoStrip = styled.div<{
   overflow-x: auto;
   overflow-y: hidden;
   flex-shrink: 0;
-  height: 150px;
+  height: 150px; /* Desktop: giữ nguyên */
   scroll-behavior: smooth;
   cursor: grab;
 
@@ -174,13 +174,13 @@ const VideoStrip = styled.div<{
 
   /* Mobile responsive - đẩy lên cao hơn bằng cách giảm padding-top */
   @media ${smallOnly} {
-    height: 100px;
+    height: 120px; /* Tăng từ 100px lên 120px để cam to hơn */
     padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 6px 10px 6px' : '2px 6px 10px 6px')}; /* Giảm padding-top từ 8px xuống 2px */
     gap: 6px; /* Tăng gap cho mobile */
   }
 
   @media ${hasPhoneWidth} {
-    height: 80px;
+    height: 100px; /* Tăng từ 80px lên 100px để cam to hơn */
     padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 4px 8px 4px' : '2px 4px 8px 4px')}; /* Giảm padding-top từ 6px xuống 2px */
     gap: 4px; /* Tăng gap cho phone */
   }
@@ -191,7 +191,7 @@ const VideoStripItem = styled.div<{
   $isPresenter?: boolean;
 }>`
   position: relative;
-  width: 160px;
+  width: 160px; /* Desktop: giữ nguyên */
   height: 100%;
   flex-shrink: 0;
   border-radius: 8px;
@@ -201,7 +201,7 @@ const VideoStripItem = styled.div<{
   ${({ $isPresenter }) => $isPresenter && `
     /* Border nổi bật cho presenter/host */
     border: 3px solid #FF6B35 !important;
-    width: 190px; /* to hon theo chiều ngang */
+    width: 190px; /* Desktop: giữ nguyên */
     /* Bỏ scale để video hiển thị đủ nội dung, không bị zoom */
   `}
 
@@ -214,11 +214,11 @@ const VideoStripItem = styled.div<{
 
   /* Mobile responsive */
   @media ${smallOnly} {
-    width: 100px;
+    width: 120px; /* Tăng từ 100px lên 120px để cam to hơn */
     border-radius: 6px;
 
     ${({ $isPresenter }) => $isPresenter && `
-      width: 120px;
+      width: 140px; /* Tăng từ 120px lên 140px để presenter cam to hơn */
       transform: scale(1.02);
       /* Bỏ box-shadow màu cam phát sáng */
     `}
@@ -231,11 +231,11 @@ const VideoStripItem = styled.div<{
   }
 
   @media ${hasPhoneWidth} {
-    width: 80px;
+    width: 100px; /* Tăng từ 80px lên 100px để cam to hơn */
     border-radius: 4px;
 
     ${({ $isPresenter }) => $isPresenter && `
-      width: 100px;
+      width: 120px; /* Tăng từ 100px lên 120px để presenter cam to hơn */
       transform: scale(1.01);
     `}
   }
