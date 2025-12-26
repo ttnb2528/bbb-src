@@ -138,7 +138,7 @@ const VideoStrip = styled.div<{
   $hasSharedContent?: boolean;
 }>`
   display: flex;
-  gap: 4px;
+  gap: 8px; /* Tăng gap để các camera cách đều nhau hơn */
   padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 10px 16px 10px' : '12px 10px 16px 10px')};
   background: rgba(15, 23, 42, 0.8);
   border-radius: 8px;
@@ -171,12 +171,13 @@ const VideoStrip = styled.div<{
   @media ${smallOnly} {
     height: 100px;
     padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 6px 10px 6px' : '8px 6px 10px 6px')};
-    gap: 3px;
+    gap: 6px; /* Tăng gap cho mobile */
   }
 
   @media ${hasPhoneWidth} {
     height: 80px;
     padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 4px 8px 4px' : '6px 4px 8px 4px')};
+    gap: 4px; /* Tăng gap cho phone */
   }
 `;
 
@@ -193,9 +194,9 @@ const VideoStripItem = styled.div<{
   border: 1px solid rgba(255, 255, 255, 0.35); /* Border để dễ nhìn trạng thái cam nhỏ */
 
   ${({ $isPresenter }) => $isPresenter && `
-    /* Bỏ border cho presenter */
+    /* Border nổi bật cho presenter/host */
+    border: 3px solid #FF6B35 !important;
     width: 190px; /* to hon theo chi?u ngang */
-    /* Bỏ box-shadow màu cam phát sáng */
     transform: scale(1.03); /* nh? d? không b? méo/c?t */
   `}
 

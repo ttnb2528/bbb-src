@@ -74,10 +74,10 @@ const Content = styled.div<{
       border: 2px solid rgb(${customHighlight[0]}, ${customHighlight[1]}, ${customHighlight[2]});
     `}
 
-    /* PRESENTER - BỎ VIỀN */
+    /* PRESENTER - BORDER NỔI BẬT */
     ${({ isPresenter }) => isPresenter && `
-      /* Bỏ border cho presenter */
-      box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+      /* Border nổi bật cho presenter/host */
+      border: 3px solid #FF6B35 !important;
     `}
 
     ${({ animations }) => animations && `
