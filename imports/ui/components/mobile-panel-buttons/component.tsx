@@ -82,7 +82,7 @@ const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
             />
             <Button
               label="Chat & Notes"
-              icon="note"
+              icon="group_chat"
               color="default"
               size="md"
               onClick={onToggleChatNotes}

@@ -39,10 +39,20 @@ const Container = styled.div`
       transition: transform 0.1s ease;
     }
 
-    /* Căn chỉnh icon tốt hơn */
+    /* Căn chỉnh icon tốt hơn - đảm bảo icon hiển thị đúng */
     [class^="icon-bbb-"],
-    i[class^="icon-bbb-"] {
-      display: flex;
+    i[class^="icon-bbb-"],
+    [class*="icon-bbb-chat"],
+    [class*="icon-bbb-group_chat"],
+    [class*="icon-bbb-note"],
+    [class*="icon-bbb-message"],
+    [class*="icon-bbb-comment"],
+    i[class*="icon-bbb-chat"],
+    i[class*="icon-bbb-group_chat"],
+    i[class*="icon-bbb-note"],
+    i[class*="icon-bbb-message"],
+    i[class*="icon-bbb-comment"] {
+      display: flex !important;
       align-items: center;
       justify-content: center;
       line-height: 1;
@@ -50,6 +60,9 @@ const Container = styled.div`
       position: relative;
       left: 50%;
       transform: translateX(-50%);
+      visibility: visible !important;
+      opacity: 1 !important;
+      font-size: inherit;
     }
   }
 
@@ -62,11 +75,11 @@ const Container = styled.div`
   }
 
   @media ${hasPhoneWidth} {
-    bottom: calc(var(--actionbar-height, 60px) + 8px);
+    bottom: calc(var(--actionbar-height, 60px) + -1px);
     left: 22px;
     right: 22px;
     gap: 8px;
-    padding: 6px 8px;
+    padding: 16px 0px;
   }
 `;
 
@@ -174,12 +187,26 @@ const RightGroup = styled.div`
       transition: transform 0.1s ease;
     }
 
-    /* Căn chỉnh icon */
-    [class^="icon-bbb-"] {
-      display: flex;
+    /* Căn chỉnh icon - đảm bảo icon hiển thị đúng */
+    [class^="icon-bbb-"],
+    i[class^="icon-bbb-"],
+    [class*="icon-bbb-chat"],
+    [class*="icon-bbb-group_chat"],
+    [class*="icon-bbb-note"],
+    [class*="icon-bbb-message"],
+    [class*="icon-bbb-comment"],
+    i[class*="icon-bbb-chat"],
+    i[class*="icon-bbb-group_chat"],
+    i[class*="icon-bbb-note"],
+    i[class*="icon-bbb-message"],
+    i[class*="icon-bbb-comment"] {
+      display: flex !important;
       align-items: center;
       justify-content: center;
       line-height: 1;
+      visibility: visible !important;
+      opacity: 1 !important;
+      font-size: inherit;
     }
   }
 `;
