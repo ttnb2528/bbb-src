@@ -252,7 +252,10 @@ const MobilePanelButtonsContainer: React.FC = () => {
       </MobileDrawer>
       <PrivateChatModal
         isOpen={isPrivateChatModalOpen}
-        onRequestClose={() => setIsPrivateChatModalOpen(false)}
+        onRequestClose={() => {
+          // Đóng modal trực tiếp, không toggle
+          setIsPrivateChatModalOpen(false);
+        }}
         isPublicChatDrawerOpen={isChatNotesDrawerOpen && activeChatNotesPanel === PANELS.CHAT}
       />
     </>

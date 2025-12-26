@@ -347,7 +347,13 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
+                // Đóng modal hoàn toàn
                 onRequestClose();
+              }}
+              onMouseDown={(e) => {
+                // Prevent drag khi click vào nút X
+                e.stopPropagation();
               }}
             >
               <Icon iconName="close" />

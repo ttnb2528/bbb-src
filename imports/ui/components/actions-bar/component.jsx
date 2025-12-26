@@ -375,7 +375,10 @@ class ActionsBar extends PureComponent {
         {!deviceInfo.isMobile && (
           <PrivateChatModal
             isOpen={this.state.isPrivateChatModalOpen}
-            onRequestClose={this.handleTogglePrivateChat}
+            onRequestClose={() => {
+              // Đóng modal trực tiếp, không toggle
+              this.setState({ isPrivateChatModalOpen: false });
+            }}
             onExpand={this.handleExpandPrivateChat}
           />
         )}
