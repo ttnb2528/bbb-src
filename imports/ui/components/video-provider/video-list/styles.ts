@@ -130,6 +130,11 @@ const CustomLayoutContainer = styled.div`
   height: 100%;
   gap: 4px; /* Giảm gap để đẩy video lên */
   padding-top: 0; /* Bỏ padding trên để đẩy video lên */
+
+  /* Mobile: đẩy container lên cao hơn */
+  @media ${smallOnly}, ${hasPhoneWidth} {
+    margin-top: -20px; /* Đẩy lên 20px trên mobile */
+  }
 `;
 
 // Dải cam nhỏ ở trên (tất cả người tham gia)
@@ -167,16 +172,16 @@ const VideoStrip = styled.div<{
     border-radius: 3px;
   }
 
-  /* Mobile responsive */
+  /* Mobile responsive - đẩy lên cao hơn bằng cách giảm padding-top */
   @media ${smallOnly} {
     height: 100px;
-    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 6px 10px 6px' : '8px 6px 10px 6px')};
+    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 6px 10px 6px' : '2px 6px 10px 6px')}; /* Giảm padding-top từ 8px xuống 2px */
     gap: 6px; /* Tăng gap cho mobile */
   }
 
   @media ${hasPhoneWidth} {
     height: 80px;
-    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 4px 8px 4px' : '6px 4px 8px 4px')};
+    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 4px 8px 4px' : '2px 4px 8px 4px')}; /* Giảm padding-top từ 6px xuống 2px */
     gap: 4px; /* Tăng gap cho phone */
   }
 `;

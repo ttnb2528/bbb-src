@@ -305,7 +305,10 @@ const CustomLayout = (props) => {
 
     const navBarHeight = calculatesNavbarHeight();
     // Khi camera ở trên, dùng navBarHeight = 0 để camera sát trên cùng
-    const effectiveNavBarHeight = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP ? 0 : navBarHeight;
+    // Trên mobile: đẩy camera lên sát trên bằng cách set top = 0 (giống như đã fix trên laptop)
+    const effectiveNavBarHeight = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP 
+      ? (isMobile ? 0 : 0)  // Mobile: top = 0 để sát trên cùng (giống laptop)
+      : (isMobile ? navBarHeight - 20 : navBarHeight); // Mobile: giảm 20px để đẩy lên
 
     const cameraDockBounds = {};
 
@@ -355,7 +358,8 @@ const CustomLayout = (props) => {
       }
 
       // Khi camera ở trên: đặt sát lên trên cùng (top = 0) để giảm khoảng trống phía trên
-      cameraDockBounds.top = effectiveNavBarHeight;
+      // Trên mobile: top = 0 để sát trên cùng (giống như đã fix trên laptop)
+      cameraDockBounds.top = isMobile && isCameraTop ? 0 : effectiveNavBarHeight;
       cameraDockBounds.left = mediaAreaBounds.left;
       cameraDockBounds.right = isRTL ? sidebarSize : null;
       cameraDockBounds.minWidth = mediaAreaBounds.width;
@@ -366,7 +370,9 @@ const CustomLayout = (props) => {
       cameraDockBounds.maxHeight = mediaAreaBounds.height * 0.8;
 
       if (isCameraBottom) {
-        cameraDockBounds.top += mediaAreaBounds.height - cameraDockHeight;
+        // Trên mobile: đẩy camera bottom lên cao hơn một chút
+        const bottomOffset = isMobile ? -40 : 0; // Mobile: đẩy lên 40px
+        cameraDockBounds.top += mediaAreaBounds.height - cameraDockHeight + bottomOffset;
       }
 
       return cameraDockBounds;
@@ -386,7 +392,9 @@ const CustomLayout = (props) => {
         );
       }
 
-      cameraDockBounds.top = navBarHeight + bannerAreaHeight();
+      // Trên mobile: đẩy camera lên cao hơn
+      const topOffset = isMobile ? -30 : 0; // Mobile: đẩy lên 30px
+      cameraDockBounds.top = navBarHeight + bannerAreaHeight() + topOffset;
       cameraDockBounds.minWidth = cameraDockMinWidth;
       cameraDockBounds.width = cameraDockWidth;
       cameraDockBounds.maxWidth = mediaAreaBounds.width * 0.8;
@@ -424,7 +432,9 @@ const CustomLayout = (props) => {
         );
       }
 
-      cameraDockBounds.top = windowHeight() - cameraDockHeight - bannerAreaHeight();
+      // Trên mobile: đẩy camera sidebar lên cao hơn
+      const sidebarTopOffset = isMobile ? -40 : 0; // Mobile: đẩy lên 40px
+      cameraDockBounds.top = windowHeight() - cameraDockHeight - bannerAreaHeight() + sidebarTopOffset;
       cameraDockBounds.left = !isRTL ? sidebarNavWidth : 0;
       cameraDockBounds.right = isRTL ? sidebarNavWidth : 0;
       cameraDockBounds.minWidth = sidebarContentWidth;
@@ -449,7 +459,8 @@ const CustomLayout = (props) => {
     // sidebarPanelHeight is defined in calculatesLayout, use a local constant here
     // Use responsive height matching calculatesLayout
     const windowH = windowHeight();
-    const localSidebarPanelHeight = windowH < 800 ? 180 : windowH < 1080 ? 200 : 220;
+    // Trên mobile: không trừ sidebarPanelHeight vì nó đã được ẩn hoặc không ảnh hưởng
+    const localSidebarPanelHeight = isMobile ? 0 : (windowH < 800 ? 180 : windowH < 1080 ? 200 : 220);
     const bannerHeight = isMobile ? 0 : bannerAreaHeight(); // Mobile: no banner space
     const panelButtonsHeight = isMobile ? 80 : 0; // Space for mobile panel buttons (tăng lên để phù hợp với padding và gap mới)
     const mediaAreaHeight =
@@ -505,7 +516,8 @@ const CustomLayout = (props) => {
         const cameraTop = cameraDockBounds.top || navBarHeight;
         const cameraHeight = cameraDockBounds.height || 0;
         // Tăng margin để document xuống sâu hơn, không bị đụng với camera
-        const extraMargin = 28;
+        // Trên mobile: margin rất nhỏ để không xuống quá sâu
+        const extraMargin = isMobile ? 0 : 28; // Mobile: 4px, Desktop: 28px
         mediaBounds.width = mediaAreaWidth;
         mediaBounds.height = mediaAreaHeight;
         // Đặt document xuống dưới camera với margin đủ để không bị đụng
@@ -565,8 +577,9 @@ const CustomLayout = (props) => {
       mediaBounds.width = mediaAreaWidth;
       mediaBounds.height = mediaAreaHeight;
       // Đẩy document xuống một chút từ top để căn giữa màn hình
-      // Tính toán top position để document ở giữa theo chiều dọc
-      const topOffset = 80; // Đẩy xuống 80px từ top để document ở giữa màn hình
+      // Trên mobile: đẩy lên một chút (offset âm) để document không quá thấp
+      // Trên desktop: offset lớn hơn để ở giữa màn hình
+      const topOffset = isMobile ? -20 : 80; // Mobile: -20px (đẩy lên), Desktop: 80px
       mediaBounds.top = navBarHeight + bannerHeight + topOffset;
       mediaBounds.left = !isRTL ? 0 : null;
       mediaBounds.right = isRTL ? 0 : null;
@@ -619,10 +632,12 @@ const CustomLayout = (props) => {
     const tempActionBarFinalHeight = isMobile 
       ? Math.max(tempActionBarHeight.height, windowWidth() < 480 ? 72 : 75) // Phone: 72px, Tablet/Mobile: 75px
       : tempActionBarHeight.height;
+    // Trên mobile: đẩy media area lên sát trên (top = 0) để camera sát trên cùng (giống laptop)
+    const mediaAreaTopOffset = isMobile ? 0 : 0; // Mobile: top = 0 để sát trên cùng
     const mediaAreaBounds = {
       width: windowWidth(),
       height: windowHeight() - tempActionBarFinalHeight - sidebarPanelHeight - bannerHeight - panelButtonsHeight,
-      top: 0, // Bỏ khoảng trống trên, bắt đầu từ top 0
+      top: mediaAreaTopOffset, // Trên mobile: top = 0 để camera sát trên cùng
       left: 0,
     };
     const navbarBounds = calculatesNavbarBounds(mediaAreaBounds);
