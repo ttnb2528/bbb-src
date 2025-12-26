@@ -304,6 +304,8 @@ const CustomLayout = (props) => {
     } = DEFAULT_VALUES;
 
     const navBarHeight = calculatesNavbarHeight();
+    // Khi camera ở trên, dùng navBarHeight = 0 để camera sát trên cùng
+    const effectiveNavBarHeight = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP ? 0 : navBarHeight;
 
     const cameraDockBounds = {};
 
@@ -352,7 +354,8 @@ const CustomLayout = (props) => {
         );
       }
 
-      cameraDockBounds.top = navBarHeight;
+      // Khi camera ở trên: đặt sát lên trên cùng (top = 0) để giảm khoảng trống phía trên
+      cameraDockBounds.top = effectiveNavBarHeight;
       cameraDockBounds.left = mediaAreaBounds.left;
       cameraDockBounds.right = isRTL ? sidebarSize : null;
       cameraDockBounds.minWidth = mediaAreaBounds.width;
