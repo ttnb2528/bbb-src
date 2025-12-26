@@ -41,14 +41,17 @@ const Content = styled.div<{
 }>`
   position: relative;
   display: flex;
+  width: 100%;
+  height: 100%;
   min-width: 100%;
-  border-radius: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
 
-  /* PRESENTER CAM - TO HƠN VÀ NỔI BẬT HƠN */
+  /* PRESENTER CAM - NỔI BẬT HƠN (không scale để video hiển thị đủ) */
   ${({ isPresenter }) => isPresenter && `
-    transform: scale(1.05);
     z-index: 10;
-    box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
   `}
 
   &::after {
@@ -60,7 +63,7 @@ const Content = styled.div<{
     left: 0;
     pointer-events: none;
     border: 2px solid ${colorBlack};
-    border-radius: 10px;
+    border-radius: 8px;
 
     ${({ isStream }) => !isStream && `
       border: 2px solid ${webcamPlaceholderBorder};
@@ -74,10 +77,10 @@ const Content = styled.div<{
       border: 2px solid rgb(${customHighlight[0]}, ${customHighlight[1]}, ${customHighlight[2]});
     `}
 
-    /* PRESENTER - BORDER NỔI BẬT */
+    /* PRESENTER - BỎ BORDER Ở ĐÂY (đã có border từ VideoStripItem) */
     ${({ isPresenter }) => isPresenter && `
-      /* Border nổi bật cho presenter/host */
-      border: 3px solid #FF6B35 !important;
+      /* Bỏ border ở Content::after vì đã có border từ VideoStripItem */
+      border: none !important;
     `}
 
     ${({ animations }) => animations && `
@@ -120,7 +123,7 @@ const WebcamConnecting = styled.div<{
   height: 100%;
   width: 100%;
   min-width: 100%;
-  border-radius: 10px;
+  border-radius: 8px;
   background-color: ${webcamBackgroundColor};
   z-index: 0;
 
@@ -150,8 +153,10 @@ const VideoContainer = styled.div<{
 }>`
   display: flex;
   justify-content: center;
+  align-items: center;
   width: 100%;
   height: 100%;
+  position: relative;
 
   ${({ $selfViewDisabled }) => $selfViewDisabled && 'display: none'}
 `;
@@ -162,10 +167,11 @@ const Video = styled.video<{
 }>`
   position: relative;
   height: 100%;
-  width: calc(100% - 1px);
+  width: 100%;
   object-fit: contain;
   background-color: ${colorBlack};
-  border-radius: 10px;
+  border-radius: 8px;
+  display: block;
 
   ${({ mirrored }) => mirrored && `
     transform: scale(-1, 1);
@@ -185,7 +191,7 @@ const VideoDisabled = styled.div`
   align-items: center;
   justify-content: center;
   position: absolute;
-  border-radius: 10px;
+  border-radius: 8px;
   z-index: 2;
   top: 40%;
   transform: translate(-50%, -50%);

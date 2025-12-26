@@ -196,8 +196,8 @@ const VideoStripItem = styled.div<{
   ${({ $isPresenter }) => $isPresenter && `
     /* Border nổi bật cho presenter/host */
     border: 3px solid #FF6B35 !important;
-    width: 190px; /* to hon theo chi?u ngang */
-    transform: scale(1.03); /* nh? d? không b? méo/c?t */
+    width: 190px; /* to hon theo chiều ngang */
+    /* Bỏ scale để video hiển thị đủ nội dung, không bị zoom */
   `}
 
   /* Thu nh? font name + status cho g?n nhung KHÔNG ?n */
