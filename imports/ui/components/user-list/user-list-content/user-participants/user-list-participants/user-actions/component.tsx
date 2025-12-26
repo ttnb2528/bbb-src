@@ -402,7 +402,6 @@ const UserActions: React.FC<UserActionsProps> = ({
       key: 'activeChat',
       label: intl.formatMessage(messages.StartPrivateChat),
       onClick: () => {
-        setPendingChat(user.userId);
         setOpenUserAction(null);
         chatCreateWithUser({
           variables: {
@@ -410,7 +409,11 @@ const UserActions: React.FC<UserActionsProps> = ({
           },
         });
         // Thay vì mở panel chat ở sidebar, phát event để mở popup Private Chat
-        window.dispatchEvent(new CustomEvent('openPrivateChatModal'));
+        // Truyền userId qua event để private modal xử lý trực tiếp, không dùng pendingChat
+        // để tránh conflict với sidebar-content
+        window.dispatchEvent(new CustomEvent('openPrivateChatModal', {
+          detail: { userId: user.userId },
+        }));
       },
       icon: 'chat',
       dataTest: 'startPrivateChat',

@@ -4,6 +4,7 @@ import { Resizable } from 're-resizable';
 import { ACTIONS, PANELS } from '../layout/enums';
 import { layoutSelectInput, layoutDispatch, layoutSelect } from '../layout/context';
 import ChatContainer from '/imports/ui/components/chat/chat-graphql/component';
+import usePendingChat from '/imports/ui/core/local-states/usePendingChat';
 import PollContainer from '/imports/ui/components/poll/container';
 import BreakoutRoomContainer from '../breakout-room/breakout-room/component';
 import TimerContainer from '/imports/ui/components/timer/panel/component';
@@ -98,6 +99,19 @@ const SidebarContent = (props) => {
   // Force set public chat ID mỗi khi component render và ở tab CHAT
   // Điều này đảm bảo sidebar-content luôn hiển thị public chat, ngay cả khi private modal thay đổi idChatOpen
   const idChatOpen = layoutSelect((i) => i.idChatOpen);
+  const [pendingChat, setPendingChat] = usePendingChat();
+  
+  // Clear pendingChat khi sidebar-content đang mở để tránh conflict với private modal
+  // Khi user click "Start Private Chat" từ user list, pendingChat sẽ được set
+  // Nhưng sidebar-content không nên xử lý nó, để private modal xử lý thay
+  useEffect(() => {
+    if (activePanel === PANELS.CHAT && pendingChat) {
+      // Clear pendingChat để không trigger logic trong ChatContainer
+      // Private modal sẽ xử lý pendingChat riêng
+      setPendingChat('');
+    }
+  }, [activePanel, pendingChat, setPendingChat]);
+  
   useEffect(() => {
     const CHAT_CONFIG = window.meetingClientSettings.public.chat;
     const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;

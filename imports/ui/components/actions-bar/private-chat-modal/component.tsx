@@ -14,6 +14,7 @@ import { ACTIONS, PANELS } from '/imports/ui/components/layout/enums';
 import useChat from '/imports/ui/core/hooks/useChat';
 import { Chat } from '/imports/ui/Types/chat';
 import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
+import usePendingChat from '/imports/ui/core/local-states/usePendingChat';
 
 const intlMessages = defineMessages({
   privateChatTitle: {
@@ -48,12 +49,18 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   
   // State riêng để quản lý chatId của private chat modal, độc lập với idChatOpen từ layout context
   const [privateChatId, setPrivateChatId] = useState<string>('');
+  // State để lưu userId từ event khi mở modal từ user list
+  const [pendingUserId, setPendingUserId] = useState<string>('');
   
   const layoutContextDispatch = layoutDispatch();
   const sidebarContent = layoutSelectInput((i: Input) => i.sidebarContent);
   const { data: chats } = useChat((chat) => ({
     chatId: chat.chatId,
+    participant: chat.participant,
   })) as GraphqlDataHookSubscriptionResponse<Partial<Chat>[]>;
+  
+  // Xử lý pendingChat để tự động mở chat khi user click "Start Private Chat" từ user list (flow cũ)
+  const [pendingChat, setPendingChat] = usePendingChat();
   
   // Kiểm tra xem sidebar-content có đang mở và ở tab CHAT không (cho desktop)
   const isSidebarContentChatOpen = sidebarContent?.sidebarContentPanel === PANELS.CHAT;
@@ -169,19 +176,69 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
     setIsMinimized((prev) => !prev);
   };
 
+  // Listen for external private chat modal open event với userId từ user list
+  useEffect(() => {
+    const handleExternalOpenPrivateChat = (e: Event) => {
+      // Nếu event có detail với userId, lưu lại để xử lý sau
+      if (e instanceof CustomEvent && e.detail?.userId) {
+        setPendingUserId(e.detail.userId);
+        // Clear pendingChat ngay để tránh conflict với sidebar-content
+        setPendingChat('');
+      }
+    };
+    window.addEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
+    return () => {
+      window.removeEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
+    };
+  }, [setPendingChat]);
+
   // Reset position khi đóng modal
   useEffect(() => {
     if (!isOpen) {
       setPosition(null);
       setIsMinimized(false);
+      setPrivateChatId('');
+      setPendingUserId('');
     }
   }, [isOpen]);
 
+  // Xử lý pendingUserId khi mở modal từ user list (click "Start Private Chat")
+  // Ưu tiên xử lý pendingUserId từ event detail (flow mới, không dùng pendingChat)
+  useEffect(() => {
+    if (isOpen && activeTab === 'private' && pendingUserId && chats) {
+      const chat = chats.find((c) => c.participant?.userId === pendingUserId);
+      if (chat && chat.chatId) {
+        setPrivateChatId(chat.chatId);
+        setPendingUserId(''); // Clear sau khi đã tìm thấy
+      }
+    }
+  }, [isOpen, activeTab, pendingUserId, chats]);
+  
+  // Xử lý pendingChat khi mở modal từ flow cũ (backward compatibility)
+  // Chỉ xử lý nếu không có pendingUserId (để ưu tiên flow mới)
+  useEffect(() => {
+    if (isOpen && activeTab === 'private' && !pendingUserId && pendingChat && chats) {
+      const chat = chats.find((c) => c.participant?.userId === pendingChat);
+      if (chat && chat.chatId) {
+        setPrivateChatId(chat.chatId);
+        setPendingChat('');
+      }
+    }
+  }, [isOpen, activeTab, pendingUserId, pendingChat, chats, setPendingChat]);
+  
+  // Clear pendingUserId khi đóng modal
+  useEffect(() => {
+    if (!isOpen) {
+      setPendingUserId('');
+    }
+  }, [isOpen]);
+  
   // Đảm bảo private chat modal chỉ hiển thị private chat
   // Khi mở modal và ở tab private, tự động chọn private chat đầu tiên (nếu có)
   // Sử dụng state riêng privateChatId để không ảnh hưởng đến sidebar-content
+  // Chỉ chạy khi không có pendingUserId và pendingChat (để ưu tiên xử lý từ user list)
   useEffect(() => {
-    if (isOpen && activeTab === 'private' && chats) {
+    if (isOpen && activeTab === 'private' && chats && !pendingChat && !pendingUserId) {
       const CHAT_CONFIG = window.meetingClientSettings.public.chat;
       const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
       
@@ -194,7 +251,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
         }
       }
     }
-  }, [isOpen, activeTab, privateChatId, chats]);
+  }, [isOpen, activeTab, privateChatId, chats, pendingChat, pendingUserId]);
   
   // Reset privateChatId khi đóng modal
   useEffect(() => {
