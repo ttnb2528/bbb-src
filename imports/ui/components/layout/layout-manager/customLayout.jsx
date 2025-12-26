@@ -561,14 +561,15 @@ const CustomLayout = (props) => {
       mediaBounds.right = isRTL ? 0 : null;
       mediaBounds.zIndex = 1;
     } else {
-      // Không có camera: đưa document về giữa màn hình
+      // Không có camera: đưa document về giữa màn hình hoặc đẩy xuống một chút
       mediaBounds.width = mediaAreaWidth;
       mediaBounds.height = mediaAreaHeight;
-      const verticalMargin = (mediaAreaHeight - mediaBounds.height) / 2;
-      const horizontalMargin = (mediaAreaWidth - mediaBounds.width) / 2;
-      mediaBounds.top = navBarHeight + bannerHeight + verticalMargin;
-      mediaBounds.left = !isRTL ? horizontalMargin : null;
-      mediaBounds.right = isRTL ? horizontalMargin : null;
+      // Đẩy document xuống một chút từ top để căn giữa màn hình
+      // Tính toán top position để document ở giữa theo chiều dọc
+      const topOffset = 80; // Đẩy xuống 80px từ top để document ở giữa màn hình
+      mediaBounds.top = navBarHeight + bannerHeight + topOffset;
+      mediaBounds.left = !isRTL ? 0 : null;
+      mediaBounds.right = isRTL ? 0 : null;
       mediaBounds.zIndex = 1;
     }
 
