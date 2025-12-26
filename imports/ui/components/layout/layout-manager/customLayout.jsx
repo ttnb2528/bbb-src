@@ -345,10 +345,18 @@ const CustomLayout = (props) => {
 
     if (isCameraTop || isCameraBottom) {
       if ((lastHeight === 0 && !isResizing) || (isCameraTop && isMobile)) {
-        cameraDockHeight = min(
-          max(mediaAreaBounds.height * 0.2, cameraDockMinHeight),
-          mediaAreaBounds.height - cameraDockMinHeight
-        );
+        // Trên mobile: sử dụng height cố định khớp với CSS (120px tablet, 100px phone)
+        // Desktop: tính theo tỷ lệ như cũ
+        if (isMobile && isCameraTop) {
+          // Khớp với CSS height: tablet 120px, phone 100px
+          const windowW = windowWidth();
+          cameraDockHeight = windowW < 480 ? 100 : 120; // Phone: 100px, Tablet: 120px
+        } else {
+          cameraDockHeight = min(
+            max(mediaAreaBounds.height * 0.2, cameraDockMinHeight),
+            mediaAreaBounds.height - cameraDockMinHeight
+          );
+        }
       } else {
         const height = isResizing ? cameraDockInput.height : lastHeight;
         cameraDockHeight = min(
