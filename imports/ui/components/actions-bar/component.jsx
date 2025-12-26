@@ -66,15 +66,33 @@ class ActionsBar extends PureComponent {
   }
 
   handleTogglePrivateChat() {
-    this.setState((prevState) => ({
-      isPrivateChatModalOpen: !prevState.isPrivateChatModalOpen,
-    }));
+    this.setState((prevState) => {
+      // Nếu modal đã mở, dispatch event để expand nếu đang minimized
+      // Logic expand/close sẽ được xử lý trong PrivateChatModal
+      if (prevState.isPrivateChatModalOpen) {
+        window.dispatchEvent(new CustomEvent('togglePrivateChatModal'));
+        // Giữ nguyên state, để PrivateChatModal quyết định có đóng không
+        return prevState;
+      }
+      // Nếu modal chưa mở, mở nó
+      return {
+        isPrivateChatModalOpen: true,
+      };
+    });
+  }
+  
+  handleExpandPrivateChat() {
+    // Callback khi modal được expand
+    // Không cần làm gì, chỉ để PrivateChatModal biết đã expand
   }
 
   handleExternalOpenPrivateChat() {
-    this.setState({
-      isPrivateChatModalOpen: true,
-    });
+    // Chỉ mở modal nếu đang ở desktop (mobile sẽ được xử lý bởi mobile-panel-buttons)
+    if (!deviceInfo.isMobile) {
+      this.setState({
+        isPrivateChatModalOpen: true,
+      });
+    }
   }
 
   renderModal(isOpen, setIsOpen, priority, Component, otherOptions) {
@@ -353,10 +371,14 @@ class ActionsBar extends PureComponent {
             </Styled.Gap>
           </Styled.Right>
         </Styled.ActionsBar>
-        <PrivateChatModal
-          isOpen={this.state.isPrivateChatModalOpen}
-          onRequestClose={this.handleTogglePrivateChat}
-        />
+        {/* Chỉ render PrivateChatModal trên desktop, mobile sẽ được xử lý bởi mobile-panel-buttons */}
+        {!deviceInfo.isMobile && (
+          <PrivateChatModal
+            isOpen={this.state.isPrivateChatModalOpen}
+            onRequestClose={this.handleTogglePrivateChat}
+            onExpand={this.handleExpandPrivateChat}
+          />
+        )}
       </Styled.ActionsBarWrapper>
     );
   }

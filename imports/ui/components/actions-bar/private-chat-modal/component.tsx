@@ -31,12 +31,14 @@ interface PrivateChatModalProps {
   isOpen: boolean;
   onRequestClose: () => void;
   isPublicChatDrawerOpen?: boolean; // Thêm prop để biết drawer public chat có đang mở không
+  onExpand?: () => void; // Callback để expand modal khi đang minimized
 }
 
 const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   isOpen,
   onRequestClose,
   isPublicChatDrawerOpen = false,
+  onExpand,
 }) => {
   const intl = useIntl();
   const [isMinimized, setIsMinimized] = useState(false);
@@ -176,21 +178,64 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
     setIsMinimized((prev) => !prev);
   };
 
+  // Helper function để expand modal
+  const expandModal = () => {
+    if (isMinimized) {
+      setIsMinimized(false);
+      // Reset về vị trí center khi expand
+      const isMobile = window.innerWidth <= 640;
+      if (isMobile) {
+        setPosition({ left: 0, top: 0 });
+      } else {
+        const modalWidth = 900;
+        const modalHeight = window.innerHeight * 0.7;
+        setPosition({
+          left: window.innerWidth / 2 - modalWidth / 2,
+          top: window.innerHeight / 2 - modalHeight / 2,
+        });
+      }
+      if (onExpand) onExpand();
+    }
+  };
+
   // Listen for external private chat modal open event với userId từ user list
+  // Setup listener một lần khi component mount để nhận userId từ event
+  // Không cần check isOpen vì event có thể được dispatch trước khi modal mở
   useEffect(() => {
     const handleExternalOpenPrivateChat = (e: Event) => {
-      // Nếu event có detail với userId, lưu lại để xử lý sau
+      // Nếu modal đã mở nhưng đang minimized, expand nó ra
+      if (isOpen && isMinimized) {
+        expandModal();
+      }
+      
+      // Nếu event có detail với userId, lưu lại để xử lý khi modal mở
       if (e instanceof CustomEvent && e.detail?.userId) {
         setPendingUserId(e.detail.userId);
         // Clear pendingChat ngay để tránh conflict với sidebar-content
         setPendingChat('');
       }
     };
+    
+    const handleTogglePrivateChatModal = () => {
+      // Khi toggle và modal đã mở
+      if (isOpen) {
+        if (isMinimized) {
+          // Nếu đang minimized, expand nó
+          expandModal();
+        } else {
+          // Nếu không minimized, đóng modal
+          onRequestClose();
+        }
+      }
+    };
+    
     window.addEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
+    window.addEventListener('togglePrivateChatModal', handleTogglePrivateChatModal as EventListener);
     return () => {
       window.removeEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
+      window.removeEventListener('togglePrivateChatModal', handleTogglePrivateChatModal as EventListener);
     };
-  }, [setPendingChat]);
+  }, [isOpen, isMinimized, setPendingChat, onExpand, onRequestClose]); // Thêm onRequestClose vào dependencies
 
   // Reset position khi đóng modal
   useEffect(() => {
@@ -387,5 +432,3 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
 };
 
 export default PrivateChatModal;
-
-

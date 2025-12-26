@@ -106,7 +106,10 @@ const MobilePanelButtonsContainer: React.FC = () => {
   // Listen for external private chat modal open event
   useEffect(() => {
     const handleExternalOpenPrivateChat = () => {
-      setIsPrivateChatModalOpen(true);
+      // Chỉ mở modal nếu đang ở mobile (desktop sẽ được xử lý bởi actions-bar)
+      if (deviceInfo.isMobile) {
+        setIsPrivateChatModalOpen(true);
+      }
     };
     window.addEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
     return () => {
@@ -152,7 +155,15 @@ const MobilePanelButtonsContainer: React.FC = () => {
             });
           }
         }}
-        onTogglePrivateChat={() => setIsPrivateChatModalOpen((prev) => !prev)}
+        onTogglePrivateChat={() => {
+          if (isPrivateChatModalOpen) {
+            // Nếu modal đã mở, dispatch event để expand nếu đang minimized hoặc đóng nếu không
+            window.dispatchEvent(new CustomEvent('togglePrivateChatModal'));
+          } else {
+            // Nếu modal chưa mở, mở nó
+            setIsPrivateChatModalOpen(true);
+          }
+        }}
         privateUnreadCount={privateUnreadCount}
         // Props cho ActionsDropdown - chỉ hiển thị khi là presenter
         amIPresenter={amIPresenter}
