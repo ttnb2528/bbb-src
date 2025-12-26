@@ -8,6 +8,12 @@ import ChatContainer from '/imports/ui/components/chat/chat-graphql/component';
 import NotesContainer from '/imports/ui/components/notes/component';
 import Icon from '/imports/ui/components/common/icon/icon-ts/component';
 import Button from '/imports/ui/components/common/button/component';
+import { layoutSelect, layoutDispatch, layoutSelectInput } from '/imports/ui/components/layout/context';
+import { Layout, Input } from '/imports/ui/components/layout/layoutTypes';
+import { ACTIONS, PANELS } from '/imports/ui/components/layout/enums';
+import useChat from '/imports/ui/core/hooks/useChat';
+import { Chat } from '/imports/ui/Types/chat';
+import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
 
 const intlMessages = defineMessages({
   privateChatTitle: {
@@ -23,11 +29,13 @@ const intlMessages = defineMessages({
 interface PrivateChatModalProps {
   isOpen: boolean;
   onRequestClose: () => void;
+  isPublicChatDrawerOpen?: boolean; // Thêm prop để biết drawer public chat có đang mở không
 }
 
 const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   isOpen,
   onRequestClose,
+  isPublicChatDrawerOpen = false,
 }) => {
   const intl = useIntl();
   const [isMinimized, setIsMinimized] = useState(false);
@@ -37,6 +45,18 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const hasDragged = useRef(false);
   const [activeTab, setActiveTab] = useState<'private' | 'notes'>('private');
+  
+  // State riêng để quản lý chatId của private chat modal, độc lập với idChatOpen từ layout context
+  const [privateChatId, setPrivateChatId] = useState<string>('');
+  
+  const layoutContextDispatch = layoutDispatch();
+  const sidebarContent = layoutSelectInput((i: Input) => i.sidebarContent);
+  const { data: chats } = useChat((chat) => ({
+    chatId: chat.chatId,
+  })) as GraphqlDataHookSubscriptionResponse<Partial<Chat>[]>;
+  
+  // Kiểm tra xem sidebar-content có đang mở và ở tab CHAT không (cho desktop)
+  const isSidebarContentChatOpen = sidebarContent?.sidebarContentPanel === PANELS.CHAT;
 
   // Khởi tạo vị trí giữa màn hình khi mở modal
   useEffect(() => {
@@ -157,6 +177,32 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
     }
   }, [isOpen]);
 
+  // Đảm bảo private chat modal chỉ hiển thị private chat
+  // Khi mở modal và ở tab private, tự động chọn private chat đầu tiên (nếu có)
+  // Sử dụng state riêng privateChatId để không ảnh hưởng đến sidebar-content
+  useEffect(() => {
+    if (isOpen && activeTab === 'private' && chats) {
+      const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+      const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+      
+      // Nếu chưa có privateChatId hoặc privateChatId là public chat, thì tìm private chat đầu tiên
+      if (!privateChatId || privateChatId === PUBLIC_GROUP_CHAT_ID) {
+        const privateChats = chats.filter((c) => c.chatId && c.chatId !== PUBLIC_GROUP_CHAT_ID);
+        if (privateChats.length > 0) {
+          // Chọn private chat đầu tiên và lưu vào state riêng
+          setPrivateChatId(privateChats[0].chatId!);
+        }
+      }
+    }
+  }, [isOpen, activeTab, privateChatId, chats]);
+  
+  // Reset privateChatId khi đóng modal
+  useEffect(() => {
+    if (!isOpen) {
+      setPrivateChatId('');
+    }
+  }, [isOpen]);
+
   if (!position) return null;
 
   return (
@@ -253,10 +299,20 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
               {activeTab === 'private' && (
                 <>
                   <Styled.LeftPane>
-                    <ChatListContainer disableLayoutInteractions filterPrivateOnly />
+                    <ChatListContainer 
+                      disableLayoutInteractions 
+                      filterPrivateOnly 
+                      onChatSelect={(chatId) => setPrivateChatId(chatId)}
+                    />
                   </Styled.LeftPane>
                   <Styled.RightPane>
-                    <ChatContainer mode="modal" />
+                    {privateChatId ? (
+                      <ChatContainer mode="modal" chatId={privateChatId} />
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                        <span>Select a chat to start messaging</span>
+                      </div>
+                    )}
                   </Styled.RightPane>
                 </>
               )}
@@ -274,4 +330,5 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
 };
 
 export default PrivateChatModal;
+
 

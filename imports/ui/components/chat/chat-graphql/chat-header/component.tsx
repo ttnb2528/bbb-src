@@ -112,11 +112,15 @@ const isChatResponse = (data: unknown): data is GetChatDataResponse => {
 
 interface ChatHeaderContainerProps {
   mode?: 'sidebar' | 'modal';
+  // Optional: override chatId để tách biệt với idChatOpen từ layout context
+  chatId?: string;
 }
 
-const ChatHeaderContainer: React.FC<ChatHeaderContainerProps> = ({ mode = 'sidebar' }) => {
+const ChatHeaderContainer: React.FC<ChatHeaderContainerProps> = ({ mode = 'sidebar', chatId: overrideChatId }) => {
   const intl = useIntl();
-  const idChatOpen = layoutSelect((i: Layout) => i.idChatOpen);
+  const idChatOpenFromLayout = layoutSelect((i: Layout) => i.idChatOpen);
+  // Sử dụng overrideChatId nếu có, nếu không thì dùng idChatOpen từ layout
+  const idChatOpen = overrideChatId ?? idChatOpenFromLayout;
   const isRTL = layoutSelect((i: Layout) => i.isRTL);
 
   const {
@@ -125,6 +129,7 @@ const ChatHeaderContainer: React.FC<ChatHeaderContainerProps> = ({ mode = 'sideb
     error: chatDataError,
   } = useQuery<GetChatDataResponse>(GET_CHAT_DATA, {
     variables: { chatId: idChatOpen },
+    skip: !idChatOpen, // Skip query nếu không có chatId
   });
 
   if (chatDataLoading) return null;

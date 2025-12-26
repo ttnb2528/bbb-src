@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import MobilePanelButtons from './component';
 import MobileDrawer from '../mobile-drawer/component';
 import UserListContainer from '../user-list/container';
-import ChatContainer from '../chat/chat-graphql/component';
+import PublicChatContainer from './public-chat-container';
 import NotesContainer from '../notes/component';
 import PrivateChatModal from '../actions-bar/private-chat-modal/component';
-import { layoutSelectInput, layoutSelectOutput, layoutDispatch } from '../layout/context';
+import { layoutSelectInput, layoutSelectOutput, layoutDispatch, layoutSelect } from '../layout/context';
+import { Layout } from '../layout/layoutTypes';
 import { ACTIONS, PANELS } from '../layout/enums';
 import Styled from '../actions-bar/styles';
 import deviceInfo from '/imports/utils/deviceInfo';
@@ -37,6 +38,7 @@ const MobilePanelButtonsContainer: React.FC = () => {
   const actionBarOutput = layoutSelectOutput((i: any) => i.actionBar);
   const layoutContextDispatch = layoutDispatch();
   const activeChatNotesPanel = sidebarContent?.sidebarContentPanel || PANELS.CHAT;
+  const idChatOpen = layoutSelect((i: Layout) => i.idChatOpen);
 
   // Lấy thông tin user và meeting để truyền vào ActionsDropdown
   const { data: currentUserData } = useCurrentUser((user) => ({
@@ -112,11 +114,44 @@ const MobilePanelButtonsContainer: React.FC = () => {
     };
   }, []);
 
+  // Logic force set public chat đã được chuyển sang PublicChatContainer
+  // Giữ lại logic này để đảm bảo khi mở drawer, set ngay public chat ID
+  useEffect(() => {
+    if (isChatNotesDrawerOpen && activeChatNotesPanel === PANELS.CHAT) {
+      const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+      const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+      
+      // Set public chat ID ngay khi drawer mở để tránh loading
+      layoutContextDispatch({
+        type: ACTIONS.SET_ID_CHAT_OPEN,
+        value: PUBLIC_GROUP_CHAT_ID,
+      });
+    }
+  }, [isChatNotesDrawerOpen, activeChatNotesPanel, layoutContextDispatch]);
+
   return (
     <>
       <MobilePanelButtons
         onToggleUserList={() => setIsUserListDrawerOpen((prev) => !prev)}
-        onToggleChatNotes={() => setIsChatNotesDrawerOpen((prev) => !prev)}
+        onToggleChatNotes={() => {
+          const willOpen = !isChatNotesDrawerOpen;
+          setIsChatNotesDrawerOpen(willOpen);
+          
+          // Khi mở drawer, ngay lập tức set public chat ID và panel
+          if (willOpen && !isPrivateChatModalOpen) {
+            const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+            const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+            // Set cả panel và chat ID cùng lúc
+            layoutContextDispatch({
+              type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
+              value: PANELS.CHAT,
+            });
+            layoutContextDispatch({
+              type: ACTIONS.SET_ID_CHAT_OPEN,
+              value: PUBLIC_GROUP_CHAT_ID,
+            });
+          }
+        }}
         onTogglePrivateChat={() => setIsPrivateChatModalOpen((prev) => !prev)}
         privateUnreadCount={privateUnreadCount}
         // Props cho ActionsDropdown - chỉ hiển thị khi là presenter
@@ -146,7 +181,21 @@ const MobilePanelButtonsContainer: React.FC = () => {
       
       <MobileDrawer
         isOpen={isChatNotesDrawerOpen}
-        onClose={() => setIsChatNotesDrawerOpen(false)}
+        onClose={() => {
+          // Khi đóng drawer, nếu idChatOpen đang là public chat và private chat modal không đang mở,
+          // thì reset idChatOpen để tránh conflict
+          if (!isPrivateChatModalOpen) {
+            const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+            const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+            if (idChatOpen === PUBLIC_GROUP_CHAT_ID) {
+              layoutContextDispatch({
+                type: ACTIONS.SET_ID_CHAT_OPEN,
+                value: '',
+              });
+            }
+          }
+          setIsChatNotesDrawerOpen(false);
+        }}
         position="right"
         title="Chat & Notes"
       >
@@ -154,9 +203,16 @@ const MobilePanelButtonsContainer: React.FC = () => {
           <Styled.TabButton
             type="button"
             onClick={() => {
+              const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+              const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
               layoutContextDispatch({
                 type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
                 value: PANELS.CHAT,
+              });
+              // Force set idChatOpen thành public chat ID khi click vào tab Chat
+              layoutContextDispatch({
+                type: ACTIONS.SET_ID_CHAT_OPEN,
+                value: PUBLIC_GROUP_CHAT_ID,
               });
             }}
             data-active={activeChatNotesPanel === PANELS.CHAT}
@@ -177,7 +233,7 @@ const MobilePanelButtonsContainer: React.FC = () => {
           </Styled.TabButton>
         </Styled.ChatNotesTabs>
         {activeChatNotesPanel === PANELS.CHAT && (
-          <ChatContainer mode="sidebar" />
+          <PublicChatContainer />
         )}
         {activeChatNotesPanel === PANELS.SHARED_NOTES && (
           <NotesContainer isToSharedNotesBeShow={true} />
@@ -186,10 +242,10 @@ const MobilePanelButtonsContainer: React.FC = () => {
       <PrivateChatModal
         isOpen={isPrivateChatModalOpen}
         onRequestClose={() => setIsPrivateChatModalOpen(false)}
+        isPublicChatDrawerOpen={isChatNotesDrawerOpen && activeChatNotesPanel === PANELS.CHAT}
       />
     </>
   );
 };
 
 export default MobilePanelButtonsContainer;
-

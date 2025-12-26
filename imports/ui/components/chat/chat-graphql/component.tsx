@@ -20,9 +20,10 @@ import { ChatEvents } from '/imports/ui/core/enums/chat';
 interface ChatProps {
   isRTL: boolean;
   mode?: 'sidebar' | 'modal';
+  chatId: string;
 }
 
-const Chat: React.FC<ChatProps> = ({ isRTL, mode = 'sidebar' }) => {
+const Chat: React.FC<ChatProps> = ({ isRTL, mode = 'sidebar', chatId }) => {
   const { isChrome } = browserInfo;
   const isEditingMessage = useRef(false);
 
@@ -71,10 +72,10 @@ const Chat: React.FC<ChatProps> = ({ isRTL, mode = 'sidebar' }) => {
 
   return (
     <Styled.Chat isRTL={isRTL} isChrome={isChrome}>
-      <ChatHeader mode={mode} />
-      <ChatMessageListContainer />
-      <ChatMessageFormContainer />
-      <ChatTypingIndicatorContainer />
+      <ChatHeader mode={mode} chatId={chatId} />
+      <ChatMessageListContainer chatId={chatId} />
+      <ChatMessageFormContainer chatId={chatId} />
+      <ChatTypingIndicatorContainer chatId={chatId} />
     </Styled.Chat>
   );
 };
@@ -90,10 +91,15 @@ export const ChatLoading: React.FC<ChatProps> = ({ isRTL }) => {
 interface ChatContainerProps {
   // 'sidebar' dùng cho panel dưới; 'modal' dùng cho popup private chat
   mode?: 'sidebar' | 'modal';
+  // Optional: override chatId để tách biệt với idChatOpen từ layout context
+  // Khi được truyền, component sẽ dùng chatId này thay vì idChatOpen
+  chatId?: string;
 }
 
-const ChatContainer: React.FC<ChatContainerProps> = ({ mode = 'sidebar' }) => {
-  const idChatOpen = layoutSelect((i: Layout) => i.idChatOpen);
+const ChatContainer: React.FC<ChatContainerProps> = ({ mode = 'sidebar', chatId: overrideChatId }) => {
+  const idChatOpenFromLayout = layoutSelect((i: Layout) => i.idChatOpen);
+  // Sử dụng overrideChatId nếu có, nếu không thì dùng idChatOpen từ layout
+  const idChatOpen = overrideChatId ?? idChatOpenFromLayout;
   const isRTL = layoutSelect((i: Layout) => i.isRTL);
   const sidebarContent = layoutSelectInput((i: Input) => i.sidebarContent);
   const layoutContextDispatch = layoutDispatch();
@@ -114,8 +120,9 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ mode = 'sidebar' }) => {
   const isLocked = currentUser?.locked || currentUser?.userLockSettings?.disablePublicChat;
 
   // Giữ lại pendingChat cho các flow cũ, nhưng không được dispatch layout trong quá trình render.
+  // Chỉ xử lý pendingChat nếu không có overrideChatId (để tránh conflict)
   React.useEffect(() => {
-    if (!pendingChat || !chats) return;
+    if (overrideChatId || !pendingChat || !chats) return;
     const chat = chats.find((c) => {
       return c.participant?.userId === pendingChat;
     });
@@ -126,13 +133,13 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ mode = 'sidebar' }) => {
         value: chat.chatId,
       });
     }
-  }, [pendingChat, chats, layoutContextDispatch, setPendingChat]);
+  }, [overrideChatId, pendingChat, chats, layoutContextDispatch, setPendingChat]);
 
   const respectSidebarPanel = mode === 'sidebar';
 
   if (respectSidebarPanel && sidebarContent.sidebarContentPanel !== PANELS.CHAT) return null;
   if (!idChatOpen && !isLocked) return <ChatLoading isRTL={isRTL} />;
-  return <Chat isRTL={isRTL} mode={mode} />;
+  return <Chat isRTL={isRTL} mode={mode} chatId={idChatOpen} />;
 };
 
 export default ChatContainer;

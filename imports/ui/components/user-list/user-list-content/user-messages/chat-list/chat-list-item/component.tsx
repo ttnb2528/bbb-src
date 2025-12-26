@@ -32,6 +32,8 @@ interface ChatListItemProps {
   // Khi true, item chỉ dùng cho popup/private modal,
   // không được đụng tới layout/sidebar phía dưới
   disableLayoutInteractions?: boolean;
+  // Callback khi user chọn một chat (dùng cho private chat modal với state riêng)
+  onChatSelect?: (chatId: string) => void;
 }
 
 const ChatListItem = (props: ChatListItemProps) => {
@@ -40,6 +42,7 @@ const ChatListItem = (props: ChatListItemProps) => {
     chatNodeRef,
     index,
     disableLayoutInteractions = false,
+    onChatSelect,
   } = props;
   const sidebarContent = layoutSelectInput((i: Input) => i.sidebarContent);
   const idChatOpen = layoutSelect((i: Layout) => i.idChatOpen);
@@ -106,11 +109,16 @@ const ChatListItem = (props: ChatListItemProps) => {
 
   const handleClickToggleChat = () => {
     if (disableLayoutInteractions) {
-      // Trong popup, chỉ đổi phòng chat đang mở, không đụng tới sidebar
-      layoutContextDispatch({
-        type: ACTIONS.SET_ID_CHAT_OPEN,
-        value: chat.chatId,
-      });
+      // Trong popup, nếu có onChatSelect callback thì dùng nó (cho private chat modal với state riêng)
+      // Nếu không thì dùng layout context như cũ
+      if (onChatSelect) {
+        onChatSelect(chat.chatId);
+      } else {
+        layoutContextDispatch({
+          type: ACTIONS.SET_ID_CHAT_OPEN,
+          value: chat.chatId,
+        });
+      }
       return;
     }
     // Verify if chat panel is open

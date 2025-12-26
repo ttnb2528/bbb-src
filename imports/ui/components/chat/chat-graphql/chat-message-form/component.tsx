@@ -714,9 +714,16 @@ const ChatMessageForm: React.FC<ChatMessageFormProps> = ({
   return renderForm();
 };
 
-const ChatMessageFormContainer: React.FC = () => {
+interface ChatMessageFormContainerProps {
+  // Optional: override chatId để tách biệt với idChatOpen từ layout context
+  chatId?: string;
+}
+
+const ChatMessageFormContainer: React.FC<ChatMessageFormContainerProps> = ({ chatId: overrideChatId }) => {
   const intl = useIntl();
-  const idChatOpen: string = layoutSelect((i: Layout) => i.idChatOpen);
+  const idChatOpenFromLayout: string = layoutSelect((i: Layout) => i.idChatOpen);
+  // Sử dụng overrideChatId nếu có, nếu không thì dùng idChatOpen từ layout
+  const idChatOpen: string = overrideChatId ?? idChatOpenFromLayout;
   const isRTL = layoutSelect((i: Layout) => i.isRTL);
   const isConnected = useReactiveVar(connectionStatus.getConnectedStatusVar());
   const { data: chat } = useChat((c: Partial<Chat>) => ({

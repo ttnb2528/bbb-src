@@ -139,8 +139,15 @@ const TypingIndicator: React.FC<TypingIndicatorProps> = ({
   );
 };
 
-const TypingIndicatorContainer: React.FC = () => {
-  const idChatOpen: string = layoutSelect((i: Layout) => i.idChatOpen);
+interface TypingIndicatorContainerProps {
+  // Optional: override chatId để tách biệt với idChatOpen từ layout context
+  chatId?: string;
+}
+
+const TypingIndicatorContainer: React.FC<TypingIndicatorContainerProps> = ({ chatId: overrideChatId }) => {
+  const idChatOpenFromLayout: string = layoutSelect((i: Layout) => i.idChatOpen);
+  // Sử dụng overrideChatId nếu có, nếu không thì dùng idChatOpen từ layout
+  const idChatOpen: string = overrideChatId ?? idChatOpenFromLayout;
   const intl = useIntl();
   const { data: currentUser } = useCurrentUser((user: Partial<User>) => {
     return {

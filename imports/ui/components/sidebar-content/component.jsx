@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Resizable } from 're-resizable';
 import { ACTIONS, PANELS } from '../layout/enums';
-import { layoutSelectInput, layoutDispatch } from '../layout/context';
+import { layoutSelectInput, layoutDispatch, layoutSelect } from '../layout/context';
 import ChatContainer from '/imports/ui/components/chat/chat-graphql/component';
 import PollContainer from '/imports/ui/components/poll/container';
 import BreakoutRoomContainer from '../breakout-room/breakout-room/component';
@@ -95,16 +95,23 @@ const SidebarContent = (props) => {
   const pollDisplay = sidebarContentPanel === PANELS.POLL ? 'inherit' : 'none';
 
   // Luôn ép mở Public Chat khi ở panel CHÁT để tránh mở private chat trong panel ngang
+  // Force set public chat ID mỗi khi component render và ở tab CHAT
+  // Điều này đảm bảo sidebar-content luôn hiển thị public chat, ngay cả khi private modal thay đổi idChatOpen
+  const idChatOpen = layoutSelect((i) => i.idChatOpen);
   useEffect(() => {
     const CHAT_CONFIG = window.meetingClientSettings.public.chat;
     const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
     if (activePanel === PANELS.CHAT) {
-      contextDispatch({
-        type: ACTIONS.SET_ID_CHAT_OPEN,
-        value: PUBLIC_GROUP_CHAT_ID,
-      });
+      // Chỉ set khi idChatOpen không phải là public chat để tránh set không cần thiết
+      // Điều này đảm bảo sidebar-content luôn hiển thị public chat, ngay cả khi private modal thay đổi idChatOpen
+      if (idChatOpen !== PUBLIC_GROUP_CHAT_ID) {
+        contextDispatch({
+          type: ACTIONS.SET_ID_CHAT_OPEN,
+          value: PUBLIC_GROUP_CHAT_ID,
+        });
+      }
     }
-  }, [activePanel, contextDispatch]);
+  }, [activePanel, idChatOpen, contextDispatch]);
 
   const handleSelectPanel = (panel) => {
     contextDispatch({

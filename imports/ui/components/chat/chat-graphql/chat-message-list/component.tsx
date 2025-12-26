@@ -743,8 +743,15 @@ const ChatMessageList: React.FC<ChatListProps> = ({
   );
 };
 
-const ChatMessageListContainer: React.FC = () => {
-  const idChatOpen = layoutSelect((i: Layout) => i.idChatOpen);
+interface ChatMessageListContainerProps {
+  // Optional: override chatId để tách biệt với idChatOpen từ layout context
+  chatId?: string;
+}
+
+const ChatMessageListContainer: React.FC<ChatMessageListContainerProps> = ({ chatId: overrideChatId }) => {
+  const idChatOpenFromLayout = layoutSelect((i: Layout) => i.idChatOpen);
+  // Sử dụng overrideChatId nếu có, nếu không thì dùng idChatOpen từ layout
+  const idChatOpen = overrideChatId ?? idChatOpenFromLayout;
   const isRTL = layoutSelect((i: Layout) => i.isRTL);
 
   const CHAT_CONFIG = window.meetingClientSettings.public.chat;
