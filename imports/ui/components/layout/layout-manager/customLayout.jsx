@@ -501,13 +501,15 @@ const CustomLayout = (props) => {
       
       if (isCameraTop) {
         // Camera ở trên: document đặt xuống dưới camera, giữ kích thước đầy đủ (không bị bóp)
-        // Document được đặt dưới camera để không bị che
+        // Document được đặt dưới camera với margin đủ để không bị đụng
         const cameraTop = cameraDockBounds.top || navBarHeight;
         const cameraHeight = cameraDockBounds.height || 0;
+        // Tăng margin để document xuống sâu hơn, không bị đụng với camera
+        const extraMargin = 28;
         mediaBounds.width = mediaAreaWidth;
         mediaBounds.height = mediaAreaHeight;
-        // Đặt document xuống dưới camera với margin đủ để không bị che
-        mediaBounds.top = cameraTop + cameraHeight + camerasMargin + bannerHeight;
+        // Đặt document xuống dưới camera với margin đủ để không bị đụng
+        mediaBounds.top = cameraTop + cameraHeight + camerasMargin + extraMargin + bannerHeight;
         mediaBounds.left = !isRTL ? 0 : null;
         mediaBounds.right = isRTL ? 0 : null;
         // Z-index cao hơn camera để đảm bảo document hiển thị đúng
