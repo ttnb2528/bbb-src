@@ -130,23 +130,33 @@ const UserItemContents = styled.div<UserItemContentsProps>`
 
 const Avatar = styled.div<AvatarProps>`
   position: relative;
-  height: 2.25rem;
-  width: 2.25rem;
-  min-width: 2.25rem;
+  height: 2.75rem;
+  width: 2.75rem;
+  min-width: 2.75rem;
   border-radius: 50%;
   text-align: center;
-  font-size: .85rem;
-  border: 2px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 2.5px solid ${colorWhite};
   user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  overflow: visible; /* Cho phép các indicator hiển thị ra ngoài */
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
   ${
   ({ color }) => css`
     background-color: ${color};
+    background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);
   `}
   }
 
   ${({ animations }) => animations && `
-    transition: .3s ease-in-out;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease, .3s ease-in-out;
   `}
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.08);
+    transform: scale(1.05);
+  }
 
   &:after,
   &:before {
@@ -174,7 +184,7 @@ const Avatar = styled.div<AvatarProps>`
     text-align: center;
     vertical-align: middle;
     letter-spacing: -.65rem;
-    z-index: 1;
+    z-index: 3; /* Đảm bảo indicator ở trên cùng */
 
     [dir="rtl"] & {
       left: ${userIndicatorsOffset};
@@ -189,7 +199,6 @@ const Avatar = styled.div<AvatarProps>`
   }
 
   ${({ moderator }) => moderator && `
-    border-radius: 5px;
     color: ${colorWhite} !important;
   `}
 
@@ -197,13 +206,14 @@ const Avatar = styled.div<AvatarProps>`
     &:before {
       content: "\\00a0\\e90b\\00a0";
       padding: ${mdPaddingY} !important;
-      opacity: 1;
+      opacity: 1 !important;
       top: ${userIndicatorsOffset};
       left: ${userIndicatorsOffset};
       bottom: auto;
       right: auto;
       border-radius: 5px;
       background-color: ${colorPrimary};
+      z-index: 3 !important; /* Đảm bảo presenter indicator hiển thị */
 
       [dir="rtl"] & {
         left: auto;
@@ -263,9 +273,10 @@ const Avatar = styled.div<AvatarProps>`
         left: auto;
         right: 1.375rem;
       }
-      opacity: 1;
+      opacity: 1 !important;
       width: 1.2rem;
       height: 1.2rem;
+      z-index: 3 !important; /* Đảm bảo voice indicator hiển thị */
     }
   `}
 
@@ -273,19 +284,21 @@ const Avatar = styled.div<AvatarProps>`
     &:after {
       content: "\\00a0\\e932\\00a0";
       background-color: ${colorDanger};
-      opacity: 1;
+      opacity: 1 !important;
       width: 1.2rem;
       height: 1.2rem;
+      z-index: 3 !important; /* Đảm bảo muted indicator hiển thị */
     }
   `}
 
   ${({ listenOnly }) => listenOnly && `
     &:after {
       content: "\\00a0\\e90c\\00a0";
-      opacity: 1;
+      opacity: 1 !important;
       width: 1.2rem;
       height: 1.2rem;
       background-color: ${colorSuccess};
+      z-index: 3 !important; /* Đảm bảo listenOnly indicator hiển thị */
     }
   `}
 
@@ -302,9 +315,10 @@ const Avatar = styled.div<AvatarProps>`
         right: 1.375rem;
       }
 
-      opacity: 1;
+      opacity: 1 !important;
       width: 1.2rem;
       height: 1.2rem;
+      z-index: 3 !important; /* Đảm bảo noVoice indicator hiển thị */
     }
   `}
 
@@ -318,11 +332,12 @@ const Avatar = styled.div<AvatarProps>`
   `}
   // ================ talking animation ================
   // ================ image ================
-  ${({ avatar, emoji, color }) => avatar?.length !== 0 && !emoji && css`
+  ${({ avatar, emoji }) => avatar?.length !== 0 && !emoji && css`
     background-image: url(${avatar});
     background-repeat: no-repeat;
-    background-size: contain;
-    border: 2px solid ${color};
+    background-size: cover;
+    background-position: center;
+    border: 2.5px solid ${colorWhite};
   `}
   // ================ image ================
 
@@ -336,8 +351,9 @@ const Avatar = styled.div<AvatarProps>`
   // ================ content ================
 
   & .react-loading-skeleton {    
-    height: 2.25rem;
-    width: 2.25rem;
+    height: 2.75rem;
+    width: 2.75rem;
+    border-radius: 50%;
   }
 `;
 

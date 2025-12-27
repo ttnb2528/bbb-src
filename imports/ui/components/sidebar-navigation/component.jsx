@@ -88,10 +88,11 @@ const SidebarNavigation = ({
   };
 
   const expandedHeight = Math.min(Math.max(minHeight * 2, 260), maxHeight || window.innerHeight * 0.5);
-  const actionBarHeight = 100;
-  const handleOffset = 36;
-  const viewportHeight = window.innerHeight;
-  const translateYOffset = Math.max(0, viewportHeight - actionBarHeight - top + handleOffset);
+  
+  // Tính toán translateX để panel trượt từ bên trái vào
+  // Khi collapsed: panel trượt ra ngoài màn hình (translateX = -100%)
+  // Khi expanded: panel ở vị trí bình thường (translateX = 0)
+  const translateXOffset = isCollapsed ? '-100%' : '0';
 
   const toggleCollapsed = () => {
     const targetCollapsed = !isCollapsed;
@@ -151,18 +152,17 @@ const SidebarNavigation = ({
         zIndex,
         width,
         height: resizableHeight,
-        transition: isCollapsed 
-          ? 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), height 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0s'
-          : 'height 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
-        willChange: 'height, transform',
-        transform: isCollapsed ? `translateY(${translateYOffset}px)` : 'translateY(0)',
+        // Animation mượt mà cho trượt ngang từ bên trái
+        transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        willChange: 'transform, height',
+        transform: `translateX(${translateXOffset})`,
       }}
     >
       <Styled.SidebarNavigationWrapper data-collapsed={isCollapsed}>
-        {/* Thanh handle ở mép dưới để kéo panel lên / xuống */}
-        <Styled.BottomHandle type="button" onClick={toggleCollapsed} data-collapsed={isCollapsed}>
+        {/* Thanh handle ở mép phải để kéo panel ra/vào */}
+        <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={isCollapsed}>
           <i className="icon-bbb-right_arrow" />
-        </Styled.BottomHandle>
+        </Styled.SideHandle>
 
         <Styled.ContentArea data-collapsed={isCollapsed}>
           <UserTitleContainer />
