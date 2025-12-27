@@ -525,7 +525,7 @@ const CustomLayout = (props) => {
         const cameraHeight = cameraDockBounds.height || 0;
         // Tăng margin để document xuống sâu hơn, không bị đụng với camera
         // Trên mobile: margin rất nhỏ để không xuống quá sâu
-        const extraMargin = isMobile ? 0 : 28; // Mobile: 4px, Desktop: 28px
+        const extraMargin = isMobile ? -45 : 28;
         mediaBounds.width = mediaAreaWidth;
         mediaBounds.height = mediaAreaHeight;
         // Đặt document xuống dưới camera với margin đủ để không bị đụng
@@ -587,7 +587,7 @@ const CustomLayout = (props) => {
       // Đẩy document xuống một chút từ top để căn giữa màn hình
       // Trên mobile: đẩy lên một chút (offset âm) để document không quá thấp
       // Trên desktop: offset lớn hơn để ở giữa màn hình
-      const topOffset = isMobile ? -20 : 80; // Mobile: -20px (đẩy lên), Desktop: 80px
+      const topOffset = isMobile ? 0 : 80; // Mobile: -20px (đẩy lên), Desktop: 80px
       mediaBounds.top = navBarHeight + bannerHeight + topOffset;
       mediaBounds.left = !isRTL ? 0 : null;
       mediaBounds.right = isRTL ? 0 : null;

@@ -79,7 +79,7 @@ const Container = styled.div`
     left: 22px;
     right: 22px;
     gap: 8px;
-    padding: 16px 0px;
+    padding: 0px 0px 8px;
   }
 `;
 
