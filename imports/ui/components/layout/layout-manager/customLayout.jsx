@@ -523,15 +523,79 @@ const CustomLayout = (props) => {
         // Document được đặt dưới camera với margin đủ để không bị đụng
         const cameraTop = cameraDockBounds.top || navBarHeight;
         const cameraHeight = cameraDockBounds.height || 0;
-        // Tăng margin để document xuống sâu hơn, không bị đụng với camera
-        // Trên mobile: margin rất nhỏ để không xuống quá sâu
-        const extraMargin = isMobile ? -45 : 28;
+        
+        // Tính toán đơn giản và ổn định: luôn dựa trên camera position và height
+        // Đảm bảo document bắt đầu ngay sau camera với margin tối thiểu
+        const minMargin = 28; // Margin tối thiểu giữa camera và document
+        const documentStartTop = cameraTop + cameraHeight + minMargin;
+        
+        // Phát hiện document dọc (portrait) vs ngang (landscape)
+        // Document dọc: height > width (tỷ lệ > 1)
+        // Document ngang: width >= height (tỷ lệ <= 1)
+        const documentAspectRatio = mediaAreaHeight / mediaAreaWidth;
+        const isPortraitDocument = documentAspectRatio > 1.2; // Tỷ lệ > 1.2 được coi là dọc
+        
+        // Trên mobile: điều chỉnh thêm để document không quá thấp
+        let finalTop = documentStartTop + bannerHeight;
+        if (isMobile) {
+          const windowH = windowHeight();
+          const { height: actionBarHeight } = calculatesActionbarHeight();
+          const availableHeight = windowH - actionBarHeight;
+          
+          if (isPortraitDocument) {
+            // Document dọc: cần điều chỉnh để không bị thụt quá sát dưới
+            // Tính toán không gian còn lại sau camera
+            const spaceAfterCamera = availableHeight - (cameraTop + cameraHeight);
+            
+            // Document dọc cần nhiều không gian hơn, nhưng không được quá thấp
+            // Điều chỉnh để document có thể hiển thị tốt nhất trong không gian còn lại
+            const idealDocumentTop = cameraTop + cameraHeight + minMargin + bannerHeight;
+            
+            // Nếu không gian còn lại quá ít, đẩy document lên cao hơn một chút
+            if (spaceAfterCamera < mediaAreaHeight * 0.8) {
+              // Không gian hạn chế: đẩy document lên để có thể xem được phần trên
+              finalTop = idealDocumentTop - 20; // Đẩy lên 20px
+            } else {
+              // Không gian đủ: giữ nguyên vị trí
+              finalTop = idealDocumentTop;
+            }
+          } else {
+            // Document ngang: giữ nguyên logic cũ (đã ổn)
+            // Tính toán dựa trên tỷ lệ: document không nên chiếm quá 70% chiều cao còn lại
+            const maxDocumentHeight = availableHeight * 0.7;
+            const documentHeight = mediaAreaHeight;
+            
+            // Nếu document quá cao, điều chỉnh top để document không bị overflow
+            if (documentHeight > maxDocumentHeight) {
+              const adjustedTop = availableHeight - maxDocumentHeight - 10;
+              if (adjustedTop > documentStartTop) {
+                finalTop = adjustedTop;
+              }
+            }
+          }
+          
+          // Đảm bảo document không bị overflow
+          const maxTop = windowH - actionBarHeight - 30; // 30px padding bottom
+          if (finalTop > maxTop) {
+            finalTop = maxTop;
+          }
+          
+          // Đảm bảo document không bị overlap với camera
+          const minTop = cameraTop + cameraHeight + minMargin;
+          if (finalTop < minTop) {
+            finalTop = minTop;
+          }
+        } else {
+          // Desktop: thêm margin lớn hơn
+          finalTop = documentStartTop + camerasMargin + bannerHeight;
+        }
+        
         mediaBounds.width = mediaAreaWidth;
         mediaBounds.height = mediaAreaHeight;
-        // Đặt document xuống dưới camera với margin đủ để không bị đụng
-        mediaBounds.top = cameraTop + cameraHeight + camerasMargin + extraMargin + bannerHeight;
+        mediaBounds.top = finalTop;
         mediaBounds.left = !isRTL ? 0 : null;
         mediaBounds.right = isRTL ? 0 : null;
+        
         // Z-index cao hơn camera để đảm bảo document hiển thị đúng
         mediaBounds.zIndex = 2;
       } else if (isCameraBottom) {
