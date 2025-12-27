@@ -1410,16 +1410,19 @@ const Whiteboard = React.memo((props) => {
         ? Object.values(shapes).map((shape) => sanitizeShape(shape))
         : [];
 
-      editor.store.mergeRemoteChanges(() => {
-        editor.batch(() => {
-          editor.store.put(page);
-          editor.store.put(assets);
-          editor.setCurrentPage(`page:${curPageIdRef.current}`);
-          editor.store.put(bgShape);
-          if (hasShapes) {
-            editor.store.put(remoteShapesArray);
-          }
-          editor.history.clear();
+      // Sử dụng requestAnimationFrame để đảm bảo không update store trong render phase
+      requestAnimationFrame(() => {
+        editor.store.mergeRemoteChanges(() => {
+          editor.batch(() => {
+            editor.store.put(page);
+            editor.store.put(assets);
+            editor.setCurrentPage(`page:${curPageIdRef.current}`);
+            editor.store.put(bgShape);
+            if (hasShapes) {
+              editor.store.put(remoteShapesArray);
+            }
+            editor.history.clear();
+          });
         });
       });
 
@@ -1833,10 +1836,20 @@ const Whiteboard = React.memo((props) => {
 
   React.useEffect(() => {
     zoomValueRef.current = zoomValue;
-    setPageZoomMap((prev) => ({
-      ...prev,
-      [curPageIdRef.current]: zoomValue,
-    }));
+    
+    // Sử dụng requestAnimationFrame để tránh update state trong render phase
+    requestAnimationFrame(() => {
+      setPageZoomMap((prev) => {
+        // Chỉ update nếu giá trị thực sự thay đổi
+        if (prev[curPageIdRef.current] === zoomValue) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [curPageIdRef.current]: zoomValue,
+        };
+      });
+    });
 
     if (pageChanged) {
       zoomChanger(pageZoomMap[curPageIdRef.current] || HUNDRED_PERCENT);
@@ -1855,7 +1868,7 @@ const Whiteboard = React.memo((props) => {
       }
     }
     prevZoomValueRef.current = zoomValue;
-  }, [zoomValue, pageChanged, tlEditorRef.current, isWheelZoomRef.current]);
+  }, [zoomValue, pageChanged, pageZoomMap, curPageId, currentPresentationPage, isPresenter, isMounting, zoomChanger, syncCameraOnPresenterZoom]);
 
   React.useEffect(() => {
     if (isPresenter) {
@@ -2028,33 +2041,36 @@ const Whiteboard = React.memo((props) => {
   React.useEffect(() => {
     const formattedPageId = parseInt(curPageIdRef.current, 10);
     if (tlEditorRef.current && formattedPageId !== 0) {
-      tlEditorRef.current.store.mergeRemoteChanges(() => {
-        tlEditorRef.current.batch(() => {
-          const currentPageId = `page:${formattedPageId}`;
-          const tlZ = tlEditorRef.current.getCamera()?.z;
-          const cameras = [];
-          const pages = [];
-          const currPageExists = tlEditorRef.current?.getPage(currentPageId);
-          if (!currPageExists) {
-            const currentPage = createPage(currentPageId);
-            pages.push(...currentPage);
-          }
-          const allRecords = tlEditorRef.current.store.allRecords();
-          const cameraRecords = allRecords.filter(
-            (record) => record.typeName === 'camera' && record.id?.split(':').pop() === formattedPageId,
-          );
-          if (cameraRecords?.length < 1) {
-            cameras.push(createCamera(formattedPageId, tlZ));
-          }
-          cleanupStore(currentPageId);
-          updateStore(pages, cameras);
-          tlEditorRef.current.setCurrentPage(currentPageId);
-          finalizeStore();
+      // Sử dụng requestAnimationFrame để đảm bảo không update store trong render phase
+      requestAnimationFrame(() => {
+        tlEditorRef.current.store.mergeRemoteChanges(() => {
+          tlEditorRef.current.batch(() => {
+            const currentPageId = `page:${formattedPageId}`;
+            const tlZ = tlEditorRef.current.getCamera()?.z;
+            const cameras = [];
+            const pages = [];
+            const currPageExists = tlEditorRef.current?.getPage(currentPageId);
+            if (!currPageExists) {
+              const currentPage = createPage(currentPageId);
+              pages.push(...currentPage);
+            }
+            const allRecords = tlEditorRef.current.store.allRecords();
+            const cameraRecords = allRecords.filter(
+              (record) => record.typeName === 'camera' && record.id?.split(':').pop() === formattedPageId,
+            );
+            if (cameraRecords?.length < 1) {
+              cameras.push(createCamera(formattedPageId, tlZ));
+            }
+            cleanupStore(currentPageId);
+            updateStore(pages, cameras);
+            tlEditorRef.current.setCurrentPage(currentPageId);
+            finalizeStore();
+          });
         });
-      });
 
-      toggleToolbarIfNeeded();
-      resetSlideState();
+        toggleToolbarIfNeeded();
+        resetSlideState();
+      });
     }
   }, [curPageId]);
 
@@ -2073,11 +2089,14 @@ const Whiteboard = React.memo((props) => {
 
   React.useEffect(() => {
     if (isMounting) {
-      setIsMounting(false);
-      /// brings presentation toolbar back
-      setTldrawIsMounting(false);
+      // Sử dụng requestAnimationFrame để tránh update state trong render phase
+      requestAnimationFrame(() => {
+        setIsMounting(false);
+        /// brings presentation toolbar back
+        setTldrawIsMounting(false);
+      });
     }
-  }, [tlEditorRef?.current?.camera, presentationAreaWidth, presentationAreaHeight, presentationId]);
+  }, [isMounting, presentationAreaWidth, presentationAreaHeight, presentationId, setTldrawIsMounting]);
 
   React.useEffect(() => {
     const baseName =
@@ -2095,8 +2114,12 @@ const Whiteboard = React.memo((props) => {
 
     const currentTool = tlEditorRef.current?.getCurrentToolId();
     const newCursor = hasWBAccessRef.current || currentUser?.presenter ? TOOL_CURSORS[currentTool] || '' : 'inherit';
-    setCursorType(newCursor);
-  }, [tlEditorRef.current?.getCurrentToolId()]);
+    
+    // Sử dụng requestAnimationFrame để tránh update state trong render phase
+    requestAnimationFrame(() => {
+      setCursorType(newCursor);
+    });
+  }, [hasWBAccessRef.current, currentUser?.presenter]);
 
   const getToolbarCurrentState = useCallback(() => {
     return {

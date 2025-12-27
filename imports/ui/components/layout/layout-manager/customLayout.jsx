@@ -554,18 +554,18 @@ const CustomLayout = (props) => {
               // Document quá cao: đẩy lên cao nhất có thể (margin âm nhưng vẫn không overlap)
               // Trên thiết bị nhỏ, đẩy lên cao hơn nữa
               // Giảm xuống thêm 5px để hạ document xuống
-              dynamicMargin = isSmallDevice ? -45 : -35; // Thiết bị nhỏ: -45px, bình thường: -35px
+              dynamicMargin = isSmallDevice ? -48 : -35; // Thiết bị nhỏ: -45px, bình thường: -35px
             } else {
               // Document vừa: đẩy lên một chút để tận dụng không gian
               // Trên thiết bị nhỏ, đẩy lên cao hơn nữa
               // Giảm xuống thêm 5px để hạ document xuống
-              dynamicMargin = isSmallDevice ? -30 : -20; // Thiết bị nhỏ: -30px, bình thường: -20px
+              dynamicMargin = isSmallDevice ? -28 : -20; // Thiết bị nhỏ: -30px, bình thường: -20px
             }
           } else {
             // Document ngang: đẩy lên một chút
             // Trên thiết bị nhỏ, đẩy lên cao hơn nữa
             // Giảm xuống thêm 5px để hạ document xuống
-            dynamicMargin = isSmallDevice ? -25 : -15; // Thiết bị nhỏ: -25px, bình thường: -15px
+            dynamicMargin = isSmallDevice ? -24 : -15; // Thiết bị nhỏ: -25px, bình thường: -15px
           }
           
           // Tính toán vị trí final, đảm bảo không overlap với camera
@@ -578,15 +578,15 @@ const CustomLayout = (props) => {
           // Không cho phép overlap trên thiết bị nhỏ
           if (isSmallDevice) {
             // Thiết bị nhỏ: đảm bảo document bắt đầu sau camera với margin đủ
-            // Tăng margin lên thêm một chút để đảm bảo document không che camera
-            const minTop = baseTop + 15; // Tối thiểu 15px margin (tăng từ 10px) để không che camera
+            // Tăng margin lên thêm 5px để đảm bảo document không che camera
+            const minTop = baseTop + 20; // Tối thiểu 20px margin (tăng từ 15px) để không che camera
             if (finalTop < minTop) {
               finalTop = minTop;
             }
             // Trên thiết bị nhỏ, không cho phép margin âm để đảm bảo không che
             if (dynamicMargin < 0) {
               // Reset về margin dương nhỏ nhất
-              finalTop = baseTop + 15;
+              finalTop = baseTop + 20;
             }
           } else {
             // Thiết bị lớn hơn: cho phép overlap một chút
@@ -612,8 +612,20 @@ const CustomLayout = (props) => {
             finalTop = maxTop;
           }
           
+          // QUAN TRỌNG: Trên thiết bị nhỏ, đảm bảo finalTop không bị override
           // Thêm bannerHeight sau khi đã tính toán xong để đảm bảo không bị ảnh hưởng bởi minTop/maxTop
-          finalTop = finalTop + bannerHeight;
+          // Nhưng trên thiết bị nhỏ, đảm bảo margin tối thiểu sau camera vẫn được giữ
+          if (isSmallDevice) {
+            // Trên thiết bị nhỏ: đảm bảo sau khi cộng bannerHeight, vẫn có margin đủ
+            const minTopAfterBanner = baseTop + 20 + bannerHeight;
+            finalTop = finalTop + bannerHeight;
+            // Nếu sau khi cộng bannerHeight mà vẫn chưa đủ margin, force lại
+            if (finalTop < minTopAfterBanner) {
+              finalTop = minTopAfterBanner;
+            }
+          } else {
+            finalTop = finalTop + bannerHeight;
+          }
         } else {
           // Desktop: thêm margin lớn hơn
           const minMargin = 28;
@@ -638,7 +650,7 @@ const CustomLayout = (props) => {
           if (windowH < 700) {
             // Thiết bị rất nhỏ (như iPhone SE): thu nhỏ document để vừa với không gian
             // Để lại margin (50px) để document không sát đáy và không che camera (tăng từ 40px)
-            const maxDocumentHeight = Math.max(spaceForDocument - 65, 200); // 50px margin bottom, tối thiểu 200px
+            const maxDocumentHeight = Math.max(spaceForDocument - 68, 200); // 50px margin bottom, tối thiểu 200px
             
             // Luôn thu nhỏ document để vừa với không gian còn lại
             // Đảm bảo document không cao hơn không gian còn lại
@@ -647,7 +659,7 @@ const CustomLayout = (props) => {
               mediaBounds.height = maxDocumentHeight;
             } else {
               // Nếu document nhỏ hơn không gian, vẫn đảm bảo không overflow
-              const safeHeight = Math.max(spaceForDocument - 65, 200);
+              const safeHeight = Math.max(spaceForDocument - 68, 200);
               mediaBounds.height = Math.min(mediaAreaHeight, safeHeight);
             }
           } else {
@@ -655,12 +667,28 @@ const CustomLayout = (props) => {
             const safeHeight = spaceForDocument - 20;
             mediaBounds.height = Math.min(mediaAreaHeight, safeHeight);
           }
-        } else {
-          // Desktop hoặc không có camera: giữ nguyên chiều cao
-          mediaBounds.height = mediaAreaHeight;
-        }
+          } else {
+            // Desktop hoặc không có camera: giữ nguyên chiều cao
+            mediaBounds.height = mediaAreaHeight;
+          }
         
+        // QUAN TRỌNG: Set finalTop vào mediaBounds.top
+        // Trên thiết bị nhỏ, đảm bảo giá trị này không bị override bởi logic khác
         mediaBounds.top = finalTop;
+        
+        // Double-check trên thiết bị nhỏ: đảm bảo không bị override bởi bất kỳ logic nào khác
+        if (isMobile && isCameraTop) {
+          const windowH = windowHeight();
+          const isSmallDeviceCheck = windowH < 700;
+          if (isSmallDeviceCheck) {
+            const baseTopCheck = cameraTop + cameraHeight;
+            const minTopCheck = baseTopCheck + 20 + bannerHeight; // 20px margin + bannerHeight
+            // Force đảm bảo margin tối thiểu - đây là safety check cuối cùng
+            if (mediaBounds.top < minTopCheck) {
+              mediaBounds.top = minTopCheck;
+            }
+          }
+        }
         mediaBounds.left = !isRTL ? 0 : null;
         mediaBounds.right = isRTL ? 0 : null;
         
