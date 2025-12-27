@@ -71,6 +71,7 @@ interface ChatMessageProps {
   chatEditEnabled: boolean;
   chatReactionsEnabled: boolean;
   focused: boolean;
+  mode?: 'sidebar' | 'modal';
   sendReaction: (reactionEmoji: string, chatId: string, messageId: string) => void;
   deleteReaction: (reactionEmoji: string, chatId: string, messageId: string) => void;
 }
@@ -181,6 +182,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
   deleteReaction,
   sendReaction,
   focused,
+  mode = 'sidebar',
 }, ref) => {
   const intl = useIntl();
   const messageContentRef = React.useRef<HTMLDivElement>(null);
@@ -557,12 +559,13 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
     : ((previousMessage?.user?.userId
       || lastSenderPreviousPage) === message?.user?.userId) && pluginMessageNotCustom;
 
+  // Trong private chat modal (mode === 'modal'), luôn hiển thị header để phân biệt ai gửi tin nhắn
   const shouldRenderAvatar = messageContent.showAvatar
-    && !sameSender
+    && (!sameSender || mode === 'modal')
     && !isCustomPluginMessage;
 
   const shouldRenderHeader = messageContent.showHeading
-    && !sameSender
+    && (!sameSender || mode === 'modal')
     && !isCustomPluginMessage;
 
   const deactivateFocusTrap = useCallback(() => {

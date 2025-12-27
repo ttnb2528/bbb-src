@@ -51,6 +51,7 @@ interface ChatListPageCommonProps {
   sendReaction: (reactionEmoji: string, chatId: string, messageId: string) => void;
   deleteReaction: (reactionEmoji: string, chatId: string, messageId: string) => void;
   allPagesLoaded: boolean;
+  mode?: 'sidebar' | 'modal';
 }
 
 interface ChatListPageContainerProps extends ChatListPageCommonProps {
@@ -134,6 +135,7 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
   sendReaction,
   focusedSequence,
   allPagesLoaded,
+  mode = 'sidebar',
 }) => {
   const { domElementManipulationIdentifiers } = useContext(PluginsContext);
   const messageRefs = useRef<Record<number, ChatMessageRef | null>>({});
@@ -271,6 +273,7 @@ const ChatListPage: React.FC<ChatListPageProps> = ({
             deleteReaction={deleteReaction}
             sendReaction={sendReaction}
             focused={focusedSequence === message.messageSequence}
+            mode={mode}
           />
         );
       })}
@@ -307,6 +310,7 @@ const ChatListPageContainer: React.FC<ChatListPageContainerProps> = ({
   clearPageLoading,
   setPageLoading,
   allPagesLoaded,
+  mode = 'sidebar',
 }) => {
   const CHAT_CONFIG = window.meetingClientSettings.public.chat;
   const PUBLIC_GROUP_CHAT_KEY = CHAT_CONFIG.public_group_id;
@@ -379,6 +383,7 @@ const ChatListPageContainer: React.FC<ChatListPageContainerProps> = ({
       sendReaction={sendReaction}
       focusedSequence={focusedSequence}
       allPagesLoaded={allPagesLoaded}
+      mode={mode}
     />
   );
 };

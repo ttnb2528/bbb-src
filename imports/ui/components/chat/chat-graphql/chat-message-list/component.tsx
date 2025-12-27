@@ -60,6 +60,7 @@ interface ChatListProps {
   totalPages: number;
   chatId: string;
   isRTL: boolean;
+  mode?: 'sidebar' | 'modal';
   setMessageAsSeenMutation: (
     data: {
       variables: {
@@ -189,6 +190,7 @@ const ChatMessageList: React.FC<ChatListProps> = ({
   setMessageAsSeenMutation,
   totalUnread,
   isRTL,
+  mode = 'sidebar',
 }) => {
   const intl = useIntl();
   // I used a ref here because I don't want to re-render the component when the last sender changes
@@ -719,6 +721,7 @@ const ChatMessageList: React.FC<ChatListProps> = ({
                       clearPageLoading={clearPageLoading}
                       setPageLoading={setPageLoading}
                       allPagesLoaded={allPagesLoaded}
+                      mode={mode}
                     />
                   );
                 })}
@@ -746,9 +749,11 @@ const ChatMessageList: React.FC<ChatListProps> = ({
 interface ChatMessageListContainerProps {
   // Optional: override chatId để tách biệt với idChatOpen từ layout context
   chatId?: string;
+  // 'sidebar' dùng cho panel dưới; 'modal' dùng cho popup private chat
+  mode?: 'sidebar' | 'modal';
 }
 
-const ChatMessageListContainer: React.FC<ChatMessageListContainerProps> = ({ chatId: overrideChatId }) => {
+const ChatMessageListContainer: React.FC<ChatMessageListContainerProps> = ({ chatId: overrideChatId, mode = 'sidebar' }) => {
   const idChatOpenFromLayout = layoutSelect((i: Layout) => i.idChatOpen);
   // Sử dụng overrideChatId nếu có, nếu không thì dùng idChatOpen từ layout
   const idChatOpen = overrideChatId ?? idChatOpenFromLayout;
@@ -783,6 +788,7 @@ const ChatMessageListContainer: React.FC<ChatMessageListContainerProps> = ({ cha
       setMessageAsSeenMutation={setMessageAsSeenMutation}
       totalUnread={currentChat?.totalUnread || 0}
       isRTL={isRTL}
+      mode={mode}
     />
   );
 };
