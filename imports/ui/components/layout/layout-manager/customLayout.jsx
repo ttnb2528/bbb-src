@@ -574,19 +574,35 @@ const CustomLayout = (props) => {
           // Không cộng bannerHeight vào đây vì nó có thể làm tăng giá trị không mong muốn
           finalTop = baseTop + dynamicMargin;
           
-          // Nếu dynamicMargin là âm (đẩy lên), cho phép overlap với camera để đạt mục tiêu
-          // Nếu dynamicMargin là dương (đẩy xuống), đảm bảo không overlap
-          if (dynamicMargin < 0) {
-            // Margin âm: cho phép overlap nhưng không quá nhiều
-            const minTop = baseTop - 50; // Cho phép overlap tối đa 50px (giảm từ 80px)
+          // Trên thiết bị nhỏ, đảm bảo document không che camera
+          // Không cho phép overlap trên thiết bị nhỏ
+          if (isSmallDevice) {
+            // Thiết bị nhỏ: đảm bảo document bắt đầu sau camera với margin đủ
+            // Tăng margin lên thêm một chút để đảm bảo document không che camera
+            const minTop = baseTop + 15; // Tối thiểu 15px margin (tăng từ 10px) để không che camera
             if (finalTop < minTop) {
               finalTop = minTop;
             }
+            // Trên thiết bị nhỏ, không cho phép margin âm để đảm bảo không che
+            if (dynamicMargin < 0) {
+              // Reset về margin dương nhỏ nhất
+              finalTop = baseTop + 15;
+            }
           } else {
-            // Margin dương: đảm bảo không overlap
-            const minTop = baseTop + 3; // Tối thiểu 3px margin
-            if (finalTop < minTop) {
-              finalTop = minTop;
+            // Thiết bị lớn hơn: cho phép overlap một chút
+            if (dynamicMargin < 0) {
+              // Margin âm: cho phép overlap nhưng không quá nhiều
+              const maxOverlap = 50; // Overlap tối đa 50px
+              const minTop = baseTop - maxOverlap;
+              if (finalTop < minTop) {
+                finalTop = minTop;
+              }
+            } else {
+              // Margin dương: đảm bảo không overlap
+              const minTop = baseTop + 3; // Tối thiểu 3px margin
+              if (finalTop < minTop) {
+                finalTop = minTop;
+              }
             }
           }
           
@@ -605,7 +621,45 @@ const CustomLayout = (props) => {
         }
         
         mediaBounds.width = mediaAreaWidth;
-        mediaBounds.height = mediaAreaHeight;
+        
+        // Trên thiết bị nhỏ (như iPhone SE: 375x667), thu nhỏ document để vừa với không gian còn lại
+        if (isMobile && isCameraTop) {
+          const windowH = windowHeight();
+          const { height: actionBarHeight } = calculatesActionbarHeight();
+          const availableHeight = windowH - actionBarHeight;
+          
+          // Tính toán không gian còn lại sau finalTop
+          // Đảm bảo document không bị che camera và không overflow
+          const documentTop = finalTop;
+          const spaceForDocument = availableHeight - documentTop;
+          
+          // Tính toán chiều cao tối đa cho document
+          // Đảm bảo document vừa với không gian còn lại, không bị overflow
+          if (windowH < 700) {
+            // Thiết bị rất nhỏ (như iPhone SE): thu nhỏ document để vừa với không gian
+            // Để lại margin (50px) để document không sát đáy và không che camera (tăng từ 40px)
+            const maxDocumentHeight = Math.max(spaceForDocument - 65, 200); // 50px margin bottom, tối thiểu 200px
+            
+            // Luôn thu nhỏ document để vừa với không gian còn lại
+            // Đảm bảo document không cao hơn không gian còn lại
+            if (mediaAreaHeight > maxDocumentHeight) {
+              // Thu nhỏ document để vừa với không gian
+              mediaBounds.height = maxDocumentHeight;
+            } else {
+              // Nếu document nhỏ hơn không gian, vẫn đảm bảo không overflow
+              const safeHeight = Math.max(spaceForDocument - 65, 200);
+              mediaBounds.height = Math.min(mediaAreaHeight, safeHeight);
+            }
+          } else {
+            // Thiết bị lớn hơn: giữ nguyên chiều cao nhưng đảm bảo không overflow
+            const safeHeight = spaceForDocument - 20;
+            mediaBounds.height = Math.min(mediaAreaHeight, safeHeight);
+          }
+        } else {
+          // Desktop hoặc không có camera: giữ nguyên chiều cao
+          mediaBounds.height = mediaAreaHeight;
+        }
+        
         mediaBounds.top = finalTop;
         mediaBounds.left = !isRTL ? 0 : null;
         mediaBounds.right = isRTL ? 0 : null;
