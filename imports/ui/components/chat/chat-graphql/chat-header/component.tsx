@@ -46,6 +46,11 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const layoutContextDispatch = layoutDispatch();
   const intl = useIntl();
   const [updateVisible] = useMutation(CLOSE_PRIVATE_CHAT_MUTATION);
+  // Ẩn header khi ở sidebar mode để tiết kiệm không gian
+  if (mode === 'sidebar') {
+    return null;
+  }
+
   return (
     <Header
       isRTL={isRTL}

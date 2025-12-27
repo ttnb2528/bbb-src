@@ -135,19 +135,11 @@ const SidebarContent = (props) => {
   };
 
   const expandedHeight = Math.min(Math.max(minHeight * 2, 260), maxHeight || window.innerHeight * 0.5);
-  // Tính toán khoảng cách để panel trượt xuống sát footer khi collapsed
-  // Footer có chiều cao khoảng 80px (actionbar), nút handle cao 32px và ở top: -36px
-  // Khi collapsed, mình muốn top của nút handle sát footer (footer top = viewportHeight - actionBarHeight)
-  const actionBarHeight = 100; // Chiều cao footer/actionbar
-  const handleOffset = 36; // Nút handle nhô lên 36px từ top của panel
-  const viewportHeight = window.innerHeight;
-  // Top của nút handle khi expanded = top - handleOffset
-  // Top của nút handle khi collapsed = top - handleOffset + translateY
-  // Footer top = viewportHeight - actionBarHeight
-  // Khi collapsed, mình muốn: top - handleOffset + translateY = viewportHeight - actionBarHeight
-  // Vậy translateY = viewportHeight - actionBarHeight - top + handleOffset
-  // Nhưng cần đảm bảo translateY dương để trượt xuống
-  const translateYOffset = Math.max(0, viewportHeight - actionBarHeight - top + handleOffset);
+  
+  // Tính toán translateX để panel trượt từ bên phải vào
+  // Khi collapsed: panel trượt ra ngoài màn hình (translateX = 100%)
+  // Khi expanded: panel ở vị trí bình thường (translateX = 0)
+  const translateXOffset = isCollapsed ? '100%' : '0';
 
   const toggleCollapsed = () => {
     const targetCollapsed = !isCollapsed;
@@ -202,12 +194,10 @@ const SidebarContent = (props) => {
         zIndex,
         width,
         height: resizableHeight,
-        // Transform được ưu tiên trước, sau đó mới animate height để tránh cảm giác "kéo lên rồi mới hạ xuống"
-        transition: isCollapsed 
-          ? 'transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), height 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0s'
-          : 'height 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
-        willChange: 'height, transform',
-        transform: isCollapsed ? `translateY(${translateYOffset}px)` : 'translateY(0)',
+        // Animation mượt mà cho trượt ngang từ bên phải
+        transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+        willChange: 'transform, height',
+        transform: `translateX(${translateXOffset})`,
       }}
       handleStyles={{
         left: {
@@ -225,21 +215,11 @@ const SidebarContent = (props) => {
       }}
     >
       <Styled.SidebarContentWrapper data-collapsed={isCollapsed}>
-        {/* Thanh handle ở mép dưới để kéo panel lên / xuống */}
-        <Styled.BottomHandle type="button" onClick={toggleCollapsed} data-collapsed={isCollapsed}>
+        {/* Thanh handle ở mép trái để kéo panel ra/vào */}
+        <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={isCollapsed}>
           <i className="icon-bbb-right_arrow" />
-        </Styled.BottomHandle>
+        </Styled.SideHandle>
 
-        {/* Panel ngang: chỉ hiển thị Public Chat */}
-        <Styled.TabBar data-collapsed={isCollapsed}>
-          <Styled.TabButton
-            type="button"
-            onClick={() => handleSelectPanel(PANELS.CHAT)}
-            data-active={activePanel === PANELS.CHAT}
-          >
-            Public Chat
-          </Styled.TabButton>
-        </Styled.TabBar>
         <Styled.ContentArea data-collapsed={isCollapsed}>
           {activePanel === PANELS.CHAT && (
             <ErrorBoundary fallbackComponent={() => <FallbackView />} from="sidebar-content">

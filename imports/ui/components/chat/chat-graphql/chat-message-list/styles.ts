@@ -22,15 +22,34 @@ export const MessageList = styled(ScrollboxVertical)<MessageListProps>`
   overflow-y: auto;
   position: absolute;
   display: flex;
-  padding-bottom: ${smPaddingX};
+  padding: 1.25rem 1rem 1rem 1rem;
+  gap: 0;
 
-  ${({ isRTL }) => isRTL && `
-    padding-left: ${smPaddingX};
-  `}
-
-  ${({ isRTL }) => !isRTL && `
-    padding-right: ${smPaddingX};
-  `}
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+  
+  /* Custom scrollbar styling - modern thin scrollbar */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.25);
+    }
+  }
+  
+  /* Firefox scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 `;
 
 export const UnreadButton = styled(ButtonElipsis)<UnreadButtonProps>`

@@ -28,15 +28,10 @@ const Form = styled.form<FormProps>`
   align-self: flex-end;
   width: 100%;
   position: relative;
-  margin-top: .2rem;
-
-  ${({ isRTL }) => isRTL && `
-    padding-left: ${smPaddingX};
-  `}
-
-  ${({ isRTL }) => !isRTL && `
-    padding-right: ${smPaddingX};
-  `}
+  margin-top: 0;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border-top: 1px solid #f3f4f6;
 `;
 
 const Wrapper = styled.div`
@@ -49,19 +44,20 @@ const Input = styled(TextareaAutosize)`
   flex: 1;
   background: #fff;
   background-clip: padding-box;
-  color: ${colorText};
+  color: #1f2937;
   -webkit-appearance: none;
-  padding: calc(${smPaddingY} * 2.5) calc(${smPaddingX} * 1.25);
+  padding: 0.75rem 1rem;
   resize: none;
-  transition: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: ${borderRadius};
-  font-size: ${fontSizeBase};
-  line-height: 1;
-  min-height: 2.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  min-height: 2.75rem;
   max-height: 10rem;
   border: none;
   box-shadow: none;
   outline: none;
+  font-family: inherit;
 
   [dir='ltr'] & {
     border-radius: 0.75rem 0 0 0.75rem;
@@ -69,6 +65,18 @@ const Input = styled(TextareaAutosize)`
 
   [dir='rtl'] & {
     border-radius: 0 0.75rem 0.75rem 0;
+  }
+
+  &::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+    font-weight: 400;
+  }
+
+  &:focus {
+    &::placeholder {
+      opacity: 0.5;
+    }
   }
 
   &:disabled,
@@ -168,19 +176,29 @@ const InputWrapper = styled.div`
   flex-grow: 1;
   min-width: 0;
   z-index: 0;
-  padding: 1px 0 1px 1px;
-  border: 1px solid ${colorGrayLightest};
+  padding: 3px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
   [dir='ltr'] & {
-    border-radius: 0.75rem 0 0 0.75rem;
+    border-radius: 12px 0 0 12px;
   }
 
   [dir='rtl'] & {
-    border-radius: 0 0.75rem 0.75rem 0;
+    border-radius: 0 12px 12px 0;
+  }
+
+  &:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   }
 
   &:focus-within {
-    border: 1px solid ${colorBlueLight};
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 `;
 

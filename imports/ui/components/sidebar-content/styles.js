@@ -14,125 +14,100 @@ const SidebarContentWrapper = styled.div`
   width: 100%;
   height: 100%;
   background-color: ${colorWhite};
-  border-radius: 0 ${borderRadius} 0 0;
-  border: none; /* Bỏ border theo yêu cầu */
-  overflow: visible; /* cho phép nút handle lộ ra phía trên */
+  border-radius: ${borderRadius} 0 0 0;
+  border: none;
+  overflow: visible; /* cho phép nút handle lộ ra phía ngoài */
   display: flex;
   flex-direction: column;
-  position: relative; /* Needed for absolute TabBar on the right */
+  position: relative;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.08);
 
-  /* Hiệu ứng bottom-sheet mượt mà - trượt xuống khi ẩn, kéo lên khi hiện */
-  transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: height, transform;
+  /* Hiệu ứng trượt ngang mượt mà */
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+              height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform, height;
 
   ${({ 'data-collapsed': collapsed }) => collapsed && `
     background: transparent;
     border: none;
+    box-shadow: none;
   `}
 `;
 
-// Thanh handle ở mép trên của panel để kéo panel lên / xuống (bottom sheet)
-const BottomHandle = styled.button`
+// Thanh handle ở mép trái của panel để kéo panel ra/vào (side slide)
+const SideHandle = styled.button`
   appearance: none;
   border: none;
   background: #ff6b35;
   color: ${colorWhite};
 
-  /* Nút hình "nửa hình tròn" dính vào mép trên panel */
+  /* Nút hình "nửa hình tròn" dính vào mép trái panel */
   position: absolute;
-  top: -24px; /* Hạ xuống một chút cho đẹp hơn */
-  right: 24px; /* gần sát góc phải */
-  left: auto;
-  transform: none;
+  left: -32px; /* Nhô ra ngoài bên trái */
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 10;
 
-  height: 24px;
-  min-width: 48px;
-  padding: 0 16px;
-  border-radius: 999px 999px 0 0;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.35);
+  height: 48px;
+  min-width: 24px;
+  padding: 0 8px;
+  border-radius: 999px 0 0 999px;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
 
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-weight: 600;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 
   &:focus {
     outline: none;
   }
 
-  /* Icon mũi tên > xoay để chỉ lên/xuống */
+  /* Icon mũi tên > xoay để chỉ trái/phải */
   i[class*="icon-bbb-right_arrow"] {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1;
     display: inline-block;
-    transition: transform 0.3s ease;
-    transform: rotate(-90deg); /* Xoay -90 độ để chỉ lên khi collapsed */
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: rotate(180deg); /* Xoay 180 độ để chỉ trái khi collapsed */
   }
 
-  /* Xoay mũi tên 90 độ để chỉ xuống khi expanded */
+  /* Xoay mũi tên về 0 độ để chỉ phải khi expanded */
   ${({ 'data-collapsed': collapsed }) => !collapsed && `
     i[class*="icon-bbb-right_arrow"] {
-      transform: translateY(6px) translateX(-1px) rotate(90deg);
+      transform: rotate(0deg) translateX(8px);
     }
   `}
 
   &:hover {
     background: #ff8555;
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.2);
+    transform: translateY(-50%) scale(1.05);
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: translateY(-50%) scale(0.95);
   }
 `;
 
-// Tab bar không còn dùng (đã có handle mới) – giữ lại để tránh lỗi import nhưng ẩn hoàn toàn
-const TabBar = styled.div`
-  display: none;
-`;
-
-const TabButton = styled.button`
-  appearance: none;
-  border: ${borderSize} solid ${colorGrayLight};
-  border-radius: ${borderRadius};
-  background: ${(props) => (props['data-active'] ? colorGrayLight : colorWhite)};
-  padding: ${smPaddingY} ${xsPadding};
-  min-height: 64px;
-  width: 100%;
-  cursor: pointer;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-`;
-
-// Wrapper to keep nav items (Chat list, Notes button)
-const TabNavContent = styled.div`
-  display: none; /* Hide legacy list to save space; we use tab buttons */
-`;
 
 // Area to render selected content
 const ContentArea = styled.div`
   flex: 1;
-  overflow: auto;
-  padding: ${smPaddingY} ${smPaddingX} ${smPaddingY} ${smPaddingX};
-  /* Không cần chừa chỗ cho TabBar bên phải nữa */
-  padding-right: ${smPaddingX};
+  overflow: hidden;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: ${smPaddingY};
   opacity: 1;
-  transition: max-height 0.7s cubic-bezier(0.4, 0, 0.2, 1), padding 0.7s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease-out;
+  transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
   ${({ 'data-collapsed': collapsed }) => collapsed && `
-    max-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    padding-right: ${smPaddingX};
     overflow: hidden;
     opacity: 0;
+    pointer-events: none;
   `}
 `;
 
@@ -173,10 +148,7 @@ const Poll = styled.div`
 
 export default {
   SidebarContentWrapper,
-  BottomHandle,
-  TabBar,
-  TabButton,
-  TabNavContent,
+  SideHandle,
   ContentArea,
   Poll,
 };

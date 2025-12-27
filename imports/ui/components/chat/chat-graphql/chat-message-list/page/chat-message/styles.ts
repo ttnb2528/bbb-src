@@ -96,17 +96,32 @@ export const ChatContent = styled.div<ChatContentProps>`
   display: flex;
   flex-flow: column;
   width: 100%;
-  border-radius: 0.5rem;
+  border-radius: 12px;
   position: relative;
-  border: 1px solid transparent;
+  border: none;
+  padding: 0.5rem 0.875rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+  background-color: #f0f2f5;
+  margin-left: 0;
 
   ${({ $isSystemSender }) => !$isSystemSender && `
-    background-color: #f4f6fa;
+    background-color: #f0f2f5;
   `}
+  
+  ${({ $isSystemSender }) => $isSystemSender && `
+    background-color: transparent;
+    padding: 0.375rem 0.75rem;
+  `}
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+  }
 
   ${({ $highlight }) => $highlight && `
     &:hover {
-      border: 1px solid ${highlightedMessageBorderColor};
+      background-color: rgba(0, 123, 255, 0.08);
+      box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
     }
   `}
 
@@ -115,6 +130,7 @@ export const ChatContent = styled.div<ChatContentProps>`
   }) => ($reactionPopoverIsOpen || $editing || $keyboardFocused)
     && `
     background-color: ${colorBlueLightest} !important;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
   `}
 
   .chat-message-container:focus & {
@@ -123,10 +139,7 @@ export const ChatContent = styled.div<ChatContentProps>`
 
   ${({ $emphasizedMessage }) => $emphasizedMessage && `
     background-color: ${emphasizedMessageBackgroundColor};
-
-    &:hover {
-      border: 1px solid ${highlightedMessageBorderColor};
-    }
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
   `}
 `;
 
@@ -161,20 +174,29 @@ export const ChatHeader = styled(Header)`
 `;
 
 export const ChatAvatar = styled.div<ChatAvatarProps>`
-  flex: 0 0 2.25rem;
-  margin: 0px calc(0.5rem) 0px 0px;
+  flex: 0 0 2.75rem;
+  margin: 0;
   box-flex: 0;
   position: relative;
-  height: 2.25rem;
-  width: 2.25rem;
+  height: 2.75rem;
+  width: 2.75rem;
   border-radius: 50%;
   text-align: center;
-  font-size: .85rem;
-  border: 2px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 2.5px solid ${colorWhite};
   user-select: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+  overflow: hidden;
   ${({ color }) => css`
     background-color: ${color};
+    background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);
   `}
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
 
   &:after,
   &:before {
@@ -211,17 +233,14 @@ export const ChatAvatar = styled.div<ChatAvatarProps>`
       padding-left: 0;
     }
   }
-
-  ${({ moderator }) => moderator && `
-    border-radius: 5px;
-  `}
   
   // ================ image ================
   ${({ avatar, emoji, color }) => avatar?.length !== 0 && !emoji && css`
       background-image: url(${avatar});
       background-repeat: no-repeat;
-      background-size: contain;
-      border: 2px solid ${color};
+      background-size: cover;
+      background-position: center;
+      border: 2.5px solid ${colorWhite};
     `}
   // ================ image ================
 
@@ -231,12 +250,13 @@ export const ChatAvatar = styled.div<ChatAvatarProps>`
   text-transform: capitalize;
   display: flex;
   justify-content: center;
-  align-items:center;
+  align-items: center;
   // ================ content ================
 
   & .react-loading-skeleton {
-    height: 2.25rem;
-    width: 2.25rem;
+    height: 2.75rem;
+    width: 2.75rem;
+    border-radius: 50%;
   }
 `;
 
@@ -245,9 +265,11 @@ export const Container = styled.div<{ $sequence: number }>`
   flex-direction: column;
   user-select: text;
   outline: none;
+  margin-bottom: 1rem;
+  padding: 0.25rem 0;
 
   &:not(:first-of-type) {
-    margin-top: calc((${fontSizeSmaller} + ${lgPadding} * 2) / 2);
+    margin-top: 0;
   }
 
   &[data-focusable="false"] {
@@ -258,7 +280,16 @@ export const Container = styled.div<{ $sequence: number }>`
 export const MessageItemWrapper = styled.div`
   display: flex;
   flex-direction: row;
-  padding: calc(${lgPadding} + 2px) ${$3xlPadding};
+  padding: 0;
+  gap: 0.625rem;
+  align-items: flex-start;
+  position: relative;
+  
+  &:hover {
+    .chat-message-avatar {
+      transform: scale(1.05);
+    }
+  }
 `;
 
 export const DeleteMessage = styled.span`

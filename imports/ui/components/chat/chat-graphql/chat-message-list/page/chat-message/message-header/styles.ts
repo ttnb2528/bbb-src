@@ -23,8 +23,10 @@ export const ChatUserName = styled.div<ChatUserNameProps>`
   min-width: 0;
   font-weight: 600;
   position: relative;
+  font-size: 0.9375rem;
+  line-height: 1.4;
 
-  margin-right: calc(${lineHeightComputed} / 2);
+  margin-right: 0.5rem;
 
   min-width: 0;
   display: inline-block;
@@ -34,12 +36,14 @@ export const ChatUserName = styled.div<ChatUserNameProps>`
   flex-shrink: 1;
 
   ${({ currentlyInMeeting }) => currentlyInMeeting && `
-    color: ${colorHeading};
+    color: #1a1a1a;
   `}
 
   ${({ currentlyInMeeting }) => !currentlyInMeeting && `
+    color: #6b7280;
     text-transform: capitalize;
     font-style: italic;
+    font-weight: 500;
 
     & > span {
       text-align: right;
@@ -68,22 +72,27 @@ export const ChatTime = styled.time`
   flex-shrink: 0;
   flex-grow: 0;
   flex-basis: max-content;
-  color: ${colorGrayDark};
-  text-transform: uppercase;
-  font-size: 75%;
+  color: #9ca3af;
+  text-transform: none;
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-left: 0.375rem;
+  opacity: 0.7;
   [dir='rtl'] & {
-    margin: 0 calc(${lineHeightComputed} / 2) 0 0;
+    margin: 0 0.375rem 0 0;
   }
 
   & > span {
-    vertical-align: sub;
+    vertical-align: baseline;
   }
 `;
 
 export const ChatHeaderText = styled.div`
   display: flex;
-  align-items: baseline;
+  align-items: center;
   width: 100%;
+  margin-bottom: 0.25rem;
+  gap: 0.375rem;
 `;
 
 export const EditLabel = styled.span`
