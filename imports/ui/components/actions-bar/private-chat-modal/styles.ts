@@ -128,7 +128,7 @@ const RightPane = styled.div`
   flex: 1;
   min-width: 0; /* Prevent flex item from overflowing */
   max-width: 100%; /* Prevent from exceeding container */
-  padding: ${smPaddingY} ${smPaddingX};
+  padding: ${smPaddingY} 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;

@@ -6,11 +6,12 @@ import { smPaddingX, smPaddingY } from '/imports/ui/stylesheets/styled-component
 interface ChatProps {
   isChrome: boolean;
   isRTL: boolean;
+  mode?: 'sidebar' | 'modal';
 }
 
 export const Chat = styled.div<ChatProps>`
   background-color: ${colorWhite};
-  padding: 0.75rem;
+  padding: ${({ mode }) => (mode === 'modal' ? '0.5rem' : '0.75rem')};
   display: flex;
   flex: 1 1 0%;
   flex-direction: column;
@@ -19,7 +20,7 @@ export const Chat = styled.div<ChatProps>`
   min-height: 0;
   height: 100%;
   user-select: none;
-  gap: 0.5rem;
+  gap: ${({ mode }) => (mode === 'modal' ? '0.25rem' : '0.5rem')};
 
   a {
     color: ${colorPrimary};

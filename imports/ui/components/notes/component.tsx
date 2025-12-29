@@ -41,6 +41,7 @@ const intlMessages = defineMessages({
 interface NotesContainerGraphqlProps {
   area: 'media' | undefined;
   isToSharedNotesBeShow: boolean;
+  mode?: 'sidebar' | 'modal';
 }
 
 interface NotesGraphqlProps extends NotesContainerGraphqlProps {
@@ -57,6 +58,7 @@ interface NotesGraphqlProps extends NotesContainerGraphqlProps {
   shouldShowSharedNotesOnPresentationArea: boolean;
   handlePinSharedNotes: (pinned: boolean) => void;
   isPresentationEnabled: boolean;
+  mode?: 'sidebar' | 'modal';
 }
 
 const sidebarContentToIgnoreDelay = ['captions'];
@@ -75,6 +77,7 @@ const NotesGraphql: React.FC<NotesGraphqlProps> = (props) => {
     shouldShowSharedNotesOnPresentationArea,
     handlePinSharedNotes,
     isPresentationEnabled,
+    mode = 'sidebar',
   } = props;
   const [shouldRenderNotes, setShouldRenderNotes] = useState(false);
   const intl = useIntl();
@@ -141,28 +144,30 @@ const NotesGraphql: React.FC<NotesGraphqlProps> = (props) => {
         // @ts-ignore Until everything in Typescript
         <>
           <h2 className="sr-only">{intl.formatMessage(intlMessages.title)}</h2>
-          <Header
-            leftButtonProps={{
-              onClick: () => {
-                layoutContextDispatch({
-                  type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
-                  value: false,
-                });
-                layoutContextDispatch({
-                  type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
-                  value: PANELS.NONE,
-                });
-              },
-              'data-test': 'hideNotesLabel',
-              'aria-label': intl.formatMessage(intlMessages.hide),
-              label: intl.formatMessage(intlMessages.title),
-            }}
-            data-test="notesHeader"
-            rightButtonProps={null}
-            customRightButton={
-              <NotesDropdown handlePinSharedNotes={handlePinSharedNotes} presentationEnabled={isPresentationEnabled} />
-          }
-          />
+          {mode !== 'modal' && (
+            <Header
+              leftButtonProps={{
+                onClick: () => {
+                  layoutContextDispatch({
+                    type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+                    value: false,
+                  });
+                  layoutContextDispatch({
+                    type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
+                    value: PANELS.NONE,
+                  });
+                },
+                'data-test': 'hideNotesLabel',
+                'aria-label': intl.formatMessage(intlMessages.hide),
+                label: intl.formatMessage(intlMessages.title),
+              }}
+              data-test="notesHeader"
+              rightButtonProps={null}
+              customRightButton={
+                <NotesDropdown handlePinSharedNotes={handlePinSharedNotes} presentationEnabled={isPresentationEnabled} />
+            }
+            />
+          )}
         </>
       ) : renderHeaderOnMedia()}
       <PadContainer
@@ -176,7 +181,7 @@ const NotesGraphql: React.FC<NotesGraphqlProps> = (props) => {
 };
 
 const NotesContainerGraphql: React.FC<NotesContainerGraphqlProps> = (props) => {
-  const { area, isToSharedNotesBeShow } = props;
+  const { area, isToSharedNotesBeShow, mode = 'sidebar' } = props;
 
   const hasPermission = useHasPermission();
 
@@ -236,6 +241,7 @@ const NotesContainerGraphql: React.FC<NotesContainerGraphqlProps> = (props) => {
       isToSharedNotesBeShow={isToSharedNotesBeShow}
       handlePinSharedNotes={handlePinSharedNotes}
       isPresentationEnabled={isPresentationEnabled}
+      mode={mode}
     />
   );
 };

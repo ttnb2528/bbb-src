@@ -25,7 +25,18 @@ interface ChatListProps {
   disableLayoutInteractions?: boolean;
   // Callback khi user chọn một chat (dùng cho private chat modal với state riêng)
   onChatSelect?: (chatId: string) => void;
+  // Variant để tùy biến UI (default: dùng cho user list, modal: dùng trong private chat modal)
+  variant?: 'default' | 'modal';
+  // Chat đang active (dùng cho modal để highlight avatar)
+  activeChatId?: string;
 }
+
+const getInitials = (name?: string) => {
+  if (!name) return '?';
+  const parts = name.trim().split(' ').filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
 
 const getActiveChats = (
   chats: Chat[],
@@ -55,7 +66,13 @@ const getActiveChats = (
   </CSSTransition>
 ));
 
-const ChatList: React.FC<ChatListProps> = ({ chats, disableLayoutInteractions = false, onChatSelect }) => {
+const ChatList: React.FC<ChatListProps> = ({
+  chats,
+  disableLayoutInteractions = false,
+  onChatSelect,
+  variant = 'default',
+  activeChatId,
+}) => {
   const messageListRef = React.useRef<HTMLDivElement | null>(null);
   const messageItemsRef = React.useRef<HTMLDivElement | null>(null);
   const chatNodeRef = React.useRef<HTMLButtonElement | null>(null);
@@ -63,15 +80,82 @@ const ChatList: React.FC<ChatListProps> = ({ chats, disableLayoutInteractions = 
   const rove = useMemo(() => roveBuilder(messageItemsRef, 'chat-list'), []);
 
   const intl = useIntl();
+  const useScrollableList = variant === 'modal' || !isMobile;
+
+  // Modal variant: render different layouts for mobile vs desktop
+  if (variant === 'modal') {
+    // Mobile: horizontal row of avatars (compact)
+    if (isMobile) {
+      return (
+        <Styled.Messages variant="modal">
+          {/* Ẩn MessagesTitle và Container trong modal vì đã có "Message" ở header */}
+          <Styled.HorizontalList>
+            {chats.map((chat) => (
+              <Styled.HorizontalItem
+                key={chat.chatId}
+                type="button"
+                onClick={() => onChatSelect?.(chat.chatId)}
+              >
+                <Styled.HorizontalAvatar data-active={chat.chatId === activeChatId}>
+                  {getInitials(chat.participant?.name)}
+                </Styled.HorizontalAvatar>
+                {chat.totalUnread ? (
+                  <Styled.HorizontalUnread>
+                    {chat.totalUnread > 9 ? '9+' : chat.totalUnread}
+                  </Styled.HorizontalUnread>
+                ) : null}
+              </Styled.HorizontalItem>
+            ))}
+          </Styled.HorizontalList>
+        </Styled.Messages>
+      );
+    }
+    
+    // Desktop: vertical list with avatar + name (beautiful layout)
+    return (
+      <Styled.Messages variant="modal">
+        <Styled.VerticalList>
+          {chats.map((chat) => (
+            <Styled.VerticalItem
+              key={chat.chatId}
+              type="button"
+              onClick={() => onChatSelect?.(chat.chatId)}
+              data-active={chat.chatId === activeChatId}
+            >
+              <Styled.VerticalAvatar data-active={chat.chatId === activeChatId}>
+                {getInitials(chat.participant?.name)}
+              </Styled.VerticalAvatar>
+              <Styled.VerticalContent>
+                <Styled.VerticalName data-active={chat.chatId === activeChatId}>
+                  {chat.participant?.name || 'Unknown'}
+                </Styled.VerticalName>
+                {chat.totalMessages > 0 && (
+                  <Styled.VerticalPreview>
+                    {chat.totalMessages} {chat.totalMessages === 1 ? 'message' : 'messages'}
+                  </Styled.VerticalPreview>
+                )}
+              </Styled.VerticalContent>
+              {chat.totalUnread ? (
+                <Styled.VerticalUnread>
+                  {chat.totalUnread > 9 ? '9+' : chat.totalUnread}
+                </Styled.VerticalUnread>
+              ) : null}
+            </Styled.VerticalItem>
+          ))}
+        </Styled.VerticalList>
+      </Styled.Messages>
+    );
+  }
   return (
-    <Styled.Messages>
-      <Styled.Container>
-        <Styled.MessagesTitle data-test="messageTitle">
+    <Styled.Messages variant={variant}>
+      <Styled.Container variant={variant}>
+        <Styled.MessagesTitle data-test="messageTitle" variant={variant}>
           {intl.formatMessage(intlMessages.messagesTitle)}
         </Styled.MessagesTitle>
       </Styled.Container>
-      {!isMobile ? (
+      {useScrollableList ? (
         <Styled.ScrollableList
+          variant={variant}
           role="tabpanel"
           tabIndex={0}
           ref={messageListRef}
@@ -83,8 +167,9 @@ const ChatList: React.FC<ChatListProps> = ({ chats, disableLayoutInteractions = 
             </TransitionGroup>
           </Styled.List>
         </Styled.ScrollableList>
-      )
-        : (getActiveChats(chats, chatNodeRef, disableLayoutInteractions, onChatSelect) ?? null) }
+      ) : (
+        getActiveChats(chats, chatNodeRef, disableLayoutInteractions, onChatSelect) ?? null
+      )}
     </Styled.Messages>
   );
 };
@@ -93,12 +178,16 @@ interface ChatListContainerProps {
   disableLayoutInteractions?: boolean;
   filterPrivateOnly?: boolean;
   onChatSelect?: (chatId: string) => void;
+  variant?: 'default' | 'modal';
+  activeChatId?: string;
 }
 
 const ChatListContainer: React.FC<ChatListContainerProps> = ({
   disableLayoutInteractions = false,
   filterPrivateOnly = false,
   onChatSelect,
+  variant = 'default',
+  activeChatId,
 }) => {
   const { data: chats } = useChat((chat) => chat) as GraphqlDataHookSubscriptionResponse<Chat[]>;
   const isChatEnabled = useIsChatEnabled();
@@ -114,6 +203,8 @@ const ChatListContainer: React.FC<ChatListContainerProps> = ({
         chats={allowedChats}
         disableLayoutInteractions={disableLayoutInteractions}
         onChatSelect={onChatSelect}
+        variant={variant}
+        activeChatId={activeChatId}
       />
     );
   }

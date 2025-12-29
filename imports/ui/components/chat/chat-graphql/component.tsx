@@ -71,10 +71,10 @@ const Chat: React.FC<ChatProps> = ({ isRTL, mode = 'sidebar', chatId }) => {
   }, []);
 
   return (
-    <Styled.Chat isRTL={isRTL} isChrome={isChrome}>
+    <Styled.Chat isRTL={isRTL} isChrome={isChrome} mode={mode}>
       <ChatHeader mode={mode} chatId={chatId} />
       <ChatMessageListContainer chatId={chatId} mode={mode} />
-      <ChatMessageFormContainer chatId={chatId} />
+      <ChatMessageFormContainer chatId={chatId} mode={mode} />
       <ChatTypingIndicatorContainer chatId={chatId} />
     </Styled.Chat>
   );

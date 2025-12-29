@@ -301,6 +301,8 @@ export const DeleteMessage = styled.span`
 
 export const ChatHeading = styled.div`
   display: flex;
+  gap: 6px;
+  align-items: center;
 `;
 
 export const EditLabel = styled.span`

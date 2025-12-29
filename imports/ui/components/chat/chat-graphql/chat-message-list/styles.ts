@@ -22,7 +22,7 @@ export const MessageList = styled(ScrollboxVertical)<MessageListProps>`
   overflow-y: auto;
   position: absolute;
   display: flex;
-  padding: 1.25rem 1rem 1rem 1rem;
+  padding: 1.25rem 1rem 0 1rem;
   gap: 0;
 
   /* Smooth scrolling */

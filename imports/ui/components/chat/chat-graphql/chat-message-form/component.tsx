@@ -58,6 +58,7 @@ interface ChatMessageFormProps {
   // eslint-disable-next-line react/no-unused-prop-types
   idChatOpen: string,
   isRTL: boolean,
+  mode?: 'sidebar' | 'modal',
   chatId: string,
   connected: boolean,
   disabled: boolean,
@@ -130,6 +131,7 @@ const ChatMessageForm: React.FC<ChatMessageFormProps> = ({
   connected,
   locked,
   isRTL,
+  mode = 'sidebar',
   getUserLastSentMessage,
 }) => {
   const intl = useIntl();
@@ -622,6 +624,7 @@ const ChatMessageForm: React.FC<ChatMessageFormProps> = ({
         ref={formRef}
         onSubmit={handleSubmit}
         isRTL={isRTL}
+        mode={mode}
       >
         {showEmojiPicker ? (
           <Styled.EmojiPickerWrapper ref={emojiPickerRef}>
@@ -717,9 +720,10 @@ const ChatMessageForm: React.FC<ChatMessageFormProps> = ({
 interface ChatMessageFormContainerProps {
   // Optional: override chatId để tách biệt với idChatOpen từ layout context
   chatId?: string;
+  mode?: 'sidebar' | 'modal';
 }
 
-const ChatMessageFormContainer: React.FC<ChatMessageFormContainerProps> = ({ chatId: overrideChatId }) => {
+const ChatMessageFormContainer: React.FC<ChatMessageFormContainerProps> = ({ chatId: overrideChatId, mode = 'sidebar' }) => {
   const intl = useIntl();
   const idChatOpenFromLayout: string = layoutSelect((i: Layout) => i.idChatOpen);
   // Sử dụng overrideChatId nếu có, nếu không thì dùng idChatOpen từ layout
@@ -813,6 +817,7 @@ const ChatMessageFormContainer: React.FC<ChatMessageFormContainerProps> = ({ cha
         disabled: ((isPublicChat ? locked : disabled) || !isConnected) ?? false,
         title,
         isRTL,
+        mode,
         // if participant is not defined, it means that the chat is public
         partnerIsLoggedOut: chat?.participant ? !chat?.participant?.currentlyInMeeting : false,
         locked: locked ?? false,

@@ -2,6 +2,7 @@ import styled from 'styled-components';
 import {
   colorGray,
   colorGrayLighter,
+  colorGrayDark,
   colorPrimary,
   userListBg,
 } from '/imports/ui/stylesheets/styled-components/palette';
@@ -12,22 +13,22 @@ import deviceInfo from '/imports/utils/deviceInfo';
 
 const { isMobile } = deviceInfo;
 
-const Messages = styled.div`
+const Messages = styled.div<{ variant?: 'default' | 'modal' }>`
   flex-grow: 0;
   display: flex;
   flex-flow: column;
   flex-shrink: 0;
 
-  ${!isMobile && `
+  ${({ variant }) => !isMobile && variant !== 'modal' && `
     max-height: 30vh;
   `}
 `;
 
-const Container = styled.div`
+const Container = styled.div<{ variant?: 'default' | 'modal' }>`
   display: flex;
   align-items: center;
-  margin-bottom: ${lgPaddingY};
-  margin-top: ${smPaddingX};
+  margin-bottom: ${({ variant }) => (variant === 'modal' ? smPaddingX : lgPaddingY)};
+  margin-top: ${({ variant }) => (variant === 'modal' ? smPaddingX : smPaddingX)};
 `;
 
 const Separator = styled.hr`
@@ -37,7 +38,7 @@ const Separator = styled.hr`
   border-top: 1px solid ${colorGrayLighter};
 `;
 
-const MessagesTitle = styled.h2`
+const MessagesTitle = styled.h2<{ variant?: 'default' | 'modal' }>`
   font-size: 0.85rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -49,49 +50,16 @@ const MessagesTitle = styled.h2`
   margin: 0;
 `;
 
-const ScrollableList = styled.div`
+const ScrollableList = styled.div<{ variant?: 'default' | 'modal' }>`
   overflow-y: auto;
-  background: linear-gradient(white 30%, rgba(255,255,255,0)),
-    linear-gradient(rgba(255,255,255,0), white 70%) 0 100%,
-    /* Shadows */
-    radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.2), rgba(0,0,0,0)),
-    radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.2), rgba(0,0,0,0)) 0 100%;
-
-  background-repeat: no-repeat;
-  background-color: transparent;
-  background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
-  background-attachment: local, local, scroll, scroll;
-
-  // Fancy scroll
-  &::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
-  }
-  &::-webkit-scrollbar-button {
-    width: 0;
-    height: 0;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: rgba(0,0,0,.25);
-    border: none;
-    border-radius: 50px;
-  }
-  &::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.5); }
-  &::-webkit-scrollbar-thumb:active { background: rgba(0,0,0,.25); }
-  &::-webkit-scrollbar-track {
-    background: rgba(0,0,0,.25);
-    border: none;
-    border-radius: 50px;
-  }
-  &::-webkit-scrollbar-track:hover { background: rgba(0,0,0,.25); }
-  &::-webkit-scrollbar-track:active { background: rgba(0,0,0,.25); }
-  &::-webkit-scrollbar-corner { background: 0 0; }
-  background: linear-gradient(${userListBg} 30%, rgba(255,255,255,0)),
-    linear-gradient(rgba(255,255,255,0), ${userListBg} 70%) 0 100%,
-    /* Shadows */
-    radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.2), rgba(0,0,0,0)),
-    radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.2), rgba(0,0,0,0)) 0 100%;
-
+  max-height: ${({ variant }) => (variant === 'modal' ? '180px' : '30vh')};
+  ${({ variant }) => variant !== 'modal' && `
+    background: linear-gradient(${userListBg} 30%, rgba(255,255,255,0)),
+      linear-gradient(rgba(255,255,255,0), ${userListBg} 70%) 0 100%,
+      /* Shadows */
+      radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.2), rgba(0,0,0,0)),
+      radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.2), rgba(0,0,0,0)) 0 100%;
+  `}
   outline: none;
   
   &:hover {
@@ -114,17 +82,17 @@ const ScrollableList = styled.div`
 `;
 
 const List = styled.div`
-margin: 0 0 1px ${mdPaddingY};
+  margin: 0 0 1px ${mdPaddingY};
 
-[dir="rtl"] & {
-  margin: 0 ${mdPaddingY} 1px 0;
-}
+  [dir="rtl"] & {
+    margin: 0 ${mdPaddingY} 1px 0;
+  }
 `;
 
 const ListTransition = styled.div`
   display: flex;
   flex-flow: column;
-  padding: ${borderSize} 0 0 0;.
+  padding: ${borderSize} 0 0 0;
   outline: none;
   overflow: hidden;
   flex-shrink: 1;
@@ -156,6 +124,148 @@ const ListTransition = styled.div`
   }
 `;
 
+// ----- Horizontal variant for modal -----
+
+const HorizontalList = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  padding: ${smPaddingX} ${smPaddingX} ${smPaddingX};
+  overflow-x: auto;
+  overflow-y: hidden;
+`;
+
+const HorizontalItem = styled.button<{ 'data-active'?: boolean }>`
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+`;
+
+const HorizontalAvatar = styled.div<{ 'data-active'?: boolean }>`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: ${userListBg};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: ${colorGray};
+  box-shadow: ${({ 'data-active': active }) => (active ? '0 0 0 2px rgba(255, 107, 53, 0.8)' : '0 0 0 1px rgba(0,0,0,0.05)')};
+`;
+
+const HorizontalUnread = styled.div`
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: ${colorPrimary};
+  color: white;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+`;
+
+// ----- Vertical variant for desktop modal -----
+
+const VerticalList = styled.div`
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 400px;
+  padding: ${smPaddingX} 0;
+`;
+
+const VerticalItem = styled.button<{ 'data-active'?: boolean }>`
+  border: none;
+  background: ${({ 'data-active': active }) => (active ? 'rgba(255, 107, 53, 0.08)' : 'transparent')};
+  padding: ${smPaddingX} 0.5rem ${smPaddingX} 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  width: 100%;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: ${({ 'data-active': active }) => (active ? 'rgba(255, 107, 53, 0.12)' : 'rgba(0, 0, 0, 0.04)')};
+  }
+`;
+
+const VerticalAvatar = styled.div<{ 'data-active'?: boolean }>`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: ${userListBg};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
+  color: ${colorGray};
+  flex-shrink: 0;
+  box-shadow: ${({ 'data-active': active }) => (active ? '0 0 0 2px rgba(255, 107, 53, 0.8)' : '0 0 0 1px rgba(0,0,0,0.08)')};
+`;
+
+const VerticalContent = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+`;
+
+const VerticalName = styled.div<{ 'data-active'?: boolean }>`
+  font-weight: 600;
+  font-size: 14px;
+  color: ${({ 'data-active': active }) => (active ? colorPrimary : colorGrayDark)};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+`;
+
+const VerticalPreview = styled.div`
+  font-size: 12px;
+  color: ${colorGray};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  line-height: 1.4;
+`;
+
+const VerticalUnread = styled.div`
+  position: absolute;
+  top: ${smPaddingX};
+  right: ${smPaddingX};
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  background: ${colorPrimary};
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  flex-shrink: 0;
+`;
+
 export default {
   Messages,
   Container,
@@ -164,4 +274,15 @@ export default {
   ScrollableList,
   List,
   ListTransition,
+  HorizontalList,
+  HorizontalItem,
+  HorizontalAvatar,
+  HorizontalUnread,
+  VerticalList,
+  VerticalItem,
+  VerticalAvatar,
+  VerticalContent,
+  VerticalName,
+  VerticalPreview,
+  VerticalUnread,
 };

@@ -20,6 +20,7 @@ import Button from '/imports/ui/components/common/button/component';
 
 interface FormProps {
   isRTL: boolean;
+  mode?: 'sidebar' | 'modal';
 }
 
 const Form = styled.form<FormProps>`
@@ -29,7 +30,7 @@ const Form = styled.form<FormProps>`
   width: 100%;
   position: relative;
   margin-top: 0;
-  padding: 0.75rem 1rem;
+  padding: ${({ mode }) => (mode === 'modal' ? '0 1rem' : '0.75rem 1rem')};
   background: #fff;
   border-top: 1px solid #f3f4f6;
 `;

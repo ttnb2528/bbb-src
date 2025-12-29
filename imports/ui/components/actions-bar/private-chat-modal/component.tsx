@@ -8,9 +8,11 @@ import ChatContainer from '/imports/ui/components/chat/chat-graphql/component';
 import NotesContainer from '/imports/ui/components/notes/component';
 import Icon from '/imports/ui/components/common/icon/icon-ts/component';
 import Button from '/imports/ui/components/common/button/component';
-import { layoutSelect, layoutDispatch, layoutSelectInput } from '/imports/ui/components/layout/context';
-import { Layout, Input } from '/imports/ui/components/layout/layoutTypes';
-import { ACTIONS, PANELS } from '/imports/ui/components/layout/enums';
+import { layoutDispatch, layoutSelectInput } from '/imports/ui/components/layout/context';
+import { Input } from '/imports/ui/components/layout/layoutTypes';
+import { PANELS } from '/imports/ui/components/layout/enums';
+
+const isMobileViewport = () => (typeof window !== 'undefined' && window.innerWidth <= 640);
 import useChat from '/imports/ui/core/hooks/useChat';
 import { Chat } from '/imports/ui/Types/chat';
 import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
@@ -30,14 +32,12 @@ const intlMessages = defineMessages({
 interface PrivateChatModalProps {
   isOpen: boolean;
   onRequestClose: () => void;
-  isPublicChatDrawerOpen?: boolean; // Thêm prop để biết drawer public chat có đang mở không
   onExpand?: () => void; // Callback để expand modal khi đang minimized
 }
 
 const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   isOpen,
   onRequestClose,
-  isPublicChatDrawerOpen = false,
   onExpand,
 }) => {
   const intl = useIntl();
@@ -70,8 +70,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   // Khởi tạo vị trí giữa màn hình khi mở modal
   useEffect(() => {
     if (isOpen && position === null) {
-      const isMobile = window.innerWidth <= 640; // smallOnly breakpoint
-      if (isMobile) {
+      if (isMobileViewport()) {
         // Mobile: fullscreen, top-left corner
         setPosition({
           left: 0,
@@ -88,6 +87,11 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       }
     }
   }, [isOpen, position]);
+
+  // Không cho minimized trên mobile để tránh UX rối
+  useEffect(() => {
+    if (isOpen && isMobileViewport() && isMinimized) setIsMinimized(false);
+  }, [isOpen, isMinimized]);
 
   const handleDragStart = (e: React.MouseEvent) => {
     if (e.button !== 0 || !position) return;
@@ -140,6 +144,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   }, [isDragging, position]);
 
   const handleToggleMinimize = () => {
+    if (isMobileViewport()) return; // mobile: bỏ qua minimize
     // Nếu vừa kéo thì bỏ qua click để không mở popup
     if (hasDragged.current) {
       hasDragged.current = false;
@@ -147,19 +152,17 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
     }
 
     if (!position) return;
-    
-    const isMobile = window.innerWidth <= 640; // smallOnly breakpoint
-    
+
     if (!isMinimized) {
       // Khi minimize: di chuyển về góc dưới bên phải, thu nhỏ thành icon
-      const iconSize = isMobile ? 44 : 56;
+      const iconSize = isMobileViewport() ? 44 : 56;
       setPosition({
         left: window.innerWidth - iconSize - 8, // icon size + padding
         top: window.innerHeight - iconSize - 80, // icon size + 80px để tránh footer
       });
     } else {
       // Khi expand: về lại vị trí phù hợp
-      if (isMobile) {
+      if (isMobileViewport()) {
         // Mobile: fullscreen
         setPosition({
           left: 0,
@@ -183,7 +186,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
     if (isMinimized) {
       setIsMinimized(false);
       // Reset về vị trí center khi expand
-      const isMobile = window.innerWidth <= 640;
+      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
       if (isMobile) {
         setPosition({ left: 0, top: 0 });
       } else {
@@ -367,15 +370,17 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
                 <span>{activeTab === 'private' ? 'Message' : 'Shared Notes'}</span>
               </Styled.Title>
               <Styled.HeaderActions>
-                <Button
-                  icon="minus"
-                  onClick={handleToggleMinimize}
-                  label="Minimize"
-                  hideLabel
-                  size="md"
-                  color="default"
-                  data-test="togglePrivateChatSize"
-                />
+                {!isMobileViewport() && (
+                  <Button
+                    icon="minus"
+                    onClick={handleToggleMinimize}
+                    label="Minimize"
+                    hideLabel
+                    size="md"
+                    color="default"
+                    data-test="togglePrivateChatSize"
+                  />
+                )}
                 <Button
                   icon="close"
                   onClick={onRequestClose}
@@ -411,6 +416,8 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
                       disableLayoutInteractions 
                       filterPrivateOnly 
                       onChatSelect={(chatId) => setPrivateChatId(chatId)}
+                      variant="modal"
+                      activeChatId={privateChatId}
                     />
                   </Styled.LeftPane>
                   <Styled.RightPane>
@@ -426,7 +433,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
               )}
               {activeTab === 'notes' && (
                 <Styled.RightPane>
-                  <NotesContainer isToSharedNotesBeShow />
+                  <NotesContainer isToSharedNotesBeShow mode="modal" />
                 </Styled.RightPane>
               )}
             </Styled.Content>

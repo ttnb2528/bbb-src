@@ -43,10 +43,16 @@ const TypingIndicatorWrapper = styled.div`
   text-align: left;
   vertical-align: top;
   padding: ${smPaddingY} ${smPaddingY} 0;
-  height: 1.5rem;
+  min-height: 0;
+  height: auto;
   max-height: 1.5rem;
   line-height: 1;
   overflow-y: hidden;
+  
+  /* Không chiếm space khi không có content */
+  &:empty {
+    display: none;
+  }
 `;
 
 export default {

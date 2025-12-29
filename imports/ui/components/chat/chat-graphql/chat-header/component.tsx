@@ -46,8 +46,8 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const layoutContextDispatch = layoutDispatch();
   const intl = useIntl();
   const [updateVisible] = useMutation(CLOSE_PRIVATE_CHAT_MUTATION);
-  // Ẩn header khi ở sidebar mode để tiết kiệm không gian
-  if (mode === 'sidebar') {
+  // Ẩn header khi ở sidebar mode hoặc modal mode để tiết kiệm không gian
+  if (mode === 'sidebar' || mode === 'modal') {
     return null;
   }
 
@@ -61,8 +61,6 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         'data-test': isPublicChat ? 'hidePublicChat' : 'hidePrivateChat',
         label: title,
         onClick: () => {
-          // Trong popup (mode modal), nút back không làm gì
-          if (mode === 'modal') return;
           // Với public chat, không ẩn panel nữa để tránh thanh Chat/Notes biến mất.
           // Vẫn giữ behavior cũ cho private chat.
           if (!isPublicChat) {
@@ -88,8 +86,6 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         icon: 'close',
         label: intl.formatMessage(intlMessages.closeChatLabel, { chatName: title }),
         onClick: () => {
-          // Trong popup, không đóng panel khi bấm X trên header
-          if (mode === 'modal') return;
           updateVisible({ variables: { chatId, visible: false } });
           closePrivateChat(chatId);
           layoutContextDispatch({
