@@ -13,6 +13,7 @@ import Styled from './styles';
 import ErrorBoundary from '/imports/ui/components/common/error-boundary/component';
 import FallbackView from '/imports/ui/components/common/fallback-errors/fallback-view/component';
 import GenericContentSidekickContainer from '/imports/ui/components/generic-content/generic-sidekick-content/container';
+import deviceInfo from '/imports/utils/deviceInfo';
 
 const propTypes = {
   top: PropTypes.number.isRequired,
@@ -207,10 +208,12 @@ const SidebarContent = (props) => {
       }}
     >
       <Styled.SidebarContentWrapper>
-        {/* Thanh handle ở mép trái để kéo panel ra/vào */}
-        <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={!isOpen}>
-          <i className="icon-bbb-right_arrow" />
-        </Styled.SideHandle>
+        {/* Thanh handle ở mép trái để kéo panel ra/vào - Ẩn trên mobile */}
+        {!deviceInfo.isPhone && (
+          <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={!isOpen}>
+            <i className="icon-bbb-right_arrow" />
+          </Styled.SideHandle>
+        )}
 
         <Styled.ContentArea>
           {activePanel === PANELS.CHAT && (

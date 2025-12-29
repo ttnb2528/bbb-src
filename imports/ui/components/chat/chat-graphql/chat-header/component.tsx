@@ -139,20 +139,10 @@ const ChatHeaderContainer: React.FC<ChatHeaderContainerProps> = ({ mode = 'sideb
 
   if (chatDataLoading) return null;
   if (chatDataError) {
-    return (
-      <div>
-        Error:
-        {JSON.stringify(chatDataError)}
-      </div>
-    );
+    return null; // Không hiển thị error trong UI
   }
-  if (!isChatResponse(chatData)) {
-    return (
-      <div>
-        Error:
-        {JSON.stringify(chatData)}
-      </div>
-    );
+  if (!idChatOpen || !chatData || !isChatResponse(chatData)) {
+    return null; // Không render nếu không có chatData hợp lệ
   }
   const isPublicChat = chatData.chat[0]?.public;
   const title = isPublicChat ? intl.formatMessage(intlMessages.titlePublic)

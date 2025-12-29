@@ -4,6 +4,7 @@ import { Resizable } from 're-resizable';
 import { ACTIONS } from '../layout/enums';
 import UserListParticipantsContainer from '../user-list/user-list-content/user-participants/user-list-participants/component';
 import UserTitleContainer from '../user-list/user-list-graphql/user-participants-title/component';
+import deviceInfo from '/imports/utils/deviceInfo';
 import Styled from './styles';
 
 const propTypes = {
@@ -151,10 +152,12 @@ const SidebarNavigation = ({
       }}
     >
       <Styled.SidebarNavigationWrapper>
-        {/* Thanh handle ở mép phải để kéo panel ra/vào */}
-        <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={!isOpen}>
-          <i className="icon-bbb-right_arrow" />
-        </Styled.SideHandle>
+        {/* Thanh handle ở mép phải để kéo panel ra/vào - Ẩn trên mobile */}
+        {!deviceInfo.isPhone && (
+          <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={!isOpen}>
+            <i className="icon-bbb-right_arrow" />
+          </Styled.SideHandle>
+        )}
 
         <Styled.ContentArea>
           <UserTitleContainer />
