@@ -76,7 +76,7 @@ const SideHandle = styled.button`
     transform: translateY(-50%) scale(1.05);
   }
 
-  &:active {
+  &:active { 
     transform: translateY(-50%) scale(0.95);
   }
 `;
