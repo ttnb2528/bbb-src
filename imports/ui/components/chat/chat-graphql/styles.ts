@@ -10,15 +10,16 @@ interface ChatProps {
 
 export const Chat = styled.div<ChatProps>`
   background-color: ${colorWhite};
-  padding: ${smPaddingY} ${smPaddingX};
+  padding: 0.75rem;
   display: flex;
-  flex-grow: 1;
+  flex: 1 1 0%;
   flex-direction: column;
   justify-content: flex-start;
   overflow: hidden;
+  min-height: 0;
   height: 100%;
   user-select: none;
-  gap: ${smPaddingY};
+  gap: 0.5rem;
 
   a {
     color: ${colorPrimary};

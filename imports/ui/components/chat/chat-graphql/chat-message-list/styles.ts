@@ -76,7 +76,8 @@ export const PageWrapper = styled.div``;
 export const Content = styled.div`
   height: 100%;
   position: relative;
-  flex-shrink: 1;
+  flex: 1 1 0%;
+  min-height: 0;
   overflow: hidden;
 `;
 

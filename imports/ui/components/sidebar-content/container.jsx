@@ -27,13 +27,13 @@ const SidebarContentContainer = (props) => {
   const presentationPage = presentationPageData?.pres_page_curr[0] || {};
 
   const currentSlideId = presentationPage?.pageId;
+  const { isOpen } = sidebarContentInput;
 
-  // Với layout mới, luôn hiển thị thanh Chat/Notes ngang phía dưới,
-  // nên bỏ chặn display === false (tránh bị ẩn khi user bấm nút Back trong header chat)
-
+  // Luôn render component, dùng transform để ẩn/hiện thay vì display
   return (
     <SidebarContent
       {...sidebarContentOutput}
+      isOpen={isOpen}
       contextDispatch={layoutContextDispatch}
       sidebarContentPanel={sidebarContentPanel}
       amIPresenter={amIPresenter}

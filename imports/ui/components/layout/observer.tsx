@@ -219,46 +219,27 @@ const LayoutObserver: React.FC = () => {
 
   useEffect(() => {
     if (layoutIsReady) {
-      if (isChatEnabled && getFromUserSettings('bbb_show_public_chat_on_login', !window.meetingClientSettings.public.chat.startClosed) && !deviceInfo.isPhone) {
-        const PUBLIC_CHAT_ID = window.meetingClientSettings.public.chat.public_group_id;
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
-          value: true,
-        });
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
-          value: PANELS.CHAT,
-        });
-        layoutContextDispatch({
-          type: ACTIONS.SET_ID_CHAT_OPEN,
-          value: PUBLIC_CHAT_ID,
-        });
-      } else {
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
-          value: false,
-        });
-      }
+      // Không tự động mở sidebar khi vào room, để sidebar ẩn theo transform
+      // User có thể mở sidebar bằng cách click vào button handle
+      layoutContextDispatch({
+        type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+        value: false,
+      });
     }
   }, [isChatEnabled, layoutIsReady]);
 
   useEffect(() => {
     if (layoutIsReady && sidebarContentPanel === PANELS.NONE) {
-      if (getFromUserSettings('bbb_show_participants_on_login', window.meetingClientSettings.public.layout.showParticipantsOnLogin) && !deviceInfo.isPhone) {
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_NAVIGATION_IS_OPEN,
-          value: true,
-        });
-      } else {
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_NAVIGATION_IS_OPEN,
-          value: false,
-        });
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
-          value: false,
-        });
-      }
+      // Không tự động mở sidebar khi vào room, để sidebar ẩn theo transform
+      // User có thể mở sidebar bằng cách click vào button handle
+      layoutContextDispatch({
+        type: ACTIONS.SET_SIDEBAR_NAVIGATION_IS_OPEN,
+        value: false,
+      });
+      layoutContextDispatch({
+        type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+        value: false,
+      });
     }
   }, [layoutIsReady]);
 

@@ -98,11 +98,30 @@ interface ChatContainerProps {
 
 const ChatContainer: React.FC<ChatContainerProps> = ({ mode = 'sidebar', chatId: overrideChatId }) => {
   const idChatOpenFromLayout = layoutSelect((i: Layout) => i.idChatOpen);
-  // Sử dụng overrideChatId nếu có, nếu không thì dùng idChatOpen từ layout
-  const idChatOpen = overrideChatId ?? idChatOpenFromLayout;
   const isRTL = layoutSelect((i: Layout) => i.isRTL);
   const sidebarContent = layoutSelectInput((i: Input) => i.sidebarContent);
   const layoutContextDispatch = layoutDispatch();
+  
+  // Trong sidebar mode, nếu không có idChatOpen, tự động set về public chat
+  const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+  const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+  
+  // Sử dụng overrideChatId nếu có, nếu không thì dùng idChatOpen từ layout
+  let idChatOpen = overrideChatId ?? idChatOpenFromLayout;
+  
+  // Trong sidebar mode, nếu không có idChatOpen và activePanel là CHAT, set về public chat
+  React.useEffect(() => {
+    if (mode === 'sidebar' && !idChatOpen && sidebarContent.sidebarContentPanel === PANELS.CHAT) {
+      layoutContextDispatch({
+        type: ACTIONS.SET_ID_CHAT_OPEN,
+        value: PUBLIC_GROUP_CHAT_ID,
+      });
+      idChatOpen = PUBLIC_GROUP_CHAT_ID;
+    }
+  }, [mode, idChatOpen, sidebarContent.sidebarContentPanel, layoutContextDispatch]);
+  
+  // Update idChatOpen sau khi set trong useEffect
+  const finalIdChatOpen = overrideChatId ?? idChatOpenFromLayout ?? (mode === 'sidebar' && sidebarContent.sidebarContentPanel === PANELS.CHAT ? PUBLIC_GROUP_CHAT_ID : idChatOpenFromLayout);
   const { data: chats } = useChat((chat) => {
     return {
       chatId: chat.chatId,
@@ -135,11 +154,12 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ mode = 'sidebar', chatId:
     }
   }, [overrideChatId, pendingChat, chats, layoutContextDispatch, setPendingChat]);
 
-  const respectSidebarPanel = mode === 'sidebar';
-
-  if (respectSidebarPanel && sidebarContent.sidebarContentPanel !== PANELS.CHAT) return null;
-  if (!idChatOpen && !isLocked) return <ChatLoading isRTL={isRTL} />;
-  return <Chat isRTL={isRTL} mode={mode} chatId={idChatOpen} />;
+  // Trong sidebar mode, luôn render chat nếu activePanel là CHAT (đã được check ở parent)
+  // Không cần check sidebarContentPanel nữa vì parent đã đảm bảo activePanel === PANELS.CHAT
+  // Sử dụng finalIdChatOpen nếu có, fallback về PUBLIC_GROUP_CHAT_ID trong sidebar mode
+  const chatIdToUse = finalIdChatOpen || (mode === 'sidebar' && sidebarContent.sidebarContentPanel === PANELS.CHAT ? PUBLIC_GROUP_CHAT_ID : idChatOpen);
+  if (!chatIdToUse && !isLocked) return <ChatLoading isRTL={isRTL} chatId="" />;
+  return <Chat isRTL={isRTL} mode={mode} chatId={chatIdToUse} />;
 };
 
 export default ChatContainer;

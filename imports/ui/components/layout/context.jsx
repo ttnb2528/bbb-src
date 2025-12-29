@@ -499,8 +499,8 @@ const reducer = (state, action) => {
       if (sidebarContent.isOpen === action.value) {
         return state;
       }
-      // When opening content sidebar, the navigation sidebar should be opened as well
-      if (action.value === true) sidebarNavigation.isOpen = true;
+      // Không tự động mở navigation sidebar khi mở content sidebar
+      // User có thể tự quyết định mở/đóng từng sidebar riêng biệt
       return {
         ...state,
         input: {

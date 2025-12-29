@@ -1,16 +1,17 @@
 import React from 'react';
-import { layoutDispatch, layoutSelectOutput } from '../layout/context';
+import { layoutDispatch, layoutSelectOutput, layoutSelectInput } from '../layout/context';
 import SidebarNavigation from './component';
 
 const SidebarNavigationContainer = () => {
   const sidebarNavigation = layoutSelectOutput((i) => i.sidebarNavigation);
+  const sidebarNavigationInput = layoutSelectInput((i) => i.sidebarNavigation);
   const layoutContextDispatch = layoutDispatch();
 
-  if (sidebarNavigation.display === false) return null;
-
+  // Luôn render component, dùng transform để ẩn/hiện thay vì display
   return (
     <SidebarNavigation
       {...sidebarNavigation}
+      isOpen={sidebarNavigationInput.isOpen}
       contextDispatch={layoutContextDispatch}
     />
   );

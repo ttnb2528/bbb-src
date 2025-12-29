@@ -48,6 +48,7 @@ const SidebarContent = (props) => {
     isSharedNotesPinned,
     currentSlideId,
     amIModerator,
+    isOpen = false,
   } = props;
 
   const [resizableWidth, setResizableWidth] = useState(width);
@@ -137,24 +138,15 @@ const SidebarContent = (props) => {
   const expandedHeight = Math.min(Math.max(minHeight * 2, 260), maxHeight || window.innerHeight * 0.5);
   
   // Tính toán translateX để panel trượt từ bên phải vào
-  // Khi collapsed: panel trượt ra ngoài màn hình (translateX = 100%)
-  // Khi expanded: panel ở vị trí bình thường (translateX = 0)
-  const translateXOffset = isCollapsed ? '100%' : '0';
+  // Dùng isOpen để control ẩn/hiện: khi isOpen = false → ẩn ra ngoài (translateX = 100%)
+  // Khi isOpen = true → hiển thị (translateX = 0)
+  const translateXOffset = isOpen ? '0' : '100%';
 
   const toggleCollapsed = () => {
-    const targetCollapsed = !isCollapsed;
-    setIsCollapsed(targetCollapsed);
-
-    const targetHeight = targetCollapsed ? COLLAPSED_HEIGHT : expandedHeight;
-
+    // Toggle isOpen state để ẩn/hiện sidebar
     contextDispatch({
-      type: ACTIONS.SET_SIDEBAR_CONTENT_SIZE,
-      value: {
-        width,
-        height: targetHeight,
-        browserWidth: window.innerWidth,
-        browserHeight: window.innerHeight,
-      },
+      type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+      value: !isOpen,
     });
   };
 
@@ -214,13 +206,13 @@ const SidebarContent = (props) => {
         },
       }}
     >
-      <Styled.SidebarContentWrapper data-collapsed={isCollapsed}>
+      <Styled.SidebarContentWrapper>
         {/* Thanh handle ở mép trái để kéo panel ra/vào */}
-        <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={isCollapsed}>
+        <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={!isOpen}>
           <i className="icon-bbb-right_arrow" />
         </Styled.SideHandle>
 
-        <Styled.ContentArea data-collapsed={isCollapsed}>
+        <Styled.ContentArea>
           {activePanel === PANELS.CHAT && (
             <ErrorBoundary fallbackComponent={() => <FallbackView />} from="sidebar-content">
               <ChatContainer mode="sidebar" />

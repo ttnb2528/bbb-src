@@ -36,6 +36,7 @@ const SidebarNavigation = ({
   isResizable,
   resizableEdge,
   contextDispatch,
+  isOpen = false,
 }) => {
   const [resizableWidth, setResizableWidth] = useState(width);
   const [resizableHeight, setResizableHeight] = useState(height);
@@ -90,24 +91,15 @@ const SidebarNavigation = ({
   const expandedHeight = Math.min(Math.max(minHeight * 2, 260), maxHeight || window.innerHeight * 0.5);
   
   // Tính toán translateX để panel trượt từ bên trái vào
-  // Khi collapsed: panel trượt ra ngoài màn hình (translateX = -100%)
-  // Khi expanded: panel ở vị trí bình thường (translateX = 0)
-  const translateXOffset = isCollapsed ? '-100%' : '0';
+  // Dùng isOpen để control ẩn/hiện: khi isOpen = false → ẩn ra ngoài (translateX = -100%)
+  // Khi isOpen = true → hiển thị (translateX = 0)
+  const translateXOffset = isOpen ? '0' : '-100%';
 
   const toggleCollapsed = () => {
-    const targetCollapsed = !isCollapsed;
-    setIsCollapsed(targetCollapsed);
-
-    const targetHeight = targetCollapsed ? COLLAPSED_HEIGHT : expandedHeight;
-
+    // Toggle isOpen state để ẩn/hiện sidebar
     contextDispatch({
-      type: ACTIONS.SET_SIDEBAR_NAVIGATION_SIZE,
-      value: {
-        width,
-        height: targetHeight,
-        browserWidth: window.innerWidth,
-        browserHeight: window.innerHeight,
-      },
+      type: ACTIONS.SET_SIDEBAR_NAVIGATION_IS_OPEN,
+      value: !isOpen,
     });
   };
 

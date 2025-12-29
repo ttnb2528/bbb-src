@@ -28,11 +28,7 @@ const SidebarContentWrapper = styled.div`
               box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: transform, height;
 
-  ${({ 'data-collapsed': collapsed }) => collapsed && `
-    background: transparent;
-    border: none;
-    box-shadow: none;
-  `}
+  /* Không cần data-collapsed vì transform đã xử lý việc ẩn/hiện */
 `;
 
 // Thanh handle ở mép trái của panel để kéo panel ra/vào (side slide)
@@ -96,19 +92,18 @@ const SideHandle = styled.button`
 
 // Area to render selected content
 const ContentArea = styled.div`
-  flex: 1;
+  flex: 1 1 0%;
+  min-height: 0;
   overflow: hidden;
   padding: 0;
   display: flex;
   flex-direction: column;
   opacity: 1;
   transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
 
-  ${({ 'data-collapsed': collapsed }) => collapsed && `
-    overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
-  `}
+  /* Không ẩn content khi collapsed, vì transform đã xử lý việc ẩn/hiện */
+  /* Chỉ ẩn khi thực sự cần (ví dụ khi đang resize hoặc transition) */
 `;
 
 const Poll = styled.div`

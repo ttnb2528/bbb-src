@@ -149,12 +149,17 @@ const CustomLayout = (props) => {
           return defaultsDeep(
             {
               sidebarNavigation: {
-                isOpen:
-                  sidebarNavigation.isOpen || sidebarContentPanel !== PANELS.NONE || false,
+                // Khi lần đầu load, luôn set isOpen = false, sau đó dùng transform để ẩn/hiện
+                isOpen: hasLayoutEngineLoadedOnce 
+                  ? (sidebarNavigation.isOpen || sidebarContentPanel !== PANELS.NONE || false)
+                  : false,
                 sidebarNavPanel: sidebarNavigation.sidebarNavPanel,
               },
               sidebarContent: {
-                isOpen: sidebarContentPanel !== PANELS.NONE,
+                // Khi lần đầu load, luôn set isOpen = false, sau đó dùng transform để ẩn/hiện
+                isOpen: hasLayoutEngineLoadedOnce 
+                  ? (sidebarContentPanel !== PANELS.NONE)
+                  : false,
                 sidebarContentPanel: sidebarContent.sidebarContentPanel,
               },
               presentation: {
@@ -197,27 +202,36 @@ const CustomLayout = (props) => {
           } = prevInput;
           const { sidebarContentPanel } = sidebarContent;
           let sidebarContentPanelOverride = sidebarContentPanel;
-          let overrideOpenSidebarPanel = sidebarContentPanel !== PANELS.NONE;
-          let overrideOpenSidebarNavigation = sidebarNavigation.isOpen
-            || sidebarContentPanel !== PANELS.NONE || false;
+          // Khi lần đầu load, không override isOpen, để sidebar ẩn theo initState
+          let overrideOpenSidebarPanel = hasLayoutEngineLoadedOnce 
+            ? (sidebarContentPanel !== PANELS.NONE)
+            : false;
+          let overrideOpenSidebarNavigation = hasLayoutEngineLoadedOnce
+            ? (sidebarNavigation.isOpen || sidebarContentPanel !== PANELS.NONE || false)
+            : false;
           if (prevLayout === LAYOUT_TYPE.CAMERAS_ONLY
             || prevLayout === LAYOUT_TYPE.PRESENTATION_ONLY
             || prevLayout === LAYOUT_TYPE.MEDIA_ONLY) {
-            overrideOpenSidebarNavigation = true;
-            overrideOpenSidebarPanel = true;
-            sidebarContentPanelOverride = PANELS.CHAT;
+            // Chỉ override khi đã load trước đó
+            if (hasLayoutEngineLoadedOnce) {
+              overrideOpenSidebarNavigation = true;
+              overrideOpenSidebarPanel = true;
+              sidebarContentPanelOverride = PANELS.CHAT;
+            }
           }
-          // Ensure sidebar navigation is open when sidebar content is open
-          if (overrideOpenSidebarPanel) {
+          // Ensure sidebar navigation is open when sidebar content is open (chỉ khi đã load trước đó)
+          if (overrideOpenSidebarPanel && hasLayoutEngineLoadedOnce) {
             overrideOpenSidebarNavigation = true;
           }
           return defaultsDeep(
             {
               sidebarNavigation: {
-                isOpen: overrideOpenSidebarNavigation,
+                // Khi lần đầu load, luôn set isOpen = false
+                isOpen: hasLayoutEngineLoadedOnce ? overrideOpenSidebarNavigation : false,
               },
               sidebarContent: {
-                isOpen: overrideOpenSidebarPanel,
+                // Khi lần đầu load, luôn set isOpen = false
+                isOpen: hasLayoutEngineLoadedOnce ? overrideOpenSidebarPanel : false,
                 sidebarContentPanel: sidebarContentPanelOverride,
               },
               presentation: {

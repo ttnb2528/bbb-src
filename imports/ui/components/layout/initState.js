@@ -25,14 +25,14 @@ export const INITIAL_INPUT_STATE = {
     height: DEFAULT_VALUES.actionBarHeight,
   },
   sidebarNavigation: {
-    isOpen: true,
+    isOpen: false,
     width: 0,
     height: 0,
     browserWidth: 0,
     sidebarNavPanel: DEFAULT_VALUES.sidebarNavPanel,
   },
   sidebarContent: {
-    isOpen: true,
+    isOpen: false,
     currentPanelType: DEFAULT_VALUES.panelType,
     width: 0,
     height: 0,
