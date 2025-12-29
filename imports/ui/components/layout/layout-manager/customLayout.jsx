@@ -333,7 +333,15 @@ const CustomLayout = (props) => {
     let { width: lastWidth, height: lastHeight } = lastSize;
 
     if (cameraDockInput.isDragging) cameraDockBounds.zIndex = 99;
-    else cameraDockBounds.zIndex = 10; // Tăng z-index để camera hiển thị trên document
+    else {
+      // Check if external video is active - if so, lower camera z-index so video appears on top
+      const { hasExternalVideo: hasExtVideo } = externalVideoInput;
+      if (hasExtVideo) {
+        cameraDockBounds.zIndex = 1; // Lower z-index when external video is active
+      } else {
+        cameraDockBounds.zIndex = 10; // Tăng z-index để camera hiển thị trên document
+      }
+    }
 
     const isCameraTop = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP;
     const isCameraBottom = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_BOTTOM;
@@ -1026,10 +1034,29 @@ const CustomLayout = (props) => {
 
     const isMediaOpen = mediaBounds?.width > 0 && mediaBounds?.height > 0;
 
+    // Priority: external video > document > camera
+    // Hide camera dock (large camera in center) when external video or document is displayed
+    // But keep small camera on top (CONTENT_TOP position) visible
+    const { hasExternalVideo } = externalVideoInput;
+    const { isOpen: isPresentationOpen, slidesLength } = presentationInput;
+    // Only hide camera dock if:
+    // 1. External video is active, OR
+    // 2. Presentation is open AND has slides AND media is actually being displayed
+    // But keep camera visible if it's in CONTENT_TOP position (small camera on top)
+    const hasPresentation = isPresentationOpen && (isPresentationEnabled && slidesLength !== 0) && isMediaOpen;
+    // For external video: hide all camera docks except CONTENT_TOP (small camera on top)
+    // For document: same behavior - hide large cameras, keep small one on top
+    // Check if camera is large (not in CONTENT_TOP) - large cameras should be hidden
+    const isCameraTop = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP;
+    // Check if external video is active - use hasExternalVideo directly (it's set by external video player)
+    // Don't require isMediaOpen check for external video as it might not be set correctly
+    const externalVideoActive = hasExternalVideo;
+    const shouldHideCameraDock = (externalVideoActive || hasPresentation) && !isCameraTop;
+
     layoutContextDispatch({
       type: ACTIONS.SET_CAMERA_DOCK_OUTPUT,
       value: {
-        display: cameraDockInput.numCameras > 0,
+        display: cameraDockInput.numCameras > 0 && !shouldHideCameraDock,
         position: cameraDockInput.position,
         minWidth: cameraDockBounds.minWidth,
         width: cameraDockBounds.width,
