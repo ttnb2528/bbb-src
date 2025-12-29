@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import Icon from '/imports/ui/components/common/icon/component';
 import Styled from './styles';
 
 interface MobileDrawerProps {
@@ -38,7 +39,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({
           <Styled.Header>
             <Styled.Title>{title}</Styled.Title>
             <Styled.CloseButton onClick={onClose}>
-              <span>×</span>
+              <Icon iconName="close" />
             </Styled.CloseButton>
           </Styled.Header>
         )}

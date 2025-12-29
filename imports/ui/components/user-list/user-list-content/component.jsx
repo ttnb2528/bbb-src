@@ -47,8 +47,7 @@ class UserContent extends PureComponent {
         {isMobile || (isMobile && isPortrait) ? (
           <Styled.ScrollableList role="tabpanel" tabIndex={0}>
             <Styled.List>
-              <ChatList />
-              <UserNotesContainer />
+              {/* Trên mobile, chỉ hiển thị user list, ẩn Messages và Notes */}
               {isTimerActive
               && <TimerContainer isModerator={currentUser?.role === ROLE_MODERATOR} />}
               {currentUser?.role === ROLE_MODERATOR ? <GuestPanelOpenerContainer /> : null}

@@ -1,6 +1,6 @@
 import styled, { css } from 'styled-components';
 import { colorWhite, colorGrayLight, colorGrayDark } from '/imports/ui/stylesheets/styled-components/palette';
-import { fontSizeBase, fontSizeLarge } from '/imports/ui/stylesheets/styled-components/typography';
+import { fontSizeLarge } from '/imports/ui/stylesheets/styled-components/typography';
 import { smPaddingX, smPaddingY, borderSize } from '/imports/ui/stylesheets/styled-components/general';
 
 const Overlay = styled.div`
@@ -34,20 +34,30 @@ const Drawer = styled.div<{ $position: 'left' | 'right' }>`
   display: flex;
   flex-direction: column;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
-  animation: slideIn 0.3s ease;
 
   ${({ $position }) => $position === 'left' && css`
     left: 0;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    animation: slideInFromLeft 0.3s ease;
   `}
 
   ${({ $position }) => $position === 'right' && css`
     right: 0;
+    animation: slideInFromRight 0.3s ease;
   `}
 
-  @keyframes slideIn {
+  @keyframes slideInFromLeft {
     from {
-      transform: translateX(${({ $position }) => ($position === 'left' ? '-100%' : '100%')});
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInFromRight {
+    from {
+      transform: translateX(100%);
     }
     to {
       transform: translateX(0);
@@ -75,7 +85,7 @@ const Title = styled.h2`
 const CloseButton = styled.button`
   background: none;
   border: none;
-  font-size: 28px;
+  font-size: 24px;
   color: ${colorGrayDark};
   cursor: pointer;
   padding: 0;

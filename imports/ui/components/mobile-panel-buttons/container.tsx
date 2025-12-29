@@ -193,22 +193,11 @@ const MobilePanelButtonsContainer: React.FC = () => {
       <MobileDrawer
         isOpen={isChatNotesDrawerOpen}
         onClose={() => {
-          // Khi đóng drawer, nếu idChatOpen đang là public chat và private chat modal không đang mở,
-          // thì reset idChatOpen để tránh conflict
-          if (!isPrivateChatModalOpen) {
-            const CHAT_CONFIG = window.meetingClientSettings.public.chat;
-            const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
-            if (idChatOpen === PUBLIC_GROUP_CHAT_ID) {
-              layoutContextDispatch({
-                type: ACTIONS.SET_ID_CHAT_OPEN,
-                value: '',
-              });
-            }
-          }
+          // Chỉ đóng drawer, không reset các state khác để tránh conflict
           setIsChatNotesDrawerOpen(false);
         }}
         position="right"
-        title="Chat & Notes"
+        title="Chat"
       >
         <Styled.ChatNotesTabs>
           <Styled.TabButton
