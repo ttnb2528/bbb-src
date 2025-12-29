@@ -559,9 +559,10 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
     : ((previousMessage?.user?.userId
       || lastSenderPreviousPage) === message?.user?.userId) && pluginMessageNotCustom;
 
-  // Trong private chat modal (mode === 'modal'), luôn hiển thị header để phân biệt ai gửi tin nhắn
+  // Chỉ hiển thị avatar và header khi không cùng sender với tin nhắn trước (giống Zalo/Facebook Messenger)
+  // Trong modal mode, vẫn hiển thị header để phân biệt ai gửi, nhưng avatar chỉ hiển thị một lần
   const shouldRenderAvatar = messageContent.showAvatar
-    && (!sameSender || mode === 'modal')
+    && !sameSender
     && !isCustomPluginMessage;
 
   const shouldRenderHeader = messageContent.showHeading
