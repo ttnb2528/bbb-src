@@ -41,8 +41,7 @@ const SideHandle = styled.button`
   /* Nút hình "nửa hình tròn" dính vào mép trái panel */
   position: absolute;
   left: -32px; /* Nhô ra ngoài bên trái */
-  top: 50%;
-  transform: translateY(-50%);
+  bottom: 14%;
   z-index: 10;
 
   height: 48px;
@@ -81,11 +80,11 @@ const SideHandle = styled.button`
   &:hover {
     background: #ff8555;
     box-shadow: -2px 0 12px rgba(0, 0, 0, 0.2);
-    transform: translateY(-50%) scale(1.05);
+    transform: scale(1.05);
   }
 
   &:active {
-    transform: translateY(-50%) scale(0.95);
+    transform: scale(0.95);
   }
 `;
 

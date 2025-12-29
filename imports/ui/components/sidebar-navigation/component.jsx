@@ -150,13 +150,13 @@ const SidebarNavigation = ({
         transform: `translateX(${translateXOffset})`,
       }}
     >
-      <Styled.SidebarNavigationWrapper data-collapsed={isCollapsed}>
+      <Styled.SidebarNavigationWrapper>
         {/* Thanh handle ở mép phải để kéo panel ra/vào */}
-        <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={isCollapsed}>
+        <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={!isOpen}>
           <i className="icon-bbb-right_arrow" />
         </Styled.SideHandle>
 
-        <Styled.ContentArea data-collapsed={isCollapsed}>
+        <Styled.ContentArea>
           <UserTitleContainer />
           <UserListParticipantsContainer />
         </Styled.ContentArea>

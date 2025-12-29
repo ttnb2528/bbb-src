@@ -20,11 +20,7 @@ const SidebarNavigationWrapper = styled.div`
               box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: transform, height;
 
-  ${({ 'data-collapsed': collapsed }) => collapsed && `
-    background: transparent;
-    border: none;
-    box-shadow: none;
-  `}
+  /* Không cần data-collapsed vì transform đã xử lý việc ẩn/hiện */
 `;
 
 // Thanh handle ở mép phải của panel để kéo panel ra/vào (side slide)
@@ -64,10 +60,10 @@ const SideHandle = styled.button`
     line-height: 1;
     display: inline-block;
     transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    transform: rotate(0deg); /* Xoay 0 độ để chỉ phải khi collapsed */
+    transform: rotate(0deg); /* Xoay 0 độ để chỉ phải (>) khi collapsed (sidebar ẩn) - click để mở */
   }
 
-  /* Xoay mũi tên 180 độ để chỉ trái khi expanded */
+  /* Xoay mũi tên 180 độ để chỉ trái (<) khi expanded (sidebar mở) - click để đóng */
   ${({ 'data-collapsed': collapsed }) => !collapsed && `
     i[class*="icon-bbb-right_arrow"] {
       transform: rotate(180deg) translateX(8px);
@@ -95,11 +91,7 @@ const ContentArea = styled.div`
   opacity: 1;
   transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
-  ${({ 'data-collapsed': collapsed }) => collapsed && `
-    overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
-  `}
+  /* Không ẩn content khi collapsed, vì transform đã xử lý việc ẩn/hiện */
 `;
 
 export default {
