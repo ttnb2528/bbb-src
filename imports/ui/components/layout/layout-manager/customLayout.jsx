@@ -804,8 +804,8 @@ const CustomLayout = (props) => {
       // Mobile: ẩn panel hoặc dùng height rất nhỏ
       sidebarPanelHeight = 0; // Hoặc có thể dùng 120 nếu muốn hiện nhưng nhỏ
     } else {
-      // User panel giữ nguyên chiều cao cũ
-      sidebarPanelHeight = windowH < 800 ? 180 : windowH < 1080 ? 200 : 220;
+      // User panel: tăng chiều cao đáng kể để hiển thị nhiều user hơn
+      sidebarPanelHeight = windowH < 800 ? 300 : windowH < 1080 ? 360 : 420;
     }
 
     const sidebarNavWidth = calculatesSidebarNavWidth();
@@ -932,7 +932,8 @@ const CustomLayout = (props) => {
     const sidebarNavNewWidth = sidebarNavigationInput.width || defaultUserListWidth;
     // Calculate minHeight and maxHeight for collapse/expand functionality
     const minUserListHeight = 52; // Collapsed height
-    const maxUserListHeight = Math.min(windowHeight() * 0.5, windowHeight() - actionBarHeight - 20);
+    // Tăng maxHeight đáng kể để user list có thể expand cao hơn, hiển thị nhiều user hơn
+    const maxUserListHeight = Math.min(windowHeight() * 0.75, windowHeight() - actionBarHeight - 20);
 
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_NAVIGATION_OUTPUT,
