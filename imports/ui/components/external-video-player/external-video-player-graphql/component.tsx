@@ -36,7 +36,7 @@ import { uniqueId } from '/imports/utils/string-utils';
 import useTimeSync from '/imports/ui/core/local-states/useTimeSync';
 import ExternalVideoPlayerToolbar from './toolbar/component';
 import deviceInfo from '/imports/utils/deviceInfo';
-import { ACTIONS, PRESENTATION_AREA } from '../../layout/enums';
+import { ACTIONS, PRESENTATION_AREA, CAMERADOCK_POSITION } from '../../layout/enums';
 import { EXTERNAL_VIDEO_UPDATE, EXTERNAL_VIDEO_STOP } from '../mutations';
 import { calculateCurrentTime } from '/imports/ui/components/external-video-player/service';
 
@@ -122,12 +122,22 @@ const ExternalVideoPlayer: React.FC<ExternalVideoPlayerProps> = ({
   const intl = useIntl();
   const storage = getStorageSingletonInstance();
   const {
-    height,
+    height: originalHeight,
     width,
     top,
     left,
     right,
   } = externalVideo;
+
+  // Gi?i h?n height cho external video: t?i da 500px d? gi?m n?n den
+  // Tính toán d?a trên aspect ratio 16:9 và gi?i h?n t?i da 500px
+  const videoAspectRatio = 16 / 9;
+  const idealHeight = typeof width === 'number' ? width / videoAspectRatio : 0;
+  const maxHeight = 500; // T?i da 500px
+  const height = typeof originalHeight === 'number' 
+    ? Math.min(Math.max(idealHeight, 400), maxHeight) // Gi? trong kho?ng 400-500px
+    : originalHeight;
+
 
   const hideVolume = useMemo(() => ({
     Vimeo: true,
@@ -592,14 +602,12 @@ const ExternalVideoPlayer: React.FC<ExternalVideoPlayerProps> = ({
 
   return (
     <Styled.Container
-      style={{
-        height,
-        width,
-        top,
-        left,
-        right,
-        zIndex: externalVideo.zIndex,
-      }}
+      height={height}
+      width={width}
+      top={top}
+      left={left}
+      right={right}
+      zIndex={externalVideo.zIndex}
       isResizing={isResizing}
       isMinimized={isMinimized}
     >
@@ -812,6 +820,7 @@ const ExternalVideoPlayerContainer: React.FC = () => {
   const externalVideo: ExternalVideo = layoutSelectOutput((i: Output) => i.externalVideo);
   const hasExternalVideoOnLayout: boolean = layoutSelectInput((i: Input) => i.externalVideo?.hasExternalVideo);
   const cameraDock = layoutSelectInput((i: Input) => i.cameraDock);
+  const cameraDockOutput = layoutSelectOutput((i: Output) => i.cameraDock);
   const sidebarContent = layoutSelectInput((i: Input) => i.sidebarContent);
   const { isOpen: isSidebarContentOpen } = sidebarContent;
   const { isResizing } = cameraDock;
@@ -832,6 +841,21 @@ const ExternalVideoPlayerContainer: React.FC = () => {
   } = currentMeeting.externalVideo;
   const getServerCurrentTime = () => calculateCurrentTime(timeSync, currentMeeting.externalVideo);
 
+  // Ði?u ch?nh top cho mobile: tính d?a trên chi?u cao c?a dãy cam nh? (CONTENT_TOP) + vài px
+  // Ði?u này giúp tránh v? layout trên thi?t b? có chi?u cao th?p
+  let adjustedExternalVideo = externalVideo;
+  if (deviceInfo.isMobile && typeof externalVideo.top === 'number' && cameraDockOutput && cameraDockOutput.position) {
+    const { position, height: cameraHeight, display: cameraDisplay } = cameraDockOutput;
+    // N?u camera ? CONTENT_TOP và dang hi?n th?, s? d?ng height c?a nó
+    if (position === CAMERADOCK_POSITION.CONTENT_TOP && cameraDisplay && cameraHeight) {
+      // Top = chi?u cao camera + margin nh? (15px)
+      adjustedExternalVideo = {
+        ...externalVideo,
+        top: cameraHeight + 15,
+      };
+    }
+  }
+
   return (
     <ExternalVideoPlayer
       isSidebarContentOpen={isSidebarContentOpen}
@@ -845,7 +869,7 @@ const ExternalVideoPlayerContainer: React.FC = () => {
       playerPlaybackRate={playerPlaybackRate}
       isResizing={isResizing}
       fullscreenContext={fullscreenContext}
-      externalVideo={externalVideo}
+      externalVideo={adjustedExternalVideo}
       getServerCurrentTime={getServerCurrentTime}
       playerKey={key}
       setPlayerKey={setKey}

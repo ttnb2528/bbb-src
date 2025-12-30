@@ -11,6 +11,12 @@ type VideoPlayerWrapperProps = {
 type ContainerProps = {
   isResizing: boolean;
   isMinimized: boolean;
+  height?: number | string;
+  width?: number | string;
+  top?: number | string;
+  left?: number | string;
+  right?: number | string;
+  zIndex?: number;
 };
 
 export const Container = styled.span<ContainerProps>`
@@ -18,6 +24,25 @@ export const Container = styled.span<ContainerProps>`
   pointer-events: inherit;
   background: var(--color-black);
   overflow: hidden;
+
+  ${({ height }) => height && `
+    height: ${typeof height === 'number' ? `${height}px` : height} !important;
+  `}
+  ${({ width }) => width && `
+    width: ${typeof width === 'number' ? `${width}px` : width} !important;
+  `}
+  ${({ top }) => top !== undefined && `
+    top: ${typeof top === 'number' ? `${top}px` : top} !important;
+  `}
+  ${({ left }) => left !== undefined && `
+    left: ${typeof left === 'number' ? `${left}px` : left} !important;
+  `}
+  ${({ right }) => right !== undefined && `
+    right: ${typeof right === 'number' ? `${right}px` : right} !important;
+  `}
+  ${({ zIndex }) => zIndex !== undefined && `
+    z-index: ${zIndex} !important;
+  `}
 
   ${({ isResizing }) => isResizing && `
     pointer-events: none;
@@ -52,7 +77,6 @@ export const AutoPlayWarning = styled.p`
   bottom: 20%;
   vertical-align: middle;
   text-align: center;
-  pointer-events: none;
 `;
 
 export const VideoPlayer = styled(ReactPlayer)`
