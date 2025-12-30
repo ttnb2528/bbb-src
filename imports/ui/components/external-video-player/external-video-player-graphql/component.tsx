@@ -875,7 +875,7 @@ const ExternalVideoPlayerContainer: React.FC = () => {
       // Top = chi?u cao camera + margin nh? (15px)
       adjustedExternalVideo = {
         ...externalVideo,
-        top: cameraHeight + 15,
+        top: cameraHeight + 35,
       };
     }
   }
