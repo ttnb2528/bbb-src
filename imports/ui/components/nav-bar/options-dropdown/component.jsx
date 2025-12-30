@@ -432,9 +432,9 @@ class OptionsDropdown extends PureComponent {
 
     const Settings = getSettingsSingletonInstance();
     const { selectedLayout } = Settings.application;
-    const shouldShowManageLayoutButton = selectedLayout !== LAYOUT_TYPE.CAMERAS_ONLY
-      && selectedLayout !== LAYOUT_TYPE.PRESENTATION_ONLY
-      && selectedLayout !== LAYOUT_TYPE.PARTICIPANTS_AND_CHAT_ONLY;
+    // Ẩn hoàn toàn "Manage layout" để người dùng không thể chuyển sang layout khác
+    // Chỉ cho phép dùng CUSTOM_LAYOUT, các layout khác sẽ bị lỗi nếu dùng
+    const shouldShowManageLayoutButton = false; // Luôn ẩn để tránh người dùng chuyển layout
 
     if (shouldShowManageLayoutButton && isLayoutsEnabled) {
       this.menuItems.push(
@@ -509,6 +509,28 @@ class OptionsDropdown extends PureComponent {
       });
     }
 
+    // Thêm "End meeting" cho moderator/host ngay sau "Leave session"
+    // Không phụ thuộc vào isDirectLeaveButtonEnabled để đảm bảo host luôn có option này
+    if (isMeteorConnected && allowedToEndMeeting) {
+      // Thêm separator trước "End meeting"
+      this.menuItems.push({
+        key: 'separator-end-meeting',
+        isSeparator: true,
+      });
+
+      const customStyles = { background: colorDanger, color: colorWhite };
+
+      this.menuItems.push({
+        key: 'list-item-end-meeting',
+        icon: 'close',
+        label: intl.formatMessage(intlMessages.endMeetingLabel),
+        description: intl.formatMessage(intlMessages.endMeetingDesc),
+        customStyles,
+        onClick: () => this.setEndMeetingConfirmationModalIsOpen(true),
+      });
+    }
+
+    // Giữ logic cũ cho bottomItems (nếu cần cho các trường hợp khác)
     if (isMeteorConnected && !isDirectLeaveButtonEnabled) {
       const bottomItems = [{
         key: 'list-item-separator',
@@ -533,19 +555,8 @@ class OptionsDropdown extends PureComponent {
         });
       }
 
-      if (allowedToEndMeeting) {
-        const customStyles = { background: colorDanger, color: colorWhite };
-
-        bottomItems.push({
-          key: 'list-item-end-meeting',
-          icon: 'close',
-          label: intl.formatMessage(intlMessages.endMeetingLabel),
-          description: intl.formatMessage(intlMessages.endMeetingDesc),
-          customStyles,
-          onClick: () => this.setEndMeetingConfirmationModalIsOpen(true),
-        });
-      }
-
+      // Không thêm "End meeting" vào bottomItems nữa vì đã thêm ở trên
+      // (tránh duplicate)
       if (bottomItems.length > 1) this.menuItems.push(...bottomItems);
     }
 

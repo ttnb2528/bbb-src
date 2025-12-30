@@ -4,6 +4,8 @@ import { Resizable } from 're-resizable';
 import { ACTIONS } from '../layout/enums';
 import UserListParticipantsContainer from '../user-list/user-list-content/user-participants/user-list-participants/component';
 import UserTitleContainer from '../user-list/user-list-graphql/user-participants-title/component';
+import GuestPanelOpenerContainer from '../user-list/user-list-graphql/user-participants-title/guest-panel-opener/component';
+import GuestWaitingNotification from './guest-waiting-notification/component';
 import deviceInfo from '/imports/utils/deviceInfo';
 import Styled from './styles';
 
@@ -161,6 +163,8 @@ const SidebarNavigation = ({
 
         <Styled.ContentArea>
           <UserTitleContainer />
+          <GuestPanelOpenerContainer />
+          <GuestWaitingNotification />
           <UserListParticipantsContainer />
         </Styled.ContentArea>
       </Styled.SidebarNavigationWrapper>
