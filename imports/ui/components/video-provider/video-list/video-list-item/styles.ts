@@ -180,6 +180,13 @@ const Video = styled.video<{
   ${({ unhealthyStream }) => unhealthyStream && `
     filter: grayscale(50%) opacity(50%);
   `}
+
+  /* Khi external video đang hiển thị: ẩn toàn bộ webcam render trong VideoListItem
+     (các ô cam lớn phía sau nội dung) */
+  body.bbb-external-video-active [data-test="webcamItem"] &,
+  body.bbb-external-video-active [data-test="webcamItemTalkingUser"] & {
+    display: none !important;
+  }
 `;
 
 const VideoDisabled = styled.div`

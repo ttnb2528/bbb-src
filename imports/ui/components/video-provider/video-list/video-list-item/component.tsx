@@ -108,6 +108,18 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
   } = props;
 
   const intl = useIntl();
+  const [hasExternalVideo, setHasExternalVideo] = useState<boolean>(false);
+
+  // Lắng nghe class global (do external video set lên body) để ẩn/hiện cam lớn
+  useEffect(() => {
+    const check = () => {
+      setHasExternalVideo(document.body.classList.contains('bbb-external-video-active'));
+    };
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   const [videoDataLoaded, setVideoDataLoaded] = useState(false);
   const [isStreamHealthy, setIsStreamHealthy] = useState(false);

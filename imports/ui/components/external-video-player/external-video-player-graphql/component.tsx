@@ -829,8 +829,32 @@ const ExternalVideoPlayerContainer: React.FC = () => {
   const { element } = fullscreen;
   const fullscreenContext = (element === fullscreenElementId);
   const [key, setKey] = React.useState(uniqueId('react-player'));
-  if (!currentUser || !currentMeeting?.externalVideo || !externalVideo?.display) return null;
-  if (!hasExternalVideoOnLayout) return null;
+
+  // External video thực sự đang hiển thị hay không
+  const externalVideoUrl = currentMeeting?.externalVideo?.externalVideoUrl;
+  const hasExternalVideoActive = !!(
+    currentUser
+    && currentMeeting?.externalVideo
+    && externalVideo?.display
+    && hasExternalVideoOnLayout
+    && externalVideoUrl
+  );
+
+  // Đánh dấu global state khi external video đang hiển thị để có thể ẩn webcam bằng CSS
+  React.useEffect(() => {
+    const className = 'bbb-external-video-active';
+    const layoutEl = document.getElementById('layout');
+
+    if (hasExternalVideoActive) {
+      document.body.classList.add(className);
+      layoutEl?.setAttribute('data-external-video-active', 'true');
+    } else {
+      document.body.classList.remove(className);
+      layoutEl?.removeAttribute('data-external-video-active');
+    }
+  }, [hasExternalVideoActive]);
+
+  if (!hasExternalVideoActive) return null;
   const isPresenter = currentUser.presenter ?? false;
   const isGridLayout = currentMeeting.layout?.currentLayoutType === 'VIDEO_FOCUS';
   const {
@@ -838,7 +862,7 @@ const ExternalVideoPlayerContainer: React.FC = () => {
     playerPlaybackRate = 1,
     playerPlaying: playing = false,
     externalVideoUrl: videoUrl = '',
-  } = currentMeeting.externalVideo;
+  } = currentMeeting.externalVideo || {};
   const getServerCurrentTime = () => calculateCurrentTime(timeSync, currentMeeting.externalVideo);
 
   // Ði?u ch?nh top cho mobile: tính d?a trên chi?u cao c?a dãy cam nh? (CONTENT_TOP) + vài px
