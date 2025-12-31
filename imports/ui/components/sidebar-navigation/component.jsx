@@ -157,7 +157,7 @@ const SidebarNavigation = ({
         {/* Thanh handle ở mép phải để kéo panel ra/vào - Ẩn trên mobile */}
         {!deviceInfo.isPhone && (
           <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={!isOpen}>
-            <i className="icon-bbb-right_arrow" />
+            <i className="icon-bbb-user" />
           </Styled.SideHandle>
         )}
 

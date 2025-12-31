@@ -40,7 +40,7 @@ const SideHandle = styled.button`
 
   /* Nút hình "nửa hình tròn" dính vào mép trái panel */
   position: absolute;
-  left: -32px; /* Nhô ra ngoài bên trái */
+  left: -34px; /* Nhô ra ngoài bên trái */
   bottom: 14%;
   z-index: 10;
 
@@ -61,19 +61,19 @@ const SideHandle = styled.button`
     outline: none;
   }
 
-  /* Icon mũi tên > xoay để chỉ trái/phải */
-  i[class*="icon-bbb-right_arrow"] {
-    font-size: 16px;
+  /* Icon chat - không xoay, chỉ hiển thị icon để phân biệt */
+  i[class*="icon-bbb-chat"] {
+    font-size: 18px;
     line-height: 1;
     display: inline-block;
     transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    transform: rotate(180deg); /* Xoay 180 độ để chỉ trái khi collapsed */
+    transform: scale(1) translateX(4px);
   }
 
-  /* Xoay mũi tên về 0 độ để chỉ phải khi expanded */
+  /* Hiệu ứng nhẹ khi expanded */
   ${({ 'data-collapsed': collapsed }) => !collapsed && `
-    i[class*="icon-bbb-right_arrow"] {
-      transform: rotate(0deg) translateX(8px);
+    i[class*="icon-bbb-chat"] {
+      transform: scale(1.1) translateX(4px);
     }
   `}
 

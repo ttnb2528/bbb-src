@@ -32,7 +32,7 @@ const SideHandle = styled.button`
 
   /* Nút hình "nửa hình tròn" dính vào mép phải panel */
   position: absolute;
-  right: -32px; /* Nhô ra ngoài bên phải */
+  right: -34px; /* Nhô ra ngoài bên phải */
   top: 65%;
   z-index: 10;
 
@@ -53,19 +53,19 @@ const SideHandle = styled.button`
     outline: none;
   }
 
-  /* Icon mũi tên > xoay để chỉ trái/phải */
-  i[class*="icon-bbb-right_arrow"] {
-    font-size: 16px;
+  /* Icon user - không xoay, chỉ hiển thị icon để phân biệt */
+  i[class*="icon-bbb-user"] {
+    font-size: 18px;
     line-height: 1;
     display: inline-block;
     transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    transform: rotate(0deg); /* Xoay 0 độ để chỉ phải (>) khi collapsed (sidebar ẩn) - click để mở */
+    transform: scale(1) translateX(-4px);
   }
 
-  /* Xoay mũi tên 180 độ để chỉ trái (<) khi expanded (sidebar mở) - click để đóng */
+  /* Hiệu ứng nhẹ khi expanded */
   ${({ 'data-collapsed': collapsed }) => !collapsed && `
-    i[class*="icon-bbb-right_arrow"] {
-      transform: rotate(180deg) translateX(8px);
+    i[class*="icon-bbb-user"] {
+      transform: scale(1.1) translateX(-4px);
     }
   `}
 
