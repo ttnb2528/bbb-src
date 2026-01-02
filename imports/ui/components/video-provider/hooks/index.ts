@@ -400,7 +400,11 @@ export const useVideoStreams = () => {
     streams = streams.filter((vs) => videoService.isLocalStream(vs.stream));
   }
 
-  if (isPaginationEnabled) {
+  // Presenter/Moderator và Viewer đều xem hết tất cả streams, không bị giới hạn pagination
+  // Nếu muốn chỉ moderator xem hết, thay đổi thành: const shouldShowAllStreams = myRole === ROLE_MODERATOR || myPageSize === 0;
+  const shouldShowAllStreams = true; // Cả viewer và moderator đều xem hết
+
+  if (isPaginationEnabled && !shouldShowAllStreams) {
     const [filtered, others] = partition(
       streams,
       (vs: StreamItem) => videoService.isLocalStream(vs.stream) || (vs.type === VIDEO_TYPES.STREAM && vs.user?.pinned),
@@ -413,6 +417,8 @@ export const useVideoStreams = () => {
     totalNumberOfOtherStreams = others.length;
     const chunkIndex = currentVideoPageIndex * myPageSize;
     const sortingMethod = (numberOfPages > 1) ? PAGINATION_SORTING : DEFAULT_SORTING;
+    
+    // Slice streams theo pageSize cho viewer
     const paginatedStreams = sortVideoStreams(others, sortingMethod)
       .slice(chunkIndex, (chunkIndex + myPageSize)) || [];
 
@@ -422,6 +428,7 @@ export const useVideoStreams = () => {
       streams = [...pin, ...paginatedStreams, ...mine];
     }
   } else {
+    // Moderator hoặc pageSize = 0: hiển thị tất cả streams
     streams = sortVideoStreams(streams, DEFAULT_SORTING);
   }
 
