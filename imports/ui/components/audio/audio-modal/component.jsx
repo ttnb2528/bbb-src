@@ -421,20 +421,62 @@ const AudioModal = ({
     // Reset the modal to a connecting state - this kind of sucks?
     // prlanzarin Apr 04 2022
     setContent(null);
-    if (inputStream) changeInputStream(inputStream);
+    
+    // If inputStream is provided, set it
+    if (inputStream) {
+      // Ensure stream is active and tracks are enabled before setting it
+      if (inputStream.active) {
+        inputStream.getAudioTracks().forEach((track) => {
+          if (track.readyState === 'live') {
+            track.enabled = true;
+          }
+        });
+      }
+      // Set the stream before joining to ensure it's available
+      changeInputStream(inputStream);
+    }
 
     if (!isConnected) {
+      // If no stream provided but we're not connected, we need to join
+      // This handles the case where user selected microphone but stream wasn't generated
+      if (!inputStream) {
+        // Stream will be generated in joinMicrophone if needed
+        logger.info({
+          logCode: 'audiomodal_confirm_no_stream',
+          extraInfo: { logType: 'user_action' },
+        }, 'Audio settings confirmed without stream, will generate in joinMicrophone');
+      }
+      // Ensure stream is set and then join
+      // The stream from echo test should be used in joinMicrophone
       handleJoinMicrophone();
       disableAwayMode();
     } else {
+      // If already connected, the device change was handled by liveChangeInputDevice
+      // However, we need to ensure the stream is set and track is enabled
+      // This is especially important when switching from listen-only to microphone
+      if (inputStream && inputStream.active) {
+        // Ensure stream is set and tracks are enabled
+        // Add a small delay to ensure liveChangeInputDevice has completed
+        setTimeout(() => {
+          // Double-check that stream is still active and enable tracks
+          if (inputStream && inputStream.active) {
+            inputStream.getAudioTracks().forEach((track) => {
+              if (track.readyState === 'live') {
+                track.enabled = true;
+              }
+            });
+          }
+        }, 300);
+      }
+      // Close the modal
       closeModal();
     }
-  }, [changeInputStream, isConnected]);
+  }, [changeInputStream, isConnected, handleJoinMicrophone]);
 
   const skipAudioOptions = useCallback(
     // eslint-disable-next-line max-len
-    () => !hasError && (isConnecting || (forceListenOnlyAttendee && !autoplayChecked) || !listenOnlyMode),
-    [hasError, isConnecting, forceListenOnlyAttendee, autoplayChecked, listenOnlyMode],
+    () => !hasError && (isConnecting || (forceListenOnlyAttendee && !autoplayChecked)),
+    [hasError, isConnecting, forceListenOnlyAttendee, autoplayChecked],
   );
 
   const renderAudioOptions = () => {
@@ -466,7 +508,7 @@ const AudioModal = ({
               </span>
             </>
           )}
-          {listenOnlyMode && (
+          {(listenOnlyMode || !hideMicrophone) && (
             <>
               <Styled.AudioModalButton
                 label={intl.formatMessage(intlMessages.listenOnlyLabel)}
@@ -659,30 +701,28 @@ const AudioModal = ({
 
   useEffect(() => {
     if (!isUsingAudio) {
-      if (forceListenOnlyAttendee || audioLocked) {
-        handleJoinListenOnly();
-      } else if (!listenOnlyMode) {
-        // Audio join should only be automatic if the prop says so, listen only
-        // mode is off, and automatic audio join hasn't been tried yet. For the
-        // latter, the reason is that we don't want to loop audio join retries
-        // if an error occurs.
-        if (joinFullAudioImmediately && !initialJoinExecuted) {
-          setInitialJoinExecuted(true);
-          checkMicrophonePermission({ doGUM: true, permissionStatus })
-            .then((hasPermission) => {
-              // No permission - let the Help screen be shown as it's triggered
-              // by the checkMicrophonePermission function
-              if (hasPermission === false) return;
+      // Don't auto-join, always show modal for user to choose
+      // The modal will handle showing appropriate options based on:
+      // - forceListenOnlyAttendee/audioLocked: will hide microphone button
+      // - listenOnlyMode: will show/hide listen only button
+      // - joinFullAudioImmediately: will determine if echo test is skipped
+      if (!listenOnlyMode && joinFullAudioImmediately && !initialJoinExecuted) {
+        // Only auto-join if explicitly configured to do so
+        // Otherwise, show the audio options modal for user to choose
+        setInitialJoinExecuted(true);
+        checkMicrophonePermission({ doGUM: true, permissionStatus })
+          .then((hasPermission) => {
+            // No permission - let the Help screen be shown as it's triggered
+            // by the checkMicrophonePermission function
+            if (hasPermission === false) return;
 
-              // Permission is granted or undetermined, so we can proceed
-              handleJoinMicrophone();
-            });
-        } else {
-          // No need to check for permission here since the AudioSettings
-          // component will handle it
-          handleGoToEchoTest();
-        }
+            // Permission is granted or undetermined, so we can proceed
+            handleJoinMicrophone();
+          });
       }
+      // Modal will show audio options for user to choose
+      // If forceListenOnlyAttendee or audioLocked, microphone button will be hidden
+      // but user can still see and choose listen only option
     }
   }, [
     audioLocked,

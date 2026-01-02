@@ -661,11 +661,53 @@ class AudioManager {
       extraInfo: { logType: 'user_action', bridge: this.bridgeName },
     }, 'user requested to connect to audio conference as listen only');
 
+    // Stop any existing input stream to release the microphone
+    // This is critical to ensure the browser releases the mic
+    if (this.inputStream) {
+      logger.info({
+        logCode: 'audiomanager_stopping_stream_for_listenonly',
+        extraInfo: {
+          bridge: this.bridgeName,
+          streamId: this.inputStream.id,
+          trackCount: this.inputStream.getAudioTracks().length,
+        },
+      }, 'Stopping input stream before joining listen-only mode');
+      
+      // Stop all audio tracks to release the microphone
+      this.inputStream.getAudioTracks().forEach((track) => {
+        track.stop();
+      });
+      
+      // Clear the input stream reference
+      this.inputStream = null;
+    }
+
     // If the bridge supports transparent listen-only, we set the placeholder
     // input device ID to 'listen-only' so that both the bridge and UI know
     // it can be changed on the fly later on.
     if (this.supportsTransparentListenOnly()) {
       this.inputDeviceId = 'listen-only';
+      
+      // For SFU bridge, we can't directly set inputStream (it's a getter)
+      // Instead, we use liveChangeInputDevice to properly stop the stream in the bridge
+      // This will stop tracks and clear the stream reference
+      if (this.bridge && typeof this.bridge.liveChangeInputDevice === 'function') {
+        logger.info({
+          logCode: 'audiomanager_clearing_bridge_stream_for_listenonly',
+          extraInfo: {
+            bridge: this.bridgeName,
+          },
+        }, 'Clearing bridge inputStream for listen-only mode via liveChangeInputDevice');
+        this.bridge.liveChangeInputDevice('listen-only').catch((error) => {
+          logger.warn({
+            logCode: 'audiomanager_listenonly_device_change_warning',
+            extraInfo: {
+              bridge: this.bridgeName,
+              errorMessage: error?.message,
+            },
+          }, 'Warning: failed to change device to listen-only in bridge');
+        });
+      }
     }
 
     return this.onAudioJoining.bind(this)()
@@ -1068,24 +1110,410 @@ class AudioManager {
 
   liveChangeInputDevice(deviceId) {
     const currentDeviceId = this.inputDeviceId ?? 'none';
+    const wasListenOnly = this.isListenOnly || currentDeviceId === 'listen-only';
+    const switchingToMicrophone = deviceId !== 'listen-only' && deviceId !== null;
+    
+    // If switching from listen-only to microphone, reset isListenOnly flag
+    if (wasListenOnly && switchingToMicrophone) {
+      this.isListenOnly = false;
+      logger.info({
+        logCode: 'audiomanager_switching_from_listenonly_to_mic',
+        extraInfo: {
+          bridge: this.bridgeName,
+          previousDeviceId: currentDeviceId,
+          newDeviceId: deviceId,
+        },
+      }, 'Switching from listen-only to microphone mode');
+    }
+    
     // we force stream to be null, so MutedAlert will deallocate it and
     // a new one will be created for the new stream
     this.inputStream = null;
+    
+    logger.info({
+      logCode: 'audiomanager_live_change_input_device_start',
+      extraInfo: {
+        bridge: this.bridgeName,
+        currentDeviceId,
+        newDeviceId: deviceId,
+        wasListenOnly,
+        switchingToMicrophone,
+        isListenOnly: this.isListenOnly,
+      },
+    }, `Starting live change input device from ${currentDeviceId} to ${deviceId}`);
+    
     return this.bridge
       .liveChangeInputDevice(deviceId)
       .then((stream) => {
+        logger.info({
+          logCode: 'audiomanager_live_change_input_device_success',
+          extraInfo: {
+            bridge: this.bridgeName,
+            deviceId,
+            hasStream: !!stream,
+            streamActive: stream?.active,
+            trackCount: stream?.getAudioTracks()?.length || 0,
+          },
+        }, `Live change input device succeeded, got stream: ${!!stream}`);
+        
         this.inputStream = stream;
-        const extractedDeviceId = MediaStreamUtils.extractDeviceIdFromStream(
-          this.inputStream,
-          'audio',
-        );
-        if (extractedDeviceId && extractedDeviceId !== this.inputDeviceId) {
-          this.changeInputDevice(extractedDeviceId);
+        
+        // Only extract device ID if stream exists (not null for listen-only)
+        if (stream) {
+          const extractedDeviceId = MediaStreamUtils.extractDeviceIdFromStream(
+            stream,
+            'audio',
+          );
+          if (extractedDeviceId && extractedDeviceId !== this.inputDeviceId) {
+            this.changeInputDevice(extractedDeviceId);
+          }
+          // Live input device change - add device ID to session storage so it
+          // can be re-used on refreshes/other sessions
+          storeAudioInputDeviceId(extractedDeviceId || deviceId);
+        } else if (deviceId === 'listen-only') {
+          // For listen-only, store 'listen-only' as the device ID
+          storeAudioInputDeviceId('listen-only');
         }
-        // Live input device change - add device ID to session storage so it
-        // can be re-used on refreshes/other sessions
-        storeAudioInputDeviceId(extractedDeviceId);
-        if (this.isMuted) this.setSenderTrackEnabled(false);
+        
+        // If switching to microphone from listen-only, ensure track is enabled and published
+        if (switchingToMicrophone && wasListenOnly && stream) {
+          logger.info({
+            logCode: 'audiomanager_enabling_tracks_after_listenonly_switch',
+            extraInfo: {
+              bridge: this.bridgeName,
+              deviceId,
+              isMuted: this.isMuted,
+            },
+          }, 'Enabling tracks after switching from listen-only to microphone');
+          
+          // Enable all audio tracks in the new stream
+          stream.getAudioTracks().forEach((track) => {
+            if (track.readyState === 'live') {
+              track.enabled = true;
+            }
+          });
+          
+          // For SFU bridge, when switching from listen-only to microphone, the peer connection
+          // may still have role 'recvonly'. We need to ensure the stream is set and track is enabled.
+          // The setInputStream should handle adding the track to peer connection via replaceTrack.
+          // Note: isMuted state is managed by server, but track.enabled controls whether audio is sent
+          logger.info({
+            logCode: 'audiomanager_enabling_sender_track_after_listenonly_switch',
+            extraInfo: {
+              bridge: this.bridgeName,
+              deviceId,
+              isMuted: this.isMuted,
+              bridgeRole: this.bridge?.role,
+            },
+          }, 'Enabling sender track after switching from listen-only to microphone');
+          
+          // Always enable sender track when switching from listen-only to microphone
+          // This ensures the track is enabled and ready to send audio, regardless of mute state
+          // The mute state (isMuted) is managed by the server and affects UI, but track.enabled
+          // controls whether audio is actually sent over WebRTC
+          // NOTE: Even if isMuted is true, we enable the track because the user explicitly
+          // switched to microphone mode, indicating they want to send audio
+          this.setSenderTrackEnabled(true);
+          
+          // For SFU bridge, if the bridge role is still 'recvonly' or 'passive-sendrecv',
+          // we may need to rejoin audio to change the role to 'sendrecv'.
+          // The role is determined by getBrokerRole, which checks isListenOnly and hasInputStream.
+          // When switching from listen-only to microphone, isListenOnly is false and hasInputStream
+          // should be true, so role should be SENDRECV_ROLE. However, if peer connection was
+          // already created with the old role, it won't automatically change.
+          // Skip rejoin if we're already in the process of restoring after a rejoin
+          const bridgeRole = this.bridge?.role;
+          if (this.bridgeName === 'fullaudio' && bridgeRole && 
+              (bridgeRole === 'recv' || bridgeRole === 'passive-sendrecv') &&
+              !this._isRestoringAfterRejoin) {
+            logger.warn({
+              logCode: 'audiomanager_bridge_wrong_role_after_switch',
+              extraInfo: {
+                bridge: this.bridgeName,
+                deviceId,
+                bridgeRole,
+                isConnected: this.isConnected,
+                isListenOnly: this.isListenOnly,
+                hasInputStream: !!stream,
+              },
+            }, `Warning: Bridge role is ${bridgeRole} after switching to microphone. Audio may not be sent. Need to rejoin audio to change role to sendrecv.`);
+            
+            // For SFU bridge, when switching from listen-only to microphone, if role is still
+            // recvonly or passive-sendrecv, we need to rejoin audio to create a new peer connection
+            // with the correct role (sendrecv). This will ensure audio can be sent.
+            if (this.isConnected) {
+              logger.info({
+                logCode: 'audiomanager_rejoining_audio_for_role_change',
+                extraInfo: {
+                  bridge: this.bridgeName,
+                  deviceId,
+                  oldRole: bridgeRole,
+                  newRole: 'sendrecv',
+                },
+              }, 'Rejoining audio to change role from listen-only to microphone (sendrecv)');
+              
+              // Store the device ID and stream before rejoin so we can restore them after
+              const deviceIdToRestore = deviceId;
+              const streamToRestore = stream;
+              
+              // CRITICAL: Ensure isListenOnly is false BEFORE rejoin
+              // This is essential because getBrokerRole checks isListenOnly to determine role
+              // If isListenOnly is true, role will be passive-sendrecv or recv, not sendrecv
+              this.isListenOnly = false;
+              
+              // Set flag to prevent infinite loop if liveChangeInputDevice is called again
+              this._isRestoringAfterRejoin = true;
+              
+              logger.info({
+                logCode: 'audiomanager_preparing_for_rejoin',
+                extraInfo: {
+                  bridge: this.bridgeName,
+                  deviceId: deviceIdToRestore,
+                  hasStream: !!streamToRestore,
+                  streamActive: streamToRestore?.active,
+                  isListenOnly: this.isListenOnly,
+                  currentBridgeRole: this.bridge?.role,
+                },
+              }, 'Preparing to rejoin: ensuring isListenOnly=false and stream is ready');
+              
+              // Exit audio first, then join again with the correct options
+              // This ensures the broker is created with the correct role (sendrecv)
+              // We need to pass inputStream to joinAudio so getBrokerRole returns SENDRECV_ROLE
+              this.exitAudio()
+                .then(() => {
+                  // Set inputStream and inputDeviceId before joining
+                  this.inputStream = streamToRestore;
+                  this.inputDeviceId = deviceIdToRestore;
+                  
+                  // Join audio with the stream to ensure correct role
+                  const callOptions = {
+                    isListenOnly: false,
+                    extension: null,
+                    inputStream: streamToRestore,
+                    bypassGUM: this.shouldBypassGUM(),
+                    muted: this.isMuted,
+                  };
+                  
+                  return this.joinAudio(callOptions, this.callStateCallback);
+                })
+                .then(() => {
+                  // onAudioJoin will be called by joinAudio
+                  // Wait a bit for onAudioJoin to complete
+                  return new Promise((resolve) => {
+                    setTimeout(resolve, 300);
+                  });
+                })
+                .then(() => {
+                  // Wait a bit for onAudioJoin to complete before restoring device
+                  // onAudioJoin is called synchronously in transferCall callback, but we need
+                  // to wait for it to finish setting up before we change the device
+                  setTimeout(() => {
+                    // After rejoin, restore the device ID and create a new stream
+                    logger.info({
+                      logCode: 'audiomanager_restoring_device_after_rejoin',
+                      extraInfo: {
+                        bridge: this.bridgeName,
+                        deviceId: deviceIdToRestore,
+                        currentInputDeviceId: this.inputDeviceId,
+                        currentIsListenOnly: this.isListenOnly,
+                      },
+                    }, 'Restoring device ID and creating new stream after rejoin');
+                    
+                    // Ensure isListenOnly is false (should already be, but double-check)
+                    this.isListenOnly = false;
+                    
+                    // Restore input device ID
+                    this.inputDeviceId = deviceIdToRestore;
+                    
+                    // Instead of restoring the old stream (which may be inactive),
+                    // create a new stream by calling liveChangeInputDevice again
+                    // This ensures the stream is compatible with the new peer connection
+                    this.liveChangeInputDevice(deviceIdToRestore)
+                      .then((newStream) => {
+                        if (newStream && newStream.active) {
+                          logger.info({
+                            logCode: 'audiomanager_device_restored_after_rejoin',
+                            extraInfo: {
+                              bridge: this.bridgeName,
+                              deviceId: deviceIdToRestore,
+                              hasStream: true,
+                              streamActive: newStream.active,
+                              trackCount: newStream.getAudioTracks().length,
+                            },
+                          }, 'Successfully restored device and created new stream after rejoin');
+                          
+                          // Ensure track is enabled after restore, even if isMuted is true
+                          // This is critical because the user explicitly switched to microphone mode
+                          newStream.getAudioTracks().forEach((track) => {
+                            if (track.readyState === 'live') {
+                              track.enabled = true;
+                            }
+                          });
+                          
+                          // Ensure stream is set in bridge after restore
+                          // liveChangeInputDevice should have already set it, but double-check
+                          if (this.bridge && typeof this.bridge.setInputStream === 'function') {
+                            const bridgeStream = this.bridge.setInputStream(newStream);
+                            logger.info({
+                              logCode: 'audiomanager_set_stream_in_bridge_after_restore',
+                              extraInfo: {
+                                bridge: this.bridgeName,
+                                deviceId: deviceIdToRestore,
+                                hasStream: !!newStream,
+                                streamActive: newStream?.active,
+                                bridgeHasStream: !!bridgeStream,
+                                bridgeRole: this.bridge?.role,
+                              },
+                            }, 'Set stream in bridge after restore');
+                          }
+                          
+                          // Enable sender track after a delay to ensure replaceTrack completed
+                          // This must be done even if isMuted is true, because we're restoring after rejoin
+                          setTimeout(() => {
+                            // Check bridge role after restore
+                            const bridgeRole = this.bridge?.role;
+                            logger.info({
+                              logCode: 'audiomanager_checking_bridge_role_after_restore',
+                              extraInfo: {
+                                bridge: this.bridgeName,
+                                deviceId: deviceIdToRestore,
+                                bridgeRole,
+                                expectedRole: 'sendrecv',
+                                isCorrectRole: bridgeRole === 'sendrecv',
+                                hasInputStream: !!this.inputStream,
+                                streamActive: this.inputStream?.active,
+                              },
+                            }, `Checking bridge role after restore: ${bridgeRole}`);
+                            
+                            this.setSenderTrackEnabled(true);
+                            
+                            // Also ensure stream tracks are still enabled
+                            if (newStream && newStream.active) {
+                              newStream.getAudioTracks().forEach((track) => {
+                                if (track.readyState === 'live') {
+                                  track.enabled = true;
+                                }
+                              });
+                            }
+                            
+                            // Log final state
+                            logger.info({
+                              logCode: 'audiomanager_final_state_after_restore',
+                              extraInfo: {
+                                bridge: this.bridgeName,
+                                deviceId: deviceIdToRestore,
+                                bridgeRole: this.bridge?.role,
+                                hasInputStream: !!this.inputStream,
+                                streamActive: this.inputStream?.active,
+                                trackCount: this.inputStream?.getAudioTracks()?.length || 0,
+                                isMuted: this.isMuted,
+                                isListenOnly: this.isListenOnly,
+                              },
+                            }, 'Final state after restore');
+                          }, 200);
+                        }
+                        
+                        // Clear the flag after successful restore
+                        this._isRestoringAfterRejoin = false;
+                      })
+                      .catch((error) => {
+                        // Clear the flag even on error
+                        this._isRestoringAfterRejoin = false;
+                        
+                        logger.error({
+                          logCode: 'audiomanager_device_restore_failed_after_rejoin',
+                          extraInfo: {
+                            bridge: this.bridgeName,
+                            deviceId: deviceIdToRestore,
+                            errorMessage: error?.message,
+                          },
+                        }, 'Failed to restore device after rejoin');
+                      });
+                  }, 300);
+                })
+                .catch((error) => {
+                  // Clear the flag on error
+                  this._isRestoringAfterRejoin = false;
+                  
+                  logger.error({
+                    logCode: 'audiomanager_transfer_call_failed',
+                    extraInfo: {
+                      bridge: this.bridgeName,
+                      deviceId,
+                      errorMessage: error?.message,
+                    },
+                  }, 'Failed to transfer call (rejoin audio) after switching to microphone');
+                });
+            }
+          }
+          
+          // Also ensure the track is enabled at the MediaStreamTrack level
+          // Sometimes setSenderTrackEnabled might not work if track isn't in peer connection yet,
+          // so we also enable it directly on the stream's track
+          stream.getAudioTracks().forEach((track) => {
+            if (track.readyState === 'live') {
+              track.enabled = true;
+              logger.info({
+                logCode: 'audiomanager_enabled_stream_track',
+                extraInfo: {
+                  bridge: this.bridgeName,
+                  deviceId,
+                  trackId: track.id,
+                  trackEnabled: track.enabled,
+                  trackMuted: track.muted,
+                  trackReadyState: track.readyState,
+                },
+              }, `Enabled stream track ${track.id} - enabled: ${track.enabled}, muted: ${track.muted}`);
+            }
+          });
+          
+          // For SFU bridge, replaceTrack in setLocalStream is asynchronous
+          // We need to enable the track again after a short delay to ensure
+          // the new track in peer connection senders is enabled
+          setTimeout(() => {
+            logger.info({
+              logCode: 'audiomanager_re_enabling_sender_track_after_delay',
+              extraInfo: {
+                bridge: this.bridgeName,
+                deviceId,
+                isMuted: this.isMuted,
+                streamActive: stream?.active,
+                trackCount: stream?.getAudioTracks()?.length || 0,
+              },
+            }, 'Re-enabling sender track after delay to ensure replaceTrack completed');
+            this.setSenderTrackEnabled(true);
+            
+            // Also ensure stream tracks are still enabled and log their state
+            if (stream && stream.active) {
+              stream.getAudioTracks().forEach((track) => {
+                if (track.readyState === 'live') {
+                  const wasEnabled = track.enabled;
+                  track.enabled = true;
+                  logger.info({
+                    logCode: 'audiomanager_re_enabled_stream_track',
+                    extraInfo: {
+                      bridge: this.bridgeName,
+                      deviceId,
+                      trackId: track.id,
+                      trackEnabled: track.enabled,
+                      wasEnabled,
+                      trackMuted: track.muted,
+                      trackReadyState: track.readyState,
+                    },
+                  }, `Re-enabled stream track ${track.id} - enabled: ${track.enabled} (was: ${wasEnabled}), muted: ${track.muted}`);
+                }
+              });
+            }
+          }, 200);
+        } else if (this.isMuted && !this._isRestoringAfterRejoin) {
+          // Only disable track if muted and NOT restoring after rejoin
+          // When restoring after rejoin (switching from listen-only to microphone),
+          // we want to enable the track even if isMuted is true, because the user
+          // explicitly switched to microphone mode
+          this.setSenderTrackEnabled(false);
+        }
+        
+        return stream;
       })
       .catch((error) => {
         logger.error({
@@ -1098,6 +1526,9 @@ class AudioManager {
             deviceId: currentDeviceId,
             newDeviceId: deviceId,
             inputDevices: this.inputDevicesJSON,
+            wasListenOnly,
+            switchingToMicrophone,
+            isListenOnly: this.isListenOnly,
           },
         }, `Input device live change failed - {${error.name}: ${error.message}}`);
 

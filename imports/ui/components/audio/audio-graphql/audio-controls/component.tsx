@@ -72,11 +72,8 @@ const AudioControls: React.FC<AudioControlsProps> = ({
   const [setListenOnlyInputDevice] = useMutation(SET_LISTEN_ONLY_INPUT_DEVICE);
 
   const handleJoinAudio = useCallback((connected: boolean) => {
-    if (connected) {
-      joinListenOnly();
-    } else {
-      setIsAudioModalOpen(true);
-    }
+    // Always open modal to let user choose between microphone and listen only
+    setIsAudioModalOpen(true);
   }, []);
 
   const openAudioSettings = useCallback((props: { unmuteOnExit?: boolean } = {}) => {

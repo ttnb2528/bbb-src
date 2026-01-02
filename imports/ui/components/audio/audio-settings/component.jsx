@@ -233,17 +233,44 @@ class AudioSettings extends React.Component {
       liveChangeInputDevice,
     } = this.props;
 
-    const confirm = () => {
-      // Stream generation disabled or there isn't any stream: just run the provided callback
-      if (!produceStreams || !stream) return handleConfirmation();
+    const confirm = async () => {
+      // If listen-only is selected, no stream needed
+      if (selectedInputDeviceId === 'listen-only') {
+        return handleConfirmation(null);
+      }
 
-      // Stream generation enabled and there is a valid input stream => call
-      // the confirmation callback with the input stream as arg so it can be used
-      // in upstream components. The rationale is no surplus gUM calls.
-      // We're cloning it because the original will be cleaned up on unmount here.
-      const clonedStream = stream.clone();
+      // Stream generation disabled: just run the provided callback
+      if (!produceStreams) return handleConfirmation();
 
-      return handleConfirmation(clonedStream);
+      // If we have a stream, use it
+      if (stream) {
+        const clonedStream = stream.clone();
+        return handleConfirmation(clonedStream);
+      }
+
+      // If no stream but we need one (e.g., switching from listen-only to microphone),
+      // generate a new stream
+      try {
+        const newStream = await this.generateInputStream(selectedInputDeviceId);
+        if (newStream) {
+          const clonedStream = newStream.clone();
+          return handleConfirmation(clonedStream);
+        }
+        // If stream generation failed or listen-only, just confirm without stream
+        return handleConfirmation(null);
+      } catch (error) {
+        logger.warn({
+          logCode: 'audiosettings_confirmation_stream_generation_failed',
+          extraInfo: {
+            errorMessage: error?.message,
+            errorStack: error?.stack,
+            errorName: error?.name,
+            inputDeviceId: selectedInputDeviceId,
+          },
+        }, `Audio settings: failed to generate stream for confirmation - ${error.name}`);
+        // Confirm anyway, let upstream handle the error
+        return handleConfirmation(null);
+      }
     };
 
     if (isConnected) {
@@ -465,7 +492,20 @@ class AudioSettings extends React.Component {
       MediaStreamUtils.stopMediaStreamTracks(stream);
     }
 
-    if (inputDeviceId === 'listen-only') return Promise.resolve(null);
+    if (inputDeviceId === 'listen-only') {
+      // Stop any existing stream when switching to listen-only
+      if (stream) {
+        MediaStreamUtils.stopMediaStreamTracks(stream);
+      }
+      // Also stop the stream in AudioManager if it exists
+      if (AudioManager.inputStream) {
+        AudioManager.inputStream.getTracks().forEach((track) => {
+          track.stop();
+        });
+        AudioManager.inputStream = null;
+      }
+      return Promise.resolve(null);
+    }
 
     const constraints = {
       audio: getAudioConstraints({ deviceId: inputDeviceId }),

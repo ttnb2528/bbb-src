@@ -70,14 +70,58 @@ export default class BaseAudioBridge {
   setSenderTrackEnabled(shouldEnable) {
     const peer = this.getPeerConnection();
 
-    if (!peer) return;
+    if (!peer) {
+      logger.warn({
+        logCode: 'base_audio_bridge_set_sender_track_no_peer',
+        extraInfo: {
+          bridgeName: this.bridgeName,
+          shouldEnable,
+        },
+      }, 'BaseAudioBridge: setSenderTrackEnabled called but no peer connection available');
+      return;
+    }
 
-    peer.getSenders().forEach((sender) => {
+    const senders = peer.getSenders();
+    let enabledCount = 0;
+    let disabledCount = 0;
+    
+    senders.forEach((sender) => {
       const { track } = sender;
       if (track && track.kind === 'audio') {
         track.enabled = shouldEnable;
+        // Also ensure track is not muted (muted is different from enabled)
+        // enabled controls whether audio is sent, muted is a separate state
+        if (shouldEnable && track.muted) {
+          // Note: track.muted is read-only, but we can log it for debugging
+          logger.warn({
+            logCode: 'base_audio_bridge_track_muted',
+            extraInfo: {
+              bridgeName: this.bridgeName,
+              trackId: track.id,
+              trackEnabled: track.enabled,
+              trackMuted: track.muted,
+              trackReadyState: track.readyState,
+            },
+          }, 'BaseAudioBridge: track is muted (read-only property)');
+        }
+        if (shouldEnable) {
+          enabledCount++;
+        } else {
+          disabledCount++;
+        }
       }
     });
+    
+    logger.info({
+      logCode: 'base_audio_bridge_set_sender_track_result',
+      extraInfo: {
+        bridgeName: this.bridgeName,
+        shouldEnable,
+        sendersCount: senders.length,
+        enabledCount,
+        disabledCount,
+      },
+    }, `BaseAudioBridge: setSenderTrackEnabled(${shouldEnable}) - ${enabledCount} enabled, ${disabledCount} disabled`);
   }
 
   /* eslint-disable class-methods-use-this */
@@ -105,12 +149,56 @@ export default class BaseAudioBridge {
       if (deviceId === 'listen-only') {
         const stream = this.inputStream;
         if (stream) {
-          stream.getAudioTracks().forEach((track) => {
-            track.stop();
-            stream.removeTrack(track);
+          // Get all tracks before stopping to ensure we stop all of them
+          const tracks = stream.getAudioTracks();
+          
+          logger.info({
+            logCode: 'base_audio_bridge_stopping_tracks_for_listenonly',
+            extraInfo: {
+              bridgeName: this.bridgeName,
+              streamId: stream.id,
+              trackCount: tracks.length,
+            },
+          }, `BaseAudioBridge: stopping ${tracks.length} audio track(s) for listen-only mode`);
+          
+          // Stop all audio tracks to release the microphone
+          // This is critical to ensure the browser releases the mic
+          // so it can be properly re-acquired when switching back to microphone
+          tracks.forEach((track) => {
+            if (track.readyState !== 'ended') {
+              track.stop();
+            }
+            // Remove track from stream
+            try {
+              stream.removeTrack(track);
+            } catch (error) {
+              // Track might already be removed, ignore error
+              logger.debug({
+                logCode: 'base_audio_bridge_remove_track_error',
+                extraInfo: {
+                  bridgeName: this.bridgeName,
+                  trackId: track.id,
+                  errorMessage: error?.message,
+                },
+              }, 'BaseAudioBridge: error removing track (may already be removed)');
+            }
           });
+          
+          logger.info({
+            logCode: 'base_audio_bridge_stopped_tracks_for_listenonly',
+            extraInfo: {
+              bridgeName: this.bridgeName,
+              streamId: stream.id,
+              tracksStopped: tracks.length,
+              remainingTracks: stream.getAudioTracks().length,
+            },
+          }, `BaseAudioBridge: stopped ${tracks.length} audio track(s) for listen-only mode`);
+          
+          // Clear the input stream reference to ensure a fresh stream is created
+          // when switching back to microphone
+          this.inputStream = null;
         }
-        return stream;
+        return null; // Return null to indicate no input stream for listen-only
       }
 
       const constraints = {
@@ -124,7 +212,56 @@ export default class BaseAudioBridge {
       }
 
       newStream = await doGUM(constraints);
+      
+      // Ensure all tracks in the new stream are enabled before setting it as input stream
+      // This is especially important when switching from listen-only to microphone
+      newStream.getAudioTracks().forEach((track) => {
+        if (track.readyState === 'live') {
+          track.enabled = true;
+        }
+      });
+      
       await this.setInputStream(newStream, { deviceId });
+      
+      // After setting the input stream, ensure tracks are still enabled
+      // This is needed because setInputStream might replace tracks in the peer connection
+      // and we want to make sure the new tracks are enabled
+      if (newStream && newStream.active) {
+        newStream.getAudioTracks().forEach((track) => {
+          if (track.readyState === 'live') {
+            track.enabled = true;
+          }
+        });
+      }
+      
+      // Also ensure tracks in peer connection senders are enabled
+      // This is critical because setInputStream uses replaceTrack, and the new track
+      // might not be enabled even if the stream's track is enabled
+      // Use multiple delays to ensure replaceTrack has completed and track is properly set
+      setTimeout(() => {
+        this.setSenderTrackEnabled(true);
+        // Also check and enable tracks in the stream again
+        if (newStream && newStream.active) {
+          newStream.getAudioTracks().forEach((track) => {
+            if (track.readyState === 'live') {
+              track.enabled = true;
+            }
+          });
+        }
+      }, 100);
+      
+      // Second attempt after a longer delay to ensure everything is set up
+      setTimeout(() => {
+        this.setSenderTrackEnabled(true);
+        if (newStream && newStream.active) {
+          newStream.getAudioTracks().forEach((track) => {
+            if (track.readyState === 'live') {
+              track.enabled = true;
+            }
+          });
+        }
+      }, 500);
+      
       if (backupStream && backupStream.active) {
         backupStream.getAudioTracks().forEach((track) => track.stop());
         backupStream = null;
