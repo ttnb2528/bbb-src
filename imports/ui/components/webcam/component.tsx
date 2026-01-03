@@ -220,6 +220,7 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
           || cameraDock.position === CAMERADOCK_POSITION.CONTENT_BOTTOM}
         $vertical={cameraDock.position === CAMERADOCK_POSITION.CONTENT_LEFT
           || cameraDock.position === CAMERADOCK_POSITION.CONTENT_RIGHT}
+        data-camera-position={cameraDock.position}
       >
         {disableDrag ? (
           <Resizable

@@ -181,10 +181,10 @@ const Video = styled.video<{
     filter: grayscale(50%) opacity(50%);
   `}
 
-  /* Khi external video đang hiển thị: ẩn toàn bộ webcam render trong VideoListItem
-     (các ô cam lớn phía sau nội dung) */
-  body.bbb-external-video-active [data-test="webcamItem"] &,
-  body.bbb-external-video-active [data-test="webcamItemTalkingUser"] & {
+  /* Khi external video đang hiển thị: chỉ ẩn các camera lớn (không phải CONTENT_TOP)
+     Giữ lại camera nhỏ ở trên cùng (CONTENT_TOP) để người dùng vẫn thấy được */
+  body.bbb-external-video-active [data-camera-position]:not([data-camera-position="contentTop"]) [data-test="webcamItem"] &,
+  body.bbb-external-video-active [data-camera-position]:not([data-camera-position="contentTop"]) [data-test="webcamItemTalkingUser"] & {
     display: none !important;
   }
 `;
