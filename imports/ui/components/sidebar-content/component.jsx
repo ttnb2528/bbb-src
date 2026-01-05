@@ -14,6 +14,11 @@ import ErrorBoundary from '/imports/ui/components/common/error-boundary/componen
 import FallbackView from '/imports/ui/components/common/fallback-errors/fallback-view/component';
 import GenericContentSidekickContainer from '/imports/ui/components/generic-content/generic-sidekick-content/container';
 import deviceInfo from '/imports/utils/deviceInfo';
+// Import user list components
+import UserListParticipantsContainer from '../user-list/user-list-content/user-participants/user-list-participants/component';
+import UserTitleContainer from '../user-list/user-list-graphql/user-participants-title/component';
+import GuestPanelOpenerContainer from '../user-list/user-list-graphql/user-participants-title/guest-panel-opener/component';
+import GuestWaitingNotification from '../sidebar-navigation/guest-waiting-notification/component';
 
 const propTypes = {
   top: PropTypes.number.isRequired,
@@ -65,7 +70,7 @@ const SidebarContent = (props) => {
   // ta vẫn giữ CHÁT làm mặc định để không bị mất panel
   let activePanel = sidebarContentPanel;
   if (!activePanel || activePanel === PANELS.NONE) {
-    activePanel = PANELS.CHAT;
+    activePanel = PANELS.CHAT; // default
   }
 
   useEffect(() => {
@@ -135,6 +140,8 @@ const SidebarContent = (props) => {
       value: panel,
     });
   };
+
+  // Không dùng tab nữa, chỉ dùng panel được set từ actions-bar
 
   const expandedHeight = Math.min(Math.max(minHeight * 2, 260), maxHeight || window.innerHeight * 0.5);
   
@@ -216,31 +223,44 @@ const SidebarContent = (props) => {
         )}
 
         <Styled.ContentArea>
+          {/* Tab People - User List */}
+          {activePanel === PANELS.USERLIST && (
+            <ErrorBoundary fallbackComponent={() => <FallbackView />} from="sidebar-content-userlist">
+              <UserTitleContainer />
+              <GuestPanelOpenerContainer />
+              <GuestWaitingNotification />
+              <UserListParticipantsContainer />
+            </ErrorBoundary>
+          )}
+          
+          {/* Tab Chat */}
           {activePanel === PANELS.CHAT && (
             <ErrorBoundary fallbackComponent={() => <FallbackView />} from="sidebar-content">
               <ChatContainer mode="sidebar" />
-          </ErrorBoundary>
-        )}
+            </ErrorBoundary>
+          )}
+          
+          {/* Các panel khác (POLL, TIMER, etc.) */}
           {activePanel === PANELS.BREAKOUT && <BreakoutRoomContainer />}
           {activePanel === PANELS.TIMER && <TimerContainer isModerator={amIModerator} />}
           {activePanel === PANELS.WAITING_USERS && <GuestUsersManagementPanel />}
           {activePanel === PANELS.POLL && (
-        <Styled.Poll
-          style={{ minWidth, top: '0', display: pollDisplay }}
-          id="pollPanel"
-        >
-          <PollContainer
-            smallSidebar={smallSidebar}
-            amIPresenter={amIPresenter}
-            currentSlideId={currentSlideId}
-          />
-        </Styled.Poll>
-      )}
+            <Styled.Poll
+              style={{ minWidth, top: '0', display: pollDisplay }}
+              id="pollPanel"
+            >
+              <PollContainer
+                smallSidebar={smallSidebar}
+                amIPresenter={amIPresenter}
+                currentSlideId={currentSlideId}
+              />
+            </Styled.Poll>
+          )}
           {activePanel.includes && activePanel.includes(PANELS.GENERIC_CONTENT_SIDEKICK) && (
-        <GenericContentSidekickContainer
+            <GenericContentSidekickContainer
               genericSidekickContentId={activePanel}
-        />
-      )}
+            />
+          )}
         </Styled.ContentArea>
       </Styled.SidebarContentWrapper>
     </Resizable>

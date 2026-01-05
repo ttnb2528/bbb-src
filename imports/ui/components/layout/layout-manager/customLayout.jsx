@@ -808,7 +808,9 @@ const CustomLayout = (props) => {
       sidebarPanelHeight = windowH < 800 ? 300 : windowH < 1080 ? 360 : 420;
     }
 
-    const sidebarNavWidth = calculatesSidebarNavWidth();
+    // Tab-based sidebar: sidebar-navigation đã được gộp vào sidebar-content
+    // Luôn set sidebarNavWidth = 0 vì không còn sidebar riêng nữa
+    const sidebarNavWidth = 0; // Đã gộp vào sidebar-content với tabs
     const sidebarNavHeight = calculatesSidebarNavHeight();
     const sidebarContentWidth = calculatesSidebarContentWidth();
     // Media area bounds: full width, no sidebars on left (they're horizontal at bottom now)
@@ -833,19 +835,19 @@ const CustomLayout = (props) => {
     const navbarBounds = calculatesNavbarBounds(mediaAreaBounds);
     const actionbarBounds = calculatesActionbarBounds(mediaAreaBounds);
     const cameraDockBounds = calculatesCameraDockBounds(
-      0,
-      0,
+      0, // sidebarNavWidth = 0 (đã gộp)
+      sidebarContentWidth, // chỉ tính sidebar-content width
       mediaAreaBounds
     );
     const dropZoneAreas = calculatesDropAreas(
-      0,
-      0,
+      0, // sidebarNavWidth = 0
+      sidebarContentWidth, // sidebarContentWidth
       cameraDockBounds
     );
     const sidebarContentHeight = calculatesSidebarContentHeight(cameraDockBounds.height);
     const mediaBounds = calculatesMediaBounds(
-      0,
-      0,
+      0, // sidebarNavWidth = 0
+      sidebarContentWidth, // sidebarContentWidth
       cameraDockBounds
     );
     const { height: actionBarHeight } = calculatesActionbarHeight();
@@ -938,7 +940,7 @@ const CustomLayout = (props) => {
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_NAVIGATION_OUTPUT,
       value: {
-        display: isMobile ? false : sidebarNavigationInput.isOpen, // Mobile: ẩn User List panel
+        display: false, // Luôn ẩn vì đã gộp vào sidebar-content với tabs
         minWidth: minUserListWidth,
         width: sidebarNavNewWidth,
         maxWidth: maxUserListWidth,

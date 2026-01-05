@@ -116,42 +116,31 @@ class ActionsBar extends PureComponent {
   }
 
   handleToggleUserList = () => {
-    const { layoutContextDispatch, sidebarNavigation, sidebarContent } = this.props;
+    const { layoutContextDispatch, sidebarContent } = this.props;
     
-    if (!layoutContextDispatch || !sidebarNavigation || !sidebarContent) {
+    if (!layoutContextDispatch || !sidebarContent) {
       return;
     }
     
-    if (sidebarNavigation.isOpen) {
-      if (sidebarContent.isOpen) {
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
-          value: false,
-        });
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
-          value: PANELS.NONE,
-        });
-        layoutContextDispatch({
-          type: ACTIONS.SET_ID_CHAT_OPEN,
-          value: '',
-        });
-      }
+    // Tab-based sidebar: mở sidebar-content với tab People
+    if (sidebarContent.isOpen && sidebarContent.sidebarContentPanel === PANELS.USERLIST) {
+      // Đóng sidebar nếu đang ở tab People
       layoutContextDispatch({
-        type: ACTIONS.SET_SIDEBAR_NAVIGATION_IS_OPEN,
+        type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
         value: false,
       });
       layoutContextDispatch({
-        type: ACTIONS.SET_SIDEBAR_NAVIGATION_PANEL,
+        type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
         value: PANELS.NONE,
       });
     } else {
+      // Mở sidebar với tab People
       layoutContextDispatch({
-        type: ACTIONS.SET_SIDEBAR_NAVIGATION_IS_OPEN,
+        type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
         value: true,
       });
       layoutContextDispatch({
-        type: ACTIONS.SET_SIDEBAR_NAVIGATION_PANEL,
+        type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
         value: PANELS.USERLIST,
       });
     }
@@ -328,7 +317,6 @@ class ActionsBar extends PureComponent {
       meetingName,
       presentationTitle,
       sidebarContent,
-      sidebarNavigation,
       currentUserId,
       isDirectLeaveButtonEnabled,
       privateUnreadCount,
@@ -462,7 +450,7 @@ class ActionsBar extends PureComponent {
                   hideLabel
                   circle
                   data-test="toggleUserList"
-                  aria-expanded={sidebarNavigation?.isOpen}
+                  aria-expanded={sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.USERLIST}
                 />
                 {/* Có thể thêm badge nếu có notification */}
               </Styled.BadgeWrapper>

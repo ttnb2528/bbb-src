@@ -182,7 +182,6 @@ const ActionsBarContainer = (props) => {
         meetingName,
         presentationTitle,
         sidebarContent,
-        sidebarNavigation,
         currentUserId: currentUser?.userId,
         isDirectLeaveButtonEnabled,
         privateUnreadCount,

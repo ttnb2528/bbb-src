@@ -140,9 +140,55 @@ const Poll = styled.div`
   }
 `;
 
+// Tab Bar - giống Google Meet
+const TabBar = styled.div`
+  display: flex;
+  border-bottom: 1px solid ${colorGrayLight};
+  background-color: ${colorWhite};
+  flex-shrink: 0;
+  padding: 0 ${smPaddingX};
+`;
+
+const Tab = styled.button`
+  flex: 1;
+  padding: ${smPaddingY} ${smPaddingX};
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #5f6368;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  position: relative;
+
+  &[data-active="true"],
+  ${({ active }) => active && `
+    color: #1a73e8;
+    border-bottom-color: #1a73e8;
+    font-weight: 600;
+  `}
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+
+  &:active {
+    background-color: rgba(0, 0, 0, 0.08);
+  }
+
+  @media ${smallOnly} {
+    font-size: 13px;
+    padding: ${smPaddingY} ${xsPadding};
+  }
+`;
+
 export default {
   SidebarContentWrapper,
   SideHandle,
   ContentArea,
   Poll,
+  TabBar,
+  Tab,
 };

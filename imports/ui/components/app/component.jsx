@@ -368,7 +368,8 @@ class App extends Component {
           <ScreenReaderAlertContainer />
           <BannerBarContainer />
           <NotificationsBarContainer />
-          <SidebarNavigationContainer />
+          {/* Sidebar-navigation đã được gộp vào sidebar-content với tabs */}
+          {/* <SidebarNavigationContainer /> */}
           <SidebarContentContainer isSharedNotesPinned={isSharedNotesPinned} />
           <NavBarContainer main="new" />
           <WebcamContainer />
