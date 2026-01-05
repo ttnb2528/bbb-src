@@ -13,6 +13,7 @@ import SwapPresentationButton from './swap-presentation/component';
 import Button from '/imports/ui/components/common/button/component';
 import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
 import { LAYOUT_TYPE, PANELS, ACTIONS } from '../layout/enums';
+import { layoutDispatch } from '../layout/context';
 import ReactionsButtonContainer from '/imports/ui/components/actions-bar/reactions-button/container';
 import RaiseHandButtonContainer from '/imports/ui/components/actions-bar/raise-hand-button/container';
 import Selector from '/imports/ui/components/common/selector/component';
@@ -110,6 +111,81 @@ class ActionsBar extends PureComponent {
     if (!deviceInfo.isMobile) {
       this.setState({
         isPrivateChatModalOpen: true,
+      });
+    }
+  }
+
+  handleToggleUserList = () => {
+    const { layoutContextDispatch, sidebarNavigation, sidebarContent } = this.props;
+    
+    if (!layoutContextDispatch || !sidebarNavigation || !sidebarContent) {
+      return;
+    }
+    
+    if (sidebarNavigation.isOpen) {
+      if (sidebarContent.isOpen) {
+        layoutContextDispatch({
+          type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+          value: false,
+        });
+        layoutContextDispatch({
+          type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
+          value: PANELS.NONE,
+        });
+        layoutContextDispatch({
+          type: ACTIONS.SET_ID_CHAT_OPEN,
+          value: '',
+        });
+      }
+      layoutContextDispatch({
+        type: ACTIONS.SET_SIDEBAR_NAVIGATION_IS_OPEN,
+        value: false,
+      });
+      layoutContextDispatch({
+        type: ACTIONS.SET_SIDEBAR_NAVIGATION_PANEL,
+        value: PANELS.NONE,
+      });
+    } else {
+      layoutContextDispatch({
+        type: ACTIONS.SET_SIDEBAR_NAVIGATION_IS_OPEN,
+        value: true,
+      });
+      layoutContextDispatch({
+        type: ACTIONS.SET_SIDEBAR_NAVIGATION_PANEL,
+        value: PANELS.USERLIST,
+      });
+    }
+  };
+
+  handleToggleChat = () => {
+    const { layoutContextDispatch, sidebarContent } = this.props;
+    
+    if (!layoutContextDispatch || !sidebarContent) {
+      return;
+    }
+    
+    if (sidebarContent.isOpen && sidebarContent.sidebarContentPanel === PANELS.CHAT) {
+      layoutContextDispatch({
+        type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+        value: false,
+      });
+      layoutContextDispatch({
+        type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
+        value: PANELS.NONE,
+      });
+      layoutContextDispatch({
+        type: ACTIONS.SET_ID_CHAT_OPEN,
+        value: '',
+      });
+    } else {
+      // Chỉ mở chat panel, không tự động mở user list sidebar
+      layoutContextDispatch({
+        type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+        value: true,
+      });
+      layoutContextDispatch({
+        type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
+        value: PANELS.CHAT,
       });
     }
   }
@@ -252,6 +328,7 @@ class ActionsBar extends PureComponent {
       meetingName,
       presentationTitle,
       sidebarContent,
+      sidebarNavigation,
       currentUserId,
       isDirectLeaveButtonEnabled,
       privateUnreadCount,
@@ -362,32 +439,62 @@ class ActionsBar extends PureComponent {
           </Styled.Center>
           <Styled.Right>
             <Styled.Gap>
-              {/* Mobile: ẩn private chat button ở footer, sẽ có trong panel buttons */}
-              {!deviceInfo.isMobile && (
-                <Styled.BadgeWrapper>
-                  <Button
-                    label="Message"
-                    icon="chat"
-                    color="primary"
-                    size="md"
-                    onClick={this.handleTogglePrivateChat}
-                    data-test="privateChatButton"
-                    hideLabel
-                    circle
-                  />
-                  {privateUnreadCount > 0 && (
-                    <Styled.UnreadBadge>{privateUnreadCount}</Styled.UnreadBadge>
-                  )}
-                </Styled.BadgeWrapper>
-              )}
-              {/* Ẩn 3 nút bên phải, đưa vào options dropdown */}
-              {/* ConnectionStatus, LeaveMeeting, OptionsDropdown sẽ được thêm vào options dropdown menu */}
+              {/* Info button - dùng icon settings hoặc custom SVG */}
+              <Button
+                label={intl.formatMessage({ id: 'app.navBar.openDetailsTooltip' })}
+                icon="settings"
+                color="default"
+                size="md"
+                onClick={() => this.setModalIsOpen(true)}
+                hideLabel
+                circle
+                data-test="infoButton"
+              />
+              
+              {/* User List button - dùng icon user (có sẵn) */}
+              <Styled.BadgeWrapper>
+                <Button
+                  label={intl.formatMessage({ id: 'app.navBar.userListToggleBtnLabel' })}
+                  icon="user"
+                  color="default"
+                  size="md"
+                  onClick={this.handleToggleUserList}
+                  hideLabel
+                  circle
+                  data-test="toggleUserList"
+                  aria-expanded={sidebarNavigation?.isOpen}
+                />
+                {/* Có thể thêm badge nếu có notification */}
+              </Styled.BadgeWrapper>
+              
+              {/* Chat button - dùng icon group_chat cho public chat */}
+              <Styled.BadgeWrapper>
+                <Button
+                  label={intl.formatMessage({ id: 'app.chat.title' })}
+                  icon="group_chat"
+                  color="default"
+                  size="md"
+                  onClick={this.handleToggleChat}
+                  hideLabel
+                  circle
+                  data-test="toggleChat"
+                  aria-expanded={sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT}
+                />
+                {/* Có thể thêm badge nếu có unread messages */}
+              </Styled.BadgeWrapper>
+              
+              {/* Options dropdown */}
               <OptionsDropdownContainer
                 amIModerator={amIModerator}
                 isDirectLeaveButtonEnabled={isDirectLeaveButtonEnabled}
                 showConnectionStatus={ConnectionStatusService.isEnabled()}
-                showLeaveButton={isDirectLeaveButtonEnabled && isMeteorConnected}
-                  />
+                showLeaveButton={false}
+              />
+              
+              {/* Leave Meeting button - rõ ràng, màu đỏ */}
+              {isDirectLeaveButtonEnabled && isMeteorConnected && (
+                <LeaveMeetingButtonContainer amIModerator={amIModerator} />
+              )}
             </Styled.Gap>
           </Styled.Right>
         </Styled.ActionsBar>
