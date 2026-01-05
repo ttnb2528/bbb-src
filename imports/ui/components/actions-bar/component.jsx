@@ -46,19 +46,38 @@ class ActionsBar extends PureComponent {
     this.setModalIsOpen = this.setModalIsOpen.bind(this);
     this.handleTogglePrivateChat = this.handleTogglePrivateChat.bind(this);
     this.handleExternalOpenPrivateChat = this.handleExternalOpenPrivateChat.bind(this);
+    this.getCurrentTime = this.getCurrentTime.bind(this);
 
     this.state = {
       isModalOpen: false,
       isPrivateChatModalOpen: false,
+      currentTime: this.getCurrentTime(),
     };
   }
 
   componentDidMount() {
     window.addEventListener('openPrivateChatModal', this.handleExternalOpenPrivateChat);
+    // Update time every minute
+    this.timeInterval = setInterval(() => {
+      this.setState({ currentTime: this.getCurrentTime() });
+    }, 60000);
   }
 
   componentWillUnmount() {
     window.removeEventListener('openPrivateChatModal', this.handleExternalOpenPrivateChat);
+    if (this.timeInterval) {
+      clearInterval(this.timeInterval);
+    }
+  }
+
+  getCurrentTime() {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    const displayMinutes = minutes < 10 ? `0${minutes}` : minutes;
+    return `${displayHours}:${displayMinutes} ${ampm}`;
   }
 
   setModalIsOpen(isOpen) {
@@ -236,9 +255,10 @@ class ActionsBar extends PureComponent {
       currentUserId,
       isDirectLeaveButtonEnabled,
       privateUnreadCount,
+      meetingId,
     } = this.props;
 
-    const { isPrivateChatModalOpen } = this.state;
+    const { isPrivateChatModalOpen, currentTime } = this.state;
 
     const Settings = getSettingsSingletonInstance();
     const { selectedLayout } = Settings.application;
@@ -279,6 +299,11 @@ class ActionsBar extends PureComponent {
         >
           <Styled.Left>
             <Styled.RoomInfo>
+              {/* Time */}
+              <Styled.Time>{currentTime}</Styled.Time>
+              
+              {/* Room name với dropdown */}
+              <Styled.Separator aria-hidden="true">|</Styled.Separator>
               <Styled.RoomName
                 onClick={() => this.setModalIsOpen(true)}
                 data-test="roomName"
@@ -291,14 +316,9 @@ class ActionsBar extends PureComponent {
                 </Tooltip>
               </Styled.RoomName>
               {this.renderModal(this.state.isModalOpen, this.setModalIsOpen, 'low', SessionDetailsModal)}
-              <Styled.Separator aria-hidden="true">|</Styled.Separator>
-              <RecordingIndicatorContainer
-                amIModerator={amIModerator}
-                currentUserId={currentUserId}
-              />
-              <LiveIndicator />
-              {/* ActionsDropdown (nút dấu cộng) - chỉ hiển thị trên desktop, sau LiveIndicator */}
-              {!deviceInfo.isMobile && (
+
+              {/* ActionsDropdown (nút dấu cộng) - chỉ hiển thị nếu là presenter */}
+              {amIPresenter && !deviceInfo.isMobile && (
                 <>
                   <Styled.Separator aria-hidden="true">|</Styled.Separator>
                   <ActionsDropdown

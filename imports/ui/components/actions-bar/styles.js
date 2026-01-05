@@ -63,19 +63,24 @@ const Left = styled.div`
 const Center = styled.div`
   display: flex;
   flex-direction: row;
-  gap: 12px; /* Tăng gap để buttons không dính nhau */
+  gap: 8px; /* Giảm gap để gọn gàng hơn, giống Google Meet */
   flex: 1;
   justify-content: center;
   align-items: center;
 
-  /* Desktop: gap hợp lý */
+  /* Desktop: gap hợp lý, không quá rộng */
   @media (min-width: 1024px) {
-    gap: 16px;
+    gap: 10px;
   }
 
-  /* Mobile: tăng gap để buttons giãn ra thêm nữa */
+  /* Đảm bảo buttons có kích thước đồng nhất */
+  button {
+    flex-shrink: 0;
+  }
+
+  /* Mobile: gap vừa phải, không quá rộng */
   @media ${smallOnly} {
-    gap: 18px; /* Tăng thêm gap để buttons giãn ra hơn nữa */
+    gap: 10px;
     flex: 1;
     justify-content: center;
     overflow-x: auto;
@@ -86,27 +91,27 @@ const Center = styled.div`
       display: none;
     }
 
-    /* Buttons trên mobile - không cho shrink */
+    /* Buttons trên mobile - kích thước hợp lý */
     button {
       min-width: 40px !important;
       min-height: 40px !important;
       width: 40px !important;
       height: 40px !important;
-      flex-shrink: 0 !important; /* Không cho buttons shrink */
+      flex-shrink: 0 !important;
     }
   }
 
   @media ${hasPhoneWidth} {
-    gap: 38px; /* Tăng thêm gap để buttons giãn ra  hơn nữa */
+    gap: 12px; /* Giảm gap trên phone để không quá rộng */
     height: 62px !important;
 
-    /* Buttons trên phone - không cho shrink */
+    /* Buttons trên phone */
     button {
       min-width: 36px !important;
       min-height: 36px !important;
       width: 36px !important;
       height: 36px !important;
-      flex-shrink: 0 !important; /* Không cho buttons shrink */
+      flex-shrink: 0 !important;
     }
   }
 `;
@@ -114,10 +119,10 @@ const Center = styled.div`
 const Right = styled.div`
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   position: relative;
-  gap: 12px; /* Tăng gap để buttons không dính nhau */
+  gap: 8px; /* Gap hợp lý, giống Google Meet */
 
   [dir="rtl"] & {
     right: auto;
@@ -125,7 +130,7 @@ const Right = styled.div`
   }
 
   @media (min-width: 1024px) {
-    gap: 16px;
+    gap: 10px;
   }
 
   @media ${smallOnly} {
@@ -134,30 +139,30 @@ const Right = styled.div`
     display: contents;
   }
 
-  /* Mobile: giảm gap cho Right section (status, leave, options) */
+  /* Mobile: gap hợp lý cho Right section */
   @media ${smallOnly} {
-    gap: 6px; /* Giảm gap thêm để không giãn quá */
+    gap: 8px;
 
-    /* Buttons trên mobile - không cho shrink */
+    /* Buttons trên mobile */
     button {
       min-width: 40px !important;
       min-height: 40px !important;
       width: 40px !important;
       height: 40px !important;
-      flex-shrink: 0 !important; /* Không cho buttons shrink */
+      flex-shrink: 0 !important;
     }
   }
 
   @media ${hasPhoneWidth} {
-    gap: 0px; /* Giảm gap thêm để không giãn quá */
+    gap: 6px;
 
-    /* Buttons trên phone - không cho shrink */
+    /* Buttons trên phone */
     button {
       min-width: 36px !important;
       min-height: 36px !important;
       width: 36px !important;
       height: 36px !important;
-      flex-shrink: 0 !important; /* Không cho buttons shrink */
+      flex-shrink: 0 !important;
     }
   }
 `;
@@ -212,16 +217,16 @@ const Separator = styled.div`
 
 const Gap = styled.div`
   display: flex;
-  gap: .5rem;
+  gap: 8px;
   align-items: center;
 
-  /* Mobile: giảm gap cho Gap section (status, leave, options) */
+  /* Mobile: gap hợp lý */
   @media ${smallOnly} {
-    gap: 6px; /* Giảm gap thêm để không giãn quá */
+    gap: 8px;
   }
 
   @media ${hasPhoneWidth} {
-    gap: 0px; /* Giảm gap thêm trên phone */
+    gap: 6px;
   }
 `;
 
@@ -292,6 +297,21 @@ const RoomInfo = styled.div`
   }
 `;
 
+const Time = styled.span`
+  font-weight: 400;
+  color: ${colorWhite};
+  font-size: ${fontSizeBase};
+  white-space: nowrap;
+
+  @media ${smallOnly} {
+    font-size: ${fontSizeSmall};
+  }
+
+  @media ${hasPhoneWidth} {
+    font-size: 11px;
+  }
+`;
+
 const RoomName = styled.h1`
   font-weight: 400;
   color: ${colorWhite};
@@ -356,4 +376,5 @@ export default {
   UnreadBadge,
   ChatNotesTabs,
   TabButton,
+  Time,
 };

@@ -185,6 +185,7 @@ const ActionsBarContainer = (props) => {
         currentUserId: currentUser?.userId,
         isDirectLeaveButtonEnabled,
         privateUnreadCount,
+        meetingId: currentMeeting?.meetingId,
       }
     }
     />
