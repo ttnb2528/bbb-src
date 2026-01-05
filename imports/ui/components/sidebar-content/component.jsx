@@ -215,13 +215,6 @@ const SidebarContent = (props) => {
       }}
     >
       <Styled.SidebarContentWrapper>
-        {/* Thanh handle ở mép trái để kéo panel ra/vào - Ẩn trên mobile */}
-        {!deviceInfo.isPhone && (
-          <Styled.SideHandle type="button" onClick={toggleCollapsed} data-collapsed={!isOpen}>
-            <i className="icon-bbb-chat" />
-          </Styled.SideHandle>
-        )}
-
         <Styled.ContentArea>
           {/* Tab People - User List */}
           {activePanel === PANELS.USERLIST && (

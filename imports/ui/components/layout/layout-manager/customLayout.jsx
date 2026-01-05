@@ -149,10 +149,8 @@ const CustomLayout = (props) => {
           return defaultsDeep(
             {
               sidebarNavigation: {
-                // Khi lần đầu load, luôn set isOpen = false, sau đó dùng transform để ẩn/hiện
-                isOpen: hasLayoutEngineLoadedOnce 
-                  ? (sidebarNavigation.isOpen || sidebarContentPanel !== PANELS.NONE || false)
-                  : false,
+                // Luôn ẩn sidebar-navigation vì đã gộp vào sidebar-content
+                isOpen: false,
                 sidebarNavPanel: sidebarNavigation.sidebarNavPanel,
               },
               sidebarContent: {
@@ -940,7 +938,7 @@ const CustomLayout = (props) => {
     layoutContextDispatch({
       type: ACTIONS.SET_SIDEBAR_NAVIGATION_OUTPUT,
       value: {
-        display: false, // Luôn ẩn vì đã gộp vào sidebar-content với tabs
+        display: false, // Luôn ẩn vì đã gộp vào sidebar-content - không còn sidebar trái nữa
         minWidth: minUserListWidth,
         width: sidebarNavNewWidth,
         maxWidth: maxUserListWidth,

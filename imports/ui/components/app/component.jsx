@@ -29,7 +29,8 @@ import EmojiRainContainer from '../emoji-rain/container';
 import Styled from './styles';
 import LayoutEngine from '../layout/layout-manager/layoutEngine';
 import NavBarContainer from '../nav-bar/container';
-import SidebarNavigationContainer from '../sidebar-navigation/container';
+// Sidebar-navigation đã được gộp vào sidebar-content với tabs - không cần import nữa
+// import SidebarNavigationContainer from '../sidebar-navigation/container';
 import SidebarContentContainer from '../sidebar-content/container';
 import PluginsEngineManager from '../plugins-engine/manager';
 import Notifications from '../notifications/component';
@@ -368,8 +369,7 @@ class App extends Component {
           <ScreenReaderAlertContainer />
           <BannerBarContainer />
           <NotificationsBarContainer />
-          {/* Sidebar-navigation đã được gộp vào sidebar-content với tabs */}
-          {/* <SidebarNavigationContainer /> */}
+          {/* Sidebar-navigation đã được gộp vào sidebar-content - không render nữa */}
           <SidebarContentContainer isSharedNotesPinned={isSharedNotesPinned} />
           <NavBarContainer main="new" />
           <WebcamContainer />
