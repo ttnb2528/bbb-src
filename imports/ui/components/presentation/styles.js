@@ -125,10 +125,19 @@ const PresentationContainer = styled.div`
   display: flex;
   flex-direction: column;
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  /* Bỏ top/left/right/bottom cố định - dùng inline style từ layout bounds */
+  /* Inline style sẽ override các giá trị này */
+  
+  /* Ẩn tất cả resize handles để không có đường trắng kéo */
+  & .react-resizable-handle {
+    display: none !important;
+  }
+  
+  /* Ẩn resize handles từ re-resizable */
+  & [class*="resizable-handle"],
+  & [class*="resize-handle"] {
+    display: none !important;
+  }
 `;
 
 const Presentation = styled.div`

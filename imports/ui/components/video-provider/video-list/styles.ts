@@ -134,14 +134,17 @@ const Break = styled.div`
 `;
 
 // Layout m?i: Container chính - MainStage chiếm full height, VideoStrip overlay
-const CustomLayoutContainer = styled.div`
+const CustomLayoutContainer = styled.div<{
+  $hasSharedContent?: boolean;
+}>`
   position: relative; /* Enable absolute positioning for VideoStrip */
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   /* Chừa không gian phía trên cho dải cam nhỏ + tạo khoảng cách với cam lớn */
-  padding: clamp(120px, 10vh, 150px) 0 0 0;
+  /* Khi share content thì không cần padding vì MainStage đã bị ẩn */
+  padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '0' : 'clamp(120px, 10vh, 150px) 0 0 0')};
   overflow: hidden; /* Prevent overflow */
   min-width: 0; /* Allow flex shrinking */
   min-height: 0; /* Allow flex shrinking */

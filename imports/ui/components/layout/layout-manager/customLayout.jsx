@@ -622,16 +622,16 @@ const CustomLayout = (props) => {
       const isCameraRight = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_RIGHT;
       
       if (isCameraTop) {
-        // Camera ở trên (VideoStrip): MainStage chiếm FULL height, VideoStrip overlay lên trên
-        // Giống Google Meet: video chiếm gần full height, strip chỉ overlay nhỏ ở trên
-        // VideoStrip đã được set position: absolute trong CSS, không chiếm không gian layout
+        // Camera ở trên (VideoStrip): Presentation nằm trong MainStage, giống camera lớn
+        // Đồng bộ top với sidebar để document và sidebar cùng một mức
+        const videoStripReserve = 120; // Chiều cao dự phòng cho strip cam nhỏ (khớp với CSS)
+        const gap = 12; // Gap giữa strip và content (khớp với sidebar)
         mediaBounds.width = mediaAreaWidth;
-        // MainStage chiếm FULL height của mediaAreaHeight (không trừ cameraDockHeight)
-        // VideoStrip sẽ overlay lên trên với position absolute (đã được xử lý ở CSS)
-        mediaBounds.height = mediaAreaHeight; // Full height, không trừ cameraDockHeight
-        // MainStage bắt đầu từ top: mobile = 0, desktop = navBarHeight + bannerHeight
-        // Nhưng navBarHeight = 0 (NavBar is hidden), nên chỉ cần bannerHeight
-        mediaBounds.top = mediaAreaTop; // Top đã tính theo layout (đã trừ banner nếu cần)
+        // Presentation chiếm height còn lại sau khi trừ phần dành cho strip
+        mediaBounds.height = mediaAreaHeight - videoStripReserve - gap;
+        // Presentation top đồng bộ với sidebar top: bannerHeight + videoStripReserve + gap
+        // Để document và sidebar cùng một mức
+        mediaBounds.top = bannerHeight + videoStripReserve + gap;
         mediaBounds.left = !isRTL ? 0 : null;
         mediaBounds.right = isRTL ? 0 : null;
         

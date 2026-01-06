@@ -510,7 +510,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     });
 
     return (
-      <Styled.CustomLayoutContainer>
+      <Styled.CustomLayoutContainer $hasSharedContent={hasSharedContent}>
         {/* Dải cam nhỏ ở trên */}
         <Styled.VideoStrip
           $hasSharedContent={hasSharedContent}
@@ -519,14 +519,16 @@ class VideoList extends Component<VideoListProps, VideoListState> {
           {sortedStripStreams.map((item) => this.renderVideoItem(item, true))}
         </Styled.VideoStrip>
 
-        {/* Khung trung tâm to */}
-        <Styled.MainStage>
-          {/* Khi đang share document / screen thì không hiển thị cam lớn để nhường chỗ cho nội dung share */}
-          {!hasSharedContent && stageStream && this.renderVideoItem(stageStream, false)}
-          {!hasSharedContent && !stageStream && (
-            <Styled.StagePlaceholder>Chờ presenter...</Styled.StagePlaceholder>
-          )}
-        </Styled.MainStage>
+        {/* Khung trung tâm to - chỉ hiển thị khi không share content */}
+        {!hasSharedContent && (
+          <Styled.MainStage>
+            {/* Hiển thị cam lớn hoặc placeholder */}
+            {stageStream && this.renderVideoItem(stageStream, false)}
+            {!stageStream && (
+              <Styled.StagePlaceholder>Chờ presenter...</Styled.StagePlaceholder>
+            )}
+          </Styled.MainStage>
+        )}
       </Styled.CustomLayoutContainer>
     );
   }
