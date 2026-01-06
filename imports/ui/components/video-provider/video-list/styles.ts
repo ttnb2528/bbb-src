@@ -165,7 +165,6 @@ const VideoStrip = styled.div<{
   display: flex;
   gap: clamp(6px, 0.65vw, 10px); /* Tăng gap giữa các cam nhỏ */
   // padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '6px 10px 10px 10px' : '8px 10px 10px 10px')};
-  background: rgba(15, 23, 42, 0.9); /* Slightly more opaque for better visibility */
   backdrop-filter: blur(8px); /* Blur effect like Google Meet */
   border-radius: 8px;
   overflow-x: auto;
@@ -180,7 +179,7 @@ const VideoStrip = styled.div<{
   min-width: 150px; /* Minimum width to show at least one camera */
   scroll-behavior: smooth;
   cursor: grab;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32); /* Shadow for depth */
+  box-shadow: none;
   /* Ensure VideoStrip scales properly with zoom */
   box-sizing: border-box;
 
@@ -209,7 +208,9 @@ const VideoStrip = styled.div<{
     min-height: 80px; /* Reduced for better zoom handling */
     max-height: 120px;
     padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 8px 10px 8px' : '6px 8px 10px 8px')};
-    gap: clamp(5px, 1vw, 7px); /* Responsive gap */
+    gap: clamp(8px, 1.5vw, 12px); /* Tăng gap để các cam không dính nhau */
+    /* Bỏ box-shadow trên mobile để gọn hơn */
+    box-shadow: none;
     /* Ensure VideoStrip doesn't overflow at high zoom */
     max-width: min(calc(100vw - 24px), calc(100% - 12px));
     left: 8px;
@@ -218,11 +219,13 @@ const VideoStrip = styled.div<{
 
   @media ${hasPhoneWidth} {
     /* Use clamp for better responsive behavior on phones - improved for zoom */
-    height: clamp(60px, 10vh, 100px); /* Responsive: min 60px, preferred 10vh, max 100px */
+    height: clamp(60px, 12vh, 100px); /* Responsive: min 60px, preferred 10vh, max 100px */
     min-height: 60px; /* Reduced for better zoom handling */
     max-height: 100px;
     padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 6px 8px 6px' : '6px 6px 8px 6px')};
-    gap: clamp(3px, 1vw, 6px); /* Responsive gap */
+    gap: clamp(6px, 1.2vw, 10px); /* Tăng gap để các cam không dính nhau */
+    /* Bỏ box-shadow trên mobile để gọn hơn */
+    box-shadow: none;
     /* Ensure VideoStrip doesn't overflow at high zoom */
     max-width: min(calc(100vw - 16px), calc(100% - 8px));
     left: 6px;
@@ -273,18 +276,17 @@ const VideoStripItem = styled.div<{
 
   /* Mobile responsive */
   @media ${smallOnly} {
-    /* Use clamp for better responsive behavior - improved for zoom */
-    width: clamp(80px, min(15vw, 18%), 120px); /* Responsive: min 80px, preferred min(15vw, 18%), max 120px */
+    /* Điều chỉnh kích thước cam cho phù hợp với tablet */
+    width: clamp(90px, min(18vw, 20%), 130px); /* Tăng kích thước một chút cho dễ nhìn */
     border-radius: 6px;
-    min-width: 80px; /* Reduced for better zoom handling */
-    max-width: 120px;
+    min-width: 90px;
+    max-width: 130px;
 
     ${({ $isPresenter }) => $isPresenter && `
-      width: clamp(100px, min(18vw, 20%), 140px); /* Responsive: min 100px, preferred min(18vw, 20%), max 140px */
-      min-width: 100px;
-      max-width: 140px;
-      transform: scale(1.02);
-      /* Bỏ box-shadow màu cam phát sáng */
+      width: clamp(110px, min(20vw, 22%), 150px); /* Presenter lớn hơn một chút */
+      min-width: 110px;
+      max-width: 150px;
+      transform: none; /* Bỏ scale để không bị lệch */
     `}
 
     [class*="userName"],
@@ -295,17 +297,17 @@ const VideoStripItem = styled.div<{
   }
 
   @media ${hasPhoneWidth} {
-    /* Use clamp for better responsive behavior on phones - improved for zoom */
-    width: clamp(60px, min(20vw, 25%), 100px); /* Responsive: min 60px, preferred min(20vw, 25%), max 100px */
+    /* Điều chỉnh kích thước cam cho phù hợp với phone */
+    width: clamp(100px, min(22vw, 26%), 110px); /* Tăng kích thước một chút cho dễ nhìn */
     border-radius: 4px;
-    min-width: 60px; /* Reduced for better zoom handling */
-    max-width: 100px;
+    min-width: 100px;
+    max-width: 110px;
 
     ${({ $isPresenter }) => $isPresenter && `
-      width: clamp(80px, min(25vw, 30%), 120px); /* Responsive: min 80px, preferred min(25vw, 30%), max 120px */
-      min-width: 80px;
-      max-width: 120px;
-      transform: scale(1.01);
+      width: clamp(105px, min(26vw, 30%), 130px); /* Presenter lớn hơn một chút */
+      min-width: 105px;
+      max-width: 130px;
+      transform: none; /* Bỏ scale để không bị lệch */
     `}
   }
 `;

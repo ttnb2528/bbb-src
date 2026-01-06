@@ -164,12 +164,15 @@ const VideoContainer = styled.div<{
 const Video = styled.video<{
   mirrored: boolean;
   unhealthyStream: boolean;
+  $isPresenter?: boolean;
 }>`
   position: relative;
   height: 100%;
   width: 100%;
-  /* Improved object-fit: cover for better scaling */
-  object-fit: cover;
+  /* Viewer: dùng contain để hiển thị đủ nội dung, không bị crop */
+  /* Presenter: có thể dùng cover để fill đầy (tùy chọn) */
+  object-fit: ${({ $isPresenter }) => ($isPresenter ? 'cover' : 'contain')};
+  object-position: center center;
   /* Bỏ aspect-ratio constraint để video có thể fill container tự do */
   /* Chỉ giữ aspect-ratio cho VideoStrip (sẽ override trong VideoStripItem) */
   background-color: ${colorBlack};

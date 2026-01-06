@@ -454,6 +454,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
         <Styled.Video
           mirrored={isMirrored}
           unhealthyStream={videoDataLoaded && !isStreamHealthy}
+          $isPresenter={isPresenter}
           data-test={isMirrored ? 'mirroredVideoContainer' : 'videoContainer'}
           data-current-user-stream={stream.userId === Auth.userID ? 'true' : 'false'}
           data-local-stream={VideoService.isLocalStream(cameraId) ? 'true' : 'false'}
