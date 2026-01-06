@@ -55,6 +55,7 @@ const VideoListContainer: React.FC<VideoListContainerProps> = (props) => {
     onVirtualBgDrop,
   } = props;
   const numberOfPages = useNumberOfPages();
+  const mediaArea = layoutSelect((i: Layout) => i.output.mediaArea);
 
   const { pluginsExtensibleAreasAggregatedState } = useContext(PluginsContext);
 
@@ -120,6 +121,7 @@ const VideoListContainer: React.FC<VideoListContainerProps> = (props) => {
           numberOfPages={numberOfPages}
           currentVideoPageIndex={currentVideoPageIndex}
           cameraDock={cameraDock}
+          mediaArea={mediaArea}
           focusedId={focusedId}
           handleVideoFocus={handleVideoFocus}
           isGridEnabled={isGridEnabled}

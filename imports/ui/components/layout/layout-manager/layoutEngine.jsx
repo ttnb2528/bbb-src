@@ -46,8 +46,9 @@ const LayoutEngine = () => {
 
   const isMobile = deviceType === DEVICE_TYPE.MOBILE;
   const isTablet = deviceType === DEVICE_TYPE.TABLET;
-  const windowWidth = () => window.document.documentElement.clientWidth;
-  const windowHeight = () => window.document.documentElement.clientHeight;
+  // Use visualViewport-aware viewport size (captures browser zoom changes)
+  const windowWidth = () => window.visualViewport?.width || window.document.documentElement.clientWidth;
+  const windowHeight = () => window.visualViewport?.height || window.document.documentElement.clientHeight;
   const min = (value1, value2) => (value1 <= value2 ? value1 : value2);
   const max = (value1, value2) => (value1 >= value2 ? value1 : value2);
 
@@ -263,6 +264,13 @@ const LayoutEngine = () => {
     let minWidth = 0;
     let width = 0;
     let maxWidth = 0;
+    // Responsive width that scales with viewport (helps when browser zoom changes)
+    const viewportWidth = window.visualViewport?.width || windowWidth();
+    // Target ~22-26% of viewport for sidebar when open, clamped by min/max (smaller than before)
+    const responsiveWidth = min(
+      max(viewportWidth * 0.24, sidebarContentMinWidth),
+      sidebarContentMaxWidth,
+    );
 
     if (isOpen) {
       if (isMobile) {
@@ -270,14 +278,15 @@ const LayoutEngine = () => {
         width = windowWidth();
         maxWidth = windowWidth();
       } else {
-        if (sidebarContentWidth === 0) {
-          width = min(
-            max((windowWidth() * 0.2), sidebarContentMinWidth), sidebarContentMaxWidth,
-          );
-        } else {
-          width = min(max(sidebarContentWidth, sidebarContentMinWidth),
-            sidebarContentMaxWidth);
-        }
+        // If user has a stored width, let it shrink with zoom by favoring the smaller between stored and responsive
+        const storedWidth = sidebarContentWidth || 0;
+        const targetWidth = storedWidth > 0
+          ? min(storedWidth, responsiveWidth)
+          : responsiveWidth;
+        width = min(
+          max(targetWidth, sidebarContentMinWidth),
+          sidebarContentMaxWidth,
+        );
         minWidth = sidebarContentMinWidth;
         maxWidth = sidebarContentMaxWidth;
       }

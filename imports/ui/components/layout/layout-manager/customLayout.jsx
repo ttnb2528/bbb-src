@@ -550,7 +550,12 @@ const CustomLayout = (props) => {
     return cameraDockBounds;
   };
 
-  const calculatesMediaBounds = (sidebarNavWidth, sidebarContentWidth, cameraDockBounds) => {
+  const calculatesMediaBounds = (
+    sidebarNavWidth,
+    sidebarContentWidth,
+    cameraDockBounds,
+    mediaAreaBoundsFromLayout,
+  ) => {
     const { isOpen, slidesLength } = presentationInput;
     const { hasExternalVideo } = externalVideoInput;
     const { genericContentId } = genericMainContentInput;
@@ -565,9 +570,13 @@ const CustomLayout = (props) => {
     const localSidebarPanelHeight = 0;
     const bannerHeight = isMobile ? 0 : bannerAreaHeight(); // Mobile: no banner space
     const panelButtonsHeight = isMobile ? 80 : 0; // Space for mobile panel buttons (tăng lên để phù hợp với padding và gap mới)
-    const mediaAreaHeight =
-      windowHeight() - (actionBarHeight + bannerHeight + localSidebarPanelHeight + panelButtonsHeight); // No navbar height, add panel buttons space on mobile
-    const mediaAreaWidth = windowWidth(); // Full width, no sidebars on left
+
+    // Ưu tiên dùng mediaAreaBounds đã được tính (đã trừ sidebar width/gutter)
+    const mediaAreaWidth = mediaAreaBoundsFromLayout?.width ?? windowWidth();
+    const mediaAreaHeight = mediaAreaBoundsFromLayout?.height
+      ?? (windowHeight() - (actionBarHeight + bannerHeight + localSidebarPanelHeight + panelButtonsHeight)); // No navbar height, add panel buttons space on mobile
+    const mediaAreaTop = mediaAreaBoundsFromLayout?.top ?? (navBarHeight + bannerHeight);
+
     const mediaBounds = {};
     const { element: fullscreenElement } = fullscreen;
     const { camerasMargin } = DEFAULT_VALUES;
@@ -622,7 +631,7 @@ const CustomLayout = (props) => {
         mediaBounds.height = mediaAreaHeight; // Full height, không trừ cameraDockHeight
         // MainStage bắt đầu từ top: mobile = 0, desktop = navBarHeight + bannerHeight
         // Nhưng navBarHeight = 0 (NavBar is hidden), nên chỉ cần bannerHeight
-        mediaBounds.top = isMobile ? 0 : bannerHeight; // Mobile: top = 0, Desktop: bannerHeight
+        mediaBounds.top = mediaAreaTop; // Top đã tính theo layout (đã trừ banner nếu cần)
         mediaBounds.left = !isRTL ? 0 : null;
         mediaBounds.right = isRTL ? 0 : null;
         
@@ -633,7 +642,7 @@ const CustomLayout = (props) => {
         // Camera ở dưới: document chiếm phần trên, camera ở dưới
         mediaBounds.width = mediaAreaWidth;
         mediaBounds.height = mediaAreaHeight - cameraDockBounds.height - camerasMargin;
-        mediaBounds.top = navBarHeight + bannerHeight;
+        mediaBounds.top = mediaAreaTop;
         mediaBounds.left = !isRTL ? 0 : null;
         mediaBounds.right = isRTL ? 0 : null;
         mediaBounds.zIndex = 1;
@@ -641,7 +650,7 @@ const CustomLayout = (props) => {
         // Camera ở bên trái hoặc phải: document chiếm phần còn lại, giữ kích thước tối đa
         mediaBounds.width = mediaAreaWidth - cameraDockBounds.width - camerasMargin * 2;
         mediaBounds.height = mediaAreaHeight;
-        mediaBounds.top = navBarHeight + bannerHeight;
+        mediaBounds.top = mediaAreaTop;
         if (isCameraLeft) {
           mediaBounds.left = !isRTL ? (cameraDockBounds.width + camerasMargin * 2) : null;
           mediaBounds.right = isRTL ? 0 : null;
@@ -654,7 +663,7 @@ const CustomLayout = (props) => {
         // Camera ở sidebar: document chiếm toàn bộ không gian (camera không ảnh hưởng)
         mediaBounds.width = mediaAreaWidth;
         mediaBounds.height = mediaAreaHeight;
-        mediaBounds.top = navBarHeight + bannerHeight;
+        mediaBounds.top = mediaAreaTop;
         mediaBounds.left = !isRTL ? 0 : null;
         mediaBounds.right = isRTL ? 0 : null;
         mediaBounds.zIndex = 1;
@@ -662,7 +671,7 @@ const CustomLayout = (props) => {
         // Vị trí khác: document giữ nguyên kích thước đầy đủ
         mediaBounds.width = mediaAreaWidth;
         mediaBounds.height = mediaAreaHeight;
-        mediaBounds.top = navBarHeight + bannerHeight;
+        mediaBounds.top = mediaAreaTop;
         mediaBounds.left = !isRTL ? 0 : null;
         mediaBounds.right = isRTL ? 0 : null;
         mediaBounds.zIndex = 1;
@@ -671,7 +680,7 @@ const CustomLayout = (props) => {
       // Có camera nhưng không có document: giữ nguyên logic cũ
       mediaBounds.width = mediaAreaWidth;
       mediaBounds.height = mediaAreaHeight;
-      mediaBounds.top = navBarHeight + bannerHeight;
+      mediaBounds.top = mediaAreaTop;
       mediaBounds.left = !isRTL ? 0 : null;
       mediaBounds.right = isRTL ? 0 : null;
       mediaBounds.zIndex = 1;
@@ -683,7 +692,7 @@ const CustomLayout = (props) => {
       // Trên mobile: đẩy lên một chút (offset âm) để document không quá thấp
       // Trên desktop: offset lớn hơn để ở giữa màn hình
       const topOffset = isMobile ? 0 : 80; // Mobile: -20px (đẩy lên), Desktop: 80px
-      mediaBounds.top = navBarHeight + bannerHeight + topOffset;
+      mediaBounds.top = mediaAreaTop + topOffset;
       mediaBounds.left = !isRTL ? 0 : null;
       mediaBounds.right = isRTL ? 0 : null;
       mediaBounds.zIndex = 1;
@@ -720,25 +729,49 @@ const CustomLayout = (props) => {
     // calculatesSidebarContentWidth trả về object { minWidth, width, maxWidth }
     const sidebarContentWidthObj = calculatesSidebarContentWidth();
     const sidebarContentWidth = sidebarContentWidthObj?.width || 0;
+
+    // Xác định trạng thái sidebar thực tế (khi panel Users/Chat/Notes đang được chọn)
+    const hasSidebarPanel = sidebarContentInput.sidebarContentPanel !== PANELS.NONE;
+    const isSidebarOpen = !isMobile && (sidebarContentInput.isOpen || hasSidebarPanel);
+
+    // Sidebar desktop: target width cố định ~360px (giống Meet), có clamp để không quá to
+    const targetSidebarWidth = clamp(
+      360,
+      300,
+      420,
+    );
+    // Nếu layout chưa có width lưu lại, dùng target cố định; luôn clamp để tránh phá vỡ khi zoom
+    const effectiveSidebarWidth = isSidebarOpen
+      ? clamp(sidebarContentWidth || targetSidebarWidth, 280, 440)
+      : 0;
     // Media area bounds: full width, no sidebars on left (they're horizontal at bottom now)
     // Hide navbar to give more space for video and allow sidebar to span full width
     // Ensure minimum usable dimensions to prevent layout breaking
     const minMediaAreaWidth = 320; // Minimum usable width
     const minMediaAreaHeight = 200; // Minimum usable height
 
-    // Khi sidebar (chat/user list) mở trên desktop: trừ width của sidebarContentWidth
-    // Thêm gutter (khoảng cách) giữa video và sidebar để đẹp hơn, giống Google Meet
-    // REFACTOR: Tính mediaAreaBounds đúng cách để tránh overlay với sidebar
-    // Khi sidebar mở: video bắt đầu từ left=0, width = viewportWidth - sidebarContentWidth - gutter
-    // Khi sidebar đóng: video bắt đầu từ left=0, width = viewportWidth
-    const sidebarGutter = 8; // 8px spacing giữa video và sidebar trên desktop
     const viewportWidth = windowWidth();
     const viewportHeight = windowHeight();
-    const isSidebarOpen = sidebarContentInput.isOpen && !isMobile;
+    // Khi sidebar (chat/user list) mở trên desktop: trừ width của sidebar (effectiveSidebarWidth)
+    // Thêm gutter (khoảng cách) giữa video và sidebar để đẹp hơn, giống Google Meet
+    // Gutter scale nhẹ theo viewport, có clamp để ổn định khi zoom in/out
+    const sidebarGutter = clamp(
+      viewportWidth * 0.008, // ~0.8% viewport
+      8, // min
+      14, // max
+    );
     
     // Tính width đúng: trừ sidebar width và gutter khi sidebar mở
+    // Đồng thời clamp theo tỷ lệ để video không chiếm quá nhiều hoặc quá ít khi zoom
+    const mediaWidthMinRatio = 0.55; // không nhỏ hơn ~55% viewport
+    const mediaWidthMaxRatio = 0.8; // không lớn hơn ~80% viewport (co thêm khi zoom cao)
+    const safetyPadding = 16; // trừ thêm để tránh dính sidebar ở 150% zoom
     const mediaAreaWidth = isSidebarOpen
-      ? Math.max(viewportWidth - sidebarContentWidth - sidebarGutter, minMediaAreaWidth)
+      ? clamp(
+        viewportWidth - effectiveSidebarWidth - sidebarGutter - safetyPadding,
+        Math.max(minMediaAreaWidth, viewportWidth * mediaWidthMinRatio),
+        Math.max(minMediaAreaWidth, viewportWidth * mediaWidthMaxRatio),
+      )
       : Math.max(viewportWidth, minMediaAreaWidth);
     
     // Tính height: trừ actionBar, banner, panelButtons (mobile)
@@ -762,19 +795,20 @@ const CustomLayout = (props) => {
     const actionbarBounds = calculatesActionbarBounds(mediaAreaBounds);
     const cameraDockBounds = calculatesCameraDockBounds(
       0, // sidebarNavWidth = 0 (đã gộp)
-      sidebarContentWidth, // chỉ tính sidebar-content width
-      mediaAreaBounds
+      effectiveSidebarWidth, // chỉ tính sidebar-content width thực tế đang chiếm chỗ
+      mediaAreaBounds,
     );
     const dropZoneAreas = calculatesDropAreas(
       0, // sidebarNavWidth = 0
-      sidebarContentWidth, // sidebarContentWidth
-      cameraDockBounds
+      effectiveSidebarWidth, // sidebarContentWidth thực tế
+      cameraDockBounds,
     );
     const sidebarContentHeight = calculatesSidebarContentHeight(cameraDockBounds.height);
     const mediaBounds = calculatesMediaBounds(
       0, // sidebarNavWidth = 0
-      sidebarContentWidth, // sidebarContentWidth
-      cameraDockBounds
+      effectiveSidebarWidth, // sidebarContentWidth thực tế
+      cameraDockBounds,
+      mediaAreaBounds,
     );
     const { height: actionBarHeight } = calculatesActionbarHeight();
 

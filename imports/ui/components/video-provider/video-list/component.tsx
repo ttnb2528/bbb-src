@@ -74,6 +74,7 @@ interface VideoListProps {
   numberOfPages: number;
   currentVideoPageIndex: number;
   cameraDock: Output['cameraDock'];
+  mediaArea: Output['mediaArea'];
   focusedId: string;
   handleVideoFocus: (id: string) => void;
   isGridEnabled: boolean;
@@ -532,10 +533,12 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       streams,
       intl,
       cameraDock,
+      mediaArea,
       isGridEnabled,
     } = this.props;
     const { autoplayBlocked } = this.state;
-    const { position } = cameraDock;
+    const { position, width: cameraDockWidth } = cameraDock;
+    const mediaWidth = mediaArea?.width || cameraDockWidth || undefined;
 
     return (
       <Styled.VideoCanvas
@@ -545,6 +548,9 @@ class VideoList extends Component<VideoListProps, VideoListState> {
         }}
         style={{
           minHeight: 'inherit',
+          // Ràng buộc chiều rộng khung video theo media area mà layout đã tính
+          // để khi sidebar mở/zoom, MainStage + dropdown cam luôn co lại theo
+          maxWidth: mediaWidth,
         }}
       >
         {/* Layout m?i: Strip + Stage (không dùng grid cu n?a) */}
