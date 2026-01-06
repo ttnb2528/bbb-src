@@ -43,6 +43,11 @@ const VideoListContainer: React.FC<VideoListContainerProps> = (props) => {
     hasScreenShare
     || (typeof slidesLength === 'number' && slidesLength > 0)
   );
+  
+  // Kiểm tra sidebar có mở không để điều chỉnh object-fit của video
+  const sidebarContentInput = layoutSelectInput((i: any) => i.sidebarContent);
+  const hasSidebarOpen = !!(sidebarContentInput?.isOpen);
+  
   const {
     streams,
     cameraDock,
@@ -126,6 +131,7 @@ const VideoListContainer: React.FC<VideoListContainerProps> = (props) => {
           handleVideoFocus={handleVideoFocus}
           isGridEnabled={isGridEnabled}
           hasSharedContent={hasSharedContent}
+          hasSidebarOpen={hasSidebarOpen}
           streams={streams}
           onVideoItemMount={onVideoItemMount}
           onVideoItemUnmount={onVideoItemUnmount}

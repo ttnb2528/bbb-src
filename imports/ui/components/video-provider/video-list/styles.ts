@@ -329,21 +329,6 @@ const MainStage = styled.div`
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
               height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Video trong MainStage ưu tiên lấp đầy khung (giống Google Meet) */
-  video {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    object-fit: cover !important; /* Lấp đầy khung, chấp nhận crop nhẹ để tránh viền đen */
-    box-sizing: border-box;
-    /* Bỏ aspect-ratio constraint để video fill container tự do */
-    aspect-ratio: unset !important;
-
-    /* Không zoom thêm khi đã có sidebar/gutter, tránh cảm giác quá sát viền */
-    transform: none;
-  }
-
   /* Container video tự động fit với khung */
   > div {
     width: 100%;
@@ -359,7 +344,10 @@ const MainStage = styled.div`
 
 // Container cho presenter cam trong stage (khi không có share)
 // Mục tiêu: video luôn tràn full MainStage giống Google Meet
-const PresenterStageVideo = styled.div`
+// Điều chỉnh object-fit dựa trên sidebar: cover khi sidebar mở, contain khi đóng
+const PresenterStageVideo = styled.div<{
+  $hasSidebarOpen?: boolean;
+}>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -398,7 +386,12 @@ const PresenterStageVideo = styled.div`
     height: 100%;
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain; /* Khớp với preview: không crop, giữ đầy đủ khung hình */
+     /* Điều chỉnh object-fit dựa trên sidebar:
+       - Khi sidebar mở: dùng cover để fill đầy, không có viền đen
+       - Khi sidebar đóng: dùng contain để hiển thị đủ, có thể có viền đen */
+    /* object-fit: ${({ $hasSidebarOpen }) => ($hasSidebarOpen ? 'cover' : 'contain')}; */
+    object-fit: contain;
+    object-position: center center;
     border-radius: 0;
     display: block;
   }

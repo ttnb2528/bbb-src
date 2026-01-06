@@ -80,6 +80,8 @@ interface VideoListProps {
   isGridEnabled: boolean;
   // Đang share nội dung (presentation hoặc screen share)
   hasSharedContent: boolean;
+  // Sidebar có mở không - để điều chỉnh object-fit của video
+  hasSidebarOpen: boolean;
   streams: VideoItem[];
   intl: IntlShape;
   setUserCamerasRequestedFromPlugin: React.Dispatch<React.SetStateAction<UpdatedDataForUserCameraDomElement[]>>;
@@ -454,8 +456,9 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     }
 
     // N?u ? stage (presenter l?n), b?c v?i PresenterStageVideo
+    const { hasSidebarOpen } = this.props;
     return (
-      <Styled.PresenterStageVideo key={key}>
+      <Styled.PresenterStageVideo key={key} $hasSidebarOpen={hasSidebarOpen}>
         {videoItem}
       </Styled.PresenterStageVideo>
     );
