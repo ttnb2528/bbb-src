@@ -164,7 +164,7 @@ const VideoStrip = styled.div<{
   // padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '6px 10px 10px 10px' : '8px 10px 10px 10px')};
   background: rgba(15, 23, 42, 0.9); /* Slightly more opaque for better visibility */
   backdrop-filter: blur(8px); /* Blur effect like Google Meet */
-  border-radius: 10px;
+  border-radius: 8px;
   overflow-x: auto;
   overflow-y: hidden;
   /* Use viewport-relative height for better zoom handling, smaller to avoid overlap when zoom 150%+ */
@@ -312,7 +312,7 @@ const VideoStripItem = styled.div<{
 const MainStage = styled.div`
   flex: 1;
   display: flex;
-  align-items: stretch; /* Cho phép nội dung bên trong tràn full chiều cao */
+  align-items: center; /* Canh giữa, tránh kéo video full chiều cao */
   justify-content: center;
   background: rgba(15, 23, 42, 0.95);
   border-radius: 12px;
@@ -323,6 +323,7 @@ const MainStage = styled.div`
   box-sizing: border-box;
   width: 100%;
   height: 100%;
+  max-height: 88vh; /* Giới hạn chiều cao để video không phóng quá to */
 
   /* Smooth transition khi sidebar mở/đóng - giống Google Meet */
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
@@ -360,7 +361,7 @@ const MainStage = styled.div`
 // Mục tiêu: video luôn tràn full MainStage giống Google Meet
 const PresenterStageVideo = styled.div`
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: center;
   border-radius: 12px;
   overflow: hidden; /* Ẩn phần video bị crop */
@@ -393,11 +394,11 @@ const PresenterStageVideo = styled.div`
   }
   
   video {
-    width: 100%; /* Fill toàn bộ khung stage */
+    width: 100%;
     height: 100%;
     max-width: 100%;
     max-height: 100%;
-    object-fit: cover; /* Ưu tiên chiều cao, chấp nhận crop nhẹ giống Meet */
+    object-fit: contain; /* Khớp với preview: không crop, giữ đầy đủ khung hình */
     border-radius: 0;
     display: block;
   }
