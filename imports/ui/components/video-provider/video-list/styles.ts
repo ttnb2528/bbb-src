@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 import { colorWhite } from '/imports/ui/stylesheets/styled-components/palette';
 import { mediumUp, smallOnly, hasPhoneWidth } from '/imports/ui/stylesheets/styled-components/breakpoints';
-import { actionsBarHeight, navbarHeight, mdPaddingX } from '/imports/ui/stylesheets/styled-components/general';
+import { mdPaddingX } from '/imports/ui/stylesheets/styled-components/general';
 import Button from '/imports/ui/components/common/button/component';
 
 // @ts-expect-error -> Untyped component.
@@ -140,7 +140,8 @@ const CustomLayoutContainer = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: 0;
+  /* Chừa không gian phía trên cho dải cam nhỏ */
+  padding: clamp(90px, 9vh, 140px) 0 0 0;
   overflow: hidden; /* Prevent overflow */
   min-width: 0; /* Allow flex shrinking */
   min-height: 0; /* Allow flex shrinking */
@@ -154,24 +155,24 @@ const VideoStrip = styled.div<{
   $hasSharedContent?: boolean;
 }>`
   position: absolute; /* Overlay trên MainStage */
-  top: 8px; /* Small offset from top */
+  top: 6px; /* Small offset from top */
   left: 50%;
   transform: translateX(-50%); /* Center horizontally */
   z-index: 10; /* Above MainStage */
   display: flex;
-  gap: clamp(4px, 0.5vw, 8px); /* Responsive gap: min 4px, preferred 0.5vw, max 8px */
-  padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 10px 16px 10px' : '8px 10px 12px 10px')};
+  gap: clamp(3px, 0.45vw, 7px); /* Responsive gap: min 3px, preferred 0.45vw, max 7px */
+  padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 8px 12px 8px' : '6px 8px 10px 8px')};
   background: rgba(15, 23, 42, 0.9); /* Slightly more opaque for better visibility */
   backdrop-filter: blur(8px); /* Blur effect like Google Meet */
   border-radius: 8px;
   overflow-x: auto;
   overflow-y: hidden;
-  /* Use viewport-relative height for better zoom handling */
-  height: clamp(100px, 10vh, 150px); /* Responsive: min 100px, preferred 10vh, max 150px */
-  min-height: 100px; /* Ensure minimum usable height */
-  max-height: 150px; /* Maximum height */
+  /* Use viewport-relative height for better zoom handling, smaller to avoid overlap when zoom 150%+ */
+  height: clamp(90px, 9vh, 140px); /* Responsive: min 90px, preferred 9vh, max 140px */
+  min-height: 90px; /* Ensure minimum usable height */
+  max-height: 140px; /* Maximum height */
   /* Improved max-width: ensure it doesn't overflow even at high zoom levels */
-  max-width: min(calc(100vw - 32px), calc(100% - 16px)); /* Don't exceed viewport width minus padding */
+  max-width: min(calc(100vw - 28px), calc(100% - 12px)); /* Don't exceed viewport width minus padding */
   width: auto; /* Auto width based on content */
   min-width: 200px; /* Minimum width to show at least one camera */
   scroll-behavior: smooth;

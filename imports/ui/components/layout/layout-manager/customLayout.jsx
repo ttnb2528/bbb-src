@@ -929,9 +929,10 @@ const CustomLayout = (props) => {
     // Calculate new position for sidebar content (Chat/Notes panel - separate panel, on the right side)
     // Sidebar bắt đầu từ top (sau banner nếu có) và kéo xuống đến trên action bar
     // Dùng lại bannerHeight đã được khai báo ở trên (dòng 749)
-    const sidebarContentTop = bannerHeight; // Bắt đầu từ sau banner
-    // Chiều cao sidebar = viewportHeight - bannerHeight - actionBarHeight
-    const sidebarContentNewHeight = windowHeight() - bannerHeight - actionBarHeight;
+    // Đặt sidebar xuống sát footer, chừa khoảng cho dải cam nhỏ ở trên
+    const videoStripReserve = 120; // chiều cao dự phòng cho strip cam nhỏ (đã giảm còn 90-140 ở CSS)
+    const sidebarContentTop = bannerHeight + videoStripReserve + 12; // chừa strip + gap
+    const sidebarContentNewHeight = windowHeight() - bannerHeight - actionBarHeight - videoStripReserve - 16; // trừ thêm gap
     // Chat panel nằm ở bên phải màn hình, tách biệt với user panel
     const sidebarContentLeft = isMobile ? 0 : null; // Desktop: đặt từ right edge
     const sidebarContentRight = isMobile ? null : 0; // Desktop: nằm sát bên phải
