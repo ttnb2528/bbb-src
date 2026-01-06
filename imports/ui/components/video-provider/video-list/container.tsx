@@ -32,15 +32,18 @@ const VideoListContainer: React.FC<VideoListContainerProps> = (props) => {
   const layoutType = layoutSelect((i: Layout) => i.layoutType);
   const layoutContextDispatch = layoutDispatch();
 
-  // Lấy trạng thái presentation và screenshare để biết khi nào đang share nội dung
+  // Lấy trạng thái presentation, screenshare và external video để biết khi nào đang share nội dung
   const presentationInput = layoutSelectInput((i: any) => i.presentation);
   const screenShareInput = layoutSelectInput((i: any) => i.screenShare);
+  const externalVideoInput = layoutSelectInput((i: any) => i.externalVideo);
   const { isOpen, slidesLength } = presentationInput || {};
   const { hasScreenShare } = screenShareInput || {};
-  // Chỉ coi là "đang share nội dung" khi thật sự có screen share hoặc có slide/document
+  const { hasExternalVideo } = externalVideoInput || {};
+  // Chỉ coi là "đang share nội dung" khi thật sự có screen share, external video hoặc có slide/document
   // Whiteboard trống (isOpen = true nhưng slidesLength = 0) vẫn cho phép hiển thị cam lớn
   const hasSharedContent = !!(
     hasScreenShare
+    || hasExternalVideo
     || (typeof slidesLength === 'number' && slidesLength > 0)
   );
   
