@@ -140,8 +140,8 @@ const CustomLayoutContainer = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
-  /* Chừa không gian phía trên cho dải cam nhỏ */
-  padding: clamp(90px, 9vh, 140px) 0 0 0;
+  /* Chừa không gian phía trên cho dải cam nhỏ + tạo khoảng cách với cam lớn */
+  padding: clamp(120px, 10vh, 150px) 0 0 0;
   overflow: hidden; /* Prevent overflow */
   min-width: 0; /* Allow flex shrinking */
   min-height: 0; /* Allow flex shrinking */
@@ -155,29 +155,29 @@ const VideoStrip = styled.div<{
   $hasSharedContent?: boolean;
 }>`
   position: absolute; /* Overlay trên MainStage */
-  top: 6px; /* Small offset from top */
-  left: 50%;
-  transform: translateX(-50%); /* Center horizontally */
+  top: 0px; /* Sát mép trên hơn */
+  left: 10px; /* Dock về bên trái */
+  transform: none;
   z-index: 10; /* Above MainStage */
   display: flex;
-  gap: clamp(3px, 0.45vw, 7px); /* Responsive gap: min 3px, preferred 0.45vw, max 7px */
-  padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 8px 12px 8px' : '6px 8px 10px 8px')};
+  gap: clamp(6px, 0.65vw, 10px); /* Tăng gap giữa các cam nhỏ */
+  // padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '6px 10px 10px 10px' : '8px 10px 10px 10px')};
   background: rgba(15, 23, 42, 0.9); /* Slightly more opaque for better visibility */
   backdrop-filter: blur(8px); /* Blur effect like Google Meet */
-  border-radius: 8px;
+  border-radius: 10px;
   overflow-x: auto;
   overflow-y: hidden;
   /* Use viewport-relative height for better zoom handling, smaller to avoid overlap when zoom 150%+ */
-  height: clamp(90px, 9vh, 140px); /* Responsive: min 90px, preferred 9vh, max 140px */
-  min-height: 90px; /* Ensure minimum usable height */
-  max-height: 140px; /* Maximum height */
+  height: clamp(108px, 9vh, 132px); /* Nhỏ gọn hơn */
+  min-height: 108px; /* Ensure minimum usable height */
+  max-height: 132px; /* Maximum height */
   /* Improved max-width: ensure it doesn't overflow even at high zoom levels */
   max-width: min(calc(100vw - 28px), calc(100% - 12px)); /* Don't exceed viewport width minus padding */
-  width: auto; /* Auto width based on content */
-  min-width: 200px; /* Minimum width to show at least one camera */
+  width: fit-content; /* Auto width based on content */
+  min-width: 150px; /* Minimum width to show at least one camera */
   scroll-behavior: smooth;
   cursor: grab;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Shadow for depth */
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32); /* Shadow for depth */
   /* Ensure VideoStrip scales properly with zoom */
   box-sizing: border-box;
 
@@ -205,10 +205,12 @@ const VideoStrip = styled.div<{
     height: clamp(80px, 12vh, 120px); /* Responsive: min 80px, preferred 12vh, max 120px */
     min-height: 80px; /* Reduced for better zoom handling */
     max-height: 120px;
-    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 6px 10px 6px' : '2px 6px 10px 6px')}; /* Giảm padding-top từ 8px xuống 2px */
-    gap: clamp(4px, 1vw, 6px); /* Responsive gap */
+    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 8px 10px 8px' : '6px 8px 10px 8px')};
+    gap: clamp(5px, 1vw, 7px); /* Responsive gap */
     /* Ensure VideoStrip doesn't overflow at high zoom */
     max-width: min(calc(100vw - 24px), calc(100% - 12px));
+    left: 8px;
+    top: 10px;
   }
 
   @media ${hasPhoneWidth} {
@@ -216,10 +218,12 @@ const VideoStrip = styled.div<{
     height: clamp(60px, 10vh, 100px); /* Responsive: min 60px, preferred 10vh, max 100px */
     min-height: 60px; /* Reduced for better zoom handling */
     max-height: 100px;
-    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '2px 4px 8px 4px' : '2px 4px 8px 4px')}; /* Giảm padding-top từ 6px xuống 2px */
-    gap: clamp(2px, 1vw, 4px); /* Responsive gap */
+    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 6px 8px 6px' : '6px 6px 8px 6px')};
+    gap: clamp(3px, 1vw, 6px); /* Responsive gap */
     /* Ensure VideoStrip doesn't overflow at high zoom */
     max-width: min(calc(100vw - 16px), calc(100% - 8px));
+    left: 6px;
+    top: 8px;
   }
 `;
 
@@ -230,30 +234,30 @@ const VideoStripItem = styled.div<{
   position: relative;
   /* Use viewport-relative units for better zoom handling */
   /* Improved clamp: better scaling at different zoom levels */
-  width: clamp(80px, min(10vw, 12%), 160px); /* Responsive: min 80px, preferred min(10vw, 12%), max 160px */
+  width: clamp(110px, min(12vw, 15%), 190px); /* Bigger default size */
   height: 100%;
   flex-shrink: 0;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.35); /* Border để dễ nhìn trạng thái cam nhỏ */
   /* Ensure aspect ratio is maintained cho cam nhỏ */
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 3;
   
   /* Đảm bảo video trong VideoStripItem giữ aspect-ratio 16:9 */
   video {
-    aspect-ratio: 16 / 9 !important;
+    aspect-ratio: 4 / 3 !important;
   }
-  min-width: 80px; /* Reduced minimum for better zoom handling */
-  max-width: 190px; /* Maximum width */
+  min-width: 150px;
+  max-width: 210px; /* Slightly larger max */
   /* Ensure proper scaling with zoom */
   box-sizing: border-box;
 
   ${({ $isPresenter }) => $isPresenter && `
     /* Border nổi bật cho presenter/host */
     border: 3px solid #FF6B35 !important;
-    width: clamp(100px, min(12vw, 14%), 190px); /* Responsive: min 100px, preferred min(12vw, 14%), max 190px */
-    min-width: 100px;
-    max-width: 190px;
+    width: clamp(150px, min(14vw, 17%), 210px); /* Larger for presenter */
+    min-width: 150px;
+    max-width: 210px;
     /* Bỏ scale để video hiển thị đủ nội dung, không bị zoom */
   `}
 
@@ -389,13 +393,13 @@ const PresenterStageVideo = styled.div`
   }
   
   video {
-    width: auto; /* Tự động theo kích thước thực của video */
-    height: auto; /* Tự động theo kích thước thực của video */
-    max-width: 100%; /* Không vượt quá container */
-    max-height: 100%; /* Không vượt quá container */
-    object-fit: contain; /* contain để hiển thị đầy đủ, không bị crop */
-    border-radius: 0; /* B? border-radius ? video, d? container x? lý */
-    display: block; /* Để video không có khoảng trống */
+    width: 100%; /* Fill toàn bộ khung stage */
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover; /* Ưu tiên chiều cao, chấp nhận crop nhẹ giống Meet */
+    border-radius: 0;
+    display: block;
   }
 `;
 
