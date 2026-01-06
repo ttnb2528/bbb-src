@@ -22,6 +22,9 @@ const SidebarContentWrapper = styled.div`
   position: relative;
   box-shadow: -2px 0 12px rgba(0, 0, 0, 0.08);
 
+  /* Không cần margin-left nữa vì gutter đã được tính trong calculatesMediaAreaBounds
+     (layoutEngine đã tự động tạo khoảng cách giữa video và sidebar) */
+
   /* Hiệu ứng trượt ngang mượt mà */
   transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
               height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),

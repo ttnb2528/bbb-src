@@ -22,16 +22,23 @@ const ActionsBarWrapper = styled.section`
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2); /* Thêm shadow để tách biệt */
   overflow: visible; /* Đảm bảo không bị clip */
   padding-bottom: ${barsPadding}; /* Đảm bảo padding bottom đủ để không bị thụt */
+  
+  /* Protect controls when zooming: ensure minimum usable width */
+  min-width: 320px; /* Minimum width to prevent controls from overflowing at 25% zoom */
+  width: 100%; /* Full width by default */
+  max-width: 100vw; /* Don't exceed viewport width */
 
   /* Mobile: tăng padding và min-height để buttons có không gian và không bị thụt */
   @media ${smallOnly} {
     padding: 10px 16px 16px 16px; /* Tăng padding bottom thêm để không bị thụt */
     min-height: 75px !important; /* Tăng chiều cao tối thiểu lên 75px */
+    min-width: 280px; /* Slightly smaller min-width on mobile */
   }
 
   @media ${hasPhoneWidth} {
     padding: 0px 4px 14px 0px !important; /* Tăng padding bottom thêm để không bị thụt */
     min-height: 72px !important; /* Tăng chiều cao tối thiểu lên 72px */
+    min-width: 260px; /* Even smaller min-width on phone */
   }
 `;
 
@@ -67,6 +74,8 @@ const Center = styled.div`
   flex: 1;
   justify-content: center;
   align-items: center;
+  min-width: 0; /* Allow flex shrinking */
+  flex-shrink: 1; /* Allow shrinking when needed */
 
   /* Desktop: gap hợp lý, không quá rộng */
   @media (min-width: 1024px) {
@@ -217,8 +226,11 @@ const Separator = styled.div`
 
 const Gap = styled.div`
   display: flex;
+  flex-wrap: wrap; /* Allow wrapping when zoomed to prevent overflow */
   gap: 8px;
   align-items: center;
+  min-width: 0; /* Allow flex shrinking */
+  flex-shrink: 0; /* Prevent shrinking */
 
   /* Mobile: gap hợp lý */
   @media ${smallOnly} {

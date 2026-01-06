@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { throttle } from '/imports/utils/throttle';
+import { debounce } from '/imports/utils/debounce';
 import { layoutSelect, layoutSelectInput, layoutDispatch } from '/imports/ui/components/layout/context';
 import DEFAULT_VALUES from '/imports/ui/components/layout/defaultValues';
 import { INITIAL_INPUT_STATE } from '/imports/ui/components/layout/initState';
@@ -8,10 +9,28 @@ import Storage from '/imports/ui/services/storage/session';
 import { defaultsDeep } from '/imports/utils/array-utils';
 import Session from '/imports/ui/services/storage/in-memory';
 
-const windowWidth = () => window.document.documentElement.clientWidth;
-const windowHeight = () => window.document.documentElement.clientHeight;
+// Improved window size functions that account for browser zoom
+const windowWidth = () => {
+  // Use visualViewport if available (better zoom handling)
+  if (window.visualViewport) {
+    return window.visualViewport.width;
+  }
+  return window.document.documentElement.clientWidth;
+};
+
+const windowHeight = () => {
+  // Use visualViewport if available (better zoom handling)
+  if (window.visualViewport) {
+    return window.visualViewport.height;
+  }
+  return window.document.documentElement.clientHeight;
+};
+
 const min = (value1, value2) => (value1 <= value2 ? value1 : value2);
 const max = (value1, value2) => (value1 >= value2 ? value1 : value2);
+
+// Clamp value between min and max
+const clamp = (value, minVal, maxVal) => Math.min(Math.max(value, minVal), maxVal);
 
 const CustomLayout = (props) => {
   const {
@@ -33,6 +52,8 @@ const CustomLayout = (props) => {
   const fullscreen = layoutSelect((i) => i.fullscreen);
   const fontSize = layoutSelect((i) => i.fontSize);
   const currentPanelType = layoutSelect((i) => i.currentPanelType);
+  // Track browser size changes to trigger layout recalculation on zoom
+  const browserSize = layoutSelect((i) => i.input.browser);
 
   const presentationInput = layoutSelectInput((i) => i.presentation);
   const externalVideoInput = layoutSelectInput((i) => i.externalVideo);
@@ -56,17 +77,45 @@ const CustomLayout = (props) => {
   const throttledCalculatesLayout = throttle(() => calculatesLayout(),
     50, { trailing: true, leading: true });
 
+  // Improved resize handler with visualViewport support for better zoom handling
+  // This handler updates browser size AND triggers layout recalculation immediately
   useEffect(() => {
-    window.addEventListener('resize', () => {
+    const handleResize = throttle(() => {
+      // Use visualViewport if available (better zoom handling)
+      const width = window.visualViewport?.width || window.document.documentElement.clientWidth;
+      const height = window.visualViewport?.height || window.document.documentElement.clientHeight;
+      
+      // Update browser size in context
       layoutContextDispatch({
         type: ACTIONS.SET_BROWSER_SIZE,
         value: {
-          width: window.document.documentElement.clientWidth,
-          height: window.document.documentElement.clientHeight,
+          width,
+          height,
         },
       });
-    });
-  }, []);
+      
+      // IMPORTANT: Trigger layout recalculation immediately after browser size change
+      // This ensures layout updates right away when zooming, not waiting for other triggers
+      throttledCalculatesLayout();
+    }, 50, { trailing: true, leading: true }); // Reduced throttle to 50ms for more responsive zoom
+
+    // Listen to both resize and visualViewport resize events
+    window.addEventListener('resize', handleResize);
+    
+    // Use visualViewport API if available for better zoom handling
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+      window.visualViewport.addEventListener('scroll', handleResize);
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+        window.visualViewport.removeEventListener('scroll', handleResize);
+      }
+    };
+  }, [layoutContextDispatch, throttledCalculatesLayout]);
 
   useEffect(() => {
     if (deviceType === null) return () => null;
@@ -78,7 +127,17 @@ const CustomLayout = (props) => {
     } else {
       throttledCalculatesLayout();
     }
-  }, [input, deviceType, isRTL, fontSize, fullscreen, isPresentationEnabled]);
+  }, [
+    input,
+    deviceType,
+    isRTL,
+    fontSize,
+    fullscreen,
+    isPresentationEnabled,
+    browserSize,
+    // Khi sidebar (chat / user list) mở / đóng, cần force recalc ngay để tránh bug phải zoom mới update
+    sidebarContentInput.isOpen,
+  ]); // Added browserSize to trigger recalculation on zoom
 
   const calculatesDropAreas = (sidebarNavWidth, sidebarContentWidth, cameraDockBounds) => {
     const { height: actionBarHeight } = calculatesActionbarHeight();
@@ -368,21 +427,32 @@ const CustomLayout = (props) => {
         // Trên mobile: sử dụng height cố định khớp với CSS (120px tablet, 100px phone)
         // Desktop: tính theo tỷ lệ như cũ
         if (isMobile && isCameraTop) {
-          // Khớp với CSS height: tablet 120px, phone 100px
+          // Improved responsive calculation using viewport-relative units
+          // Use viewport-relative calculation: ~8vh for phone, ~10vh for tablet
+          // This scales better with browser zoom
           const windowW = windowWidth();
-          cameraDockHeight = windowW < 480 ? 100 : 120; // Phone: 100px, Tablet: 120px
+          const viewportHeight = windowHeight();
+          cameraDockHeight = windowW < 480 
+            ? Math.max(100, viewportHeight * 0.08) // Phone: min 100px or 8vh
+            : Math.max(120, viewportHeight * 0.10); // Tablet: min 120px or 10vh
         } else {
-          cameraDockHeight = min(
-            max(mediaAreaBounds.height * 0.2, cameraDockMinHeight),
-            mediaAreaBounds.height - cameraDockMinHeight
+          // Desktop: use percentage-based calculation with constraints
+          // Min 15% of viewport, max 30% of viewport, clamped between minHeight and available space
+          const minHeightPercent = 0.15;
+          const maxHeightPercent = 0.30;
+          const calculatedHeight = mediaAreaBounds.height * 0.2; // Default 20%
+          cameraDockHeight = clamp(
+            calculatedHeight,
+            Math.max(cameraDockMinHeight, mediaAreaBounds.height * minHeightPercent),
+            Math.min(mediaAreaBounds.height * maxHeightPercent, mediaAreaBounds.height - cameraDockMinHeight)
           );
         }
       } else {
+        // Use saved height but clamp it to ensure it's within bounds
         const height = isResizing ? cameraDockInput.height : lastHeight;
-        cameraDockHeight = min(
-          max(height, cameraDockMinHeight),
-          mediaAreaBounds.height - cameraDockMinHeight
-        );
+        const minAllowedHeight = Math.max(cameraDockMinHeight, mediaAreaBounds.height * 0.10);
+        const maxAllowedHeight = Math.min(mediaAreaBounds.height * 0.40, mediaAreaBounds.height - cameraDockMinHeight);
+        cameraDockHeight = clamp(height, minAllowedHeight, maxAllowedHeight);
       }
 
       // Khi camera ở trên: đặt sát lên trên cùng (top = 0) để giảm khoảng trống phía trên
@@ -390,12 +460,17 @@ const CustomLayout = (props) => {
       cameraDockBounds.top = isMobile && isCameraTop ? 0 : effectiveNavBarHeight;
       cameraDockBounds.left = mediaAreaBounds.left;
       cameraDockBounds.right = isRTL ? sidebarSize : null;
-      cameraDockBounds.minWidth = mediaAreaBounds.width;
+      
+      // Improved width constraints: ensure minimum usable width
+      const minUsableWidth = Math.max(320, mediaAreaBounds.width * 0.5); // At least 320px or 50% of available width
+      cameraDockBounds.minWidth = minUsableWidth;
       cameraDockBounds.width = mediaAreaBounds.width;
       cameraDockBounds.maxWidth = mediaAreaBounds.width;
-      cameraDockBounds.minHeight = cameraDockMinHeight;
+      
+      // Improved height constraints: ensure reasonable min/max
+      cameraDockBounds.minHeight = Math.max(cameraDockMinHeight, mediaAreaBounds.height * 0.10);
       cameraDockBounds.height = cameraDockHeight;
-      cameraDockBounds.maxHeight = mediaAreaBounds.height * 0.8;
+      cameraDockBounds.maxHeight = Math.min(mediaAreaBounds.height * 0.80, mediaAreaBounds.height - 100); // Max 80% or leave 100px for other content
 
       if (isCameraBottom) {
         // Trên mobile: đẩy camera bottom lên cao hơn một chút
@@ -484,11 +559,10 @@ const CustomLayout = (props) => {
 
     const { height: actionBarHeight } = calculatesActionbarHeight();
     const navBarHeight = 0; // NavBar is always hidden now - features moved to footer
-    // sidebarPanelHeight is defined in calculatesLayout, use a local constant here
-    // Use responsive height matching calculatesLayout
-    const windowH = windowHeight();
-    // Trên mobile: không trừ sidebarPanelHeight vì nó đã được ẩn hoặc không ảnh hưởng
-    const localSidebarPanelHeight = isMobile ? 0 : (windowH < 800 ? 180 : windowH < 1080 ? 200 : 220);
+    // sidebarPanelHeight used to reserve space for a horizontal panel above footer.
+    // Layout mới: sidebar đã chuyển sang bên phải, không còn panel ngang cố định nữa,
+    // nên KHÔNG cần trừ sidebarPanelHeight khỏi chiều cao media area.
+    const localSidebarPanelHeight = 0;
     const bannerHeight = isMobile ? 0 : bannerAreaHeight(); // Mobile: no banner space
     const panelButtonsHeight = isMobile ? 80 : 0; // Space for mobile panel buttons (tăng lên để phù hợp với padding và gap mới)
     const mediaAreaHeight =
@@ -539,181 +613,22 @@ const CustomLayout = (props) => {
       const isCameraRight = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_RIGHT;
       
       if (isCameraTop) {
-        // Camera ở trên: document đặt xuống dưới camera, giữ kích thước đầy đủ (không bị bóp)
-        // Document được đặt dưới camera với margin đủ để không bị đụng
-        // Khi có camera, đẩy document lên cao hơn để tận dụng không gian tốt hơn
-        const cameraTop = cameraDockBounds.top || navBarHeight;
-        const cameraHeight = cameraDockBounds.height || 0;
-        
-        // Phát hiện document dọc (portrait) vs ngang (landscape)
-        const documentAspectRatio = mediaAreaHeight / mediaAreaWidth;
-        const isPortraitDocument = documentAspectRatio > 1.2; // Tỷ lệ > 1.2 được coi là dọc
-        
-        // Trên mobile: điều chỉnh để document được nâng lên cao hơn khi có camera
-        let finalTop;
-        if (isMobile) {
-          const windowH = windowHeight();
-          const { height: actionBarHeight } = calculatesActionbarHeight();
-          const availableHeight = windowH - actionBarHeight;
-          
-          // Tính toán margin động dựa trên loại document và không gian còn lại
-          let dynamicMargin = 5; // Margin tối thiểu để không overlap với camera
-          
-          // Kiểm tra thiết bị nhỏ (chiều cao < 700px) để đẩy lên cao hơn
-          // windowH đã được khai báo ở trên, không cần khai báo lại
-          const isSmallDevice = windowH < 700;
-          
-          if (isPortraitDocument) {
-            // Document dọc: đẩy lên cao hơn nhiều để có thể xem được phần trên
-            // Tính toán không gian còn lại sau camera
-            const spaceAfterCamera = availableHeight - (cameraTop + cameraHeight);
-            const documentHeight = mediaAreaHeight;
-            
-            // Nếu document cao hơn không gian còn lại, đẩy lên để có thể scroll xem
-            if (documentHeight > spaceAfterCamera * 0.9) {
-              // Document quá cao: đẩy lên cao nhất có thể (margin âm nhưng vẫn không overlap)
-              // Trên thiết bị nhỏ, đẩy lên cao hơn nữa
-              // Giảm xuống thêm 5px để hạ document xuống
-              dynamicMargin = isSmallDevice ? -48 : -35; // Thiết bị nhỏ: -45px, bình thường: -35px
-            } else {
-              // Document vừa: đẩy lên một chút để tận dụng không gian
-              // Trên thiết bị nhỏ, đẩy lên cao hơn nữa
-              // Giảm xuống thêm 5px để hạ document xuống
-              dynamicMargin = isSmallDevice ? -28 : -20; // Thiết bị nhỏ: -30px, bình thường: -20px
-            }
-          } else {
-            // Document ngang: đẩy lên một chút
-            // Trên thiết bị nhỏ, đẩy lên cao hơn nữa
-            // Giảm xuống thêm 5px để hạ document xuống
-            dynamicMargin = isSmallDevice ? -24 : -15; // Thiết bị nhỏ: -25px, bình thường: -15px
-          }
-          
-          // Tính toán vị trí final, đảm bảo không overlap với camera
-          const baseTop = cameraTop + cameraHeight;
-          // Tính toán finalTop với dynamicMargin (có thể âm để đẩy lên cao)
-          // Không cộng bannerHeight vào đây vì nó có thể làm tăng giá trị không mong muốn
-          finalTop = baseTop + dynamicMargin;
-          
-          // Trên thiết bị nhỏ, đảm bảo document không che camera
-          // Không cho phép overlap trên thiết bị nhỏ
-          if (isSmallDevice) {
-            // Thiết bị nhỏ: đảm bảo document bắt đầu sau camera với margin đủ
-            // Tăng margin lên thêm 5px để đảm bảo document không che camera
-            const minTop = baseTop + 20; // Tối thiểu 20px margin (tăng từ 15px) để không che camera
-            if (finalTop < minTop) {
-              finalTop = minTop;
-            }
-            // Trên thiết bị nhỏ, không cho phép margin âm để đảm bảo không che
-            if (dynamicMargin < 0) {
-              // Reset về margin dương nhỏ nhất
-              finalTop = baseTop + 20;
-            }
-          } else {
-            // Thiết bị lớn hơn: cho phép overlap một chút
-            if (dynamicMargin < 0) {
-              // Margin âm: cho phép overlap nhưng không quá nhiều
-              const maxOverlap = 50; // Overlap tối đa 50px
-              const minTop = baseTop - maxOverlap;
-              if (finalTop < minTop) {
-                finalTop = minTop;
-              }
-            } else {
-              // Margin dương: đảm bảo không overlap
-              const minTop = baseTop + 3; // Tối thiểu 3px margin
-              if (finalTop < minTop) {
-                finalTop = minTop;
-              }
-            }
-          }
-          
-          // Đảm bảo document không bị overflow
-          const maxTop = windowH - actionBarHeight - 20; // 20px padding bottom
-          if (finalTop > maxTop) {
-            finalTop = maxTop;
-          }
-          
-          // QUAN TRỌNG: Trên thiết bị nhỏ, đảm bảo finalTop không bị override
-          // Thêm bannerHeight sau khi đã tính toán xong để đảm bảo không bị ảnh hưởng bởi minTop/maxTop
-          // Nhưng trên thiết bị nhỏ, đảm bảo margin tối thiểu sau camera vẫn được giữ
-          if (isSmallDevice) {
-            // Trên thiết bị nhỏ: đảm bảo sau khi cộng bannerHeight, vẫn có margin đủ
-            const minTopAfterBanner = baseTop + 20 + bannerHeight;
-            finalTop = finalTop + bannerHeight;
-            // Nếu sau khi cộng bannerHeight mà vẫn chưa đủ margin, force lại
-            if (finalTop < minTopAfterBanner) {
-              finalTop = minTopAfterBanner;
-            }
-          } else {
-            finalTop = finalTop + bannerHeight;
-          }
-        } else {
-          // Desktop: thêm margin lớn hơn
-          const minMargin = 28;
-          finalTop = cameraTop + cameraHeight + minMargin + camerasMargin + bannerHeight;
-        }
-        
+        // Camera ở trên (VideoStrip): MainStage chiếm FULL height, VideoStrip overlay lên trên
+        // Giống Google Meet: video chiếm gần full height, strip chỉ overlay nhỏ ở trên
+        // VideoStrip đã được set position: absolute trong CSS, không chiếm không gian layout
         mediaBounds.width = mediaAreaWidth;
-        
-        // Trên thiết bị nhỏ (như iPhone SE: 375x667), thu nhỏ document để vừa với không gian còn lại
-        if (isMobile && isCameraTop) {
-          const windowH = windowHeight();
-          const { height: actionBarHeight } = calculatesActionbarHeight();
-          const availableHeight = windowH - actionBarHeight;
-          
-          // Tính toán không gian còn lại sau finalTop
-          // Đảm bảo document không bị che camera và không overflow
-          const documentTop = finalTop;
-          const spaceForDocument = availableHeight - documentTop;
-          
-          // Tính toán chiều cao tối đa cho document
-          // Đảm bảo document vừa với không gian còn lại, không bị overflow
-          if (windowH < 700) {
-            // Thiết bị rất nhỏ (như iPhone SE): thu nhỏ document để vừa với không gian
-            // Để lại margin (50px) để document không sát đáy và không che camera (tăng từ 40px)
-            const maxDocumentHeight = Math.max(spaceForDocument - 68, 200); // 50px margin bottom, tối thiểu 200px
-            
-            // Luôn thu nhỏ document để vừa với không gian còn lại
-            // Đảm bảo document không cao hơn không gian còn lại
-            if (mediaAreaHeight > maxDocumentHeight) {
-              // Thu nhỏ document để vừa với không gian
-              mediaBounds.height = maxDocumentHeight;
-            } else {
-              // Nếu document nhỏ hơn không gian, vẫn đảm bảo không overflow
-              const safeHeight = Math.max(spaceForDocument - 68, 200);
-              mediaBounds.height = Math.min(mediaAreaHeight, safeHeight);
-            }
-          } else {
-            // Thiết bị lớn hơn: giữ nguyên chiều cao nhưng đảm bảo không overflow
-            const safeHeight = spaceForDocument - 20;
-            mediaBounds.height = Math.min(mediaAreaHeight, safeHeight);
-          }
-          } else {
-            // Desktop hoặc không có camera: giữ nguyên chiều cao
-            mediaBounds.height = mediaAreaHeight;
-          }
-        
-        // QUAN TRỌNG: Set finalTop vào mediaBounds.top
-        // Trên thiết bị nhỏ, đảm bảo giá trị này không bị override bởi logic khác
-        mediaBounds.top = finalTop;
-        
-        // Double-check trên thiết bị nhỏ: đảm bảo không bị override bởi bất kỳ logic nào khác
-        if (isMobile && isCameraTop) {
-          const windowH = windowHeight();
-          const isSmallDeviceCheck = windowH < 700;
-          if (isSmallDeviceCheck) {
-            const baseTopCheck = cameraTop + cameraHeight;
-            const minTopCheck = baseTopCheck + 20 + bannerHeight; // 20px margin + bannerHeight
-            // Force đảm bảo margin tối thiểu - đây là safety check cuối cùng
-            if (mediaBounds.top < minTopCheck) {
-              mediaBounds.top = minTopCheck;
-            }
-          }
-        }
+        // MainStage chiếm FULL height của mediaAreaHeight (không trừ cameraDockHeight)
+        // VideoStrip sẽ overlay lên trên với position absolute (đã được xử lý ở CSS)
+        mediaBounds.height = mediaAreaHeight; // Full height, không trừ cameraDockHeight
+        // MainStage bắt đầu từ top: mobile = 0, desktop = navBarHeight + bannerHeight
+        // Nhưng navBarHeight = 0 (NavBar is hidden), nên chỉ cần bannerHeight
+        mediaBounds.top = isMobile ? 0 : bannerHeight; // Mobile: top = 0, Desktop: bannerHeight
         mediaBounds.left = !isRTL ? 0 : null;
         mediaBounds.right = isRTL ? 0 : null;
         
-        // Z-index cao hơn camera để đảm bảo document hiển thị đúng
-        mediaBounds.zIndex = 2;
+        // Z-index thấp hơn VideoStrip để VideoStrip overlay lên trên
+        // VideoStrip có z-index cao hơn (được set trong cameraDockBounds z-index: 10)
+        mediaBounds.zIndex = 1;
       } else if (isCameraBottom) {
         // Camera ở dưới: document chiếm phần trên, camera ở dưới
         mediaBounds.width = mediaAreaWidth;
@@ -793,42 +708,55 @@ const CustomLayout = (props) => {
     const { camerasMargin, captionsMargin } = DEFAULT_VALUES;
 
 
-    // Fixed height for horizontal sidebar panel above footer (optimized for better video space)
-    // Use responsive height: smaller on smaller screens, but not too small to be unusable
-    const windowH = windowHeight();
-    // Mobile: ẩn hoặc giảm height đáng kể
-    let sidebarPanelHeight;
-    if (isMobile) {
-      // Mobile: ẩn panel hoặc dùng height rất nhỏ
-      sidebarPanelHeight = 0; // Hoặc có thể dùng 120 nếu muốn hiện nhưng nhỏ
-    } else {
-      // User panel: tăng chiều cao đáng kể để hiển thị nhiều user hơn
-      sidebarPanelHeight = windowH < 800 ? 300 : windowH < 1080 ? 360 : 420;
-    }
+    // Fixed height for horizontal sidebar panel above footer (legacy behaviour).
+    // Layout mới: sidebar đã chuyển sang bên phải (sidebar-content), không còn panel ngang cố định nữa.
+    // Để video chiếm tối đa chiều cao giống Google Meet, KHÔNG trừ sidebarPanelHeight khỏi media area.
+    const sidebarPanelHeight = 0;
 
     // Tab-based sidebar: sidebar-navigation đã được gộp vào sidebar-content
     // Luôn set sidebarNavWidth = 0 vì không còn sidebar riêng nữa
     const sidebarNavWidth = 0; // Đã gộp vào sidebar-content với tabs
     const sidebarNavHeight = calculatesSidebarNavHeight();
-    const sidebarContentWidth = calculatesSidebarContentWidth();
+    // calculatesSidebarContentWidth trả về object { minWidth, width, maxWidth }
+    const sidebarContentWidthObj = calculatesSidebarContentWidth();
+    const sidebarContentWidth = sidebarContentWidthObj?.width || 0;
     // Media area bounds: full width, no sidebars on left (they're horizontal at bottom now)
     // Hide navbar to give more space for video and allow sidebar to span full width
-    // Mobile: start from absolute top (0), no banner or navbar space
-    // Mobile: subtract extra space for panel buttons (khoảng 80px với padding và gap mới)
-    const bannerHeight = isMobile ? 0 : bannerAreaHeight();
-    const panelButtonsHeight = isMobile ? 80 : 0; // Space for mobile panel buttons (tăng lên để phù hợp với padding và gap mới)
-    // Tính actionBarFinalHeight trước để dùng cho mediaAreaBounds
+    // Ensure minimum usable dimensions to prevent layout breaking
+    const minMediaAreaWidth = 320; // Minimum usable width
+    const minMediaAreaHeight = 200; // Minimum usable height
+
+    // Khi sidebar (chat/user list) mở trên desktop: trừ width của sidebarContentWidth
+    // Thêm gutter (khoảng cách) giữa video và sidebar để đẹp hơn, giống Google Meet
+    // REFACTOR: Tính mediaAreaBounds đúng cách để tránh overlay với sidebar
+    // Khi sidebar mở: video bắt đầu từ left=0, width = viewportWidth - sidebarContentWidth - gutter
+    // Khi sidebar đóng: video bắt đầu từ left=0, width = viewportWidth
+    const sidebarGutter = 8; // 8px spacing giữa video và sidebar trên desktop
+    const viewportWidth = windowWidth();
+    const viewportHeight = windowHeight();
+    const isSidebarOpen = sidebarContentInput.isOpen && !isMobile;
+    
+    // Tính width đúng: trừ sidebar width và gutter khi sidebar mở
+    const mediaAreaWidth = isSidebarOpen
+      ? Math.max(viewportWidth - sidebarContentWidth - sidebarGutter, minMediaAreaWidth)
+      : Math.max(viewportWidth, minMediaAreaWidth);
+    
+    // Tính height: trừ actionBar, banner, panelButtons (mobile)
     const tempActionBarHeight = calculatesActionbarHeight();
     const tempActionBarFinalHeight = isMobile 
-      ? Math.max(tempActionBarHeight.height, windowWidth() < 480 ? 72 : 75) // Phone: 72px, Tablet/Mobile: 75px
+      ? Math.max(tempActionBarHeight.height, windowWidth() < 480 ? 72 : 75)
       : tempActionBarHeight.height;
-    // Trên mobile: đẩy media area lên sát trên (top = 0) để camera sát trên cùng (giống laptop)
-    const mediaAreaTopOffset = isMobile ? 0 : 0; // Mobile: top = 0 để sát trên cùng
+    const bannerHeight = isMobile ? 0 : bannerAreaHeight();
+    const panelButtonsHeight = isMobile ? 80 : 0;
+    
     const mediaAreaBounds = {
-      width: windowWidth(),
-      height: windowHeight() - tempActionBarFinalHeight - sidebarPanelHeight - bannerHeight - panelButtonsHeight,
-      top: mediaAreaTopOffset, // Trên mobile: top = 0 để camera sát trên cùng
-      left: 0,
+      width: mediaAreaWidth,
+      height: Math.max(
+        viewportHeight - tempActionBarFinalHeight - sidebarPanelHeight - bannerHeight - panelButtonsHeight,
+        minMediaAreaHeight
+      ),
+      top: isMobile ? 0 : bannerHeight, // Trên mobile: top = 0 để sát trên cùng
+      left: 0, // Video luôn bắt đầu từ mép trái
     };
     const navbarBounds = calculatesNavbarBounds(mediaAreaBounds);
     const actionbarBounds = calculatesActionbarBounds(mediaAreaBounds);
@@ -891,11 +819,11 @@ const CustomLayout = (props) => {
       type: ACTIONS.SET_ACTIONBAR_OUTPUT,
       value: {
         display: actionbarInput.hasActionBar,
-        width: actionbarBounds.width,
+        width: windowWidth(), // Footer luôn full width, không bị giới hạn bởi mediaAreaBounds
         height: actionBarFinalHeight, // Sử dụng height đã điều chỉnh
         innerHeight: actionbarBounds.innerHeight,
         top: actionBarFinalTop, // Sử dụng top đã điều chỉnh
-        left: actionbarBounds.left,
+        left: 0, // Footer luôn bắt đầu từ mép trái để full width
         padding: actionbarBounds.padding,
         tabOrder: DEFAULT_VALUES.actionBarTabOrder,
         zIndex: 1000, // Tăng z-index cao để không bị che
@@ -965,18 +893,17 @@ const CustomLayout = (props) => {
     });
 
     // Calculate new position for sidebar content (Chat/Notes panel - separate panel, on the right side)
-    // Chat panel cao hơn user panel để hiển thị nhiều tin nhắn hơn
-    // Dùng lại windowH đã được tính ở trên (dòng 564)
-    // Tăng chiều cao lên cao hơn nữa
-    const chatPanelHeight = isMobile ? 0 : (windowH < 800 ? 400 : windowH < 1080 ? 500 : 600);
-    // Chat panel có thể cao hơn user panel, nên tính top dựa trên chat panel height
-    const sidebarContentTop = windowHeight() - actionBarHeight - chatPanelHeight;
+    // Sidebar bắt đầu từ top (sau banner nếu có) và kéo xuống đến trên action bar
+    // Dùng lại bannerHeight đã được khai báo ở trên (dòng 749)
+    const sidebarContentTop = bannerHeight; // Bắt đầu từ sau banner
+    // Chiều cao sidebar = viewportHeight - bannerHeight - actionBarHeight
+    const sidebarContentNewHeight = windowHeight() - bannerHeight - actionBarHeight;
     // Chat panel nằm ở bên phải màn hình, tách biệt với user panel
     const sidebarContentLeft = isMobile ? 0 : null; // Desktop: đặt từ right edge
     const sidebarContentRight = isMobile ? null : 0; // Desktop: nằm sát bên phải
     // Chat/Notes panel: width cố định nhỏ gọn
-    const sidebarContentNewWidth = isMobile ? windowWidth() : 350; // Width cố định cho desktop
-    const sidebarContentNewHeight = chatPanelHeight;
+    // QUAN TRỌNG: Dùng sidebarContentWidth đã được tính từ calculatesSidebarContentWidth để đảm bảo đồng bộ
+    const sidebarContentNewWidth = sidebarContentWidth || (isMobile ? windowWidth() : 350); // Fallback nếu sidebarContentWidth = 0
     const minChatNotesWidth = isMobile ? windowWidth() : 300; // Mobile: full width
     const maxChatNotesWidth = isMobile ? windowWidth() : 450; // Max width cho desktop
     // Calculate minHeight and maxHeight for collapse/expand functionality

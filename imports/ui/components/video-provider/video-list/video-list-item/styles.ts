@@ -168,10 +168,18 @@ const Video = styled.video<{
   position: relative;
   height: 100%;
   width: 100%;
-  object-fit: contain;
+  /* Improved object-fit: cover for better scaling */
+  object-fit: cover;
+  /* Bỏ aspect-ratio constraint để video có thể fill container tự do */
+  /* Chỉ giữ aspect-ratio cho VideoStrip (sẽ override trong VideoStripItem) */
   background-color: ${colorBlack};
   border-radius: 8px;
   display: block;
+  /* Ensure video scales smoothly with container */
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
 
   ${({ mirrored }) => mirrored && `
     transform: scale(-1, 1);
