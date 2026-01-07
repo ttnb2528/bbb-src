@@ -183,6 +183,24 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
     meetingId,
   }] = useAuthData();
 
+  const getReturnUrl = () => {
+    try {
+      const referrer = document.referrer;
+      if (referrer && isURL(referrer, {
+        // This option is merged with isFQDN
+        // so it's not a valid ts error /validator/lib/isURL.js line 153
+        // @ts-ignore
+        allow_numeric_tld: true,
+      })) {
+        return referrer;
+      }
+    } catch (e) {
+      // ignore and fall back to logoutUrl
+    }
+
+    return logoutUrl;
+  };
+
   const generateEndMessage = useCallback((joinErrorCode: string, meetingEndedCode: string, endedBy: string) => {
     if (!isEmpty(endedBy)) {
       return intl.formatMessage(intlMessage.messageEndedByUser, { userName: endedBy });
@@ -197,9 +215,10 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
     if (isBreakout) window.close();
     if (allowRedirect) {
       const reason = generateEndMessage(joinErrorCode, meetingEndedCode, endedBy);
+      const baseUrl = getReturnUrl();
       const finalUrl = reason
-        ? `${logoutUrl}${logoutUrl.includes('?') ? '&' : '?'}reason=${encodeURIComponent(reason)}`
-        : logoutUrl;
+        ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}reason=${encodeURIComponent(reason)}`
+        : baseUrl;
       window.location.href = finalUrl;
     }
   };
