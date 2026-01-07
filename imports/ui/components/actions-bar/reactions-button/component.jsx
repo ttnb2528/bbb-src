@@ -44,6 +44,8 @@ const ReactionsButton = (props) => {
 
   const handleReactionSelect = (reaction) => {
     setReactionEmoji({ variables: { reactionEmoji: reaction } });
+    // Không đóng menu để có thể spam emoji
+    // Menu chỉ đóng khi user nhấn X
   };
 
   const customStyles = {
@@ -151,7 +153,7 @@ const ReactionsButton = (props) => {
       isEmoji
       roundButtons
       minContent={isMobile}
-      keepOpen={!autoCloseReactionsBar}
+      keepOpen={true}
       opts={{
         id: 'reactions-dropdown-menu',
         keepMounted: true,
