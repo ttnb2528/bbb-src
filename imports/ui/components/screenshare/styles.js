@@ -20,6 +20,19 @@ const MainText = styled.h1`
 `;
 
 const ScreenshareVideo = styled.video`
+  /* Đảm bảo video fill container đúng cách - giống presentation/external video */
+  /* Luôn dùng 100% để fill container, object-fit sẽ handle scaling */
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  /* Ensure proper scaling */
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+
   ${({ unhealthyStream }) => unhealthyStream && `
     filter: grayscale(50%) opacity(50%);
   `}
@@ -30,13 +43,29 @@ const ScreenshareContainer = styled.div`
   background-color: ${colorContentBackground};
   width: 100%;
   height: 100%;
+  /* Flex layout để center video content - giống Presentation */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Ensure proper scaling */
+  box-sizing: border-box;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
 
   ${({ switched }) => !switched && `
-    display: flex;
-    align-items: center;
-    justify-content: center;
     flex-direction: column;
   `}
+  
+  /* Đảm bảo video element bên trong fill container - override mọi inline style */
+  video {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    object-position: center center !important;
+  }
 `;
 
 const ScreenshareContainerDefault = styled.div`

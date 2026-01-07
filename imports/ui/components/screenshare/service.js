@@ -354,7 +354,20 @@ export const shareScreen = async (
     setSharingContentType(contentType);
     setIsSharing(true);
   } catch (error) {
-    onFail(error);
+    // Đảm bảo error message được giữ nguyên nếu có
+    // Đặc biệt quan trọng với tab sharing error
+    if (error.errorMessage) {
+      // Giữ nguyên error message tùy chỉnh
+      onFail(error);
+    } else {
+      // Nếu không có errorMessage, tạo error object với message
+      const errorWithMessage = {
+        ...error,
+        errorMessage: error.message || error.errorMessage || 'Screen sharing failed',
+        message: error.message || error.errorMessage || 'Screen sharing failed',
+      };
+      onFail(errorWithMessage);
+    }
   }
 };
 

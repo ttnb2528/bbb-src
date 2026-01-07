@@ -34,25 +34,49 @@ const getScreenStream = async () => {
       return Promise.reject(SCREENSHARING_ERRORS.NotSupportedError);
     }
 
-    if (typeof stream.getVideoTracks === 'function'
-      && typeof GDM_CONSTRAINTS.video === 'object') {
-      stream.getVideoTracks().forEach(track => {
-        if (typeof track.applyConstraints  === 'function') {
-          track.applyConstraints(GDM_CONSTRAINTS.video).catch(error => {
-            logger.warn({
-              logCode: 'screenshare_videoconstraint_failed',
-              extraInfo: { errorName: error.name, errorCode: error.code },
-            },
-              'Error applying screenshare video constraint');
-          });
-        }
-      });
+    // Kiểm tra xem stream có video tracks không
+    const videoTracks = stream.getVideoTracks();
+    if (videoTracks && videoTracks.length > 0) {
+      // Kiểm tra displaySurface để biết là tab, window hay screen
+      const videoTrack = videoTracks[0];
+      const settings = videoTrack.getSettings ? videoTrack.getSettings() : {};
+      const displaySurface = settings.displaySurface || (videoTrack.getSettings ? videoTrack.getSettings().displaySurface : null);
+
+      // Tab sharing không được hỗ trợ do vấn đề WebRTC negotiation
+      // Reject ngay và hướng dẫn user share window thay vì tab
+      if (displaySurface === 'browser') {
+        // Stop tất cả tracks để cleanup
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Reject với error code mới cho tab sharing
+        const customError = new Error('Tab sharing is not supported. Please select "Share window" or "Share entire screen" instead.');
+        // Set errorCode là "1139" (string) để match với format của SCREENSHARING_ERRORS
+        customError.errorCode = SCREENSHARING_ERRORS.TAB_SHARING_NOT_SUPPORTED?.errorCode || '1139';
+        customError.errorMessage = 'Tab sharing is not supported. Please select "Share window" or "Share entire screen" instead.';
+        customError.message = customError.errorMessage;
+        return Promise.reject(customError);
+      }
+
+      // Apply constraints cho video tracks
+      if (typeof GDM_CONSTRAINTS.video === 'object') {
+        videoTracks.forEach(track => {
+          if (typeof track.applyConstraints === 'function') {
+            track.applyConstraints(GDM_CONSTRAINTS.video).catch(error => {
+              logger.warn({
+                logCode: 'screenshare_videoconstraint_failed',
+                extraInfo: { errorName: error.name, errorCode: error.code },
+              },
+                'Error applying screenshare video constraint');
+            });
+          }
+        });
+      }
     }
 
     if (typeof stream.getAudioTracks === 'function'
       && typeof GDM_CONSTRAINTS.audio === 'object') {
       stream.getAudioTracks().forEach(track => {
-        if (typeof track.applyConstraints  === 'function') {
+        if (typeof track.applyConstraints === 'function' && track.readyState === 'live') {
           track.applyConstraints(GDM_CONSTRAINTS.audio).catch(error => {
             logger.warn({
               logCode: 'screenshare_audioconstraint_failed',
@@ -72,6 +96,15 @@ const getScreenStream = async () => {
     return getDisplayMedia(GDM_CONSTRAINTS)
       .then(gDMCallback)
       .catch(error => {
+        // Nếu error đã có errorCode (như TAB_SHARING_NOT_SUPPORTED), giữ nguyên
+        if (error.errorCode && error.errorMessage) {
+          logger.error({
+            logCode: 'screenshare_getdisplaymedia_failed',
+            extraInfo: { errorCode: error.errorCode, errorMessage: error.errorMessage },
+          }, 'getDisplayMedia call failed');
+          return Promise.reject(error);
+        }
+        // Nếu không có errorCode, normalize như bình thường
         const normalizedError = normalizeGetDisplayMediaError(error);
         logger.error({
           logCode: 'screenshare_getdisplaymedia_failed',

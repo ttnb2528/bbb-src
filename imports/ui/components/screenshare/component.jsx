@@ -425,18 +425,24 @@ class ScreenshareComponent extends React.Component {
   }
 
   renderVideo(switched) {
-    const { isGloballyBroadcasting } = this.props;
+    const { isGloballyBroadcasting, isPresenter } = this.props;
     const { videoTagRef } = this.state;
+
+    // Presenter preview nhỏ: chỉ khi switched = false (preview mode)
+    // Viewer hoặc presenter full: luôn dùng 100% để fill container
+    // Bỏ inline style để dùng CSS từ styled component (object-fit: contain sẽ handle scaling)
+    const videoStyle = (isPresenter && !switched)
+      ? { maxHeight: '25%', width: '25%', height: '25%' }
+      : {}; // Không set inline style, để CSS từ styled component handle
 
     return (
       <Styled.ScreenshareVideo
         id={SCREENSHARE_MEDIA_ELEMENT_NAME}
         key={SCREENSHARE_MEDIA_ELEMENT_NAME}
         unhealthyStream={!isGloballyBroadcasting}
-        style={switched
-          ? { maxHeight: '100%', width: '100%', height: '100%' }
-          : { maxHeight: '25%', width: '25%', height: '25%' }}
+        style={videoStyle}
         playsInline
+        autoPlay
         onLoadedData={this.onLoadedData}
         onLoadedMetadata={this.onLoadedMetadata}
         ref={(ref) => {
@@ -616,6 +622,11 @@ class ScreenshareComponent extends React.Component {
             width,
             zIndex: fullscreenContext ? zIndex : undefined,
             backgroundColor: '#06172A',
+            // Đảm bảo container fill đúng kích thước từ layout engine
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+            minWidth: 0,
+            minHeight: 0,
           }
         }
       >

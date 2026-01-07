@@ -102,6 +102,9 @@ const getErrorLocale = (errorCode) => {
     // Denied getDisplayMedia permission error
     case SCREENSHARING_ERRORS.NotAllowedError.errorCode:
       return intlMessages.permissionError;
+    // Tab sharing not supported
+    case SCREENSHARING_ERRORS.TAB_SHARING_NOT_SUPPORTED?.errorCode:
+      return null; // Will use custom errorMessage instead
     // Browser is supposed to be supported, but a browser-related error happening.
     // Suggest retrying in another device/browser/env
     case SCREENSHARING_ERRORS.AbortError.errorCode:
@@ -176,7 +179,14 @@ const ScreenshareButton = ({
     const helpInfo =  getHelpInfoForError(errorCode);
     const toastType = getToastType(errorCode);
 
-    if (localizedError) {
+    // Nếu có errorMessage tùy chỉnh (như tab sharing), sử dụng nó thay vì localized error
+    if (errorCode === SCREENSHARING_ERRORS.TAB_SHARING_NOT_SUPPORTED?.errorCode && errorMessage) {
+      notify(errorMessage, toastType, 'desktop', { ...helpInfo });
+      logger.error({
+        logCode: 'screenshare_failed',
+        extraInfo: { errorCode, errorMessage },
+      }, `Screenshare failed: ${errorMessage} (code=${errorCode})`);
+    } else if (localizedError) {
       notify(intl.formatMessage(localizedError, { errorCode }), toastType, 'desktop', { ...helpInfo });
       logger.error({
         logCode: 'screenshare_failed',
