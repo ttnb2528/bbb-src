@@ -6,7 +6,8 @@ import React, {
 } from 'react';
 import LockViewersContainer from '/imports/ui/components/lock-viewers/container';
 import GuestPolicyContainer from '/imports/ui/components/waiting-users/guest-policy/container';
-import CreateBreakoutRoomContainerGraphql from '../../../../breakout-room/create-breakout-room/component';
+// Breakout room temporarily hidden
+// import CreateBreakoutRoomContainerGraphql from '../../../../breakout-room/create-breakout-room/component';
 import BBBMenu from '/imports/ui/components/common/menu/component';
 import Styled from './styles';
 import { defineMessages, useIntl } from 'react-intl';
@@ -186,7 +187,8 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
     uid(8, 'options-'),
     uid(8, 'options-'),
   ]);
-  const [isCreateBreakoutRoomModalOpen, setIsCreateBreakoutRoomModalOpen] = useState(false);
+  // Breakout room temporarily hidden
+  // const [isCreateBreakoutRoomModalOpen, setIsCreateBreakoutRoomModalOpen] = useState(false);
   const [isGuestPolicyModalOpen, setIsGuestPolicyModalOpen] = useState(false);
   const [isLockViewersModalOpen, setIsLockViewersModalOpen] = useState(false);
 
@@ -197,10 +199,11 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
   const isLearningDashboardEnabled = useIsLearningDashboardEnabled();
   const isBreakoutRoomsEnabled = useIsBreakoutRoomsEnabled();
   const isReactionsEnabled = useIsReactionsEnabled();
-  const canInviteUsers = isModerator
-  && !isBreakout
-  && hasBreakoutRooms;
-  const isInvitation = hasBreakoutRooms && isModerator;
+  // Breakout room temporarily hidden
+  // const canInviteUsers = isModerator
+  // && !isBreakout
+  // && hasBreakoutRooms;
+  // const isInvitation = hasBreakoutRooms && isModerator;
 
   if (usersError) {
     logger.error({
@@ -253,10 +256,11 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
   const { dynamicGuestPolicy } = window.meetingClientSettings.public.app;
 
   const actions = useMemo(() => {
-    const canCreateBreakout = isModerator
-      && !isBreakout
-      && !hasBreakoutRooms
-      && isBreakoutRoomsEnabled;
+    // Breakout room temporarily hidden
+    // const canCreateBreakout = isModerator
+    //   && !isBreakout
+    //   && !hasBreakoutRooms
+    //   && isBreakoutRoomsEnabled;
     return [
       {
         allow: !isBreakout,
@@ -311,34 +315,35 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
         icon: 'clear_status',
         dataTest: 'clearStatus',
       },
-      {
-        key: 'separator-01',
-        isSeparator: true,
-        allow: true,
-      },
-      {
-        allow: canCreateBreakout,
-        key: uuids.current[6],
-        icon: 'rooms',
-        label: intl.formatMessage(intlMessages.createBreakoutRoom),
-        description: intl.formatMessage(intlMessages.createBreakoutRoomDesc),
-        onClick: () => setIsCreateBreakoutRoomModalOpen(true),
-        dataTest: 'createBreakoutRooms',
-      },
-      {
-        allow: canInviteUsers,
-        key: uuids.current[7],
-        icon: 'rooms',
-        label: intl.formatMessage(intlMessages.invitationLabel),
-        description: intl.formatMessage(intlMessages.invitationDesc),
-        onClick: () => setIsCreateBreakoutRoomModalOpen(true),
-        dataTest: 'inviteUsers',
-      },
-      {
-        key: 'separator-02',
-        isSeparator: true,
-        allow: canCreateBreakout,
-      },
+      // Breakout room options temporarily hidden
+      // {
+      //   key: 'separator-01',
+      //   isSeparator: true,
+      //   allow: true,
+      // },
+      // {
+      //   allow: canCreateBreakout,
+      //   key: uuids.current[6],
+      //   icon: 'rooms',
+      //   label: intl.formatMessage(intlMessages.createBreakoutRoom),
+      //   description: intl.formatMessage(intlMessages.createBreakoutRoomDesc),
+      //   onClick: () => setIsCreateBreakoutRoomModalOpen(true),
+      //   dataTest: 'createBreakoutRooms',
+      // },
+      // {
+      //   allow: canInviteUsers,
+      //   key: uuids.current[7],
+      //   icon: 'rooms',
+      //   label: intl.formatMessage(intlMessages.invitationLabel),
+      //   description: intl.formatMessage(intlMessages.invitationDesc),
+      //   onClick: () => setIsCreateBreakoutRoomModalOpen(true),
+      //   dataTest: 'inviteUsers',
+      // },
+      // {
+      //   key: 'separator-02',
+      //   isSeparator: true,
+      //   allow: canCreateBreakout,
+      // },
       {
         allow: isLearningDashboardEnabled,
         icon: 'multi_whiteboard',
@@ -382,7 +387,8 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
           transformOrigin: { vertical: 'top', horizontal: isRTL ? 'right' : 'left' },
         }}
       />
-      {renderModal({
+      {/* Breakout room modal temporarily hidden */}
+      {/* {renderModal({
         isOpen: isCreateBreakoutRoomModalOpen,
         setIsOpen: setIsCreateBreakoutRoomModalOpen,
         priority: 'medium',
@@ -390,7 +396,7 @@ const UserTitleOptions: React.FC<UserTitleOptionsProps> = ({
         otherOptions: {
           isUpdate: isInvitation,
         },
-      })}
+      })} */}
 
       {renderModal({
         isOpen: isGuestPolicyModalOpen,
@@ -427,7 +433,7 @@ const UserTitleOptionsContainer: React.FC = () => {
     isModerator: user?.isModerator,
   }));
   // in case of current user isn't load yet
-  if (!currentUser?.isModerator ?? true) return null;
+  if (!(currentUser?.isModerator ?? false)) return null;
 
   const hasBreakoutRooms = meetingInfo?.componentsFlags?.hasBreakoutRoom ?? false;
 

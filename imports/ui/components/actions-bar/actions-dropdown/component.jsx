@@ -220,28 +220,29 @@ class ActionsDropdown extends PureComponent {
       });
     }
 
-    if (amIPresenter && isPollingEnabled) {
-      actions.push({
-        icon: 'polling',
-        dataTest: 'polling',
-        label: isQuizEnabled ? formatMessage(pollQuizBtnLabel) : formatMessage(pollBtnLabel),
-        key: this.pollId,
-        onClick: () => {
-          if (Session.equals('pollInitiated', true)) {
-            Session.setItem('resetPollPanel', true);
-          }
-          layoutContextDispatch({
-            type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
-            value: true,
-          });
-          layoutContextDispatch({
-            type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
-            value: PANELS.POLL,
-          });
-          Session.setItem('forcePollOpen', true);
-        },
-      });
-    }
+    // Poll/Quiz temporarily hidden
+    // if (amIPresenter && isPollingEnabled) {
+    //   actions.push({
+    //     icon: 'polling',
+    //     dataTest: 'polling',
+    //     label: isQuizEnabled ? formatMessage(pollQuizBtnLabel) : formatMessage(pollBtnLabel),
+    //     key: this.pollId,
+    //     onClick: () => {
+    //       if (Session.equals('pollInitiated', true)) {
+    //         Session.setItem('resetPollPanel', true);
+    //       }
+    //       layoutContextDispatch({
+    //         type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+    //         value: true,
+    //       });
+    //       layoutContextDispatch({
+    //         type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
+    //         value: PANELS.POLL,
+    //       });
+    //       Session.setItem('forcePollOpen', true);
+    //     },
+    //   });
+    // }
 
     if (!amIPresenter && amIModerator) {
       actions.push({

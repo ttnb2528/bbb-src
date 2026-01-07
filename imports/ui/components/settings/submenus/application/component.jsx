@@ -497,7 +497,8 @@ class ApplicationMenu extends BaseMenu {
             </Styled.Col>
           </Styled.Row>
           {this.renderPaginationToggle()}
-          {this.renderDarkThemeToggle()}
+          {/* Dark mode temporarily hidden */}
+          {/* {this.renderDarkThemeToggle()} */}
           {this.renderWakeLockToggle()}
 
           <Styled.Row>

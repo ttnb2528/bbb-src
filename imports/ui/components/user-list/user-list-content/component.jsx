@@ -52,7 +52,8 @@ class UserContent extends PureComponent {
               && <TimerContainer isModerator={currentUser?.role === ROLE_MODERATOR} />}
               {currentUser?.role === ROLE_MODERATOR ? <GuestPanelOpenerContainer /> : null}
               <UserPollsContainer isPresenter={currentUser?.presenter} />
-              <BreakoutRoomContainer />
+              {/* Breakout room temporarily hidden */}
+              {/* <BreakoutRoomContainer /> */}
               <GenericSidekickContentNavButtonContainer />
               <UserTitleContainer />
               <UserListParticipants compact={compact} />
@@ -65,7 +66,8 @@ class UserContent extends PureComponent {
             {isTimerActive && <TimerContainer isModerator={currentUser?.role === ROLE_MODERATOR} />}
             {currentUser?.role === ROLE_MODERATOR ? <GuestPanelOpenerContainer /> : null}
             <UserPollsContainer isPresenter={currentUser?.presenter} />
-            <BreakoutRoomContainer />
+            {/* Breakout room temporarily hidden */}
+            {/* <BreakoutRoomContainer /> */}
             <GenericSidekickContentNavButtonContainer />
             <UserTitleContainer />
             <UserListParticipants compact={compact} />
