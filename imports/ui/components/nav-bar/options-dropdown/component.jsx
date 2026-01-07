@@ -601,9 +601,9 @@ class OptionsDropdown extends PureComponent {
             <Styled.DropdownButton
               state={isDropdownOpen ? 'open' : 'closed'}
               label={intl.formatMessage(intlMessages.optionsLabel)}
-              icon="more"
+              icon="more" /* Trả về 3 chấm, giờ đã có nền trắng nên dễ phân biệt */
               data-test="optionsButton"
-              color="dark"
+              color="default"
               size="md"
               circle
               hideLabel

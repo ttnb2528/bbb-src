@@ -182,13 +182,13 @@ class LeaveMeetingButton extends PureComponent {
               tooltipLabel={intl.formatMessage(intlMessages.leaveMeetingBtnLabel)}
               description={intl.formatMessage(intlMessages.leaveMeetingBtnDesc)}
               data-test="leaveMeetingDropdown"
-              icon="logout"
+              icon="logout" /* Dùng icon logout có sẵn để tránh lỗi missing glyph */
               color="danger"
-              size="lg"
+              size="md" /* Kích thước vừa, đồng bộ với các action */
               hideLabel
               // FIXME: Without onClick react proptypes keep warning
               // even after the DropdownTrigger inject an onClick handler
-              onClick={() => null}
+              onClick={() => null} 
             />
           )}
           actions={this.renderMenuItems()}

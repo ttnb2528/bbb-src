@@ -5,9 +5,17 @@ import {
   colorGrayDark,
   btnPrimaryColor,
   btnPrimaryActiveBg,
+  colorWhite,
 } from '/imports/ui/stylesheets/styled-components/palette';
 
 const DropdownButton = styled(Button)`
+  /* Đồng bộ với nút action: nền trắng, tròn, 44px */
+  background: ${colorWhite} !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+
   ${({ state }) => state === 'open' && `
     @media ${smallOnly} {
       display: none;

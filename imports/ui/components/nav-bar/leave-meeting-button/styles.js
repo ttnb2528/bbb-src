@@ -3,7 +3,13 @@ import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints
 import Button from '/imports/ui/components/common/button/component';
 
 const LeaveButton = styled(Button)`
-  border-radius: 1.1rem;
+  /* Đồng bộ kích thước, dạng tròn như các action */
+  min-width: 36px !important;
+  min-height: 36px !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
   font-size: 1rem;
   line-height: 1.1rem;
   font-weight: 400;
