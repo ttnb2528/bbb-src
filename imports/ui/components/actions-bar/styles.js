@@ -87,9 +87,9 @@ const Center = styled.div`
     flex-shrink: 0;
   }
 
-  /* Mobile: gap vừa phải, không quá rộng */
+  /* Mobile: gap vừa phải, không quá rộng - giống Google Meet */
   @media ${smallOnly} {
-    gap: 10px;
+    gap: 8px; /* Giảm gap để gọn gàng hơn */
     flex: 1;
     justify-content: center;
     overflow-x: auto;
@@ -111,7 +111,7 @@ const Center = styled.div`
   }
 
   @media ${hasPhoneWidth} {
-    gap: 12px; /* Giảm gap trên phone để không quá rộng */
+    gap: 6px; /* Giảm gap trên phone để gọn gàng hơn */
     height: 62px !important;
 
     /* Buttons trên phone */
@@ -148,9 +148,9 @@ const Right = styled.div`
     display: contents;
   }
 
-  /* Mobile: gap hợp lý cho Right section */
+  /* Mobile: gap hợp lý cho Right section - giống Google Meet */
   @media ${smallOnly} {
-    gap: 8px;
+    gap: 6px; /* Giảm gap để gọn gàng hơn */
 
     /* Buttons trên mobile */
     button {
@@ -163,7 +163,7 @@ const Right = styled.div`
   }
 
   @media ${hasPhoneWidth} {
-    gap: 6px;
+    gap: 4px; /* Giảm gap trên phone để gọn gàng hơn */
 
     /* Buttons trên phone */
     button {
@@ -232,13 +232,13 @@ const Gap = styled.div`
   min-width: 0; /* Allow flex shrinking */
   flex-shrink: 0; /* Prevent shrinking */
 
-  /* Mobile: gap hợp lý */
+  /* Mobile: gap hợp lý - giống Google Meet */
   @media ${smallOnly} {
-    gap: 8px;
+    gap: 6px; /* Giảm gap để gọn gàng hơn */
   }
 
   @media ${hasPhoneWidth} {
-    gap: 6px;
+    gap: 4px; /* Giảm gap trên phone để gọn gàng hơn */
   }
 `;
 

@@ -5,14 +5,14 @@ import { hasPhoneWidth, smallOnly } from '/imports/ui/stylesheets/styled-compone
 
 const Container = styled.div`
   position: fixed;
-  bottom: calc(var(--actionbar-height, 80px) + 12px);
+  bottom: calc(var(--actionbar-height, 80px) + 8px);
   left: 8px;
   right: 8px;
   transform: none;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
+  gap: 8px;
+  padding: 6px 8px;
   background-color: ${colorBackground};
   border-radius: ${borderRadius};
   box-shadow: none; /* bỏ đổ bóng để panel không nổi lên quá nhiều */

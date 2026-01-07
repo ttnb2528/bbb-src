@@ -4,7 +4,7 @@ import MobileDrawer from '../mobile-drawer/component';
 import UserListContainer from '../user-list/container';
 import PublicChatContainer from './public-chat-container';
 import NotesContainer from '../notes/component';
-import PrivateChatModal from '../actions-bar/private-chat-modal/component';
+// PrivateChatModal đã được di chuyển vào actions bar component
 import { layoutSelectInput, layoutSelectOutput, layoutDispatch, layoutSelect } from '../layout/context';
 import { Layout } from '../layout/layoutTypes';
 import { ACTIONS, PANELS } from '../layout/enums';
@@ -32,7 +32,6 @@ import { Chat } from '/imports/ui/Types/chat';
 const MobilePanelButtonsContainer: React.FC = () => {
   const [isUserListDrawerOpen, setIsUserListDrawerOpen] = useState(false);
   const [isChatNotesDrawerOpen, setIsChatNotesDrawerOpen] = useState(false);
-  const [isPrivateChatModalOpen, setIsPrivateChatModalOpen] = useState(false);
   
   const sidebarContent = layoutSelectInput((i: any) => i.sidebarContent);
   const actionBarOutput = layoutSelectOutput((i: any) => i.actionBar);
@@ -135,36 +134,6 @@ const MobilePanelButtonsContainer: React.FC = () => {
   return (
     <>
       <MobilePanelButtons
-        onToggleUserList={() => setIsUserListDrawerOpen((prev) => !prev)}
-        onToggleChatNotes={() => {
-          const willOpen = !isChatNotesDrawerOpen;
-          setIsChatNotesDrawerOpen(willOpen);
-          
-          // Khi mở drawer, ngay lập tức set public chat ID và panel
-          if (willOpen && !isPrivateChatModalOpen) {
-            const CHAT_CONFIG = window.meetingClientSettings.public.chat;
-            const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
-            // Set cả panel và chat ID cùng lúc
-            layoutContextDispatch({
-              type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
-              value: PANELS.CHAT,
-            });
-            layoutContextDispatch({
-              type: ACTIONS.SET_ID_CHAT_OPEN,
-              value: PUBLIC_GROUP_CHAT_ID,
-            });
-          }
-        }}
-        onTogglePrivateChat={() => {
-          if (isPrivateChatModalOpen) {
-            // Nếu modal đã mở, dispatch event để expand nếu đang minimized hoặc đóng nếu không
-            window.dispatchEvent(new CustomEvent('togglePrivateChatModal'));
-          } else {
-            // Nếu modal chưa mở, mở nó
-            setIsPrivateChatModalOpen(true);
-          }
-        }}
-        privateUnreadCount={privateUnreadCount}
         // Props cho ActionsDropdown - chỉ hiển thị khi là presenter
         amIPresenter={amIPresenter}
         amIModerator={amIModerator}
@@ -239,14 +208,7 @@ const MobilePanelButtonsContainer: React.FC = () => {
           <NotesContainer isToSharedNotesBeShow={true} />
         )}
       </MobileDrawer>
-      <PrivateChatModal
-        isOpen={isPrivateChatModalOpen}
-        onRequestClose={() => {
-          // Đóng modal trực tiếp, không toggle
-          setIsPrivateChatModalOpen(false);
-        }}
-        isPublicChatDrawerOpen={isChatNotesDrawerOpen && activeChatNotesPanel === PANELS.CHAT}
-      />
+      {/* PrivateChatModal đã được di chuyển vào actions bar component */}
     </>
   );
 };

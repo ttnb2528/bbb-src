@@ -6,10 +6,6 @@ import Styled from './styles';
 import ActionsDropdownContainer from '../actions-bar/actions-dropdown/container';
 
 interface MobilePanelButtonsProps {
-  onToggleUserList: () => void;
-  onToggleChatNotes: () => void;
-  onTogglePrivateChat: () => void;
-  privateUnreadCount: number;
   // Props cho ActionsDropdown
   amIPresenter?: boolean;
   amIModerator?: boolean;
@@ -27,10 +23,6 @@ interface MobilePanelButtonsProps {
 }
 
 const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
-  onToggleUserList,
-  onToggleChatNotes,
-  onTogglePrivateChat,
-  privateUnreadCount,
   amIPresenter,
   amIModerator,
   isMeteorConnected,
@@ -46,6 +38,9 @@ const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
   showPushLayout,
 }) => {
   if (!deviceInfo.isMobile) return null;
+  
+  // Chỉ hiển thị panel nếu là presenter (để có ActionsDropdown)
+  if (!amIPresenter) return null;
 
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -70,27 +65,7 @@ const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
         </Styled.ToggleButtonWrapper>
         {isExpanded && (
           <Styled.ExpandedButtons>
-            <Button
-              label="Users"
-              icon="user"
-              color="default"
-              size="md"
-              onClick={onToggleUserList}
-              hideLabel
-              circle
-              data-test="mobileUserListButton"
-            />
-            <Button
-              label="Chat & Notes"
-              icon="group_chat"
-              color="default"
-              size="md"
-              onClick={onToggleChatNotes}
-              hideLabel
-              circle
-              data-test="mobileChatNotesButton"
-            />
-            {/* Nút dấu cộng đặt trong panel xổ trái để gọn gàng */}
+            {/* Chỉ hiển thị ActionsDropdown nếu là presenter */}
             <ActionsDropdownContainer
               triggerSize="md"
               amIPresenter={amIPresenter}
@@ -110,24 +85,6 @@ const MobilePanelButtons: React.FC<MobilePanelButtonsProps> = ({
           </Styled.ExpandedButtons>
         )}
       </Styled.LeftGroup>
-
-      <Styled.RightGroup>
-        <Styled.BadgeWrapper>
-          <Button
-            label="Message"
-            icon="chat"
-            color="primary"
-            size="md"
-            onClick={onTogglePrivateChat}
-            hideLabel
-            circle
-            data-test="mobilePrivateChatButton"
-          />
-          {privateUnreadCount > 0 && (
-            <Styled.UnreadBadge>{privateUnreadCount}</Styled.UnreadBadge>
-          )}
-        </Styled.BadgeWrapper>
-      </Styled.RightGroup>
     </Styled.Container>
   );
 };

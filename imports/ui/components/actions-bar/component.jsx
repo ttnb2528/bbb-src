@@ -30,6 +30,7 @@ import Tooltip from '/imports/ui/components/common/tooltip/component';
 import SessionDetailsModal from '/imports/ui/components/session-details/component';
 import PrivateChatModal from './private-chat-modal/component';
 import deviceInfo from '/imports/utils/deviceInfo';
+import MoreMenu from './more-menu/component';
 
 const intlMessages = defineMessages({
   actionsBarLabel: {
@@ -107,12 +108,10 @@ class ActionsBar extends PureComponent {
   }
 
   handleExternalOpenPrivateChat() {
-    // Chỉ mở modal nếu đang ở desktop (mobile sẽ được xử lý bởi mobile-panel-buttons)
-    if (!deviceInfo.isMobile) {
-      this.setState({
-        isPrivateChatModalOpen: true,
-      });
-    }
+    // Mở modal cho cả desktop và mobile
+    this.setState({
+      isPrivateChatModalOpen: true,
+    });
   }
 
   handleToggleUserList = () => {
@@ -427,76 +426,94 @@ class ActionsBar extends PureComponent {
           </Styled.Center>
           <Styled.Right>
             <Styled.Gap>
-              {/* Info button - dùng icon settings hoặc custom SVG */}
-              <Button
-                label={intl.formatMessage({ id: 'app.navBar.openDetailsTooltip' })}
-                icon="settings"
-                color="default"
-                size="md"
-                onClick={() => this.setModalIsOpen(true)}
-                hideLabel
-                circle
-                data-test="infoButton"
-              />
-              
-              {/* User List button - dùng icon user (có sẵn) */}
-              <Styled.BadgeWrapper>
-                <Button
-                  label={intl.formatMessage({ id: 'app.navBar.userListToggleBtnLabel' })}
-                  icon="user"
-                  color="default"
-                  size="md"
-                  onClick={this.handleToggleUserList}
-                  hideLabel
-                  circle
-                  data-test="toggleUserList"
-                  aria-expanded={sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.USERLIST}
-                />
-                {/* Có thể thêm badge nếu có notification */}
-              </Styled.BadgeWrapper>
-              
-              {/* Chat button - dùng icon group_chat cho public chat */}
-              <Styled.BadgeWrapper>
-                <Button
-                  label={intl.formatMessage({ id: 'app.chat.title' })}
-                  icon="group_chat"
-                  color="default"
-                  size="md"
-                  onClick={this.handleToggleChat}
-                  hideLabel
-                  circle
-                  data-test="toggleChat"
-                  aria-expanded={sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT}
-                />
-                {/* Có thể thêm badge nếu có unread messages */}
-              </Styled.BadgeWrapper>
-              
-              {/* Options dropdown */}
-              <OptionsDropdownContainer
-                amIModerator={amIModerator}
-                isDirectLeaveButtonEnabled={isDirectLeaveButtonEnabled}
-                showConnectionStatus={ConnectionStatusService.isEnabled()}
-                showLeaveButton={false}
-              />
-              
-              {/* Leave Meeting button - rõ ràng, màu đỏ */}
-              {isDirectLeaveButtonEnabled && isMeteorConnected && (
-                <LeaveMeetingButtonContainer amIModerator={amIModerator} />
+              {/* Mobile: Chỉ hiển thị More menu và Leave button */}
+              {deviceInfo.isMobile ? (
+                <>
+                  <MoreMenu
+                    onOpenSettings={() => this.setModalIsOpen(true)}
+                    onToggleUserList={this.handleToggleUserList}
+                    onToggleChat={this.handleToggleChat}
+                    onTogglePrivateChat={this.handleTogglePrivateChat}
+                    sidebarContent={sidebarContent}
+                    privateUnreadCount={privateUnreadCount}
+                  />
+                  
+                  {/* Leave Meeting button - rõ ràng, màu đỏ */}
+                  {isDirectLeaveButtonEnabled && isMeteorConnected && (
+                    <LeaveMeetingButtonContainer amIModerator={amIModerator} />
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Desktop: Hiển thị tất cả các nút */}
+                  {/* Info button - dùng icon settings hoặc custom SVG */}
+                  <Button
+                    label={intl.formatMessage({ id: 'app.navBar.openDetailsTooltip' })}
+                    icon="settings"
+                    color="default"
+                    size="md"
+                    onClick={() => this.setModalIsOpen(true)}
+                    hideLabel
+                    circle
+                    data-test="infoButton"
+                  />
+                  
+                  {/* User List button - dùng icon user (có sẵn) */}
+                  <Styled.BadgeWrapper>
+                    <Button
+                      label={intl.formatMessage({ id: 'app.navBar.userListToggleBtnLabel' })}
+                      icon="user"
+                      color="default"
+                      size="md"
+                      onClick={this.handleToggleUserList}
+                      hideLabel
+                      circle
+                      data-test="toggleUserList"
+                      aria-expanded={sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.USERLIST}
+                    />
+                  </Styled.BadgeWrapper>
+                  
+                  {/* Chat button - dùng icon group_chat cho public chat */}
+                  <Styled.BadgeWrapper>
+                    <Button
+                      label={intl.formatMessage({ id: 'app.chat.title' })}
+                      icon="group_chat"
+                      color="default"
+                      size="md"
+                      onClick={this.handleToggleChat}
+                      hideLabel
+                      circle
+                      data-test="toggleChat"
+                      aria-expanded={sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT}
+                    />
+                  </Styled.BadgeWrapper>
+                  
+                  {/* Options dropdown */}
+                  <OptionsDropdownContainer
+                    amIModerator={amIModerator}
+                    isDirectLeaveButtonEnabled={isDirectLeaveButtonEnabled}
+                    showConnectionStatus={ConnectionStatusService.isEnabled()}
+                    showLeaveButton={false}
+                  />
+                  
+                  {/* Leave Meeting button - rõ ràng, màu đỏ */}
+                  {isDirectLeaveButtonEnabled && isMeteorConnected && (
+                    <LeaveMeetingButtonContainer amIModerator={amIModerator} />
+                  )}
+                </>
               )}
             </Styled.Gap>
           </Styled.Right>
         </Styled.ActionsBar>
-        {/* Chỉ render PrivateChatModal trên desktop, mobile sẽ được xử lý bởi mobile-panel-buttons */}
-        {!deviceInfo.isMobile && (
-          <PrivateChatModal
-            isOpen={this.state.isPrivateChatModalOpen}
-            onRequestClose={() => {
-              // Đóng modal trực tiếp, không toggle
-              this.setState({ isPrivateChatModalOpen: false });
-            }}
-            onExpand={this.handleExpandPrivateChat}
-          />
-        )}
+        {/* Render PrivateChatModal cho cả desktop và mobile */}
+        <PrivateChatModal
+          isOpen={this.state.isPrivateChatModalOpen}
+          onRequestClose={() => {
+            // Đóng modal trực tiếp, không toggle
+            this.setState({ isPrivateChatModalOpen: false });
+          }}
+          onExpand={this.handleExpandPrivateChat}
+        />
       </Styled.ActionsBarWrapper>
     );
   }
