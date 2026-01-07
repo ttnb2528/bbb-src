@@ -36,7 +36,7 @@ const ActionsBarWrapper = styled.section`
   }
 
   @media ${hasPhoneWidth} {
-    padding: 0px 4px 14px 0px !important; /* Tăng padding bottom thêm để không bị thụt */
+    padding: 0px 10px 14px 10px !important; /* Tăng padding ngang để nút có khoảng thở */
     min-height: 72px !important; /* Tăng chiều cao tối thiểu lên 72px */
     min-width: 260px; /* Even smaller min-width on phone */
   }
@@ -111,15 +111,15 @@ const Center = styled.div`
   }
 
   @media ${hasPhoneWidth} {
-    gap: 6px; /* Giảm gap trên phone để gọn gàng hơn */
+    gap: 12px; /* Giảm gap trên phone để gọn gàng hơn */
     height: 62px !important;
 
     /* Buttons trên phone */
     button {
-      min-width: 36px !important;
-      min-height: 36px !important;
-      width: 36px !important;
-      height: 36px !important;
+      min-width: 48px !important;
+      min-height: 48px !important;
+      width: 48px !important;
+      height: 48px !important;
       flex-shrink: 0 !important;
     }
   }
@@ -150,7 +150,7 @@ const Right = styled.div`
 
   /* Mobile: gap hợp lý cho Right section - giống Google Meet */
   @media ${smallOnly} {
-    gap: 6px; /* Giảm gap để gọn gàng hơn */
+    gap: 10px; /* Tăng gap nhẹ để nút không dính nhau */
 
     /* Buttons trên mobile */
     button {
@@ -163,14 +163,14 @@ const Right = styled.div`
   }
 
   @media ${hasPhoneWidth} {
-    gap: 4px; /* Giảm gap trên phone để gọn gàng hơn */
+    gap: 8px; /* Tăng gap cho 2 nút ngoài cùng bên phải */
 
     /* Buttons trên phone */
     button {
-      min-width: 36px !important;
-      min-height: 36px !important;
-      width: 36px !important;
-      height: 36px !important;
+      min-width: 48px !important;
+      min-height: 48px !important;
+      width: 48px !important;
+      height: 48px !important;
       flex-shrink: 0 !important;
     }
   }
@@ -227,18 +227,18 @@ const Separator = styled.div`
 const Gap = styled.div`
   display: flex;
   flex-wrap: wrap; /* Allow wrapping when zoomed to prevent overflow */
-  gap: 8px;
+  gap: 10px;
   align-items: center;
   min-width: 0; /* Allow flex shrinking */
   flex-shrink: 0; /* Prevent shrinking */
 
   /* Mobile: gap hợp lý - giống Google Meet */
   @media ${smallOnly} {
-    gap: 6px; /* Giảm gap để gọn gàng hơn */
+    gap: 10px; /* Tăng gap nhẹ cho nhóm nút bên phải */
   }
 
   @media ${hasPhoneWidth} {
-    gap: 4px; /* Giảm gap trên phone để gọn gàng hơn */
+    gap: 8px; /* Tăng gap trên phone để 2 nút ngoài cùng tách nhau hơn */
   }
 `;
 

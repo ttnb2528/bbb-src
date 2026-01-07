@@ -139,7 +139,7 @@ class MoreMenu extends PureComponent {
         opts={{
           id: 'actions-bar-more-menu',
           keepMounted: true,
-          transitionDuration: 0,
+          transitionDuration: 120, // mượt hơn khi mở
           elevation: 3,
           getcontentanchorel: null,
           fullwidth: 'true',
