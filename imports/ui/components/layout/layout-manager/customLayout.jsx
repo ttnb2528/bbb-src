@@ -911,7 +911,7 @@ const CustomLayout = (props) => {
         left: sidebarNavLeft,
         right: sidebarContentRight,
         tabOrder: DEFAULT_VALUES.sidebarNavTabOrder,
-        isResizable: !isMobile && !isTablet, // Allow resize for desktop
+        isResizable: false, // Tắt tính năng resize sidebar
         zIndex: 10,
       },
     });
@@ -920,9 +920,9 @@ const CustomLayout = (props) => {
       type: ACTIONS.SET_SIDEBAR_NAVIGATION_RESIZABLE_EDGE,
       value: {
         top: false,
-        right: !isRTL, // Allow resize from right edge
+        right: false, // Tắt resize từ right edge
         bottom: false,
-        left: isRTL,
+        left: false, // Tắt resize từ left edge
       },
     });
 
@@ -963,7 +963,7 @@ const CustomLayout = (props) => {
         right: sidebarContentRight,
         currentPanelType,
         tabOrder: DEFAULT_VALUES.sidebarContentTabOrder,
-        isResizable: !isMobile && !isTablet, // Allow resize for desktop
+        isResizable: false, // Tắt tính năng resize sidebar
         zIndex: 10,
       },
     });
@@ -972,9 +972,9 @@ const CustomLayout = (props) => {
       type: ACTIONS.SET_SIDEBAR_CONTENT_RESIZABLE_EDGE,
       value: {
         top: false,
-        right: !isRTL,
+        right: false, // Tắt resize từ right edge
         bottom: false,
-        left: !isRTL, // Allow resize from left edge (adjacent to User List)
+        left: false, // Tắt resize từ left edge
       },
     });
 
