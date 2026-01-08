@@ -224,17 +224,29 @@ class ActionsBar extends PureComponent {
     
     // Nếu có chatId trực tiếp, mở luôn (đây là từ PrivateChatHelper sau khi tìm được chatId)
     if (chatId) {
+      console.log('[ActionsBar] handleExternalOpenPrivateChat - Opening chat with chatId:', chatId);
       // Xử lý ngay lập tức, không dùng setTimeout
       this.setState((prevState) => {
         // Kiểm tra xem chatId này đã được xử lý chưa (tránh duplicate)
         const existingChat = prevState.openPrivateChats[chatId];
+        const allChatIds = Object.keys(prevState.openPrivateChats);
+        const minimizedChatIds = allChatIds.filter(id => prevState.openPrivateChats[id]?.isMinimized);
+        
+        console.log('[ActionsBar] Current state:', {
+          allChatIds,
+          minimizedChatIds,
+          existingChat: existingChat ? { isOpen: existingChat.isOpen, isMinimized: existingChat.isMinimized } : null,
+        });
+        
         if (existingChat?.isOpen && !existingChat?.isMinimized) {
           // Chat đã mở rồi, không làm gì (tránh duplicate)
+          console.log('[ActionsBar] Chat already open, skipping');
           return prevState;
         }
         
         // Nếu chat đã tồn tại và đang minimized, expand nó thay vì tạo mới
         if (existingChat && existingChat.isMinimized) {
+          console.log('[ActionsBar] Chat exists and is minimized, expanding it');
           // Expand chat này
           const restoredPosition = existingChat.savedPosition || (() => {
             const modalWidth = 360;
@@ -256,6 +268,8 @@ class ActionsBar extends PureComponent {
               savedPosition: undefined,
             },
           };
+          console.log('[ActionsBar] After expand - minimizedChats should remain:', 
+            Object.keys(newChats).filter(id => newChats[id]?.isMinimized));
           return { 
             openPrivateChats: newChats,
             isPrivateChatDockOpen: false,
@@ -264,6 +278,7 @@ class ActionsBar extends PureComponent {
         
         // Nếu chat chưa tồn tại hoặc đang đóng, tạo mới hoặc mở lại
         // Đảm bảo các chat minimized khác vẫn giữ nguyên trạng thái minimized
+        console.log('[ActionsBar] Creating new chat, preserving minimized chats:', minimizedChatIds);
         const newChats = {
           ...prevState.openPrivateChats,
           [chatId]: {
@@ -272,6 +287,8 @@ class ActionsBar extends PureComponent {
             position: existingChat?.position || null,
           },
         };
+        console.log('[ActionsBar] After create - minimizedChats:', 
+          Object.keys(newChats).filter(id => newChats[id]?.isMinimized));
         return { 
           openPrivateChats: newChats,
           isPrivateChatDockOpen: false, // Đóng dock khi mở chat mới
@@ -342,7 +359,6 @@ class ActionsBar extends PureComponent {
     };
     
     // eslint-disable-next-line no-console
-    console.log('[ActionsBar] handleMinimizePrivateChat', { chatId, savedPosition, dockPosition });
 
     this.setState((prevState) => {
       const newChats = {
@@ -361,7 +377,6 @@ class ActionsBar extends PureComponent {
   handleExpandPrivateChat = (chatId) => {
     // Mở lại popup chat từ minimized, restore vị trí cũ
     // eslint-disable-next-line no-console
-    console.log('[ActionsBar] handleExpandPrivateChat', { chatId });
 
     this.setState((prevState) => {
       const chatState = prevState.openPrivateChats[chatId];

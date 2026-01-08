@@ -209,7 +209,6 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
 
     // Log để debug click 2 lần
     // eslint-disable-next-line no-console
-    console.log('[PrivateChatModal] toggleMinimize click, externalIsMinimized:', externalIsMinimized, 'position:', currentPosition);
 
     // Sử dụng externalIsMinimized thay vì isMinimized state để tránh delay
     // vì externalIsMinimized được cập nhật ngay lập tức từ parent
@@ -270,10 +269,24 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   // Setup listener một lần khi component mount để nhận userId từ event
   // Không cần check isOpen vì event có thể được dispatch trước khi modal mở
   useEffect(() => {
-    const handleExternalOpenPrivateChat = () => {
-      // Nếu modal đã mở nhưng đang minimized, expand nó ra
-      if (isOpen && isMinimized) {
-        expandModal();
+    const handleExternalOpenPrivateChat = (e: Event) => {
+      // CHỈ expand modal này nếu chatId trong event khớp với chatId của modal này
+      // Tránh expand tất cả các modal khi mở chat mới
+      if (e instanceof CustomEvent && e.detail?.chatId) {
+        const eventChatId = e.detail.chatId;
+        console.log('[PrivateChatModal] openPrivateChatModal event received', { 
+          eventChatId, 
+          thisChatId: chatId, 
+          isOpen, 
+          isMinimized,
+          shouldExpand: eventChatId === chatId && isOpen && isMinimized
+        });
+        
+        // Chỉ expand nếu chatId khớp
+        if (eventChatId === chatId && isOpen && isMinimized) {
+          console.log('[PrivateChatModal] Expanding this modal because chatId matches');
+          expandModal();
+        }
       }
     };
     
@@ -296,7 +309,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       window.removeEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
       window.removeEventListener('togglePrivateChatModal', handleTogglePrivateChatModal as EventListener);
     };
-  }, [isOpen, isMinimized, onExpand, onRequestClose]); // Thêm onRequestClose vào dependencies
+  }, [isOpen, isMinimized, onExpand, onRequestClose, chatId]); // Thêm chatId vào dependencies
 
   // Reset position khi đóng modal
   useEffect(() => {
