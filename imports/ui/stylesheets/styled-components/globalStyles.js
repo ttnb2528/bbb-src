@@ -201,6 +201,42 @@ const GlobalStyle = createGlobalStyle`
       left: none !important;
     }
   }
+
+  /* Smooth transition for Session Details modal */
+  .ReactModal__Overlay {
+    opacity: 0;
+    background-color: rgba(0, 0, 0, 0);
+    transition: opacity 0.2s ease-out, background-color 0.2s ease-out;
+    backdrop-filter: blur(0px);
+  }
+
+  .ReactModal__Overlay--after-open {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  .ReactModal__Overlay--before-close {
+    opacity: 0;
+    background-color: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0px);
+  }
+
+  .ReactModal__Content {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+  }
+
+  .ReactModal__Content--after-open {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  .ReactModal__Content--before-close {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
 `;
 
 export default GlobalStyle;

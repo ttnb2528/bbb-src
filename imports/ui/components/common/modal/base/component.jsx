@@ -42,6 +42,7 @@ const BaseModal = (props) => {
       className={className}
       overlayClassName={overlayClassName}
       shouldReturnFocusAfterClose={false}
+      closeTimeoutMS={200}
       data={{
         test: dataTest,
       }}

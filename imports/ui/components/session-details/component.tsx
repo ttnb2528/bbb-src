@@ -115,62 +115,68 @@ const SessionDetails: React.FC<SessionDetailsProps> = (props) => {
       <Styled.Container
         isFullWidth={isMobile || !(loginUrl || (formattedDialNum && formattedTelVoice))}
       >
-        <div>
-          <Styled.WelcomeMessage dangerouslySetInnerHTML={{ __html: welcomeMessage }} />
-          <Styled.WelcomeMessage dangerouslySetInnerHTML={{ __html: welcomeMsgForModerators }} />
-        </div>
-        <div>
-          {loginUrl && (
-            <>
-              <Styled.JoinTitle>
-                {intl.formatMessage(intlMessages.joinByUrlLabel)}
-              </Styled.JoinTitle>
-              <p>
-                {loginUrl}
-                <Styled.CopyButton
-                  key="copy-join-url"
-                  onClick={() => copyData(loginUrl, 'join-url')}
-                  hideLabel
-                  color="light"
-                  icon={copyingJoinUrl ? 'check' : 'copy'}
-                  size="sm"
-                  circle
-                  ghost
-                  label={copyingJoinUrl
-                    ? intl.formatMessage(intlMessages.copied)
-                    : intl.formatMessage(intlMessages.copyUrlTooltip)}
-                />
-              </p>
-            </>
-          )}
-          {formattedDialNum && formattedTelVoice && (
-            <>
-              <Styled.JoinTitle>
-                {intl.formatMessage(intlMessages.joinByPhoneLabel)}
-                <Styled.CopyButton
-                  key="copy-dial-in"
-                  onClick={() => copyData(formattedDialNum, 'dial-in')}
-                  hideLabel
-                  color="light"
-                  icon={copyingDialIn ? 'check' : 'copy'}
-                  size="sm"
-                  circle
-                  ghost
-                  label={copyingDialIn
-                    ? intl.formatMessage(intlMessages.copied)
-                    : intl.formatMessage(intlMessages.copyPhoneTooltip)}
-                />
-              </Styled.JoinTitle>
-              <p>{formattedDialNum}</p>
-              <p>
-                <b>
-                  {`${intl.formatMessage(intlMessages.phonePinLabel)}:`}
-                </b>
-                {` ${formattedPin} #`}
-              </p>
-            </>
-          )}
-        </div>
+        {(welcomeMessage || welcomeMsgForModerators) && (
+          <div>
+            {welcomeMessage && (
+              <Styled.WelcomeMessage dangerouslySetInnerHTML={{ __html: welcomeMessage }} />
+            )}
+            {welcomeMsgForModerators && (
+              <Styled.WelcomeMessage dangerouslySetInnerHTML={{ __html: welcomeMsgForModerators }} />
+            )}
+          </div>
+        )}
+        {(loginUrl || (formattedDialNum && formattedTelVoice)) && (
+          <div>
+            {loginUrl && (
+              <>
+                <Styled.JoinTitle>
+                  {intl.formatMessage(intlMessages.joinByUrlLabel)}
+                  <Styled.CopyButton
+                    key="copy-join-url"
+                    onClick={() => copyData(loginUrl, 'join-url')}
+                    hideLabel
+                    color="light"
+                    icon={copyingJoinUrl ? 'check' : 'copy'}
+                    size="sm"
+                    circle
+                    ghost
+                    label={copyingJoinUrl
+                      ? intl.formatMessage(intlMessages.copied)
+                      : intl.formatMessage(intlMessages.copyUrlTooltip)}
+                  />
+                </Styled.JoinTitle>
+                <p>{loginUrl}</p>
+              </>
+            )}
+            {formattedDialNum && formattedTelVoice && (
+              <>
+                <Styled.JoinTitle>
+                  {intl.formatMessage(intlMessages.joinByPhoneLabel)}
+                  <Styled.CopyButton
+                    key="copy-dial-in"
+                    onClick={() => copyData(formattedDialNum, 'dial-in')}
+                    hideLabel
+                    color="light"
+                    icon={copyingDialIn ? 'check' : 'copy'}
+                    size="sm"
+                    circle
+                    ghost
+                    label={copyingDialIn
+                      ? intl.formatMessage(intlMessages.copied)
+                      : intl.formatMessage(intlMessages.copyPhoneTooltip)}
+                  />
+                </Styled.JoinTitle>
+                <p>{formattedDialNum}</p>
+                <p>
+                  <b>
+                    {`${intl.formatMessage(intlMessages.phonePinLabel)}:`}
+                  </b>
+                  {` ${formattedPin} #`}
+                </p>
+              </>
+            )}
+          </div>
+        )}
       </Styled.Container>
     </ModalSimple>
   );

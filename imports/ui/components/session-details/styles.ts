@@ -9,7 +9,33 @@ import { smPadding } from '/imports/ui/stylesheets/styled-components/general';
 
 const WelcomeMessage = styled.div`
   font-size: 1.0rem;
-  margin-bottom: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+  color: ${colorGrayDark};
+  
+  &:empty {
+    display: none;
+  }
+
+  p {
+    margin: 0 0 0.75rem 0;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  a {
+    color: ${colorPrimary};
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: ${colorPrimary};
+      text-decoration: underline;
+    }
+  }
 `;
 
 const Container = styled.div<{ isFullWidth: boolean }>`
@@ -18,17 +44,21 @@ const Container = styled.div<{ isFullWidth: boolean }>`
   width: 100%;
   box-sizing: border-box;
   text-align: left;
+  gap: 1.5rem;
 
   & > div {
-    flex: ${({ isFullWidth }) => (isFullWidth ? '1 1 100%' : '1 1 50%')};
+    flex: ${({ isFullWidth }) => (isFullWidth ? '1 1 100%' : '1 1 calc(50% - 0.75rem)')};
     box-sizing: border-box;
-    padding: 10px;
+    padding: ${({ isFullWidth }) => (isFullWidth ? '0' : '0 1rem')};
     overflow: auto;
     overflow-wrap: break-word;
+    min-width: 0;
   }
 
   & div p {
-    margin: 0;
+    margin: 0.5rem 0;
+    line-height: 1.5;
+    word-break: break-word;
   }
 
   ${({ isFullWidth }) => !isFullWidth && `
@@ -71,10 +101,15 @@ const Container = styled.div<{ isFullWidth: boolean }>`
 `;
 
 const JoinTitle = styled.h2`
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   text-transform: uppercase;
   color: ${colorGrayDark};
   font-weight: 600;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.75rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 // @ts-ignore - as button comes from JS, we can't provide its props
