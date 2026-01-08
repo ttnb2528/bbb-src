@@ -142,12 +142,19 @@ const GlobalStyle = createGlobalStyle`
   /* Nhưng icon vẫn có thể click được */
   .PrivateChatModal__overlay--minimized .PrivateChatModal__content {
     pointer-events: auto;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Thêm shadow nhẹ cho icon */
+    box-shadow: none !important; /* Bỏ shadow cho icon */
+    background: transparent !important; /* Bỏ nền trắng */
   }
 
   .PrivateChatModal__content {
     position: relative;
     outline: none;
+    background: transparent !important; /* Bỏ nền trắng từ ReactModal */
+  }
+  
+  /* Bỏ nền trắng cho minimized icon */
+  .PrivateChatModal__overlay--minimized .PrivateChatModal__content > div {
+    background: transparent !important;
   }
 
   // toast

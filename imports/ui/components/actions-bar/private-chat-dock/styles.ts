@@ -1,13 +1,18 @@
 import styled from 'styled-components';
 import { colorWhite } from '/imports/ui/stylesheets/styled-components/palette';
 
-export const Dock = styled.div`
+export const Dock = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   display: flex;
   flex-direction: row;
   gap: 8px;
   z-index: 10001;
   pointer-events: auto;
+  opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
+  transform: ${({ $isOpen }) => ($isOpen ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(-10px)')};
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
 `;
 
 export const DockItem = styled.button`

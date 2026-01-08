@@ -224,7 +224,6 @@ class ActionsBar extends PureComponent {
     
     // Nếu có chatId trực tiếp, mở luôn (đây là từ PrivateChatHelper sau khi tìm được chatId)
     if (chatId) {
-      console.log('[ActionsBar] handleExternalOpenPrivateChat - Opening chat with chatId:', chatId);
       // Xử lý ngay lập tức, không dùng setTimeout
       this.setState((prevState) => {
         // Kiểm tra xem chatId này đã được xử lý chưa (tránh duplicate)
@@ -232,21 +231,13 @@ class ActionsBar extends PureComponent {
         const allChatIds = Object.keys(prevState.openPrivateChats);
         const minimizedChatIds = allChatIds.filter(id => prevState.openPrivateChats[id]?.isMinimized);
         
-        console.log('[ActionsBar] Current state:', {
-          allChatIds,
-          minimizedChatIds,
-          existingChat: existingChat ? { isOpen: existingChat.isOpen, isMinimized: existingChat.isMinimized } : null,
-        });
-        
         if (existingChat?.isOpen && !existingChat?.isMinimized) {
           // Chat đã mở rồi, không làm gì (tránh duplicate)
-          console.log('[ActionsBar] Chat already open, skipping');
           return prevState;
         }
         
         // Nếu chat đã tồn tại và đang minimized, expand nó thay vì tạo mới
         if (existingChat && existingChat.isMinimized) {
-          console.log('[ActionsBar] Chat exists and is minimized, expanding it');
           // Expand chat này
           const restoredPosition = existingChat.savedPosition || (() => {
             const modalWidth = 360;
@@ -268,8 +259,6 @@ class ActionsBar extends PureComponent {
               savedPosition: undefined,
             },
           };
-          console.log('[ActionsBar] After expand - minimizedChats should remain:', 
-            Object.keys(newChats).filter(id => newChats[id]?.isMinimized));
           return { 
             openPrivateChats: newChats,
             isPrivateChatDockOpen: false,
@@ -278,7 +267,6 @@ class ActionsBar extends PureComponent {
         
         // Nếu chat chưa tồn tại hoặc đang đóng, tạo mới hoặc mở lại
         // Đảm bảo các chat minimized khác vẫn giữ nguyên trạng thái minimized
-        console.log('[ActionsBar] Creating new chat, preserving minimized chats:', minimizedChatIds);
         const newChats = {
           ...prevState.openPrivateChats,
           [chatId]: {
@@ -287,8 +275,6 @@ class ActionsBar extends PureComponent {
             position: existingChat?.position || null,
           },
         };
-        console.log('[ActionsBar] After create - minimizedChats:', 
-          Object.keys(newChats).filter(id => newChats[id]?.isMinimized));
         return { 
           openPrivateChats: newChats,
           isPrivateChatDockOpen: false, // Đóng dock khi mở chat mới
@@ -353,38 +339,53 @@ class ActionsBar extends PureComponent {
     // Thu nhỏ popup chat về vị trí dock cố định
     // Tất cả các chat minimized đều về cùng 1 vị trí
     const iconSize = 56;
-    const dockPosition = {
+    const defaultDockPosition = {
       left: window.innerWidth - iconSize - 16,
       top: window.innerHeight - iconSize - 96, // tránh đè actions bar
     };
     
-    // eslint-disable-next-line no-console
-
     this.setState((prevState) => {
+      const prevChatState = prevState.openPrivateChats[chatId];
+      // Nếu đã có dockPosition (do kéo icon), ưu tiên dùng lại, nếu chưa thì dùng default
+      const dockPosition = prevChatState?.dockPosition || defaultDockPosition;
       const newChats = {
         ...prevState.openPrivateChats,
         [chatId]: {
-          ...prevState.openPrivateChats[chatId],
+          ...prevChatState,
           isMinimized: true,
-          position: dockPosition, // Vị trí dock cố định
-          savedPosition: savedPosition || prevState.openPrivateChats[chatId]?.savedPosition,
+          position: dockPosition, // Vị trí icon hiện tại/dock
+          dockPosition, // Lưu vị trí dock để dùng lại
+          savedPosition: savedPosition || prevChatState?.savedPosition, // Vị trí popup trước khi minimize
         },
       };
       return { openPrivateChats: newChats };
     });
   }
   
-  handleExpandPrivateChat = (chatId) => {
-    // Mở lại popup chat từ minimized, restore vị trí cũ
-    // eslint-disable-next-line no-console
-
+  handleExpandPrivateChat = (chatId, iconPosition = null) => {
+    // Mở lại popup chat từ minimized
+    // Mở ở vị trí icon hiện tại (đã được cập nhật khi kéo) thay vì savedPosition
     this.setState((prevState) => {
       const chatState = prevState.openPrivateChats[chatId];
       if (!chatState) return prevState;
       
-      const restoredPosition = chatState.savedPosition || (() => {
-        const modalWidth = 360;
-        const modalHeight = 460;
+      // Lấy vị trí icon hiện tại (đã được cập nhật khi kéo)
+      const currentIconPosition = iconPosition || chatState.dockPosition || chatState.position;
+      
+      // Tính toán vị trí popup: mở ở vị trí icon, nhưng điều chỉnh để popup không bị lệch
+      // Popup có width 360px, icon có width 56px, nên cần offset
+      const modalWidth = 360;
+      const modalHeight = 460;
+      const iconSize = 56;
+      
+      // Mở popup ở vị trí icon, nhưng offset để popup không che icon
+      // Nếu icon ở bên phải màn hình, mở popup về bên trái icon
+      // Nếu icon ở bên trái, mở popup về bên phải icon
+      const expandPosition = currentIconPosition ? {
+        left: currentIconPosition.left - modalWidth + iconSize, // Offset để popup không che icon
+        top: currentIconPosition.top - modalHeight + iconSize, // Offset lên trên
+      } : (() => {
+        // Fallback nếu không có position
         const paddingRight = 16;
         const paddingBottom = 120;
         return {
@@ -393,13 +394,18 @@ class ActionsBar extends PureComponent {
         };
       })();
       
+      // Đảm bảo popup không ra ngoài màn hình
+      expandPosition.left = Math.max(16, Math.min(expandPosition.left, window.innerWidth - modalWidth - 16));
+      expandPosition.top = Math.max(16, Math.min(expandPosition.top, window.innerHeight - modalHeight - 16));
+      
       const newChats = {
         ...prevState.openPrivateChats,
         [chatId]: {
           ...chatState,
           isMinimized: false,
-          position: restoredPosition,
-          savedPosition: undefined,
+          position: expandPosition, // Mở ở vị trí icon hiện tại
+          savedPosition: chatState.savedPosition, // Giữ savedPosition để có thể restore sau
+          dockPosition: currentIconPosition, // Lưu lại vị trí icon hiện tại
         },
       };
       return { 
@@ -410,17 +416,19 @@ class ActionsBar extends PureComponent {
   }
   
   handleUpdateChatPosition = (chatId, position) => {
-    // Cập nhật vị trí popup chat (chỉ khi không minimized)
+    // Cập nhật vị trí popup chat (kể cả khi minimized để icon kéo được)
     this.setState((prevState) => {
       if (!prevState.openPrivateChats[chatId]) return prevState;
       const chatState = prevState.openPrivateChats[chatId];
-      if (chatState.isMinimized) return prevState; // Không cập nhật nếu đang minimized
-      
       const newChats = {
         ...prevState.openPrivateChats,
         [chatId]: {
           ...chatState,
           position,
+          // Khi đang minimized và kéo icon, cập nhật dockPosition theo vị trí kéo
+          dockPosition: chatState.isMinimized ? position : chatState.dockPosition,
+          // Giữ savedPosition (vị trí popup trước khi minimize) không đổi
+          savedPosition: chatState.savedPosition,
         },
       };
       return { openPrivateChats: newChats };
@@ -890,7 +898,7 @@ class ActionsBar extends PureComponent {
               isOpen={this.state.isPrivateChatDockOpen}
               minimizedChats={minimizedChats}
               onClose={() => this.setState({ isPrivateChatDockOpen: false })}
-              onSelectChat={(chatId) => this.handleExpandPrivateChat(chatId)}
+              onSelectChat={(chatId, iconPosition) => this.handleExpandPrivateChat(chatId, iconPosition)}
               anchorPosition={anchorPosition || undefined}
             />
           );

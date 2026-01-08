@@ -18,7 +18,7 @@ interface PrivateChatDockProps {
   isOpen: boolean;
   minimizedChats: string[]; // Array of chatIds that are minimized
   onClose: () => void;
-  onSelectChat: (chatId: string) => void;
+  onSelectChat: (chatId: string, iconPosition?: { left: number; top: number }) => void;
   anchorPosition?: { left: number; top: number }; // Vị trí của icon minimized
 }
 
@@ -66,18 +66,19 @@ const PrivateChatDock: React.FC<PrivateChatDockProps> = ({
 
   // Tính toán vị trí dock: hiển thị ngang từ anchor position
   const dockStyle: React.CSSProperties = {};
+  let totalWidth = 0;
+  const itemWidth = 56;
+  const spacing = 8;
   if (anchorPosition) {
     // Dock hiển thị ngang, từ phải sang trái
-    const itemWidth = 56;
-    const spacing = 8;
-    const totalWidth = minimizedChatData.length * (itemWidth + spacing) - spacing;
+    totalWidth = minimizedChatData.length * (itemWidth + spacing) - spacing;
     dockStyle.left = `${anchorPosition.left - totalWidth - 16}px`;
     dockStyle.top = `${anchorPosition.top}px`;
   }
 
   return (
-    <Styled.Dock ref={dockRef} style={dockStyle}>
-      {minimizedChatData.map((chat) => {
+    <Styled.Dock ref={dockRef} style={dockStyle} $isOpen={isOpen}>
+      {minimizedChatData.map((chat, index) => {
         if (!chat.chatId || !chat.participant) return null;
 
         const participant = chat.participant;
@@ -91,12 +92,19 @@ const PrivateChatDock: React.FC<PrivateChatDockProps> = ({
           ? (participant.color.startsWith('#') ? participant.color : `#${participant.color}`)
           : colorPrimary;
         const unreadCount = chat.totalUnread || 0;
+        // Tính toán vị trí tuyệt đối của icon trong dock để mở popup tại vị trí icon đang hiển thị
+        const iconPosition = anchorPosition
+          ? {
+              left: (anchorPosition.left - totalWidth - 16) + index * (itemWidth + spacing),
+              top: anchorPosition.top,
+            }
+          : undefined;
 
         return (
           <Styled.DockItem
             key={chat.chatId}
             onClick={() => {
-              onSelectChat(chat.chatId!);
+              onSelectChat(chat.chatId!, iconPosition);
               onClose();
             }}
             title={participant.name || intl.formatMessage(intlMessages.privateChat)}

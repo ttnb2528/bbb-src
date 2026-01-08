@@ -274,17 +274,8 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       // Tránh expand tất cả các modal khi mở chat mới
       if (e instanceof CustomEvent && e.detail?.chatId) {
         const eventChatId = e.detail.chatId;
-        console.log('[PrivateChatModal] openPrivateChatModal event received', { 
-          eventChatId, 
-          thisChatId: chatId, 
-          isOpen, 
-          isMinimized,
-          shouldExpand: eventChatId === chatId && isOpen && isMinimized
-        });
-        
         // Chỉ expand nếu chatId khớp
         if (eventChatId === chatId && isOpen && isMinimized) {
-          console.log('[PrivateChatModal] Expanding this modal because chatId matches');
           expandModal();
         }
       }

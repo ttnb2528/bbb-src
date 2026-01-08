@@ -13,11 +13,11 @@ const Modal = styled.div<{ $minimized: boolean }>`
   height: ${({ $minimized }) => ($minimized ? '56px' : '460px')};
   max-height: ${({ $minimized }) => ($minimized ? '56px' : '70vh')};
   min-height: ${({ $minimized }) => ($minimized ? '56px' : '320px')};
-  background-color: ${colorWhite};
+  background-color: ${({ $minimized }) => ($minimized ? 'transparent' : colorWhite)};
   border-radius: ${({ $minimized }) => ($minimized ? '50%' : '8px')};
-  box-shadow: ${({ $minimized }) => ($minimized ? '0 2px 8px rgba(0, 0, 0, 0.15)' : '0 4px 20px rgba(0, 0, 0, 0.3)')};
+  box-shadow: ${({ $minimized }) => ($minimized ? 'none' : '0 4px 20px rgba(0, 0, 0, 0.3)')};
   overflow: ${({ $minimized }) => ($minimized ? 'visible' : 'hidden')};
-  transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
+  transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease, background-color 0.3s ease;
   border: none !important;
   outline: none !important;
   position: relative;
