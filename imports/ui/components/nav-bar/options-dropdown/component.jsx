@@ -512,13 +512,12 @@ class OptionsDropdown extends PureComponent {
     // Thêm "End meeting" cho moderator/host ngay sau "Leave session"
     // Không phụ thuộc vào isDirectLeaveButtonEnabled để đảm bảo host luôn có option này
     if (isMeteorConnected && allowedToEndMeeting) {
-      // Thêm separator trước "End meeting"
-      this.menuItems.push({
-        key: 'separator-end-meeting',
-        isSeparator: true,
-      });
-
-      const customStyles = { background: colorDanger, color: colorWhite };
+      // Dùng một separator chung cho Connection Status + End meeting (đã thêm ở trên)
+      // Row End meeting chỉ cần chữ đỏ, không cần nền riêng để nhìn đơn giản, bớt rối
+      const customStyles = {
+        color: '#c62828', // đỏ trầm
+        fontWeight: 600,
+      };
 
       this.menuItems.push({
         key: 'list-item-end-meeting',
@@ -616,7 +615,12 @@ class OptionsDropdown extends PureComponent {
           opts={{
             id: 'app-settings-dropdown-menu',
             keepMounted: true,
-            transitionDuration: 0,
+            // Cho phép Material-UI handle animation để mở/đóng mượt hơn
+            transitionDuration: {
+              appear: 180,
+              enter: 180,
+              exit: 140,
+            },
             elevation: 3,
             getcontentanchorel: null,
             fullwidth: 'true',

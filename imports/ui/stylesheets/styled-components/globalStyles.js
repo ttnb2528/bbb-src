@@ -42,6 +42,16 @@ const GlobalStyle = createGlobalStyle`
     max-width: 22rem;
   }
 
+  /* Options dropdown (id=app-settings-dropdown-menu) - giữ menu nằm gọn trên footer */
+  #app-settings-dropdown-menu .MuiPaper-root {
+    @media (min-width: 768px) {
+      top: auto !important;          /* Bỏ top mặc định */
+      bottom: 72px !important;       /* Gần footer hơn nhưng vẫn có khoảng thở */
+      transform-origin: bottom right !important;
+      transition: transform 0.18s ease-out, opacity 0.18s ease-out;
+    }
+  }
+
   // modal
   @keyframes fade-in {
     0% {
