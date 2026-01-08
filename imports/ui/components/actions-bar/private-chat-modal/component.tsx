@@ -10,6 +10,7 @@ import useChat from '/imports/ui/core/hooks/useChat';
 import { Chat } from '/imports/ui/Types/chat';
 import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
 import usePendingChat from '/imports/ui/core/local-states/usePendingChat';
+import { colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
 
 const isMobileViewport = () => (typeof window !== 'undefined' && window.innerWidth <= 640);
 
@@ -338,16 +339,18 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       shouldCloseOnEsc={false}
       style={{
         content: {
-          top: `${position.top}px`,
-          left: `${position.left}px`,
-          right: 'auto',
-          bottom: 'auto',
+          top: isMobileViewport() ? '0' : `${position.top}px`,
+          left: isMobileViewport() ? '0' : `${position.left}px`,
+          right: isMobileViewport() ? '0' : 'auto',
+          bottom: isMobileViewport() ? '0' : 'auto',
           margin: 0,
           padding: 0,
           border: 'none',
-          borderRadius: '8px',
+          borderRadius: isMobileViewport() ? '0' : '8px',
           overflow: 'visible',
           position: 'fixed',
+          width: isMobileViewport() ? '100vw' : 'auto',
+          height: isMobileViewport() ? '100vh' : 'auto',
         },
       }}
     >
@@ -356,12 +359,28 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
         $minimized={isMinimized}
       >
         {isMinimized ? (
-          // Khi minimized: chỉ hiện icon chat nhỏ, có thể kéo và đóng
+          // Khi minimized: hiển thị avatar của người đang chat, có thể kéo và đóng
           <Styled.MinimizedIcon
             onMouseDown={handleDragStart}
             onClick={handleToggleMinimize}
           >
-            <Icon iconName="chat" />
+            {activeChat?.participant ? (
+              <Styled.MinimizedAvatar
+                moderator={activeChat.participant.role === window.meetingClientSettings.public.user.role_moderator}
+                avatar={activeChat.participant.avatar || ''}
+                style={{
+                  backgroundColor: activeChat.participant.color
+                    ? (activeChat.participant.color.startsWith('#') ? activeChat.participant.color : `#${activeChat.participant.color}`)
+                    : colorPrimary,
+                }}
+              >
+                {activeChat.participant.avatar?.length === 0
+                  ? activeChat.participant.name?.toLowerCase().slice(0, 2) || ''
+                  : ''}
+              </Styled.MinimizedAvatar>
+            ) : (
+              <Icon iconName="chat" />
+            )}
             {unreadCount > 0 && (
               <Styled.UnreadBadge>
                 {unreadCount > 99 ? '99+' : unreadCount}
@@ -385,12 +404,17 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
           </Styled.MinimizedIcon>
         ) : (
           <>
-            <Styled.Header>
-              <Styled.Title onMouseDown={handleDragStart}>
+            <Styled.Header onMouseDown={handleDragStart}>
+              <Styled.Title>
                 <Icon iconName="chat" />
                 <span>{activeChatName}</span>
               </Styled.Title>
-              <Styled.HeaderActions>
+              <Styled.HeaderActions
+                onMouseDown={(e) => {
+                  // Ngăn drag khi click vào các button trong header
+                  e.stopPropagation();
+                }}
+              >
                 {!isMobileViewport() && (
                   <Button
                     icon="minus"

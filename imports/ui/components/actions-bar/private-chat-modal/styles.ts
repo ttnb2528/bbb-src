@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { colorWhite, colorGrayLight, colorGrayDark, colorDanger } from '/imports/ui/stylesheets/styled-components/palette';
+import { colorWhite, colorGrayLight, colorGrayDark, colorDanger, colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
 import { fontSizeBase, fontSizeLarge } from '/imports/ui/stylesheets/styled-components/typography';
 import { smPaddingX, smPaddingY, borderSize } from '/imports/ui/stylesheets/styled-components/general';
 import { smallOnly, hasPhoneWidth } from '/imports/ui/stylesheets/styled-components/breakpoints';
@@ -54,6 +54,8 @@ const Header = styled.div`
   padding: ${smPaddingY} ${smPaddingX};
   border-bottom: ${borderSize} solid ${colorGrayLight};
   flex-shrink: 0; /* Prevent header from shrinking */
+  cursor: move;
+  user-select: none;
 `;
 
 const TabBar = styled.div`
@@ -214,6 +216,28 @@ const MinimizedIcon = styled.div`
   }
 `;
 
+const MinimizedAvatar = styled.div<{ moderator?: boolean; avatar?: string }>`
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${colorWhite};
+  font-weight: 600;
+  font-size: 18px;
+  flex-shrink: 0;
+  ${({ moderator }) => moderator && `
+    border: 2px solid ${colorPrimary};
+  `}
+  ${({ avatar }) => avatar && avatar.length > 0 && `
+    background-image: url(${avatar});
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  `}
+`;
+
 const UnreadBadge = styled.div`
   position: absolute;
   top: -4px;
@@ -242,6 +266,7 @@ export default {
   RightPane,
   HeaderActions,
   MinimizedIcon,
+  MinimizedAvatar,
   MinimizedClose,
   TabBar,
   TabButton,

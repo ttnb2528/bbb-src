@@ -105,6 +105,14 @@ const GlobalStyle = createGlobalStyle`
     pointer-events: none;
   }
   
+  /* Mobile: fullscreen từ top-left */
+  @media (max-width: 640px) {
+    .PrivateChatModal__overlay {
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+    }
+  }
+  
   /* Override ReactModal default styles cho PrivateChatModal */
   .PrivateChatModal__overlay.ReactModal__Overlay--after-open {
     background-color: transparent !important;
