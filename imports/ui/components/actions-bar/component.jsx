@@ -827,30 +827,49 @@ class ActionsBar extends PureComponent {
         
         {/* Render nhiều PrivateChatModal - mỗi chatId một popup hoặc icon */}
         {(() => {
-          const minimizedChats = Object.keys(this.state.openPrivateChats).filter(
+          // Lấy tất cả chat minimized
+          const allMinimizedChats = Object.keys(this.state.openPrivateChats).filter(
             (chatId) => this.state.openPrivateChats[chatId]?.isMinimized
           );
           
-          return Object.keys(this.state.openPrivateChats).map((chatId) => {
+          // CHỈ hiển thị 1 icon minimized độc lập (icon mới nhất)
+          // Các icon còn lại sẽ chỉ hiển thị trong dock bar khi mở
+          const lastMinimizedChatId = allMinimizedChats.length > 0 
+            ? allMinimizedChats[allMinimizedChats.length - 1] 
+            : null;
+          
+          // Track các chatId đã render để tránh duplicate
+          const renderedChatIds = new Set();
+          const renderedChats = [];
+          
+          // Render tất cả chats (mở và minimized)
+          const allChats = Object.keys(this.state.openPrivateChats);
+          
+          for (const chatId of allChats) {
+            // Đảm bảo mỗi chatId chỉ render 1 lần
+            if (renderedChatIds.has(chatId)) {
+              continue;
+            }
+            
             const chatState = this.state.openPrivateChats[chatId];
-            if (!chatState?.isOpen) return null;
+            if (!chatState?.isOpen) continue;
             
             // Nếu chat đang minimized
             if (chatState.isMinimized) {
-              // Chỉ render icon cho chat cuối cùng (hoặc chat duy nhất) để tránh duplicate
-              // Các chat khác sẽ hiển thị trong dock bar khi mở
-              const isLastMinimized = chatId === minimizedChats[minimizedChats.length - 1];
-              const shouldRender = minimizedChats.length === 1 || isLastMinimized;
-              
-              if (!shouldRender) {
-                // Không render icon cho các chat minimized trước chat cuối
-                // Chúng sẽ được hiển thị trong dock bar
-                return null;
+              // CHỈ render icon nếu nó là icon mới nhất (cuối cùng)
+              // Các icon cũ hơn sẽ KHÔNG được render ở đây, chỉ hiển thị trong dock bar
+              if (chatId !== lastMinimizedChatId) {
+                // Không render icon cho các chat minimized cũ hơn
+                // Chúng sẽ được hiển thị trong dock bar khi mở
+                continue;
               }
               
-              return (
+              // Đánh dấu đã render
+              renderedChatIds.add(chatId);
+              
+              renderedChats.push(
                 <PrivateChatModal
-                  key={chatId}
+                  key={`minimized-${chatId}`}
                   chatId={chatId}
                   isOpen={true}
                   isMinimized={true}
@@ -861,12 +880,14 @@ class ActionsBar extends PureComponent {
                   onPositionUpdate={(position) => this.handleUpdateChatPosition(chatId, position)}
                 />
               );
+              continue;
             }
             
             // Nếu chat đang mở (không minimized), render popup
-            return (
+            renderedChatIds.add(chatId);
+            renderedChats.push(
               <PrivateChatModal
-                key={chatId}
+                key={`open-${chatId}`}
                 chatId={chatId}
                 isOpen={chatState.isOpen}
                 isMinimized={false}
@@ -877,7 +898,9 @@ class ActionsBar extends PureComponent {
                 onPositionUpdate={(position) => this.handleUpdateChatPosition(chatId, position)}
               />
             );
-          });
+          }
+          
+          return renderedChats;
         })()}
         
         {/* Render dock bar khi có nhiều chat minimized */}
@@ -888,15 +911,22 @@ class ActionsBar extends PureComponent {
           
           if (minimizedChats.length <= 1) return null; // Chỉ hiển thị dock khi có nhiều hơn 1 chat
           
-          // Lấy vị trí của icon minimized cuối cùng (icon đang hiển thị)
+          // Chỉ hiển thị tối đa 3 icon trong dock bar
+          const MAX_DOCK_ICONS = 3;
+          const dockChats = minimizedChats.length > MAX_DOCK_ICONS 
+            ? minimizedChats.slice(-MAX_DOCK_ICONS) 
+            : minimizedChats;
+          
+          // Lấy vị trí của icon minimized cuối cùng (icon mới nhất, đang hiển thị trên cùng)
           const lastMinimizedChatId = minimizedChats[minimizedChats.length - 1];
           const lastChatState = this.state.openPrivateChats[lastMinimizedChatId];
-          const anchorPosition = lastChatState?.position || null;
+          // Ưu tiên dùng dockPosition (vị trí đã kéo), nếu không có thì dùng position
+          const anchorPosition = lastChatState?.dockPosition || lastChatState?.position || null;
           
           return (
             <PrivateChatDock
               isOpen={this.state.isPrivateChatDockOpen}
-              minimizedChats={minimizedChats}
+              minimizedChats={dockChats}
               onClose={() => this.setState({ isPrivateChatDockOpen: false })}
               onSelectChat={(chatId, iconPosition) => this.handleExpandPrivateChat(chatId, iconPosition)}
               anchorPosition={anchorPosition || undefined}
