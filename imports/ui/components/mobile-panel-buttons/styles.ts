@@ -104,10 +104,12 @@ const LeftGroup = styled.div`
 
   /* Custom styles cho buttons trong LeftGroup */
   button {
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    overflow: hidden;
 
     /* Giảm focus ring */
     &:focus,
@@ -116,10 +118,31 @@ const LeftGroup = styled.div`
       box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3) !important;
     }
 
-    /* Active state mượt mà */
+    /* Active state mượt mà với ripple effect */
     &:active {
-      transform: scale(0.95);
-      transition: transform 0.1s ease;
+      transform: scale(0.92);
+      transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Ripple effect khi nhấn */
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.4s ease, height 0.4s ease;
+      pointer-events: none;
+    }
+    
+    &:active::after {
+      width: 200px;
+      height: 200px;
+      transition: width 0.3s ease, height 0.3s ease;
     }
   }
 `;
@@ -140,6 +163,7 @@ const ExpandedButtons = styled.div`
     max-height: 40px !important;
     padding: 0 !important;
     border-radius: 50% !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 
     /* Icon bên trong */
     [class^="icon-bbb-"],
@@ -147,6 +171,13 @@ const ExpandedButtons = styled.div`
       font-size: 18px !important;
       left: 50%;
       transform: translateX(-50%);
+      transition: transform 0.2s ease;
+    }
+    
+    /* Hover/Active state cho actions button */
+    &:active {
+      transform: scale(0.88) !important;
+      background-color: rgba(255, 255, 255, 0.2) !important;
     }
   }
 

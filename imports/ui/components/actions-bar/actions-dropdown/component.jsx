@@ -439,12 +439,12 @@ class ActionsDropdown extends PureComponent {
           opts={{
             id: 'actions-dropdown-menu',
             keepMounted: true,
-            transitionDuration: 0,
+            transitionDuration: isMobile ? { appear: 300, enter: 300, exit: 250 } : 0,
             elevation: 3,
             getcontentanchorel: null,
             fullwidth: 'true',
-            anchorOrigin: { vertical: 'top', horizontal: isRTL ? 'right' : 'left' },
-            transformOrigin: { vertical: 'bottom', horizontal: isRTL ? 'right' : 'left' },
+            anchorOrigin: { vertical: isMobile ? 'bottom' : 'top', horizontal: isRTL ? 'right' : 'left' },
+            transformOrigin: { vertical: isMobile ? 'bottom' : 'bottom', horizontal: isRTL ? 'right' : 'left' },
           }}
         />
         {this.renderModal(

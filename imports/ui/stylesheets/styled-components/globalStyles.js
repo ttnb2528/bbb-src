@@ -15,20 +15,100 @@ import {
 } from '/imports/ui/stylesheets/styled-components/palette';
 
 const GlobalStyle = createGlobalStyle`
-  // BBBMenu
+  // BBBMenu - Mobile improvements
   @media ${smallOnly} {
     .MuiPopover-root {
       top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
     }
+    
+    /* Backdrop overlay cho mobile menu */
+    .MuiBackdrop-root {
+      background-color: rgba(0, 0, 0, 0.5) !important;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    
+    /* Bottom sheet style cho mobile menu */
     .MuiPaper-root-mobile {
-      top: 0 !important;
+      top: auto !important;
       left: 0 !important;
       bottom: 0 !important;
       right: 0 !important;
       max-width: none !important;
+      max-height: 95vh !important;
+      /* Min-height động: tối thiểu 60vh để đảm bảo hiển thị đủ content */
+      /* Nếu content ít: menu sẽ nhỏ hơn, nếu content nhiều: menu sẽ mở rộng đến max-height */
+      /* Cân bằng giữa việc hiển thị đủ và không chiếm quá nhiều màn hình */
+      min-height: 60vh !important;
+      height: auto !important;
+      border-radius: 20px 20px 0 0 !important;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      will-change: transform;
+      position: fixed !important;
+      transform: translateY(0) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
     }
+    
+    /* Override inline style của Material-UI để đảm bảo menu luôn ở bottom */
+    .MuiPopover-root .MuiPaper-root-mobile[style*="top"] {
+      top: auto !important;
+      bottom: 0 !important;
+    }
+    
+    /* Khi Popover đóng - ẩn xuống dưới (chỉ khi có aria-hidden="true") */
+    .MuiPopover-root[aria-hidden="true"] .MuiPaper-root-mobile {
+      transform: translateY(100%) !important;
+    }
+    
     .MuiPaper-root {
       width: 100%;
+    }
+    
+    /* Smooth animation cho menu items - đảm bảo hiển thị đầy đủ */
+    .MuiPaper-root-mobile .MuiList-root {
+      padding: 8px 0 !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      /* Cho phép list mở rộng, nhưng giới hạn để tránh vượt quá màn hình */
+      /* Trừ đi chiều cao của close button (3.5rem = 56px) */
+      max-height: calc(95vh - 56px) !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+    
+    /* Đảm bảo menu tự mở rộng theo content khi có nhiều items */
+    .MuiPaper-root-mobile {
+      /* Menu sẽ tự điều chỉnh height từ min-height đến max-height dựa trên content */
+    }
+    
+    .MuiMenuItem-root {
+      transition: background-color 0.2s ease, transform 0.1s ease !important;
+      min-height: 56px !important;
+      padding: 12px 20px !important;
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    
+    .MuiMenuItem-root:active {
+      transform: scale(0.98);
+      background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+    
+    /* Đảm bảo tất cả menu items hiển thị */
+    .MuiPaper-root-mobile .MuiMenuItem-root,
+    .MuiPaper-root-mobile .MuiList-root > * {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
     }
   }
   .MuiList-padding {

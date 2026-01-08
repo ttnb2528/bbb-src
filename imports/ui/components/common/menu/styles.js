@@ -95,14 +95,16 @@ const CloseButton = styled(Button)`
   bottom: 0;
   display: flex;
   justify-content: center;
+  align-items: center;
   width: 100%;
-  height: 5rem;
+  height: 3.5rem;
   background-color: ${colorWhite};
-  padding: 1rem;
+  padding: 0.75rem 1rem;
+  min-height: 3.5rem;
 
   border-radius: 0;
   z-index: 1100 !important; /* Tăng z-index cao hơn footer (1000) */
-  font-size: calc(${fontSizeLarge} * 1.1);
+  font-size: ${fontSizeLarge};
   box-shadow: 0 0 0 2rem ${colorWhite} !important;
   border: ${colorWhite} !important;
   cursor: pointer !important;
@@ -134,6 +136,21 @@ const BBBMenuInformation = styled.div`
 const BBBMenuItem = styled(MenuItem)`
   transition: none !important;
   font-size: 90% !important;
+  
+  /* Mobile: thêm smooth transition cho menu items */
+  @media (max-width: 768px) {
+    transition: background-color 0.2s ease, transform 0.1s ease !important;
+    min-height: 56px !important;
+    padding: 12px 20px !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    
+    &:active {
+      transform: scale(0.98);
+      background-color: rgba(0, 0, 0, 0.05) !important;
+    }
+  }
   
   &:focus,
   &:hover {
