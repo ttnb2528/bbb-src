@@ -837,14 +837,17 @@ class ActionsBar extends PureComponent {
             
             // Nếu chat đang minimized
             if (chatState.isMinimized) {
-              // Nếu có nhiều chat minimized (>1), chỉ render icon cho chat cuối cùng
-              // Các chat khác sẽ hiển thị trong dock bar
-              if (minimizedChats.length > 1 && chatId !== minimizedChats[minimizedChats.length - 1]) {
+              // Chỉ render icon cho chat cuối cùng (hoặc chat duy nhất) để tránh duplicate
+              // Các chat khác sẽ hiển thị trong dock bar khi mở
+              const isLastMinimized = chatId === minimizedChats[minimizedChats.length - 1];
+              const shouldRender = minimizedChats.length === 1 || isLastMinimized;
+              
+              if (!shouldRender) {
                 // Không render icon cho các chat minimized trước chat cuối
                 // Chúng sẽ được hiển thị trong dock bar
                 return null;
               }
-              // Render icon minimized cho chat cuối cùng (hoặc chat duy nhất)
+              
               return (
                 <PrivateChatModal
                   key={chatId}

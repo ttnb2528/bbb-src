@@ -33,6 +33,7 @@ interface PrivateChatModalProps {
   onMinimize?: (position: { left: number; top: number }) => void; // Callback khi minimize
   onExpand?: () => void; // Callback để expand modal khi đang minimized
   onPositionUpdate?: (position: { left: number; top: number }) => void; // Callback khi vị trí thay đổi
+  style?: React.CSSProperties; // Optional style để control visibility
 }
 
 const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
@@ -44,6 +45,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   onMinimize,
   onExpand,
   onPositionUpdate,
+  style,
 }) => {
   const intl = useIntl();
   const [isMinimized, setIsMinimized] = useState(externalIsMinimized);
@@ -352,6 +354,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
           position: 'fixed',
           width: isMobileViewport() ? '100vw' : 'auto',
           height: isMobileViewport() ? '100vh' : 'auto',
+          ...style, // Merge với style từ props
         },
       }}
     >

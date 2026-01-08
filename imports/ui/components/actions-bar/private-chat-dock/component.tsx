@@ -66,20 +66,48 @@ const PrivateChatDock: React.FC<PrivateChatDockProps> = ({
   // Chỉ ẩn/hiện thông qua CSS thay vì unmount
   if (minimizedChatData.length === 0) return null;
 
-  // Tính toán vị trí dock: hiển thị ngang từ anchor position
+  // Tính toán vị trí dock: detect nửa màn hình để xổ đúng hướng
   const dockStyle: React.CSSProperties = {};
   let totalWidth = 0;
-  const itemWidth = 56;
+  const itemWidth = 48; // Giảm từ 56 xuống 48 để đẹp hơn
   const spacing = 8;
+  const iconSize = 56; // Kích thước icon minimized thực tế
+  let dockDirection: 'left' | 'right' = 'left'; // Mặc định xổ qua trái
+  let dockLeft = 0; // Lưu giá trị số để dùng cho tính toán icon position
+  
   if (anchorPosition) {
-    // Dock hiển thị ngang, từ phải sang trái
     totalWidth = minimizedChatData.length * (itemWidth + spacing) - spacing;
-    dockStyle.left = `${anchorPosition.left - totalWidth - 16}px`;
-    dockStyle.top = `${anchorPosition.top}px`;
+    const screenWidth = window.innerWidth;
+    const screenPadding = 16; // Padding từ edge màn hình
+    
+    // Detect nửa màn hình: nếu icon ở nửa bên trái (< 50% width) thì xổ qua phải, ngược lại xổ qua trái
+    const isOnLeftHalf = anchorPosition.left < screenWidth / 2;
+    
+    if (isOnLeftHalf) {
+      // Icon ở nửa trái: dock xổ qua phải (từ icon sang phải)
+      dockDirection = 'right';
+      // Dock bắt đầu từ bên phải icon (anchorPosition.left + iconSize + spacing)
+      const dockStartLeft = anchorPosition.left + iconSize + spacing;
+      // Đảm bảo dock không tràn ra ngoài màn hình
+      const maxLeft = screenWidth - totalWidth - screenPadding;
+      dockLeft = Math.min(dockStartLeft, maxLeft);
+      dockStyle.left = `${dockLeft}px`;
+      dockStyle.top = `${anchorPosition.top}px`;
+    } else {
+      // Icon ở nửa phải: dock xổ qua trái (từ icon sang trái)
+      dockDirection = 'left';
+      // Dock bắt đầu từ bên trái icon (anchorPosition.left - totalWidth - spacing)
+      const dockStartLeft = anchorPosition.left - totalWidth - spacing;
+      // Đảm bảo dock không tràn ra ngoài màn hình
+      const minLeft = screenPadding;
+      dockLeft = Math.max(dockStartLeft, minLeft);
+      dockStyle.left = `${dockLeft}px`;
+      dockStyle.top = `${anchorPosition.top}px`;
+    }
   }
 
   return (
-    <Styled.Dock ref={dockRef} style={dockStyle} $isOpen={isOpen}>
+    <Styled.Dock ref={dockRef} style={dockStyle} $isOpen={isOpen} $direction={dockDirection}>
       {minimizedChatData.map((chat, index) => {
         if (!chat.chatId || !chat.participant) return null;
 
@@ -95,9 +123,10 @@ const PrivateChatDock: React.FC<PrivateChatDockProps> = ({
           : colorPrimary;
         const unreadCount = chat.totalUnread || 0;
         // Tính toán vị trí tuyệt đối của icon trong dock để mở popup tại vị trí icon đang hiển thị
-        const iconPosition = anchorPosition
+        const iconPosition = anchorPosition && dockLeft > 0
           ? {
-              left: (anchorPosition.left - totalWidth - 16) + index * (itemWidth + spacing),
+              // Vị trí icon = vị trí dock + offset của icon trong dock
+              left: dockLeft + index * (itemWidth + spacing),
               top: anchorPosition.top,
             }
           : undefined;
@@ -107,6 +136,7 @@ const PrivateChatDock: React.FC<PrivateChatDockProps> = ({
             key={chat.chatId}
             $index={minimizedChatData.indexOf(chat)}
             $isOpen={isOpen}
+            $direction={dockDirection}
             onClick={() => {
               onSelectChat(chat.chatId!, iconPosition);
               onClose();
