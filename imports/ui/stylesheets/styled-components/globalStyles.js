@@ -88,30 +88,53 @@ const GlobalStyle = createGlobalStyle`
     bottom: 0;
   }
 
-  // Private Chat Modal
+  // Private Chat Modal - Bỏ hoàn toàn overlay đen và blur
   .PrivateChatModal__overlay {
     z-index: 1000;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-end;
+    justify-content: flex-end;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    /* Bỏ nền đen mờ phía sau popup */
-    background-color: transparent;
-    animation: fade-in 0.2s ease-in;
+    /* Bỏ hoàn toàn nền đen mờ phía sau popup */
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    pointer-events: none;
+  }
+  
+  /* Override ReactModal default styles cho PrivateChatModal */
+  .PrivateChatModal__overlay.ReactModal__Overlay--after-open {
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+  }
+  
+  /* Chỉ content có thể click được */
+  .PrivateChatModal__overlay .PrivateChatModal__content {
+    pointer-events: auto;
   }
 
-  /* Khi minimized, overlay không chặn click vào các element khác */
+  /* Khi minimized, overlay hoàn toàn ẩn đi (không có nền đen, không có blur) */
   .PrivateChatModal__overlay--minimized {
     pointer-events: none;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+  
+  .PrivateChatModal__overlay--minimized.ReactModal__Overlay--after-open {
+    background-color: transparent !important;
+    backdrop-filter: none !important;
   }
 
   /* Nhưng icon vẫn có thể click được */
   .PrivateChatModal__overlay--minimized .PrivateChatModal__content {
     pointer-events: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Thêm shadow nhẹ cho icon */
   }
 
   .PrivateChatModal__content {

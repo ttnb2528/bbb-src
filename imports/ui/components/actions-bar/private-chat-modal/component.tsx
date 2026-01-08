@@ -1,22 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 // @ts-ignore
 import ReactModal from 'react-modal';
 import Styled from './styles';
-import ChatListContainer from '/imports/ui/components/user-list/user-list-content/user-messages/chat-list/component';
 import ChatContainer from '/imports/ui/components/chat/chat-graphql/component';
-import NotesContainer from '/imports/ui/components/notes/component';
 import Icon from '/imports/ui/components/common/icon/icon-ts/component';
 import Button from '/imports/ui/components/common/button/component';
-import { layoutDispatch, layoutSelectInput } from '/imports/ui/components/layout/context';
-import { Input } from '/imports/ui/components/layout/layoutTypes';
-import { PANELS } from '/imports/ui/components/layout/enums';
-
-const isMobileViewport = () => (typeof window !== 'undefined' && window.innerWidth <= 640);
 import useChat from '/imports/ui/core/hooks/useChat';
 import { Chat } from '/imports/ui/Types/chat';
 import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
 import usePendingChat from '/imports/ui/core/local-states/usePendingChat';
+
+const isMobileViewport = () => (typeof window !== 'undefined' && window.innerWidth <= 640);
 
 const intlMessages = defineMessages({
   privateChatTitle: {
@@ -47,26 +42,22 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   const dragState = useRef<{ startX: number; startY: number; originLeft: number; originTop: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const hasDragged = useRef(false);
-  const [activeTab, setActiveTab] = useState<'private' | 'notes'>('private');
+  // Lưu vị trí popup trước khi minimize để restore khi expand
+  const savedPositionRef = useRef<{ left: number; top: number } | null>(null);
   
   // State riêng để quản lý chatId của private chat modal, độc lập với idChatOpen từ layout context
   const [privateChatId, setPrivateChatId] = useState<string>('');
   // State để lưu userId từ event khi mở modal từ user list
   const [pendingUserId, setPendingUserId] = useState<string>('');
-  
-  const layoutContextDispatch = layoutDispatch();
-  const sidebarContent = layoutSelectInput((i: Input) => i.sidebarContent);
   const { data: chats } = useChat((chat) => ({
     chatId: chat.chatId,
     participant: chat.participant,
+    totalUnread: chat.totalUnread,
   })) as GraphqlDataHookSubscriptionResponse<Partial<Chat>[]>;
   
   // Xử lý pendingChat để tự động mở chat khi user click "Start Private Chat" từ user list (flow cũ)
   const [pendingChat, setPendingChat] = usePendingChat();
   
-  // Kiểm tra xem sidebar-content có đang mở và ở tab CHAT không (cho desktop)
-  const isSidebarContentChatOpen = sidebarContent?.sidebarContentPanel === PANELS.CHAT;
-
   // Khởi tạo vị trí giữa màn hình khi mở modal
   useEffect(() => {
     if (isOpen && position === null) {
@@ -77,12 +68,14 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
           top: 0,
         });
       } else {
-        // Desktop: center
-        const modalWidth = 900;
-        const modalHeight = window.innerHeight * 0.7;
+        // Desktop: popup nhỏ ở góc dưới bên phải (trên actions bar)
+        const modalWidth = 360;
+        const modalHeight = 460;
+        const paddingRight = 16;
+        const paddingBottom = 120; // chừa chỗ cho actions bar + margin
         setPosition({
-          left: window.innerWidth / 2 - modalWidth / 2,
-          top: window.innerHeight / 2 - modalHeight / 2,
+          left: window.innerWidth - modalWidth - paddingRight,
+          top: window.innerHeight - modalHeight - paddingBottom,
         });
       }
     }
@@ -154,27 +147,27 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
     if (!position) return;
 
     if (!isMinimized) {
-      // Khi minimize: di chuyển về góc dưới bên phải, thu nhỏ thành icon
-      const iconSize = isMobileViewport() ? 44 : 56;
+      // Khi minimize: lưu vị trí hiện tại và di chuyển về góc dưới bên phải
+      savedPositionRef.current = { ...position };
+      const iconSize = 56;
       setPosition({
-        left: window.innerWidth - iconSize - 8, // icon size + padding
-        top: window.innerHeight - iconSize - 80, // icon size + 80px để tránh footer
+        left: window.innerWidth - iconSize - 16,
+        top: window.innerHeight - iconSize - 96, // tránh đè actions bar
       });
     } else {
-      // Khi expand: về lại vị trí phù hợp
-      if (isMobileViewport()) {
-        // Mobile: fullscreen
-        setPosition({
-          left: 0,
-          top: 0,
-        });
+      // Khi expand lại: restore vị trí cũ hoặc mở ngay tại icon nếu chưa có vị trí cũ
+      if (savedPositionRef.current) {
+        setPosition(savedPositionRef.current);
+        savedPositionRef.current = null;
       } else {
-        // Desktop: center
-        const modalWidth = 900;
-        const modalHeight = window.innerHeight * 0.7;
+        // Nếu chưa có vị trí cũ, mở ngay tại icon (góc dưới bên phải)
+        const modalWidth = 360;
+        const modalHeight = 460;
+        const paddingRight = 16;
+        const paddingBottom = 120;
         setPosition({
-          left: window.innerWidth / 2 - modalWidth / 2,
-          top: window.innerHeight / 2 - modalHeight / 2,
+          left: window.innerWidth - modalWidth - paddingRight,
+          top: window.innerHeight - modalHeight - paddingBottom,
         });
       }
     }
@@ -185,16 +178,19 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   const expandModal = () => {
     if (isMinimized) {
       setIsMinimized(false);
-      // Reset về vị trí center khi expand
-      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 640;
-      if (isMobile) {
-        setPosition({ left: 0, top: 0 });
+      // Restore vị trí cũ hoặc mở ngay tại icon
+      if (savedPositionRef.current) {
+        setPosition(savedPositionRef.current);
+        savedPositionRef.current = null;
       } else {
-        const modalWidth = 900;
-        const modalHeight = window.innerHeight * 0.7;
+        // Mở ngay tại icon (góc dưới bên phải)
+        const modalWidth = 360;
+        const modalHeight = 460;
+        const paddingRight = 16;
+        const paddingBottom = 120;
         setPosition({
-          left: window.innerWidth / 2 - modalWidth / 2,
-          top: window.innerHeight / 2 - modalHeight / 2,
+          left: window.innerWidth - modalWidth - paddingRight,
+          top: window.innerHeight - modalHeight - paddingBottom,
         });
       }
       if (onExpand) onExpand();
@@ -211,11 +207,15 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
         expandModal();
       }
       
-      // Nếu event có detail với userId, lưu lại để xử lý khi modal mở
-      if (e instanceof CustomEvent && e.detail?.userId) {
-        setPendingUserId(e.detail.userId);
-        // Clear pendingChat ngay để tránh conflict với sidebar-content
-        setPendingChat('');
+      // Nếu event có detail với userId hoặc chatId, lưu lại để xử lý khi modal mở
+      if (e instanceof CustomEvent) {
+        if (e.detail?.userId) {
+          setPendingUserId(e.detail.userId);
+          setPendingChat('');
+        } else if (e.detail?.chatId) {
+          // Nếu có chatId trực tiếp, set luôn
+          setPrivateChatId(e.detail.chatId);
+        }
       }
     };
     
@@ -247,32 +247,33 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       setIsMinimized(false);
       setPrivateChatId('');
       setPendingUserId('');
+      savedPositionRef.current = null; // Reset saved position
     }
   }, [isOpen]);
 
   // Xử lý pendingUserId khi mở modal từ user list (click "Start Private Chat")
   // Ưu tiên xử lý pendingUserId từ event detail (flow mới, không dùng pendingChat)
   useEffect(() => {
-    if (isOpen && activeTab === 'private' && pendingUserId && chats) {
+    if (isOpen && pendingUserId && chats) {
       const chat = chats.find((c) => c.participant?.userId === pendingUserId);
       if (chat && chat.chatId) {
         setPrivateChatId(chat.chatId);
         setPendingUserId(''); // Clear sau khi đã tìm thấy
       }
     }
-  }, [isOpen, activeTab, pendingUserId, chats]);
+  }, [isOpen, pendingUserId, chats]);
   
   // Xử lý pendingChat khi mở modal từ flow cũ (backward compatibility)
   // Chỉ xử lý nếu không có pendingUserId (để ưu tiên flow mới)
   useEffect(() => {
-    if (isOpen && activeTab === 'private' && !pendingUserId && pendingChat && chats) {
+    if (isOpen && !pendingUserId && pendingChat && chats) {
       const chat = chats.find((c) => c.participant?.userId === pendingChat);
       if (chat && chat.chatId) {
         setPrivateChatId(chat.chatId);
         setPendingChat('');
       }
     }
-  }, [isOpen, activeTab, pendingUserId, pendingChat, chats, setPendingChat]);
+  }, [isOpen, pendingUserId, pendingChat, chats, setPendingChat]);
   
   // Clear pendingUserId khi đóng modal
   useEffect(() => {
@@ -284,9 +285,10 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   // Đảm bảo private chat modal chỉ hiển thị private chat
   // Khi mở modal và ở tab private, tự động chọn private chat đầu tiên (nếu có)
   // Sử dụng state riêng privateChatId để không ảnh hưởng đến sidebar-content
-  // Chỉ chạy khi không có pendingUserId và pendingChat (để ưu tiên xử lý từ user list)
   useEffect(() => {
-    if (isOpen && activeTab === 'private' && chats && !pendingChat && !pendingUserId) {
+    // Khi không có pendingUserId/pendingChat và chưa chọn privateChatId,
+    // tự động chọn private chat đầu tiên nếu có
+    if (isOpen && chats && !pendingChat && !pendingUserId) {
       const CHAT_CONFIG = window.meetingClientSettings.public.chat;
       const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
       
@@ -299,7 +301,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
         }
       }
     }
-  }, [isOpen, activeTab, privateChatId, chats, pendingChat, pendingUserId]);
+  }, [isOpen, privateChatId, chats, pendingChat, pendingUserId]);
   
   // Reset privateChatId khi đóng modal
   useEffect(() => {
@@ -307,6 +309,20 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       setPrivateChatId('');
     }
   }, [isOpen]);
+
+  // useMemo phải được gọi ở top level, không được sau early return
+  const activeChat = useMemo(
+    () => chats?.find((c) => c.chatId === privateChatId),
+    [chats, privateChatId],
+  );
+
+  // Chỉ hiển thị tên người khi đã chọn chat, nếu không thì hiển thị "Messages"
+  const activeChatName = privateChatId && activeChat?.participant?.name
+    ? activeChat.participant.name
+    : intl.formatMessage(intlMessages.privateChatTitle);
+
+  // Tính unread count cho active chat
+  const unreadCount = activeChat?.totalUnread || 0;
 
   if (!position) return null;
 
@@ -346,6 +362,11 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
             onClick={handleToggleMinimize}
           >
             <Icon iconName="chat" />
+            {unreadCount > 0 && (
+              <Styled.UnreadBadge>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Styled.UnreadBadge>
+            )}
             <Styled.MinimizedClose
               type="button"
               onClick={(e) => {
@@ -367,7 +388,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
             <Styled.Header>
               <Styled.Title onMouseDown={handleDragStart}>
                 <Icon iconName="chat" />
-                <span>{activeTab === 'private' ? 'Message' : 'Shared Notes'}</span>
+                <span>{activeChatName}</span>
               </Styled.Title>
               <Styled.HeaderActions>
                 {!isMobileViewport() && (
@@ -392,50 +413,27 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
                 />
               </Styled.HeaderActions>
             </Styled.Header>
-            <Styled.TabBar>
-              <Styled.TabButton
-                type="button"
-                data-active={activeTab === 'private'}
-                onClick={() => setActiveTab('private')}
-              >
-                Private
-              </Styled.TabButton>
-              <Styled.TabButton
-                type="button"
-                data-active={activeTab === 'notes'}
-                onClick={() => setActiveTab('notes')}
-              >
-                Notes
-              </Styled.TabButton>
-            </Styled.TabBar>
             <Styled.Content>
-              {activeTab === 'private' && (
-                <>
-                  <Styled.LeftPane>
-                    <ChatListContainer 
-                      disableLayoutInteractions 
-                      filterPrivateOnly 
-                      onChatSelect={(chatId) => setPrivateChatId(chatId)}
-                      variant="modal"
-                      activeChatId={privateChatId}
-                    />
-                  </Styled.LeftPane>
-                  <Styled.RightPane>
-                    {privateChatId ? (
-                      <ChatContainer mode="modal" chatId={privateChatId} />
-                    ) : (
-                      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                        <span>Select a chat to start messaging</span>
-                      </div>
-                    )}
-                  </Styled.RightPane>
-                </>
-              )}
-              {activeTab === 'notes' && (
-                <Styled.RightPane>
-                  <NotesContainer isToSharedNotesBeShow mode="modal" />
-                </Styled.RightPane>
-              )}
+              <Styled.RightPane>
+                {privateChatId ? (
+                  <ChatContainer mode="modal" chatId={privateChatId} />
+                ) : (
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    height: '100%',
+                    padding: '1rem',
+                    textAlign: 'center',
+                    color: '#555',
+                  }}
+                  >
+                    <span>
+                      Select a participant from the user list to start a private chat.
+                    </span>
+                  </div>
+                )}
+              </Styled.RightPane>
             </Styled.Content>
           </>
         )}

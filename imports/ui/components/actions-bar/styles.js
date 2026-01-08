@@ -251,16 +251,19 @@ const UnreadBadge = styled.div`
   position: absolute;
   top: -4px;
   right: -4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 10px;
   background-color: ${colorDanger};
   color: ${colorWhite};
-  font-size: 10px;
+  font-size: 11px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
 `;
 
 const ChatNotesTabs = styled.div`

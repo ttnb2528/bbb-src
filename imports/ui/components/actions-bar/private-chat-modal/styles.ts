@@ -7,16 +7,19 @@ import { smallOnly, hasPhoneWidth } from '/imports/ui/stylesheets/styled-compone
 const Modal = styled.div<{ $minimized: boolean }>`
   display: flex;
   flex-direction: column;
-  width: ${({ $minimized }) => ($minimized ? '56px' : '900px')};
+  /* Popup nhỏ kiểu chat (desktop) */
+  width: ${({ $minimized }) => ($minimized ? '56px' : '360px')};
   max-width: 95vw;
-  height: ${({ $minimized }) => ($minimized ? '56px' : '70vh')};
-  max-height: ${({ $minimized }) => ($minimized ? '56px' : '650px')};
-  min-height: ${({ $minimized }) => ($minimized ? '56px' : 'auto')};
+  height: ${({ $minimized }) => ($minimized ? '56px' : '460px')};
+  max-height: ${({ $minimized }) => ($minimized ? '56px' : '70vh')};
+  min-height: ${({ $minimized }) => ($minimized ? '56px' : '320px')};
   background-color: ${colorWhite};
   border-radius: ${({ $minimized }) => ($minimized ? '50%' : '8px')};
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: ${({ $minimized }) => ($minimized ? '0 2px 8px rgba(0, 0, 0, 0.15)' : '0 4px 20px rgba(0, 0, 0, 0.3)')};
   overflow: ${({ $minimized }) => ($minimized ? 'visible' : 'hidden')};
   transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
+  border: none !important;
+  outline: none !important;
   position: relative;
   ${({ $minimized }) => $minimized && `
     cursor: pointer;
@@ -195,6 +198,9 @@ const MinimizedIcon = styled.div`
   justify-content: center;
   width: 100%;
   height: 100%;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 
   > [class^="icon-bbb-"] {
     font-size: 22px;
@@ -206,6 +212,25 @@ const MinimizedIcon = styled.div`
     opacity: 1;
     visibility: visible;
   }
+`;
+
+const UnreadBadge = styled.div`
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: ${colorDanger};
+  color: ${colorWhite};
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 0 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
 `;
 
 export default {
@@ -220,5 +245,6 @@ export default {
   MinimizedClose,
   TabBar,
   TabButton,
+  UnreadBadge,
 };
 

@@ -102,19 +102,9 @@ const MobilePanelButtonsContainer: React.FC = () => {
     }
   }, [actionBarOutput?.height]);
 
-  // Listen for external private chat modal open event
-  useEffect(() => {
-    const handleExternalOpenPrivateChat = () => {
-      // Chỉ mở modal nếu đang ở mobile (desktop sẽ được xử lý bởi actions-bar)
-      if (deviceInfo.isMobile) {
-        setIsPrivateChatModalOpen(true);
-      }
-    };
-    window.addEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
-    return () => {
-      window.removeEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
-    };
-  }, []);
+  // PrivateChatModal đã được di chuyển vào actions-bar component
+  // Event 'openPrivateChatModal' sẽ được xử lý bởi actions-bar/component.jsx
+  // Không cần xử lý ở đây nữa
 
   // Logic force set public chat đã được chuyển sang PublicChatContainer
   // Giữ lại logic này để đảm bảo khi mở drawer, set ngay public chat ID

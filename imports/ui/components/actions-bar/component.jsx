@@ -29,6 +29,7 @@ import Icon from '/imports/ui/components/common/icon/icon-ts/component';
 import Tooltip from '/imports/ui/components/common/tooltip/component';
 import SessionDetailsModal from '/imports/ui/components/session-details/component';
 import PrivateChatModal from './private-chat-modal/component';
+import PrivateChatNotificationPanel from './private-chat-notification-panel/component';
 import deviceInfo from '/imports/utils/deviceInfo';
 import MoreMenu from './more-menu/component';
 
@@ -48,11 +49,15 @@ class ActionsBar extends PureComponent {
     this.setModalIsOpen = this.setModalIsOpen.bind(this);
     this.handleTogglePrivateChat = this.handleTogglePrivateChat.bind(this);
     this.handleExternalOpenPrivateChat = this.handleExternalOpenPrivateChat.bind(this);
+    this.handleCloseNotificationPanel = this.handleCloseNotificationPanel.bind(this);
+    this.handleSelectChatFromPanel = this.handleSelectChatFromPanel.bind(this);
     this.getCurrentTime = this.getCurrentTime.bind(this);
 
     this.state = {
       isModalOpen: false,
       isPrivateChatModalOpen: false,
+      isPrivateChatNotificationPanelOpen: false,
+      privateChatButtonRef: null,
       currentTime: this.getCurrentTime(),
     };
   }
@@ -86,19 +91,41 @@ class ActionsBar extends PureComponent {
     this.setState({ isModalOpen: isOpen });
   }
 
-  handleTogglePrivateChat() {
+  handleTogglePrivateChat(e) {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    
+    const buttonElement = e?.currentTarget || e?.target?.closest('button');
+    
     this.setState((prevState) => {
       // Nếu modal đã mở, dispatch event để expand nếu đang minimized
-      // Logic expand/close sẽ được xử lý trong PrivateChatModal
       if (prevState.isPrivateChatModalOpen) {
         window.dispatchEvent(new CustomEvent('togglePrivateChatModal'));
-        // Giữ nguyên state, để PrivateChatModal quyết định có đóng không
         return prevState;
       }
-      // Nếu modal chưa mở, mở nó
+      
+      // Toggle notification panel: nếu đang mở thì đóng, nếu đang đóng thì mở
+      const newPanelState = !prevState.isPrivateChatNotificationPanelOpen;
+      
       return {
-        isPrivateChatModalOpen: true,
+        isPrivateChatNotificationPanelOpen: newPanelState,
+        privateChatButtonRef: newPanelState ? buttonElement : null,
       };
+    });
+  }
+  
+  handleCloseNotificationPanel = () => {
+    this.setState({ isPrivateChatNotificationPanelOpen: false });
+  }
+  
+  handleSelectChatFromPanel = (chatId) => {
+    // Dispatch event với chatId để PrivateChatModal mở đúng chat
+    window.dispatchEvent(new CustomEvent('openPrivateChatModal', {
+      detail: { chatId },
+    }));
+    this.setState({
+      isPrivateChatNotificationPanelOpen: false,
+      isPrivateChatModalOpen: true,
     });
   }
   
@@ -488,6 +515,25 @@ class ActionsBar extends PureComponent {
                     />
                   </Styled.BadgeWrapper>
                   
+                  {/* Private Chat button - với badge notification */}
+                  <Styled.BadgeWrapper>
+                    <Button
+                      label={intl.formatMessage({ id: 'app.chat.privateChat', defaultMessage: 'Messages' })}
+                      icon="chat"
+                      color="default"
+                      size="md"
+                      onClick={this.handleTogglePrivateChat}
+                      hideLabel
+                      circle
+                      data-test="togglePrivateChat"
+                    />
+                    {privateUnreadCount > 0 && (
+                      <Styled.UnreadBadge>
+                        {privateUnreadCount > 99 ? '99+' : privateUnreadCount}
+                      </Styled.UnreadBadge>
+                    )}
+                  </Styled.BadgeWrapper>
+                  
                   {/* Options dropdown */}
                   <OptionsDropdownContainer
                     amIModerator={amIModerator}
@@ -505,6 +551,14 @@ class ActionsBar extends PureComponent {
             </Styled.Gap>
           </Styled.Right>
         </Styled.ActionsBar>
+        {/* Render PrivateChatNotificationPanel */}
+        <PrivateChatNotificationPanel
+          isOpen={this.state.isPrivateChatNotificationPanelOpen}
+          onClose={this.handleCloseNotificationPanel}
+          onSelectChat={this.handleSelectChatFromPanel}
+          anchorElement={this.state.privateChatButtonRef}
+        />
+        
         {/* Render PrivateChatModal cho cả desktop và mobile */}
         <PrivateChatModal
           isOpen={this.state.isPrivateChatModalOpen}
