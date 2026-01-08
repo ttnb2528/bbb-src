@@ -9,7 +9,6 @@ import Button from '/imports/ui/components/common/button/component';
 import useChat from '/imports/ui/core/hooks/useChat';
 import { Chat } from '/imports/ui/Types/chat';
 import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
-import usePendingChat from '/imports/ui/core/local-states/usePendingChat';
 import { colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
 
 const isMobileViewport = () => (typeof window !== 'undefined' && window.innerWidth <= 640);
@@ -57,16 +56,11 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   const savedPositionRef = useRef<{ left: number; top: number } | null>(null);
   
   // Sử dụng chatId từ props (flow mới)
-  // State để lưu userId từ event khi mở modal từ user list (backward compatibility - có thể xóa sau)
-  const [pendingUserId, setPendingUserId] = useState<string>('');
   const { data: chats } = useChat((chat) => ({
     chatId: chat.chatId,
     participant: chat.participant,
     totalUnread: chat.totalUnread,
   })) as GraphqlDataHookSubscriptionResponse<Partial<Chat>[]>;
-  
-  // Xử lý pendingChat để tự động mở chat khi user click "Start Private Chat" từ user list (flow cũ - có thể xóa sau)
-  const [pendingChat, setPendingChat] = usePendingChat();
   
   // Khởi tạo vị trí giữa màn hình khi mở modal
   useEffect(() => {
@@ -197,16 +191,38 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       return;
     }
 
-    if (!position) return;
+    // Đảm bảo luôn có position trước khi thao tác (tránh cần click lần 2)
+    let currentPosition = position;
+    if (!currentPosition) {
+      // Nếu chưa có vị trí (mở popup lần đầu), tính vị trí mặc định
+      const modalWidth = 360;
+      const modalHeight = 460;
+      const paddingRight = 16;
+      const paddingBottom = 120;
+      currentPosition = {
+        left: window.innerWidth - modalWidth - paddingRight,
+        top: window.innerHeight - modalHeight - paddingBottom,
+      };
+      setPosition(currentPosition);
+      onPositionUpdate?.(currentPosition);
+    }
 
-    if (!isMinimized) {
+    // Log để debug click 2 lần
+    // eslint-disable-next-line no-console
+    console.log('[PrivateChatModal] toggleMinimize click, externalIsMinimized:', externalIsMinimized, 'position:', currentPosition);
+
+    // Sử dụng externalIsMinimized thay vì isMinimized state để tránh delay
+    // vì externalIsMinimized được cập nhật ngay lập tức từ parent
+    if (!externalIsMinimized) {
+      setIsMinimized(true); // tối ưu UI ngay lập tức
       // Khi minimize: lưu vị trí hiện tại để restore sau
-      savedPositionRef.current = { ...position };
+      savedPositionRef.current = { ...currentPosition };
       // Truyền savedPosition để parent lưu lại và set position về dock
       // Parent sẽ xử lý việc set isMinimized và position
       // Gọi ngay lập tức để đảm bảo minimize hoạt động ngay
       onMinimize?.(savedPositionRef.current);
     } else {
+      setIsMinimized(false); // mở ngay để tránh cần click 2 lần
       // Khi expand lại: restore vị trí cũ hoặc mở ngay tại icon nếu chưa có vị trí cũ
       if (savedPositionRef.current) {
         setPosition(savedPositionRef.current);
@@ -254,21 +270,10 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   // Setup listener một lần khi component mount để nhận userId từ event
   // Không cần check isOpen vì event có thể được dispatch trước khi modal mở
   useEffect(() => {
-    const handleExternalOpenPrivateChat = (e: Event) => {
+    const handleExternalOpenPrivateChat = () => {
       // Nếu modal đã mở nhưng đang minimized, expand nó ra
       if (isOpen && isMinimized) {
         expandModal();
-      }
-      
-      // Nếu event có detail với userId hoặc chatId, lưu lại để xử lý khi modal mở
-      if (e instanceof CustomEvent) {
-        if (e.detail?.userId) {
-          setPendingUserId(e.detail.userId);
-          setPendingChat('');
-        } else if (e.detail?.chatId) {
-          // Với flow mới, chatId được truyền qua props từ parent
-          // Không cần set state ở đây nữa
-        }
       }
     };
     
@@ -291,26 +296,14 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       window.removeEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
       window.removeEventListener('togglePrivateChatModal', handleTogglePrivateChatModal as EventListener);
     };
-  }, [isOpen, isMinimized, setPendingChat, onExpand, onRequestClose]); // Thêm onRequestClose vào dependencies
+  }, [isOpen, isMinimized, onExpand, onRequestClose]); // Thêm onRequestClose vào dependencies
 
   // Reset position khi đóng modal
   useEffect(() => {
     if (!isOpen) {
       setPosition(null);
       setIsMinimized(false);
-      setPendingUserId('');
       savedPositionRef.current = null; // Reset saved position
-    }
-  }, [isOpen]);
-
-  // Note: Với flow mới, chatId được truyền qua props từ parent
-  // Các useEffect này chỉ để backward compatibility với flow cũ
-  // Có thể xóa sau khi đảm bảo flow mới hoạt động ổn định
-  
-  // Clear pendingUserId khi đóng modal
-  useEffect(() => {
-    if (!isOpen) {
-      setPendingUserId('');
     }
   }, [isOpen]);
 
@@ -366,7 +359,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
           // Khi minimized: hiển thị avatar của người đang chat, có thể kéo và đóng
           <Styled.MinimizedIcon
             onMouseDown={handleDragStart}
-            onClick={(e) => {
+            onClick={() => {
               // Nếu vừa kéo thì bỏ qua click để không mở popup
               if (hasDragged.current) {
                 hasDragged.current = false;
@@ -384,11 +377,9 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
               <Styled.MinimizedAvatar
                 moderator={activeChat.participant.role === window.meetingClientSettings.public.user.role_moderator}
                 avatar={activeChat.participant.avatar || ''}
-                style={{
-                  backgroundColor: activeChat.participant.color
-                    ? (activeChat.participant.color.startsWith('#') ? activeChat.participant.color : `#${activeChat.participant.color}`)
-                    : colorPrimary,
-                }}
+                $backgroundColor={activeChat.participant.color
+                  ? (activeChat.participant.color.startsWith('#') ? activeChat.participant.color : `#${activeChat.participant.color}`)
+                  : colorPrimary}
               >
                 {activeChat.participant.avatar?.length === 0
                   ? activeChat.participant.name?.toLowerCase().slice(0, 2) || ''
@@ -458,20 +449,11 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
                 {chatId ? (
                   <ChatContainer mode="modal" chatId={chatId} />
                 ) : (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    height: '100%',
-                    padding: '1rem',
-                    textAlign: 'center',
-                    color: '#555',
-                  }}
-                  >
+                  <Styled.EmptyState>
                     <span>
                       Select a participant from the user list to start a private chat.
                     </span>
-                  </div>
+                  </Styled.EmptyState>
                 )}
               </Styled.RightPane>
             </Styled.Content>

@@ -67,11 +67,9 @@ class ActionsBar extends PureComponent {
   }
 
   componentDidMount() {
-    console.log('[ActionsBar] componentDidMount - Setting up event listeners');
     // Setup event listeners ngay lập tức, không dùng setTimeout
     window.addEventListener('openPrivateChatModal', this.handleExternalOpenPrivateChat);
     window.addEventListener('clickMinimizedChatIcon', this.handleClickMinimizedChatIcon);
-    console.log('[ActionsBar] Event listeners setup complete');
     // Update time every minute
     this.timeInterval = setInterval(() => {
       this.setState({ currentTime: this.getCurrentTime() });
@@ -219,24 +217,19 @@ class ActionsBar extends PureComponent {
   handleExternalOpenPrivateChat = (e) => {
     // Xử lý event từ user list (click "Start Private Chat")
     if (!(e instanceof CustomEvent)) {
-      console.warn('[ActionsBar] handleExternalOpenPrivateChat - Not a CustomEvent');
       return;
     }
     
     const { userId, chatId } = e.detail || {};
-    console.log('[ActionsBar] handleExternalOpenPrivateChat - userId:', userId, 'chatId:', chatId);
     
     // Nếu có chatId trực tiếp, mở luôn (đây là từ PrivateChatHelper sau khi tìm được chatId)
     if (chatId) {
-      console.log('[ActionsBar] Opening chat with chatId:', chatId);
       // Xử lý ngay lập tức, không dùng setTimeout
       this.setState((prevState) => {
         // Kiểm tra xem chatId này đã được xử lý chưa (tránh duplicate)
         const existingChat = prevState.openPrivateChats[chatId];
-        console.log('[ActionsBar] Existing chat state:', existingChat);
         if (existingChat?.isOpen && !existingChat?.isMinimized) {
           // Chat đã mở rồi, không làm gì (tránh duplicate)
-          console.log('[ActionsBar] Chat already open, skipping');
           return prevState;
         }
         
@@ -289,12 +282,10 @@ class ActionsBar extends PureComponent {
     
     // Nếu có userId, dispatch event để PrivateChatHelper tìm chatId
     if (userId) {
-      console.log('[ActionsBar] Dispatching findChatIdFromUserId for userId:', userId);
       window.dispatchEvent(new CustomEvent('findChatIdFromUserId', {
         detail: { userId },
       }));
     } else {
-      console.warn('[ActionsBar] No userId or chatId provided in event');
     }
   }
 
@@ -350,6 +341,9 @@ class ActionsBar extends PureComponent {
       top: window.innerHeight - iconSize - 96, // tránh đè actions bar
     };
     
+    // eslint-disable-next-line no-console
+    console.log('[ActionsBar] handleMinimizePrivateChat', { chatId, savedPosition, dockPosition });
+
     this.setState((prevState) => {
       const newChats = {
         ...prevState.openPrivateChats,
@@ -366,6 +360,9 @@ class ActionsBar extends PureComponent {
   
   handleExpandPrivateChat = (chatId) => {
     // Mở lại popup chat từ minimized, restore vị trí cũ
+    // eslint-disable-next-line no-console
+    console.log('[ActionsBar] handleExpandPrivateChat', { chatId });
+
     this.setState((prevState) => {
       const chatState = prevState.openPrivateChats[chatId];
       if (!chatState) return prevState;

@@ -216,7 +216,7 @@ const MinimizedIcon = styled.div`
   }
 `;
 
-const MinimizedAvatar = styled.div<{ moderator?: boolean; avatar?: string }>`
+const MinimizedAvatar = styled.div<{ moderator?: boolean; avatar?: string; $backgroundColor?: string }>`
   width: 100%;
   height: 100%;
   border-radius: 50%;
@@ -227,6 +227,7 @@ const MinimizedAvatar = styled.div<{ moderator?: boolean; avatar?: string }>`
   font-weight: 600;
   font-size: 18px;
   flex-shrink: 0;
+  background-color: ${({ $backgroundColor }) => $backgroundColor || colorPrimary};
   ${({ moderator }) => moderator && `
     border: 2px solid ${colorPrimary};
   `}
@@ -257,6 +258,16 @@ const UnreadBadge = styled.div`
   z-index: 10;
 `;
 
+const EmptyState = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 1rem;
+  text-align: center;
+  color: #555;
+`;
+
 export default {
   Modal,
   Header,
@@ -271,5 +282,6 @@ export default {
   TabBar,
   TabButton,
   UnreadBadge,
+  EmptyState,
 };
 
