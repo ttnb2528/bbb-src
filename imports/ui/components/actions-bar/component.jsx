@@ -372,7 +372,7 @@ class ActionsBar extends PureComponent {
                 onClick={() => this.setModalIsOpen(true)}
                 data-test="roomName"
               >
-                <Tooltip title={intl.formatMessage({ id: 'app.navBar.openDetailsTooltip' })}>
+                <Tooltip title={intl.formatMessage({ id: 'app.navBar.openDetailsTooltip', defaultMessage: 'Session' })}>
                   <span>
                     {presentationTitle || meetingName || 'Room'}
                     <Icon iconName="device_list_selector" />
@@ -448,7 +448,7 @@ class ActionsBar extends PureComponent {
                   {/* Desktop: Hiển thị tất cả các nút */}
                   {/* Info button - dùng icon settings hoặc custom SVG */}
                   <Button
-                    label={intl.formatMessage({ id: 'app.navBar.openDetailsTooltip' })}
+                    label={intl.formatMessage({ id: 'app.navBar.openDetailsTooltip', defaultMessage: 'Session' })}
                     icon="settings"
                     color="default"
                     size="md"
@@ -461,7 +461,7 @@ class ActionsBar extends PureComponent {
                   {/* User List button - dùng icon user (có sẵn) */}
                   <Styled.BadgeWrapper>
                     <Button
-                      label={intl.formatMessage({ id: 'app.navBar.userListToggleBtnLabel' })}
+                      label={intl.formatMessage({ id: 'app.navBar.userListToggleBtnLabel', defaultMessage: 'Users' })}
                       icon="user"
                       color="default"
                       size="md"
@@ -476,7 +476,7 @@ class ActionsBar extends PureComponent {
                   {/* Chat button - dùng icon group_chat cho public chat */}
                   <Styled.BadgeWrapper>
                     <Button
-                      label={intl.formatMessage({ id: 'app.chat.title' })}
+                      label={intl.formatMessage({ id: 'app.chat.title', defaultMessage: 'Chat' })}
                       icon="group_chat"
                       color="default"
                       size="md"

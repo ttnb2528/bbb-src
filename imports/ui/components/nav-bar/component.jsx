@@ -26,6 +26,7 @@ const intlMessages = defineMessages({
   toggleUserListLabel: {
     id: 'app.navBar.userListToggleBtnLabel',
     description: 'Toggle button label',
+    defaultMessage: 'Users',
   },
   toggleUserListAria: {
     id: 'app.navBar.toggleUserList.ariaLabel',
@@ -50,6 +51,7 @@ const intlMessages = defineMessages({
   openDetailsTooltip: {
     id: 'app.navBar.openDetailsTooltip',
     description: 'Open details tooltip',
+    defaultMessage: 'Session',
   },
   sessionControlLabel: {
     id: 'app.navBar.sessionControlLabel',
@@ -62,7 +64,7 @@ const intlMessages = defineMessages({
 });
 
 const propTypes = {
-  presentationTitle: PropTypes.string,
+  presentationTitle: PropTypes.string,   
   hasUnreadMessages: PropTypes.bool,
   shortcuts: PropTypes.string,
   breakoutNum: PropTypes.number,

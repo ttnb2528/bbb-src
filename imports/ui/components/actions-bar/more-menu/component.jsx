@@ -16,18 +16,22 @@ const intlMessages = defineMessages({
   settingsLabel: {
     id: 'app.navBar.openDetailsTooltip',
     description: 'Settings label',
+    defaultMessage: 'Session',
   },
   userListLabel: {
     id: 'app.navBar.userListToggleBtnLabel',
     description: 'User list label',
+    defaultMessage: 'Users',
   },
   chatLabel: {
     id: 'app.chat.title',
     description: 'Chat label',
+    defaultMessage: 'Chat',
   },
   privateChatLabel: {
     id: 'app.chat.privateChat',
     description: 'Private chat label',
+    defaultMessage: 'Messages',
   },
 });
 

@@ -6,8 +6,10 @@
     "app.chat.locked": "Chát bị khóa, bạn không thể gửi tin nhắn",
     "app.chat.inputLabel": "Nội dung cho chat {chatName}",
     "app.chat.inputPlaceholder": "Gửi tin nhắn đến {chatName}",
-    "app.chat.titlePublic": "Chát công khai",
-    "app.chat.titlePrivate": "Chát riêng với {participantName}",
+    "app.chat.title": "Chat",
+    "app.chat.titlePublic": "Chat",
+    "app.chat.titlePrivate": "Chat với {participantName}",
+    "app.chat.privateChat": "Tin nhắn",
     "app.chat.partnerDisconnected": "{participantName} cuộc trò truyện còn lại",
     "app.chat.closeChatLabel": "Đóng {chatName}",
     "app.chat.hideChatLabel": "Ẩn {chatName}",
@@ -110,5 +112,7 @@
     "app.videoPreview.cancelLabel": "Hủy bỏ",
     "app.videoPreview.closeLabel": "Đóng",
     "app.video.cancel": "Hủy bỏ",
-    "app.externalVideo.close": "Đóng"
+    "app.externalVideo.close": "Đóng",
+    "app.navBar.userListToggleBtnLabel": "Thành viên",
+    "app.navBar.openDetailsTooltip": "Phiên"
 }
