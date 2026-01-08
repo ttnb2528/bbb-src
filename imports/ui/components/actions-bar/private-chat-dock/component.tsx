@@ -62,7 +62,9 @@ const PrivateChatDock: React.FC<PrivateChatDockProps> = ({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen || minimizedChatData.length === 0) return null;
+  // Luôn mount trong DOM để animation hoạt động mượt mà
+  // Chỉ ẩn/hiện thông qua CSS thay vì unmount
+  if (minimizedChatData.length === 0) return null;
 
   // Tính toán vị trí dock: hiển thị ngang từ anchor position
   const dockStyle: React.CSSProperties = {};
@@ -103,6 +105,8 @@ const PrivateChatDock: React.FC<PrivateChatDockProps> = ({
         return (
           <Styled.DockItem
             key={chat.chatId}
+            $index={minimizedChatData.indexOf(chat)}
+            $isOpen={isOpen}
             onClick={() => {
               onSelectChat(chat.chatId!, iconPosition);
               onClose();

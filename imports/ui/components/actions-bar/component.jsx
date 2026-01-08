@@ -825,14 +825,10 @@ class ActionsBar extends PureComponent {
         {/* Helper component để query chats và tìm chatId từ userId */}
         <PrivateChatHelper />
         
-        {/* Render nhiều PrivateChatModal - mỗi chatId một popup */}
-        {/* Chỉ hiển thị icon minimized cho chat cuối cùng nếu có nhiều chat minimized */}
+        {/* Render nhiều PrivateChatModal - mỗi chatId một popup hoặc icon */}
         {(() => {
           const minimizedChats = Object.keys(this.state.openPrivateChats).filter(
             (chatId) => this.state.openPrivateChats[chatId]?.isMinimized
-          );
-          const openChats = Object.keys(this.state.openPrivateChats).filter(
-            (chatId) => this.state.openPrivateChats[chatId]?.isOpen && !this.state.openPrivateChats[chatId]?.isMinimized
           );
           
           return Object.keys(this.state.openPrivateChats).map((chatId) => {
@@ -841,20 +837,21 @@ class ActionsBar extends PureComponent {
             
             // Nếu chat đang minimized
             if (chatState.isMinimized) {
-              // Chỉ render icon cho chat minimized cuối cùng nếu có nhiều chat minimized
+              // Nếu có nhiều chat minimized (>1), chỉ render icon cho chat cuối cùng
+              // Các chat khác sẽ hiển thị trong dock bar
               if (minimizedChats.length > 1 && chatId !== minimizedChats[minimizedChats.length - 1]) {
                 // Không render icon cho các chat minimized trước chat cuối
                 // Chúng sẽ được hiển thị trong dock bar
                 return null;
               }
-              // Render icon minimized cho chat cuối cùng
+              // Render icon minimized cho chat cuối cùng (hoặc chat duy nhất)
               return (
                 <PrivateChatModal
                   key={chatId}
                   chatId={chatId}
                   isOpen={true}
                   isMinimized={true}
-                  initialPosition={chatState.position}
+                  initialPosition={chatState.dockPosition || chatState.position}
                   onRequestClose={() => this.handleClosePrivateChat(chatId)}
                   onMinimize={(position) => this.handleMinimizePrivateChat(chatId, position)}
                   onExpand={() => this.handleExpandPrivateChat(chatId)}

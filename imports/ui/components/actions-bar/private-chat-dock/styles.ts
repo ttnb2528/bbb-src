@@ -7,15 +7,17 @@ export const Dock = styled.div<{ $isOpen: boolean }>`
   flex-direction: row;
   gap: 8px;
   z-index: 10001;
-  pointer-events: auto;
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
   transform: ${({ $isOpen }) => ($isOpen ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(-10px)')};
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
+  transform-origin: right center;
+  will-change: opacity, transform;
+  visibility: ${({ $isOpen }) => ($isOpen ? 'visible' : 'hidden')};
 `;
 
-export const DockItem = styled.button`
+export const DockItem = styled.button<{ $index?: number; $isOpen?: boolean }>`
   position: relative;
   width: 56px;
   height: 56px;
@@ -27,14 +29,26 @@ export const DockItem = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
+  transform: ${({ $isOpen, $index = 0 }) => 
+    $isOpen 
+      ? `scale(1) translateX(0)` 
+      : `scale(0.6) translateX(${($index + 1) * 20}px)`};
+  transition-delay: ${({ $index = 0, $isOpen }) => $isOpen ? `${$index * 0.08}s` : '0s'};
+  will-change: opacity, transform;
 
   &:hover {
-    transform: scale(1.1);
+    transform: scale(1.15) translateX(0) !important;
+    transition-delay: 0s !important;
+    transition-duration: 0.2s !important;
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.9) translateX(0) !important;
+    transition-delay: 0s !important;
+    transition-duration: 0.1s !important;
   }
 `;
 

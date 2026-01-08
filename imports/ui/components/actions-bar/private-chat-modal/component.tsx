@@ -386,7 +386,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
                   : colorPrimary}
               >
                 {activeChat.participant.avatar?.length === 0
-                  ? activeChat.participant.name?.toLowerCase().slice(0, 2) || ''
+                  ? activeChat.participant.name?.toUpperCase().slice(0, 2) || ''
                   : ''}
               </Styled.MinimizedAvatar>
             ) : (
