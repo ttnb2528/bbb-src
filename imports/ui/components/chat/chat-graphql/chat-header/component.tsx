@@ -49,22 +49,17 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const [updateVisible] = useMutation(CLOSE_PRIVATE_CHAT_MUTATION);
   const isMobile = deviceInfo.isMobile || deviceInfo.isPhone;
 
-  // Trên mobile, hiển thị header đơn giản với nút X để đóng sidebar
+  // Trên mobile, hiển thị header đơn giản với nút X ở góc trái để đóng sidebar
   if (mode === 'sidebar' && isMobile) {
     return (
       <Header
         isRTL={isRTL}
         data-test="chatTitle"
         leftButtonProps={{
-          'aria-label': title,
-          'data-test': isPublicChat ? 'publicChatTitle' : 'privateChatTitle',
-          label: title,
-        }}
-        rightButtonProps={{
           'aria-label': intl.formatMessage(intlMessages.closeChatLabel, { chatName: title }),
           'data-test': 'closeChatSidebar',
           icon: 'close',
-          label: intl.formatMessage(intlMessages.closeChatLabel, { chatName: title }),
+          hideLabel: true,
           onClick: () => {
             // Đóng sidebar khi click X
             layoutContextDispatch({
@@ -83,6 +78,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
             }
           },
         }}
+        rightButtonProps={null}
       />
     );
   }
