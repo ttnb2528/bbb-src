@@ -50,7 +50,8 @@ const NavBarContainer = ({ children, ...props }) => {
   }));
   const amIModerator = currentUserData?.isModerator;
 
-  const isExpanded = !!sidebarContentPanel || !!sidebarNavPanel;
+  // Logic mới: Chỉ check sidebarContent, không cần check sidebarNavigation nữa
+  const isExpanded = sidebarContent.isOpen && sidebarContentPanel === PANELS.USERLIST;
 
   const hideNavBar = getFromUserSettings('bbb_hide_nav_bar', false);
 

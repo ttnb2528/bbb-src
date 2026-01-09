@@ -237,42 +237,33 @@ class NavBar extends Component {
 
   handleToggleUserList() {
     const {
-      sidebarNavigation,
       sidebarContent,
       layoutContextDispatch,
     } = this.props;
 
-    if (sidebarNavigation.isOpen) {
-      if (sidebarContent.isOpen) {
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
-          value: false,
-        });
-        layoutContextDispatch({
-          type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
-          value: PANELS.NONE,
-        });
-        layoutContextDispatch({
-          type: ACTIONS.SET_ID_CHAT_OPEN,
-          value: '',
-        });
-      }
+    // Logic mới: Tất cả đã gộp vào SidebarContent, switch panel USERLIST/CHAT
+    const isSidebarOpen = sidebarContent.isOpen;
+    const currentPanel = sidebarContent.sidebarContentPanel;
+    const isUserListPanel = currentPanel === PANELS.USERLIST;
 
+    if (isSidebarOpen && isUserListPanel) {
+      // Đang mở User List → Đóng sidebar
       layoutContextDispatch({
-        type: ACTIONS.SET_SIDEBAR_NAVIGATION_IS_OPEN,
+        type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
         value: false,
       });
       layoutContextDispatch({
-        type: ACTIONS.SET_SIDEBAR_NAVIGATION_PANEL,
+        type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
         value: PANELS.NONE,
       });
     } else {
+      // Chưa mở hoặc đang ở panel khác → Mở User List
       layoutContextDispatch({
-        type: ACTIONS.SET_SIDEBAR_NAVIGATION_IS_OPEN,
+        type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
         value: true,
       });
       layoutContextDispatch({
-        type: ACTIONS.SET_SIDEBAR_NAVIGATION_PANEL,
+        type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
         value: PANELS.USERLIST,
       });
     }
@@ -315,6 +306,7 @@ class NavBar extends Component {
       main,
       isPinned,
       sidebarNavigation,
+      sidebarContent,
       currentUserId,
       isDirectLeaveButtonEnabled,
       isMeteorConnected,
@@ -328,7 +320,8 @@ class NavBar extends Component {
     let ariaLabel = intl.formatMessage(intlMessages.toggleUserListAria);
     ariaLabel += hasNotification ? (` ${intl.formatMessage(intlMessages.newMessages)}`) : '';
 
-    const isExpanded = sidebarNavigation.isOpen;
+    // Logic mới: Check sidebarContent thay vì sidebarNavigation
+    const isExpanded = sidebarContent.isOpen && sidebarContent.sidebarContentPanel === PANELS.USERLIST;
     const { isPhone } = deviceInfo;
 
     const { leftPluginItems, centerPluginItems, rightPluginItems } = this.splitPluginItems();
