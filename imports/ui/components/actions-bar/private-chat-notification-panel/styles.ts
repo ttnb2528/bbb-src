@@ -8,6 +8,7 @@ import {
 } from '/imports/ui/stylesheets/styled-components/palette';
 import { smPaddingX, smPaddingY, borderSize, borderRadius } from '/imports/ui/stylesheets/styled-components/general';
 import { fontSizeBase, fontSizeSmall } from '/imports/ui/stylesheets/styled-components/typography';
+import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
 
 const Panel = styled.div`
   position: fixed;
@@ -21,6 +22,17 @@ const Panel = styled.div`
   align-items: center;
   min-width: 200px;
   max-width: 400px;
+
+  /* Mobile: full width bar phía trên actions bar */
+  @media ${smallOnly} {
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    bottom: 80px;
+    top: auto;
+    width: calc(100% - 32px);
+    max-width: 480px;
+  }
 `;
 
 const Content = styled.div`

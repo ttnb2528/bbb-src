@@ -4,6 +4,7 @@ import Styled from './styles';
 import useChat from '/imports/ui/core/hooks/useChat';
 import { Chat } from '/imports/ui/Types/chat';
 import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
+import deviceInfo from '/imports/utils/deviceInfo';
 import { colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
 
 const intlMessages = defineMessages({
@@ -78,9 +79,18 @@ const PrivateChatNotificationPanel: React.FC<PrivateChatNotificationPanelProps> 
     };
   }, [isOpen, onClose, anchorElement]);
 
-  // Tính toán vị trí panel dựa trên anchor element
+  // Tính toán vị trí panel dựa trên anchor element (desktop)
   useEffect(() => {
-    if (!isOpen || !anchorElement || !panelRef.current) return;
+    if (!isOpen || !panelRef.current) return;
+
+    // Trên mobile: để CSS định vị (full width bar phía trên actions bar)
+    if (deviceInfo.isMobile || deviceInfo.isPhone) {
+      panelRef.current.style.top = '';
+      panelRef.current.style.left = '';
+      return;
+    }
+
+    if (!anchorElement) return;
 
     const anchorRect = anchorElement.getBoundingClientRect();
     const panelWidth = panelRef.current.offsetWidth || 300;
