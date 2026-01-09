@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Resizable } from 're-resizable';
 import { ACTIONS, PANELS } from '../layout/enums';
@@ -62,6 +62,8 @@ const SidebarContent = (props) => {
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStartWidth, setResizeStartWidth] = useState(0);
   const [resizeStartHeight, setResizeStartHeight] = useState(0);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const sidebarRef = useRef(null);
 
   const COLLAPSED_HEIGHT = 52;
   const [isCollapsed, setIsCollapsed] = useState(height <= COLLAPSED_HEIGHT + 4);
@@ -80,6 +82,33 @@ const SidebarContent = (props) => {
       setIsCollapsed(height <= COLLAPSED_HEIGHT + 4);
     }
   }, [width, height]);
+
+  // Xử lý keyboard trên mobile để tránh input bị đẩy lên
+  useEffect(() => {
+    if (!deviceInfo.isMobile && !deviceInfo.isPhone) return;
+    if (activePanel !== PANELS.CHAT) return;
+
+    const handleViewportResize = () => {
+      if (window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        const keyboardHeight = windowHeight - viewportHeight;
+        setKeyboardHeight(keyboardHeight > 100 ? keyboardHeight : 0); // Chỉ tính nếu > 100px (keyboard thật)
+      }
+    };
+
+    // Listen to visualViewport resize events (keyboard open/close)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+      handleViewportResize(); // Check initial state
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportResize);
+      }
+    };
+  }, [activePanel]);
 
   const setSidebarContentSize = (dWidth, dHeight) => {
     const newWidth = resizeStartWidth + dWidth;
@@ -198,6 +227,10 @@ const SidebarContent = (props) => {
         transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         willChange: 'transform, height',
         transform: `translateX(${translateXOffset})`,
+        // Xử lý keyboard: điều chỉnh height để sidebar không bị đẩy lên khi keyboard mở
+        ...(deviceInfo.isMobile && keyboardHeight > 0 && activePanel === PANELS.CHAT ? {
+          height: `${Math.max(resizableHeight - keyboardHeight, minHeight)}px`,
+        } : {}),
       }}
       handleStyles={{
         left: {

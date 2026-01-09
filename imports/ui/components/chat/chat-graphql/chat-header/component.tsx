@@ -9,6 +9,7 @@ import { Layout } from '../../../layout/layoutTypes';
 import { ACTIONS, PANELS } from '../../../layout/enums';
 import ChatActions from './chat-actions/component';
 import { ChatHeader as Header } from '../chat-message-list/page/chat-message/styles';
+import deviceInfo from '/imports/utils/deviceInfo';
 
 interface ChatHeaderProps {
   chatId: string;
@@ -46,7 +47,47 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const layoutContextDispatch = layoutDispatch();
   const intl = useIntl();
   const [updateVisible] = useMutation(CLOSE_PRIVATE_CHAT_MUTATION);
-  // Ẩn header khi ở sidebar mode hoặc modal mode để tiết kiệm không gian
+  const isMobile = deviceInfo.isMobile || deviceInfo.isPhone;
+
+  // Trên mobile, hiển thị header đơn giản với nút X để đóng sidebar
+  if (mode === 'sidebar' && isMobile) {
+    return (
+      <Header
+        isRTL={isRTL}
+        data-test="chatTitle"
+        leftButtonProps={{
+          'aria-label': title,
+          'data-test': isPublicChat ? 'publicChatTitle' : 'privateChatTitle',
+          label: title,
+        }}
+        rightButtonProps={{
+          'aria-label': intl.formatMessage(intlMessages.closeChatLabel, { chatName: title }),
+          'data-test': 'closeChatSidebar',
+          icon: 'close',
+          label: intl.formatMessage(intlMessages.closeChatLabel, { chatName: title }),
+          onClick: () => {
+            // Đóng sidebar khi click X
+            layoutContextDispatch({
+              type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+              value: false,
+            });
+            layoutContextDispatch({
+              type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
+              value: PANELS.NONE,
+            });
+            if (!isPublicChat) {
+              layoutContextDispatch({
+                type: ACTIONS.SET_ID_CHAT_OPEN,
+                value: '',
+              });
+            }
+          },
+        }}
+      />
+    );
+  }
+
+  // Ẩn header khi ở sidebar mode (desktop) hoặc modal mode để tiết kiệm không gian
   if (mode === 'sidebar' || mode === 'modal') {
     return null;
   }
