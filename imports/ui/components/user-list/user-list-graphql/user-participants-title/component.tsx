@@ -8,6 +8,10 @@ import { USER_WITH_AUDIO_AGGREGATE_COUNT_SUBSCRIPTION, UsersWithAudioCountSubscr
 import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
 import useMeeting from '/imports/ui/core/hooks/useMeeting';
 import { User } from '/imports/ui/Types/user';
+import deviceInfo from '/imports/utils/deviceInfo';
+import { layoutDispatch } from '/imports/ui/components/layout/context';
+import { ACTIONS, PANELS } from '/imports/ui/components/layout/enums';
+import Header from '/imports/ui/components/common/control-header/component';
 
 interface UserTitleProps {
   count: number;
@@ -24,6 +28,11 @@ const messages = defineMessages({
     id: 'app.userList.lockedUsersTitle',
     description: 'Title for the locked users',
   },
+  closeUserListLabel: {
+    id: 'app.userList.closeUserListLabel',
+    description: 'Close user list button label',
+    defaultMessage: 'Close',
+  },
 });
 
 const UserTitle: React.FC<UserTitleProps> = ({
@@ -32,8 +41,55 @@ const UserTitle: React.FC<UserTitleProps> = ({
   hideUserList,
 }) => {
   const intl = useIntl();
+  const layoutContextDispatch = layoutDispatch();
+  const isMobile = deviceInfo.isMobile || deviceInfo.isPhone;
   const userListLabel = hideUserList ? messages.lockedUsersTitle : messages.usersTitle;
 
+  // Trên mobile, hiển thị header với nút X và text "USERS (số lượng)"
+  if (isMobile) {
+    const userListTitle = intl.formatMessage(
+      userListLabel,
+      {
+        userCount: count.toLocaleString('en-US', { notation: 'standard' }),
+      },
+    );
+    return (
+      <Styled.MobileHeaderWrapper isMobile={isMobile}>
+        <Header
+          bottomless
+          data-test="userListTitle"
+          leftButtonProps={{
+            'aria-label': intl.formatMessage(messages.closeUserListLabel),
+            'data-test': 'closeUserListSidebar',
+            icon: 'close',
+            hideLabel: true,
+            onClick: () => {
+              // Đóng sidebar khi click X
+              layoutContextDispatch({
+                type: ACTIONS.SET_SIDEBAR_CONTENT_IS_OPEN,
+                value: false,
+              });
+              layoutContextDispatch({
+                type: ACTIONS.SET_SIDEBAR_CONTENT_PANEL,
+                value: PANELS.NONE,
+              });
+            },
+          }}
+          rightButtonProps={null}
+          customRightButton={
+            <Styled.MobileTitle
+              data-test-users-count={count}
+              data-test-users-with-audio-count={countWithAudio}
+            >
+              {userListTitle}
+            </Styled.MobileTitle>
+          }
+        />
+      </Styled.MobileHeaderWrapper>
+    );
+  }
+
+  // Desktop: hiển thị như cũ
   return (
     <Styled.Container>
       <Styled.SmallTitle>

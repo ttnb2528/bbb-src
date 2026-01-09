@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-import { smPaddingX, lgPaddingY } from '/imports/ui/stylesheets/styled-components/general';
+import { smPaddingX, mdPaddingX, lgPaddingY } from '/imports/ui/stylesheets/styled-components/general';
 
 import { colorGray } from '/imports/ui/stylesheets/styled-components/palette';
 
@@ -21,7 +21,23 @@ export const SmallTitle = styled.h2`
   margin: 0;
 `;
 
+export const MobileTitle = styled.span`
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #5f6368;
+  padding: 0 ${mdPaddingX};
+`;
+
+export const MobileHeaderWrapper = styled.div<{ isMobile?: boolean }>`
+  ${({ isMobile }) => isMobile && `
+    padding: 1rem ${mdPaddingX} 0.5rem ${mdPaddingX};
+  `}
+`;
+
 export default {
   Container,
   SmallTitle,
+  MobileTitle,
+  MobileHeaderWrapper,
 };
