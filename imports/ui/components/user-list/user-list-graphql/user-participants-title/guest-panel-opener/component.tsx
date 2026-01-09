@@ -10,6 +10,7 @@ import Styled from './styles';
 import logger from '/imports/startup/client/logger';
 import useDeduplicatedSubscription from '/imports/ui/core/hooks/useDeduplicatedSubscription';
 import { notify } from '/imports/ui/services/notification';
+import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
 
 interface GuestPanelOpenerProps {
   count: number;
@@ -84,6 +85,10 @@ const GuestPanelOpener: React.FC<GuestPanelOpenerProps> = ({
 
 const GuestPanelOpenerContainer: React.FC = () => {
   const intl = useIntl();
+  const { data: currentUser } = useCurrentUser((user) => ({
+    presenter: user.presenter,
+    isModerator: user.isModerator,
+  }));
   const { data: currentMeeting } = useMeeting((meeting) => {
     const a = {
       usersPolicies: meeting.usersPolicies,
@@ -97,6 +102,11 @@ const GuestPanelOpenerContainer: React.FC = () => {
     loading: guestsCountLoading,
     error: guestsCountError,
   } = useDeduplicatedSubscription<GuestUsersCountResponse>(GET_GUESTS_COUNT);
+
+  // Chỉ hiển thị Waiting Users cho presenter hoặc moderator
+  const amIPresenter = currentUser?.presenter;
+  const amIModerator = currentUser?.isModerator;
+  if (!amIPresenter && !amIModerator) return null;
 
   if (guestsCountError) {
     notify(intl.formatMessage({
