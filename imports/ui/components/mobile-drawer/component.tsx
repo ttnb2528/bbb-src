@@ -6,7 +6,7 @@ import Styled from './styles';
 interface MobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  position: 'left' | 'right';
+  position: 'left' | 'right' | 'bottom';
   children: React.ReactNode;
   title?: string;
 }

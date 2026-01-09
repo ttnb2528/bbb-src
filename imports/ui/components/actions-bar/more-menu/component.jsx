@@ -45,6 +45,9 @@ const propTypes = {
   onTogglePrivateChat: PropTypes.func.isRequired,
   sidebarContent: PropTypes.object,
   privateUnreadCount: PropTypes.number,
+  // Props cho Activities menu (ActionsDropdown)
+  amIPresenter: PropTypes.bool,
+  onOpenActivities: PropTypes.func,
 };
 
 class MoreMenu extends PureComponent {
@@ -64,6 +67,8 @@ class MoreMenu extends PureComponent {
       onTogglePrivateChat,
       sidebarContent,
       privateUnreadCount,
+      amIPresenter,
+      onOpenActivities,
     } = this.props;
 
     const menuItems = [
@@ -112,6 +117,28 @@ class MoreMenu extends PureComponent {
         },
       },
     ];
+
+    // Thêm menu item "Activities" cho presenter
+    if (amIPresenter && onOpenActivities) {
+      menuItems.push(
+        {
+          key: 'separator-activities',
+          isSeparator: true,
+        },
+        {
+          key: 'list-item-activities',
+          icon: 'plus',
+          label: intl.formatMessage({
+            id: 'app.actionsBar.actionsDropdown.actionsLabel',
+            defaultMessage: 'Activities',
+          }),
+          onClick: () => {
+            onOpenActivities();
+            this.setState({ isDropdownOpen: false });
+          },
+        }
+      );
+    }
 
     return menuItems;
   }

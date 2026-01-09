@@ -4,6 +4,7 @@ import { ActionsBarItemType, ActionsBarPosition } from 'bigbluebutton-html-plugi
 import Styled from './styles';
 import getFromUserSettings from '/imports/ui/services/users-settings';
 import ActionsDropdown from './actions-dropdown/container';
+import ActionsListContainer from './actions-list/container';
 import AudioCaptionsButtonContainer from '/imports/ui/components/audio/audio-graphql/audio-captions/button/component';
 import ScreenshareButtonContainer from '/imports/ui/components/actions-bar/screenshare/container';
 import AudioControlsContainer from '../audio/audio-graphql/audio-controls/component';
@@ -34,6 +35,9 @@ import PrivateChatHelper from './private-chat-helper/component';
 import PrivateChatDock from './private-chat-dock/component';
 import deviceInfo from '/imports/utils/deviceInfo';
 import MoreMenu from './more-menu/component';
+import MobileDrawer from '../mobile-drawer/component';
+import ExternalVideoModal from '../external-video-player/external-video-player-graphql/modal/component';
+import VideoPreviewContainer from '../video-preview/container';
 
 const intlMessages = defineMessages({
   actionsBarLabel: {
@@ -63,6 +67,11 @@ class ActionsBar extends PureComponent {
       isPrivateChatDockOpen: false, // Trạng thái dock bar (khi có nhiều chat minimized)
       privateChatButtonRef: null,
       currentTime: this.getCurrentTime(),
+      isActivitiesModalOpen: false, // State để mở Activities modal trên mobile
+      // State để quản lý modals từ ActionsList (render ở level cao hơn để không bị unmount)
+      isExternalVideoModalOpen: false,
+      isCameraAsContentModalOpen: false,
+      cameraAsContentModalProps: {},
     };
   }
 
@@ -96,6 +105,21 @@ class ActionsBar extends PureComponent {
 
   setModalIsOpen(isOpen) {
     this.setState({ isModalOpen: isOpen });
+  }
+
+  setActivitiesModalOpen = (isOpen) => {
+    this.setState({ isActivitiesModalOpen: isOpen });
+  }
+
+  setExternalVideoModalOpen = (isOpen) => {
+    this.setState({ isExternalVideoModalOpen: isOpen });
+  }
+
+  setCameraAsContentModalOpen = (isOpen, props = {}) => {
+    this.setState({ 
+      isCameraAsContentModalOpen: isOpen,
+      cameraAsContentModalProps: props,
+    });
   }
 
   handleTogglePrivateChat(e) {
@@ -726,6 +750,8 @@ class ActionsBar extends PureComponent {
                     onTogglePrivateChat={this.handleTogglePrivateChat}
                     sidebarContent={sidebarContent}
                     privateUnreadCount={privateUnreadCount}
+                    amIPresenter={amIPresenter}
+                    onOpenActivities={() => this.setActivitiesModalOpen(true)}
                   />
                   
                   {/* Leave Meeting button - rõ ràng, màu đỏ */}
@@ -933,6 +959,72 @@ class ActionsBar extends PureComponent {
             />
           );
         })()}
+        
+        {/* Activities Drawer cho mobile presenter */}
+        {deviceInfo.isMobile && amIPresenter && (
+          <MobileDrawer
+            isOpen={this.state.isActivitiesModalOpen}
+            onClose={() => this.setActivitiesModalOpen(false)}
+            position="bottom"
+            title={intl.formatMessage({
+              id: 'app.actionsBar.actionsDropdown.actionsLabel',
+              defaultMessage: 'Activities',
+            })}
+          >
+            <ActionsListContainer
+              amIPresenter={amIPresenter}
+              amIModerator={amIModerator}
+              isMeteorConnected={isMeteorConnected}
+              isSharingVideo={isSharingVideo}
+              isPollingEnabled={isPollingEnabled}
+              isTimerActive={isTimerActive}
+              isTimerEnabled={isTimerEnabled}
+              allowExternalVideo={allowExternalVideo}
+              stopExternalVideoShare={stopExternalVideoShare}
+              hasCameraAsContent={hasCameraAsContent}
+              setMeetingLayout={setMeetingLayout}
+              setPushLayout={setPushLayout}
+              showPushLayout={showPushLayout}
+              onClose={() => this.setActivitiesModalOpen(false)}
+              onOpenExternalVideoModal={() => {
+                this.setActivitiesModalOpen(false); // Đóng drawer
+                this.setExternalVideoModalOpen(true); // Mở modal
+              }}
+              onOpenCameraAsContentModal={() => {
+                this.setActivitiesModalOpen(false); // Đóng drawer
+                this.setCameraAsContentModalOpen(true, {}); // Mở modal
+              }}
+            />
+          </MobileDrawer>
+        )}
+
+        {/* Modals render ở level cao hơn (ngoài drawer) để không bị unmount */}
+        {/* External Video Modal */}
+        {deviceInfo.isMobile && amIPresenter && this.state.isExternalVideoModalOpen && (
+          <ExternalVideoModal
+            onRequestClose={() => this.setExternalVideoModalOpen(false)}
+            priority="low"
+            setIsOpen={this.setExternalVideoModalOpen}
+            isOpen={this.state.isExternalVideoModalOpen}
+          />
+        )}
+
+        {/* Camera as Content Modal */}
+        {deviceInfo.isMobile && amIPresenter && this.state.isCameraAsContentModalOpen && (
+          <VideoPreviewContainer
+            cameraAsContent
+            amIPresenter={amIPresenter}
+            {...{
+              callbackToClose: () => {
+                this.setCameraAsContentModalOpen(false, {});
+              },
+              priority: 'low',
+              setIsOpen: this.setCameraAsContentModalOpen,
+              isOpen: this.state.isCameraAsContentModalOpen,
+            }}
+            {...this.state.cameraAsContentModalProps}
+          />
+        )}
       </Styled.ActionsBarWrapper>
     );
   }

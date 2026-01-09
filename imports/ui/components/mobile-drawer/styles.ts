@@ -23,12 +23,8 @@ const Overlay = styled.div`
   }
 `;
 
-const Drawer = styled.div<{ $position: 'left' | 'right' }>`
+const Drawer = styled.div<{ $position: 'left' | 'right' | 'bottom' }>`
   position: fixed;
-  top: 0;
-  bottom: 0;
-  width: 85vw;
-  max-width: 400px;
   background-color: ${colorWhite};
   z-index: 1001;
   display: flex;
@@ -36,14 +32,34 @@ const Drawer = styled.div<{ $position: 'left' | 'right' }>`
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
 
   ${({ $position }) => $position === 'left' && css`
+    top: 0;
+    bottom: 0;
     left: 0;
+    width: 85vw;
+    max-width: 400px;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
     animation: slideInFromLeft 0.3s ease;
   `}
 
   ${({ $position }) => $position === 'right' && css`
+    top: 0;
+    bottom: 0;
     right: 0;
+    width: 85vw;
+    max-width: 400px;
     animation: slideInFromRight 0.3s ease;
+  `}
+
+  ${({ $position }) => $position === 'bottom' && css`
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+    animation: slideInFromBottom 0.3s ease;
   `}
 
   @keyframes slideInFromLeft {
@@ -61,6 +77,15 @@ const Drawer = styled.div<{ $position: 'left' | 'right' }>`
     }
     to {
       transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInFromBottom {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
     }
   }
 `;
