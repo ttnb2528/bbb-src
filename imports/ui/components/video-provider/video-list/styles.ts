@@ -159,7 +159,7 @@ const VideoStrip = styled.div<{
   $hasSharedContent?: boolean;
 }>`
   position: fixed !important; /* Fixed để luôn full màn hình, không bị ảnh hưởng bởi container */
-  top: 0px !important; /* Sát mép trên hơn */
+  top: 12px !important; /* Thấp xuống một chút, không sát trên quá */
   left: 10px !important; /* Dock về bên trái */
   right: auto !important; /* Đảm bảo không bị giới hạn bởi right */
   transform: none !important;
@@ -216,7 +216,7 @@ const VideoStrip = styled.div<{
     /* Ensure VideoStrip doesn't overflow at high zoom - luôn dùng viewport width */
     max-width: calc(100vw - 24px) !important;
     left: 8px !important;
-    top: 10px !important;
+    top: 16px !important; /* Thấp xuống một chút trên mobile */
     position: fixed !important;
   }
 
@@ -232,7 +232,7 @@ const VideoStrip = styled.div<{
     /* Ensure VideoStrip doesn't overflow at high zoom - luôn dùng viewport width */
     max-width: calc(100vw - 16px) !important;
     left: 6px !important;
-    top: 8px !important;
+    top: 14px !important; /* Thấp xuống một chút trên phone */
     position: fixed !important;
   }
 `;

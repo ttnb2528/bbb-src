@@ -120,6 +120,7 @@ const GlobalStyle = createGlobalStyle`
     width: fit-content !important;
     left: 10px !important;
     right: auto !important;
+    top: 12px !important; /* Thấp xuống một chút, không sát trên quá */
     transform: none !important;
   }
   
@@ -127,6 +128,7 @@ const GlobalStyle = createGlobalStyle`
     [class*="VideoStrip"] {
       max-width: calc(100vw - 24px) !important;
       left: 8px !important;
+      top: 16px !important; /* Thấp xuống một chút trên mobile */
     }
   }
   
@@ -134,6 +136,7 @@ const GlobalStyle = createGlobalStyle`
     [class*="VideoStrip"] {
       max-width: calc(100vw - 16px) !important;
       left: 6px !important;
+      top: 14px !important; /* Thấp xuống một chút trên phone */
     }
   }
   
