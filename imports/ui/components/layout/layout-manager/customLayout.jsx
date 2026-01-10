@@ -622,15 +622,16 @@ const CustomLayout = (props) => {
       const isCameraRight = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_RIGHT;
       
       if (isCameraTop) {
-        // Camera ở trên (VideoStrip): Presentation nằm trong MainStage, giống camera lớn
-        // Đồng bộ top với sidebar để document và sidebar cùng một mức
+        // Camera ở trên (VideoStrip): External video nằm dưới VideoStrip
+        // Đồng bộ top với sidebar để external video và sidebar cùng một mức
         const videoStripReserve = 120; // Chiều cao dự phòng cho strip cam nhỏ (khớp với CSS)
         const gap = 12; // Gap giữa strip và content (khớp với sidebar)
         mediaBounds.width = mediaAreaWidth;
-        // Presentation chiếm height còn lại sau khi trừ phần dành cho strip
+        // External video chiếm height còn lại sau khi trừ phần dành cho strip
         mediaBounds.height = mediaAreaHeight - videoStripReserve - gap;
-        // Presentation top đồng bộ với sidebar top: bannerHeight + videoStripReserve + gap
-        // Để document và sidebar cùng một mức
+        // External video top đồng bộ với sidebar top: bannerHeight + videoStripReserve + gap
+        // Để external video và sidebar cùng một mức (giống presenter)
+        // QUAN TRỌNG: Đảm bảo external video luôn nằm dưới VideoStrip, không nhảy lên trên
         mediaBounds.top = bannerHeight + videoStripReserve + gap;
         mediaBounds.left = !isRTL ? 0 : null;
         mediaBounds.right = isRTL ? 0 : null;
