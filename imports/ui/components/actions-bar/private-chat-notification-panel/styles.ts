@@ -10,7 +10,7 @@ import { smPaddingX, smPaddingY, borderSize, borderRadius } from '/imports/ui/st
 import { fontSizeBase, fontSizeSmall } from '/imports/ui/stylesheets/styled-components/typography';
 import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
 
-const Panel = styled.div`
+const Panel = styled.div<{ $isMobile?: boolean }>`
   position: fixed;
   background-color: ${colorWhite};
   border-radius: 16px;
@@ -21,7 +21,16 @@ const Panel = styled.div`
   display: flex;
   align-items: center;
   min-width: 200px;
-  max-width: 400px;
+  
+  /* Desktop: giới hạn width để chỉ hiển thị tối đa 4 icon 
+     * Tính toán: 4 icon (4 * 44px = 176px) + 3 gap (3 * 10px = 30px) + padding (16px) = 222px
+     * Thêm một chút để scrollbar có thể hiển thị = 234px
+     * Dùng fit-content để panel tự co lại nếu ít icon hơn, nhưng không vượt quá 234px
+     */
+  ${({ $isMobile }) => !$isMobile && `
+    width: fit-content;
+    max-width: 234px;
+  `}
 
   /* Mobile: full width bar phía trên actions bar */
   @media ${smallOnly} {
@@ -55,7 +64,7 @@ const EmptyState = styled.div`
   border-radius: 22px;
 `;
 
-const ChatList = styled.div`
+const ChatList = styled.div<{ $isMobile?: boolean }>`
   display: flex;
   flex-direction: row;
   gap: 10px;
@@ -66,6 +75,12 @@ const ChatList = styled.div`
   height: 100%;
   align-items: center;
   width: 100%;
+  
+  /* Desktop: chỉ hiển thị scrollbar khi có nhiều hơn 4 icon */
+  ${({ $isMobile }) => !$isMobile && `
+    /* Smooth scroll */
+    scroll-behavior: smooth;
+  `}
   
   &::-webkit-scrollbar {
     height: 4px;

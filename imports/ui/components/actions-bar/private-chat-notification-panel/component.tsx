@@ -106,15 +106,19 @@ const PrivateChatNotificationPanel: React.FC<PrivateChatNotificationPanelProps> 
 
   if (!isOpen) return null;
 
+  // Desktop: giới hạn width để chỉ hiển thị tối đa 4 icon (scroll để xem thêm)
+  // Mobile: hiển thị full màn hình, scroll để xem thêm
+  const isMobile = deviceInfo.isMobile || deviceInfo.isPhone;
+
   return (
-    <Styled.Panel ref={panelRef}>
+    <Styled.Panel ref={panelRef} $isMobile={isMobile}>
       <Styled.Content>
         {allPrivateChats.length === 0 ? (
           <Styled.EmptyState>
             {intl.formatMessage(intlMessages.noNewMessages)}
           </Styled.EmptyState>
         ) : (
-          <Styled.ChatList>
+          <Styled.ChatList $isMobile={isMobile}>
             {allPrivateChats.map((chat) => {
               const participantColor = chat.participant?.color;
               const avatarColor = participantColor 
