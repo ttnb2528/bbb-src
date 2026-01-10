@@ -50,10 +50,14 @@ const ReactionsButton = (props) => {
     }, 0);
   };
 
-  const handleReactionSelect = (reaction) => {
+  const handleReactionSelect = (reaction, shouldClose = false) => {
     setReactionEmoji({ variables: { reactionEmoji: reaction } });
-    // Không đóng menu để có thể spam emoji
-    // Menu chỉ đóng khi user nhấn X
+    // Nếu shouldClose = true (click X), đóng menu sau khi xóa reaction
+    if (shouldClose) {
+      setTimeout(() => {
+        handleClose();
+      }, 100);
+    }
   };
 
   const customStyles = {
@@ -102,14 +106,21 @@ const ReactionsButton = (props) => {
           onClick={() => { }}
           hideLabel
           circle
-          disabled={currentUserReaction === 'none'}
           color="primary"
           ghost
         />
       </Styled.ButtonWrapper>
     ),
     key: 'none',
-    onClick: () => (currentUserReaction !== 'none' ? handleReactionSelect('none') : null),
+    onClick: () => {
+      // Nếu có reaction, xóa nó và đóng menu
+      // Nếu không có reaction, chỉ đóng menu
+      if (currentUserReaction !== 'none') {
+        handleReactionSelect('none', true);
+      } else {
+        handleClose();
+      }
+    },
     customStyles: actionCustomStyles,
     dataTest: 'remove-reaction',
   });

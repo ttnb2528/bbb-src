@@ -163,7 +163,7 @@ const BBBMenuItem = styled(MenuItem)`
   @media (max-width: 768px) {
     transition: background-color 0.2s ease, transform 0.1s ease !important;
     min-height: 56px !important;
-    padding: 12px 20px !important;
+    padding: 0 !important;
     display: flex !important;
     visibility: visible !important;
     opacity: 1 !important;
