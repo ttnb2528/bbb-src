@@ -154,15 +154,17 @@ const CustomLayoutContainer = styled.div<{
 
 // Dải cam nhỏ ở trên (tất cả người tham gia) - OVERLAY trên MainStage
 // Giống Google Meet: overlay nhỏ ở trên, không chiếm không gian của MainStage
+// VideoStrip luôn full màn hình, không bị ảnh hưởng bởi sidebar
 const VideoStrip = styled.div<{
   $hasSharedContent?: boolean;
 }>`
-  position: absolute; /* Overlay trên MainStage */
-  top: 0px; /* Sát mép trên hơn */
-  left: 10px; /* Dock về bên trái */
-  transform: none;
-  z-index: 10; /* Above MainStage */
-  display: flex;
+  position: fixed !important; /* Fixed để luôn full màn hình, không bị ảnh hưởng bởi container */
+  top: 0px !important; /* Sát mép trên hơn */
+  left: 10px !important; /* Dock về bên trái */
+  right: auto !important; /* Đảm bảo không bị giới hạn bởi right */
+  transform: none !important;
+  z-index: 10 !important; /* Above MainStage */
+  display: flex !important;
   gap: clamp(6px, 0.65vw, 10px); /* Tăng gap giữa các cam nhỏ */
   // padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '6px 10px 10px 10px' : '8px 10px 10px 10px')};
   backdrop-filter: blur(8px); /* Blur effect like Google Meet */
@@ -170,13 +172,13 @@ const VideoStrip = styled.div<{
   overflow-x: auto;
   overflow-y: hidden;
   /* Use viewport-relative height for better zoom handling, smaller to avoid overlap when zoom 150%+ */
-  height: clamp(108px, 9vh, 132px); /* Nhỏ gọn hơn */
-  min-height: 108px; /* Ensure minimum usable height */
-  max-height: 132px; /* Maximum height */
-  /* Improved max-width: ensure it doesn't overflow even at high zoom levels */
-  max-width: min(calc(100vw - 28px), calc(100% - 12px)); /* Don't exceed viewport width minus padding */
-  width: fit-content; /* Auto width based on content */
-  min-width: 150px; /* Minimum width to show at least one camera */
+  height: clamp(108px, 9vh, 132px) !important; /* Nhỏ gọn hơn */
+  min-height: 108px !important; /* Ensure minimum usable height */
+  max-height: 132px !important; /* Maximum height */
+  /* Luôn dùng viewport width, không dùng % để tránh bị giới hạn bởi parent */
+  max-width: calc(100vw - 28px) !important; /* Don't exceed viewport width minus padding */
+  width: fit-content !important; /* Auto width based on content */
+  min-width: 150px !important; /* Minimum width to show at least one camera */
   scroll-behavior: smooth;
   cursor: grab;
   box-shadow: none;
@@ -204,32 +206,34 @@ const VideoStrip = styled.div<{
   /* Mobile responsive - đẩy lên cao hơn bằng cách giảm padding-top */
   @media ${smallOnly} {
     /* Use clamp for better responsive behavior - improved for zoom */
-    height: clamp(80px, 12vh, 120px); /* Responsive: min 80px, preferred 12vh, max 120px */
-    min-height: 80px; /* Reduced for better zoom handling */
-    max-height: 120px;
+    height: clamp(80px, 12vh, 120px) !important; /* Responsive: min 80px, preferred 12vh, max 120px */
+    min-height: 80px !important; /* Reduced for better zoom handling */
+    max-height: 120px !important;
     padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 8px 10px 8px' : '6px 8px 10px 8px')};
     gap: clamp(8px, 1.5vw, 12px); /* Tăng gap để các cam không dính nhau */
     /* Bỏ box-shadow trên mobile để gọn hơn */
     box-shadow: none;
-    /* Ensure VideoStrip doesn't overflow at high zoom */
-    max-width: min(calc(100vw - 24px), calc(100% - 12px));
-    left: 8px;
-    top: 10px;
+    /* Ensure VideoStrip doesn't overflow at high zoom - luôn dùng viewport width */
+    max-width: calc(100vw - 24px) !important;
+    left: 8px !important;
+    top: 10px !important;
+    position: fixed !important;
   }
 
   @media ${hasPhoneWidth} {
     /* Use clamp for better responsive behavior on phones - improved for zoom */
-    height: clamp(60px, 12vh, 100px); /* Responsive: min 60px, preferred 10vh, max 100px */
-    min-height: 60px; /* Reduced for better zoom handling */
-    max-height: 100px;
+    height: clamp(60px, 12vh, 100px) !important; /* Responsive: min 60px, preferred 10vh, max 100px */
+    min-height: 60px !important; /* Reduced for better zoom handling */
+    max-height: 100px !important;
     padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 6px 8px 6px' : '6px 6px 8px 6px')};
     gap: clamp(6px, 1.2vw, 10px); /* Tăng gap để các cam không dính nhau */
     /* Bỏ box-shadow trên mobile để gọn hơn */
     box-shadow: none;
-    /* Ensure VideoStrip doesn't overflow at high zoom */
-    max-width: min(calc(100vw - 16px), calc(100% - 8px));
-    left: 6px;
-    top: 8px;
+    /* Ensure VideoStrip doesn't overflow at high zoom - luôn dùng viewport width */
+    max-width: calc(100vw - 16px) !important;
+    left: 6px !important;
+    top: 8px !important;
+    position: fixed !important;
   }
 `;
 

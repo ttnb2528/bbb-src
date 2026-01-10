@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { createPortal } from 'react-dom';
 import { IntlShape, defineMessages, injectIntl } from 'react-intl';
 import { UpdatedDataForUserCameraDomElement } from 'bigbluebutton-html-plugin-sdk/dist/cjs/dom-element-manipulation/user-camera/types';
 import { throttle } from '/imports/utils/throttle';
@@ -511,14 +512,6 @@ class VideoList extends Component<VideoListProps, VideoListState> {
 
     return (
       <Styled.CustomLayoutContainer $hasSharedContent={hasSharedContent}>
-        {/* Dải cam nhỏ ở trên */}
-        <Styled.VideoStrip
-          $hasSharedContent={hasSharedContent}
-          onWheel={this.handleStripWheel}
-        >
-          {sortedStripStreams.map((item) => this.renderVideoItem(item, true))}
-        </Styled.VideoStrip>
-
         {/* Khung trung tâm to - chỉ hiển thị khi không share content */}
         {!hasSharedContent && (
           <Styled.MainStage>
@@ -530,6 +523,37 @@ class VideoList extends Component<VideoListProps, VideoListState> {
           </Styled.MainStage>
         )}
       </Styled.CustomLayoutContainer>
+    );
+  }
+
+  renderVideoStrip() {
+    const { streams, hasSharedContent } = this.props;
+
+    // Strip: gi? t?t c? streams, s?p x?p presenter lên d?u
+    const sortedStripStreams = [...streams].sort((a, b) => {
+      const anyA = a as any;
+      const anyB = b as any;
+
+      const aIsPresenter = (a.type === VIDEO_TYPES.STREAM && anyA?.user?.presenter)
+        || (a.type === VIDEO_TYPES.GRID && anyA?.presenter)
+        || (anyA?.user?.role === 'MODERATOR' || anyA?.role === 'MODERATOR');
+
+      const bIsPresenter = (b.type === VIDEO_TYPES.STREAM && anyB?.user?.presenter)
+        || (b.type === VIDEO_TYPES.GRID && anyB?.presenter)
+        || (anyB?.user?.role === 'MODERATOR' || anyB?.role === 'MODERATOR');
+
+      if (aIsPresenter && !bIsPresenter) return -1;
+      if (!aIsPresenter && bIsPresenter) return 1;
+      return 0;
+    });
+
+    return (
+      <Styled.VideoStrip
+        $hasSharedContent={hasSharedContent}
+        onWheel={this.handleStripWheel}
+      >
+        {sortedStripStreams.map((item) => this.renderVideoItem(item, true))}
+      </Styled.VideoStrip>
     );
   }
 
@@ -545,30 +569,44 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     const { position, width: cameraDockWidth } = cameraDock;
     const mediaWidth = mediaArea?.width || cameraDockWidth || undefined;
 
-    return (
-      <Styled.VideoCanvas
-        $position={position}
-        ref={(ref) => {
-          this.canvas = ref;
-        }}
-        style={{
-          minHeight: 'inherit',
-          // Ràng buộc chiều rộng khung video theo media area mà layout đã tính
-          // để khi sidebar mở/zoom, MainStage + dropdown cam luôn co lại theo
-          maxWidth: mediaWidth,
-        }}
-      >
-        {/* Layout m?i: Strip + Stage (không dùng grid cu n?a) */}
-        {!streams.length && !isGridEnabled ? null : this.renderVideoList()}
+    // Render VideoStrip bằng React Portal ra ngoài DOM tree (vào body)
+    // để không bị ảnh hưởng bởi container width khi sidebar mở
+    const videoStripElement = !streams.length && !isGridEnabled 
+      ? null 
+      : createPortal(
+          this.renderVideoStrip(),
+          document.body, // Render trực tiếp vào body để không bị ảnh hưởng bởi bất kỳ container nào
+        );
 
-        {!autoplayBlocked ? null : (
-          <AutoplayOverlay
-            autoplayBlockedDesc={intl.formatMessage(intlMessages.autoplayBlockedDesc)}
-            autoplayAllowLabel={intl.formatMessage(intlMessages.autoplayAllowLabel)}
-            handleAllowAutoplay={this.handleAllowAutoplay}
-          />
-        )}
-      </Styled.VideoCanvas>
+    return (
+      <>
+        {/* VideoStrip render bằng Portal ra ngoài DOM tree để luôn full màn hình */}
+        {videoStripElement}
+        
+        <Styled.VideoCanvas
+          $position={position}
+          ref={(ref) => {
+            this.canvas = ref;
+          }}
+          style={{
+            minHeight: 'inherit',
+            // Ràng buộc chiều rộng khung video theo media area mà layout đã tính
+            // để khi sidebar mở/zoom, MainStage + dropdown cam luôn co lại theo
+            maxWidth: mediaWidth,
+          }}
+        >
+          {/* Layout m?i: Strip + Stage (không dùng grid cu n?a) */}
+          {!streams.length && !isGridEnabled ? null : this.renderVideoList()}
+
+          {!autoplayBlocked ? null : (
+            <AutoplayOverlay
+              autoplayBlockedDesc={intl.formatMessage(intlMessages.autoplayBlockedDesc)}
+              autoplayAllowLabel={intl.formatMessage(intlMessages.autoplayAllowLabel)}
+              handleAllowAutoplay={this.handleAllowAutoplay}
+            />
+          )}
+        </Styled.VideoCanvas>
+      </>
     );
   }
 }

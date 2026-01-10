@@ -178,12 +178,15 @@ const LayoutEngine = () => {
 
     return {
       display: actionbarInput.hasActionBar,
-      width: mediaAreaBounds.width,
+      // Footer luôn full width màn hình, không bị giới hạn bởi mediaAreaBounds
+      // Điều này đảm bảo footer luôn hiển thị đầy đủ ngay cả khi sidebar mở
+      width: windowWidth(),
       height: actionBarHeight.height,
       innerHeight: actionBarHeight.innerHeight,
       padding: actionBarHeight.padding,
       top: windowHeight() - actionBarHeight.height,
-      left: !isRTL ? mediaAreaBounds.left : 0,
+      // Footer luôn bắt đầu từ mép trái để full width
+      left: 0,
       zIndex: 1,
     };
   };

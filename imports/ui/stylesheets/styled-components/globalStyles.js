@@ -110,7 +110,34 @@ const GlobalStyle = createGlobalStyle`
       visibility: visible !important;
       opacity: 1 !important;
     }
-    
+  }
+  
+  /* VideoStrip luôn full màn hình, không bị ảnh hưởng bởi sidebar */
+  /* Override tất cả styles để đảm bảo VideoStrip luôn dùng viewport width */
+  [class*="VideoStrip"] {
+    position: fixed !important;
+    max-width: calc(100vw - 28px) !important;
+    width: fit-content !important;
+    left: 10px !important;
+    right: auto !important;
+    transform: none !important;
+  }
+  
+  @media (max-width: 768px) {
+    [class*="VideoStrip"] {
+      max-width: calc(100vw - 24px) !important;
+      left: 8px !important;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    [class*="VideoStrip"] {
+      max-width: calc(100vw - 16px) !important;
+      left: 6px !important;
+    }
+  }
+  
+  @media ${smallOnly} {
     /* Override mobile styles cho emoji reactions menu - set left: 0 và căn giữa */
     .override-mobile-styles {
       left: 0 !important;
