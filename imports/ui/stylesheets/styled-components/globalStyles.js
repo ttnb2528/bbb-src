@@ -110,6 +110,60 @@ const GlobalStyle = createGlobalStyle`
       visibility: visible !important;
       opacity: 1 !important;
     }
+    
+    /* Override mobile styles cho emoji reactions menu - set left: 0 và căn giữa */
+    .override-mobile-styles {
+      left: 0 !important;
+      right: 0 !important;
+      margin: 0 auto !important;
+      top: auto !important;
+      bottom: 80px !important;
+      max-width: calc(100vw - 16px) !important;
+      width: fit-content !important;
+      min-width: auto !important;
+      border-radius: 1.7rem !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+      position: fixed !important;
+      overflow: visible !important;
+    }
+    
+    /* Override inline styles từ Material-UI */
+    [id="reactions-dropdown-menu"] .override-mobile-styles[style],
+    .MuiPopover-root .override-mobile-styles[style] {
+      left: 0 !important;
+      right: 0 !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      transform: none !important;
+    }
+    
+    .override-mobile-styles .MuiList-root {
+      display: flex !important;
+      flex-direction: row !important;
+      justify-content: center !important;
+      align-items: center !important;
+      padding: 0.25rem clamp(0.1rem, 0.5vw, 0.3rem) !important;
+      gap: 0 !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      scrollbar-width: thin !important;
+      scrollbar-color: rgba(0, 0, 0, 0.2) transparent !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+    
+    /* Scrollbar cho mobile */
+    .override-mobile-styles .MuiList-root::-webkit-scrollbar {
+      height: 3px !important;
+    }
+    
+    .override-mobile-styles .MuiList-root::-webkit-scrollbar-track {
+      background: transparent !important;
+    }
+    
+    .override-mobile-styles .MuiList-root::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.2) !important;
+      border-radius: 3px !important;
+    }
   }
   .MuiList-padding {
     padding: 0 !important;

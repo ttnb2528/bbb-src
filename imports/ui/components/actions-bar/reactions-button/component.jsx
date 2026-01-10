@@ -39,6 +39,14 @@ const ReactionsButton = (props) => {
     setShowEmojiPicker(false);
     setTimeout(() => {
       document.activeElement.blur();
+      const menuElement = document.querySelector('[id="reactions-dropdown-menu"]');
+      if (menuElement && menuElement.parentElement) {
+        // Force remove any invisible overlays
+        const backdrop = document.querySelector('.MuiBackdrop-root');
+        if (backdrop && !backdrop.classList.contains('MuiBackdrop-invisible')) {
+          backdrop.remove();
+        }
+      }
     }, 0);
   };
 
@@ -148,7 +156,7 @@ const ReactionsButton = (props) => {
       open={showEmojiPicker}
       hasRoundedCorners
       overrideMobileStyles
-      isHorizontal={!isMobile}
+      isHorizontal={true}
       isMobile={isMobile}
       isEmoji
       roundButtons
@@ -156,12 +164,15 @@ const ReactionsButton = (props) => {
       keepOpen={true}
       opts={{
         id: 'reactions-dropdown-menu',
-        keepMounted: true,
+        keepMounted: false,
         transitionDuration: 0,
         elevation: 3,
         getcontentanchorel: null,
         anchorOrigin: { vertical: 'top', horizontal: 'center' },
         transformOrigin: { vertical: 'bottom', horizontal: 'center' },
+        disableAutoFocus: true,
+        disableEnforceFocus: true,
+        disableRestoreFocus: true,
       }}
     />
   );

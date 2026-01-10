@@ -32,6 +32,16 @@ const ButtonWrapper = styled.div`
   border-radius: 50%;
   margin: 0 .5rem;
 
+  /* Mobile: giảm margin responsive dựa trên screen width */
+  @media (max-width: 768px) {
+    margin: 0 clamp(0.15rem, 1vw, 0.35rem);
+  }
+  
+  /* Màn hình rất nhỏ: margin tối thiểu */
+  @media (max-width: 375px) {
+    margin: 0 0.15rem;
+  }
+
   &:focus {
     background-color: ${colorGrayDark};
   }

@@ -14,7 +14,7 @@ import { mediumUp } from '/imports/ui/stylesheets/styled-components/breakpoints'
 import Menu from '@mui/material/Menu';
 
 const MenuWrapper = styled(Menu)`
-  ${({ isMobile }) => isMobile && `
+  ${({ isMobile, $isHorizontal }) => isMobile && !$isHorizontal && `
     flex-direction: column;
     align-items: center;
     padding: .5rem 0;
@@ -23,6 +23,28 @@ const MenuWrapper = styled(Menu)`
   ${({ $isHorizontal, isMobile }) => ($isHorizontal || isMobile) && `
     ul {
       display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 0;
+      padding: 0.5rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Mobile: giảm padding và thêm scroll */
+    ${isMobile && `
+      ul {
+        padding: 0.25rem clamp(0.1rem, 0.5vw, 0.3rem) !important;
+        scrollbar-width: thin;
+      }
+    `}
+
+    li {
+      margin: 0 !important;
+      padding: 0 !important;
+      flex-shrink: 0;
     }
 
     li:hover {

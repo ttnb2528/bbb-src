@@ -94,8 +94,30 @@ class BBBMenu extends React.Component {
   }
 
   handleClose(event) {
-    const { onCloseCallback } = this.props;
-    this.setState({ anchorEl: null }, onCloseCallback());
+    const { onCloseCallback, isMobile } = this.props;
+    
+    // Cleanup menu state
+    this.setState({ anchorEl: null }, () => {
+      onCloseCallback();
+      
+      // Trên mobile: cleanup thêm để tránh bug click outside
+      if (isMobile) {
+        setTimeout(() => {
+          // Xóa backdrop nếu còn sót lại
+          const backdrops = document.querySelectorAll('.MuiBackdrop-root');
+          backdrops.forEach((backdrop) => {
+            if (!backdrop.classList.contains('MuiBackdrop-invisible')) {
+              backdrop.remove();
+            }
+          });
+          
+          // Đảm bảo không có element nào còn focus
+          if (document.activeElement && document.activeElement !== document.body) {
+            document.activeElement.blur();
+          }
+        }, 100);
+      }
+    });
 
     if (event) {
       event.persist();
