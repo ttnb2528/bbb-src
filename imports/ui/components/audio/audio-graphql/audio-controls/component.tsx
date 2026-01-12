@@ -131,6 +131,10 @@ const AudioControls: React.FC<AudioControlsProps> = ({
     setAudioModalProps(null);
   }, []);
 
+  // Debug log to verify component render and inAudio state
+  // eslint-disable-next-line no-console
+  console.log('[AudioControls] Render - inAudio:', inAudio, 'isConnected:', isConnected, 'timestamp:', new Date().toISOString());
+  
   return (
     <Styled.Container>
       {!inAudio ? joinButton : <InputStreamLiveSelectorContainer openAudioSettings={openAudioSettings} />}
@@ -182,9 +186,13 @@ export const AudioControlsContainer: React.FC = () => {
 
   if (!currentUser) return null;
 
+  // Use isConnected from AudioManager as the source of truth for inAudio
+  // GraphQL currentUser.voice.joined may update slowly, but AudioManager._isConnected updates immediately
+  const inAudio = isConnected && !isDeafened;
+
   return (
     <AudioControls
-      inAudio={(!!currentUser.voice && !isDeafened)}
+      inAudio={inAudio}
       isConnected={isConnected}
       disabled={(isConnecting || isHangingUp || !isClientConnected)}
       isEchoTest={isEchoTest}

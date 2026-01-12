@@ -219,8 +219,33 @@ class AudioManager {
   }
 
   set inputDeviceId(value) {
-    if (this._inputDeviceId.value() !== value) {
+    const currentValue = this._inputDeviceId.value();
+    if (currentValue !== value) {
+      logger.info({
+        logCode: 'audiomanager_inputdeviceid_setter_called',
+        extraInfo: {
+          bridge: this.bridgeName,
+          previousValue: currentValue,
+          newValue: value,
+          reactiveVarBefore: currentValue,
+        },
+      }, `[UI UPDATE] inputDeviceId setter called: ${currentValue} -> ${value}`);
       this._inputDeviceId.value(value);
+      logger.info({
+        logCode: 'audiomanager_inputdeviceid_setter_updated',
+        extraInfo: {
+          bridge: this.bridgeName,
+          reactiveVarAfter: this._inputDeviceId.value(),
+        },
+      }, `[UI UPDATE] inputDeviceId reactive var updated to: ${this._inputDeviceId.value()}`);
+    } else {
+      logger.info({
+        logCode: 'audiomanager_inputdeviceid_setter_nochange',
+        extraInfo: {
+          bridge: this.bridgeName,
+          value,
+        },
+      }, `[UI UPDATE] inputDeviceId setter called but no change (already ${value})`);
     }
 
     if (this.fullAudioBridge) {
@@ -1112,18 +1137,35 @@ class AudioManager {
     const currentDeviceId = this.inputDeviceId ?? 'none';
     const wasListenOnly = this.isListenOnly || currentDeviceId === 'listen-only';
     const switchingToMicrophone = deviceId !== 'listen-only' && deviceId !== null;
+    const switchingToListenOnly = deviceId === 'listen-only';
     
-    // If switching from listen-only to microphone, reset isListenOnly flag
-    if (wasListenOnly && switchingToMicrophone) {
+    // CRITICAL: Update inputDeviceId IMMEDIATELY so UI can react right away
+    // This ensures components re-render with correct state before stream operations complete
+    if (switchingToListenOnly) {
+      // Switching to listen-only: update inputDeviceId immediately
+      this.inputDeviceId = 'listen-only';
+      this.isListenOnly = true;
+      logger.info({
+        logCode: 'audiomanager_switching_to_listenonly',
+        extraInfo: {
+          bridge: this.bridgeName,
+          previousDeviceId: currentDeviceId,
+          newDeviceId: deviceId,
+        },
+      }, `[UI UPDATE] Switching to listen-only mode, inputDeviceId updated immediately`);
+    } else if (wasListenOnly && switchingToMicrophone) {
+      // Switching from listen-only to microphone: update inputDeviceId immediately
+      // Use the provided deviceId, will be refined after stream extraction
+      this.inputDeviceId = deviceId;
       this.isListenOnly = false;
-      logger.debug({
+      logger.info({
         logCode: 'audiomanager_switching_from_listenonly_to_mic',
         extraInfo: {
           bridge: this.bridgeName,
           previousDeviceId: currentDeviceId,
           newDeviceId: deviceId,
         },
-      }, 'Switching from listen-only to microphone mode');
+      }, `[UI UPDATE] Switching from listen-only to microphone mode, inputDeviceId updated immediately`);
     }
     
     // we force stream to be null, so MutedAlert will deallocate it and
@@ -1164,14 +1206,28 @@ class AudioManager {
             stream,
             'audio',
           );
+          // Only update if extracted device ID is different from current
+          // This prevents unnecessary updates if we already set it above
           if (extractedDeviceId && extractedDeviceId !== this.inputDeviceId) {
+            logger.info({
+              logCode: 'audiomanager_updating_inputdeviceid_from_stream',
+              extraInfo: {
+                bridge: this.bridgeName,
+                previousInputDeviceId: this.inputDeviceId,
+                extractedDeviceId,
+              },
+            }, `[UI UPDATE] Updating inputDeviceId from extracted stream: ${this.inputDeviceId} -> ${extractedDeviceId}`);
             this.changeInputDevice(extractedDeviceId);
           }
           // Live input device change - add device ID to session storage so it
           // can be re-used on refreshes/other sessions
           storeAudioInputDeviceId(extractedDeviceId || deviceId);
         } else if (deviceId === 'listen-only') {
-          // For listen-only, store 'listen-only' as the device ID
+          // For listen-only, ensure inputDeviceId is set (should already be set above, but double-check)
+          if (this.inputDeviceId !== 'listen-only') {
+            this.inputDeviceId = 'listen-only';
+          }
+          // Store 'listen-only' as the device ID
           storeAudioInputDeviceId('listen-only');
         }
         

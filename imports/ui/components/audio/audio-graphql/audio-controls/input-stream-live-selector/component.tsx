@@ -225,7 +225,7 @@ const InputStreamLiveSelector: React.FC<InputStreamLiveSelectorProps> = ({
 
         enableDynamicAudioDeviceSelection ? (
           <LiveSelection
-            listenOnly={listenOnly}
+            listenOnly={inputDeviceId === 'listen-only' ? true : listenOnly}
             inputDevices={inputDevices}
             outputDevices={outputDevices}
             inputDeviceId={inputDeviceId}
@@ -242,20 +242,30 @@ const InputStreamLiveSelector: React.FC<InputStreamLiveSelectorProps> = ({
           />
         ) : (
           <>
-            {(isConnected && !listenOnly) && (
-              <MuteToggle
-                talking={talking}
-                muted={muted}
-                disabled={disabled || isAudioLocked}
-                isAudioLocked={isAudioLocked}
-                toggleMuteMicrophone={toggleMuteMicrophone}
-                away={away}
-                openAudioSettings={openAudioSettings}
-                noInputDevice={inputDeviceId === 'listen-only'}
-              />
-            )}
+            {/* Determine if we should show microphone based on inputDeviceId (priority) or listenOnly from GraphQL */}
+            {/* Priority: inputDeviceId === 'listen-only' means definitely listen-only, show ListenOnly icon */}
+            {/* Otherwise, use listenOnly from GraphQL or supportsTransparentListenOnly */}
+            {(() => {
+              const isActuallyListenOnly = inputDeviceId === 'listen-only' 
+                ? true 
+                : (!supportsTransparentListenOnly && listenOnly);
+              const shouldShowMicrophone = isConnected && !isActuallyListenOnly;
+              
+              return shouldShowMicrophone ? (
+                <MuteToggle
+                  talking={talking}
+                  muted={muted}
+                  disabled={disabled || isAudioLocked}
+                  isAudioLocked={isAudioLocked}
+                  toggleMuteMicrophone={toggleMuteMicrophone}
+                  away={away}
+                  openAudioSettings={openAudioSettings}
+                  noInputDevice={inputDeviceId === 'listen-only'}
+                />
+              ) : null;
+            })()}
             <ListenOnly
-              listenOnly={listenOnly}
+              listenOnly={inputDeviceId === 'listen-only' ? true : listenOnly}
               handleLeaveAudio={handleLeaveAudio}
               meetingIsBreakout={meetingIsBreakout}
               actAsDeviceSelector={enableDynamicAudioDeviceSelection && isMobile}
@@ -270,6 +280,9 @@ const InputStreamLiveSelector: React.FC<InputStreamLiveSelectorProps> = ({
 const InputStreamLiveSelectorContainer: React.FC<InputStreamLiveSelectorContainerProps> = ({
   openAudioSettings,
 }) => {
+  // eslint-disable-next-line no-console
+  console.log('[InputStreamLiveSelectorContainer] Component MOUNTED/RENDERED');
+  
   const { data: currentUser } = useCurrentUser((u: Partial<User>) => {
     if (!u.voice) {
       return {
@@ -308,7 +321,68 @@ const InputStreamLiveSelectorContainer: React.FC<InputStreamLiveSelectorContaine
   // @ts-ignore - temporary while hybrid (meteor+GraphQl)
   const isHangingUp = useReactiveVar(AudioManager._isHangingUp.value) as boolean;
   // @ts-ignore - temporary while hybrid (meteor+GraphQl)
-  const inputDeviceId = useReactiveVar(AudioManager._inputDeviceId.value) as string;
+  // Subscribe to inputDeviceId reactive var to trigger re-render when it changes
+  // Use useState + useEffect to force re-render when reactive var changes
+  const [inputDeviceId, setInputDeviceId] = React.useState(() => {
+    const initialValue = (AudioManager._inputDeviceId?.value() || '') as string;
+    // eslint-disable-next-line no-console
+    console.log('[InputStreamLiveSelectorContainer] Initial state:', initialValue);
+    return initialValue;
+  });
+  
+  React.useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('[InputStreamLiveSelectorContainer] useEffect mounted, setting up polling');
+    
+    // Subscribe to reactive var changes
+    let previousValue = inputDeviceId;
+    
+    const checkAndUpdate = () => {
+      const currentValue = (AudioManager._inputDeviceId?.value() || '') as string;
+      if (currentValue !== previousValue) {
+        // eslint-disable-next-line no-console
+        console.log('[InputStreamLiveSelectorContainer] Reactive var changed, updating state:', {
+          oldValue: previousValue,
+          newValue: currentValue,
+          timestamp: new Date().toISOString(),
+        });
+        previousValue = currentValue;
+        setInputDeviceId(currentValue);
+      }
+    };
+    
+    // Check immediately
+    checkAndUpdate();
+    
+    // Poll every 100ms to check for changes
+    // This ensures we catch changes even if useReactiveVar doesn't trigger
+    const intervalId = setInterval(checkAndUpdate, 100);
+    
+    return () => {
+      // eslint-disable-next-line no-console
+      console.log('[InputStreamLiveSelectorContainer] useEffect cleanup, clearing interval');
+      clearInterval(intervalId);
+    };
+  }, []); // Empty dependency array - chỉ chạy một lần khi mount
+  
+  // Also try useReactiveVar as fallback
+  const reactiveVarValue = (useReactiveVar(AudioManager._inputDeviceId.value) || '') as string;
+  
+  // Sync reactiveVarValue with state if different
+  React.useEffect(() => {
+    if (reactiveVarValue !== inputDeviceId) {
+      // eslint-disable-next-line no-console
+      console.log('[InputStreamLiveSelectorContainer] ReactiveVar value differs from state, syncing:', {
+        stateValue: inputDeviceId,
+        reactiveVarValue,
+      });
+      setInputDeviceId(reactiveVarValue);
+    }
+  }, [reactiveVarValue, inputDeviceId]);
+  
+  // Debug log to verify component re-renders when inputDeviceId changes
+  // eslint-disable-next-line no-console
+  console.log('[InputStreamLiveSelectorContainer] Render - inputDeviceId:', inputDeviceId, 'reactiveVarValue:', reactiveVarValue, 'listenOnly (GraphQL):', currentUser?.voice?.listenOnly ?? false, 'timestamp:', new Date().toISOString());
   // @ts-ignore - temporary while hybrid (meteor+GraphQl)
   // @ts-ignore - temporary while hybrid (meteor+GraphQl)
   const outputDeviceId = useReactiveVar(AudioManager._outputDeviceId.value) as string;
@@ -326,7 +400,9 @@ const InputStreamLiveSelectorContainer: React.FC<InputStreamLiveSelectorContaine
   const updateOutputDevices = (devices: MediaDeviceInfo[] = []) => {
     AudioManager.outputDevices = devices;
   };
-  const inAudio = (currentUser?.voice?.joined && !currentUser?.voice?.deafened) ?? false;
+  // Use isConnected from AudioManager as source of truth, not GraphQL currentUser.voice.joined
+  // GraphQL may update slowly, but AudioManager reactive vars update immediately
+  const inAudio = isConnected && !(currentUser?.voice?.deafened ?? false);
 
   return (
     <InputStreamLiveSelector

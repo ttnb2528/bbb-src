@@ -116,6 +116,10 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
   supportsTransparentListenOnly,
 }) => {
   const intl = useIntl();
+  
+  // Debug log to verify component re-renders when inputDeviceId changes
+  // eslint-disable-next-line no-console
+  console.log('[LiveSelection] Render - inputDeviceId:', inputDeviceId, 'listenOnly (prop):', listenOnly, 'shouldTreatAsMicrophone:', inputDeviceId !== 'listen-only' && (!listenOnly || supportsTransparentListenOnly));
 
   const leaveAudioShourtcut = useShortcut('leaveAudio');
 
@@ -142,7 +146,17 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
     return label;
   };
 
-  const shouldTreatAsMicrophone = () => !listenOnly || supportsTransparentListenOnly;
+  // Determine if we should treat as microphone based on both inputDeviceId and listenOnly
+  // Priority: inputDeviceId === 'listen-only' means definitely listen-only
+  // Otherwise, use listenOnly from GraphQL or supportsTransparentListenOnly
+  const shouldTreatAsMicrophone = () => {
+    // If inputDeviceId is explicitly 'listen-only', treat as listen-only
+    if (inputDeviceId === 'listen-only') {
+      return false;
+    }
+    // Otherwise, use the original logic
+    return !listenOnly || supportsTransparentListenOnly;
+  };
 
   const renderDeviceList = useCallback((
     deviceKind: string,
@@ -373,7 +387,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
               )
               : (
                 <ListenOnly
-                  listenOnly={listenOnly}
+                  listenOnly={inputDeviceId === 'listen-only' ? true : listenOnly}
                   handleLeaveAudio={handleLeaveAudio}
                   meetingIsBreakout={meetingIsBreakout}
                   actAsDeviceSelector={isMobile}
