@@ -843,13 +843,39 @@ class AudioManager {
       // eg, there's no default/pre-set deviceId ('') and the browser's
       // default device has been altered by the user (browser default != system's
       // default).
-      if (this.inputStream) {
+      // IMPORTANT: Only extract deviceId if NOT in listen-only mode
+      // In listen-only mode, inputStream should be null and inputDeviceId should be 'listen-only'
+      // Extracting deviceId from a stream in listen-only mode would incorrectly switch to microphone
+      if (this.inputStream && !this.isListenOnly && this.inputDeviceId !== 'listen-only') {
         const extractedDeviceId = MediaStreamUtils.extractDeviceIdFromStream(
           this.inputStream,
           'audio',
         );
         if (extractedDeviceId && extractedDeviceId !== this.inputDeviceId) {
+          logger.info({
+            logCode: 'audiomanager_extracting_deviceid_after_join',
+            extraInfo: {
+              bridge: this.bridgeName,
+              previousInputDeviceId: this.inputDeviceId,
+              extractedDeviceId,
+              isListenOnly: this.isListenOnly,
+            },
+          }, `Extracting deviceId from stream after audio join: ${this.inputDeviceId} -> ${extractedDeviceId}`);
           this.changeInputDevice(extractedDeviceId);
+        }
+      } else if (this.isListenOnly || this.inputDeviceId === 'listen-only') {
+        // Ensure inputDeviceId is 'listen-only' when in listen-only mode
+        // This prevents accidental switch to microphone if inputStream somehow exists
+        if (this.inputDeviceId !== 'listen-only') {
+          logger.warn({
+            logCode: 'audiomanager_fixing_listenonly_deviceid',
+            extraInfo: {
+              bridge: this.bridgeName,
+              currentInputDeviceId: this.inputDeviceId,
+              hasInputStream: !!this.inputStream,
+            },
+          }, `Fixing inputDeviceId to 'listen-only' after audio join (was ${this.inputDeviceId})`);
+          this.inputDeviceId = 'listen-only';
         }
       }
       // Audio joined successfully - add device IDs to session storage so they

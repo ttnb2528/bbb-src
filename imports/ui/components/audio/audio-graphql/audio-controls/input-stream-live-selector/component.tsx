@@ -123,6 +123,9 @@ const InputStreamLiveSelector: React.FC<InputStreamLiveSelectorProps> = ({
     audioInputDevices: MediaDeviceInfo[],
     audioOutputDevices: MediaDeviceInfo[],
   ) => {
+    // Do not auto-fallback when we're in listen-only mode
+    if (inputDeviceId === 'listen-only') return;
+
     if (inputDeviceId
       && (inputDeviceId !== DEFAULT_DEVICE)
       && !audioInputDevices.find((d) => d.deviceId === inputDeviceId)) {
