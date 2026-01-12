@@ -30,6 +30,8 @@ export default class BaseAudioBridge {
     };
 
     this.bridgeName = BASE_BRIDGE_NAME;
+    // Store original track before replacing with null for muting
+    this.savedAudioTrack = null;
   }
 
   getPeerConnection() {
@@ -85,10 +87,105 @@ export default class BaseAudioBridge {
     let enabledCount = 0;
     let disabledCount = 0;
     
-    senders.forEach((sender) => {
+    senders.forEach(async (sender) => {
       const { track } = sender;
-      if (track && track.kind === 'audio') {
-        track.enabled = shouldEnable;
+      // Check if this sender is for audio (either has audio track or is audio sender)
+      const isAudioSender = track && track.kind === 'audio';
+      
+      if (isAudioSender || (!track && this.inputStream && this.inputStream.getAudioTracks().length > 0)) {
+        if (shouldEnable) {
+          // Re-enable track - simply enable the existing track
+          // Since we didn't replace with null, the track should still be there
+          if (sender.track && sender.track.kind === 'audio') {
+            sender.track.enabled = true;
+            logger.info({
+              logCode: 'base_audio_bridge_track_enabled',
+              extraInfo: {
+                bridgeName: this.bridgeName,
+                trackId: sender.track.id,
+                senderId: sender.id,
+                trackEnabled: sender.track.enabled,
+                trackReadyState: sender.track.readyState,
+              },
+            }, 'BaseAudioBridge: enabled audio track');
+            enabledCount++;
+          } else if (this.inputStream && this.inputStream.getAudioTracks().length > 0) {
+            // Track was lost, restore from inputStream
+            const trackToRestore = this.inputStream.getAudioTracks()[0];
+            try {
+              await sender.replaceTrack(trackToRestore);
+              if (sender.track) {
+                sender.track.enabled = true;
+              }
+              logger.info({
+                logCode: 'base_audio_bridge_restore_track_from_inputstream',
+                extraInfo: {
+                  bridgeName: this.bridgeName,
+                  trackId: trackToRestore.id,
+                  senderId: sender.id,
+                  trackEnabled: sender.track?.enabled,
+                },
+              }, 'BaseAudioBridge: restored audio track from inputStream');
+              enabledCount++;
+            } catch (error) {
+              logger.warn({
+                logCode: 'base_audio_bridge_restore_track_failed',
+                extraInfo: {
+                  bridgeName: this.bridgeName,
+                  errorMessage: error.message,
+                  hasInputStream: !!this.inputStream,
+                  inputStreamTracks: this.inputStream?.getAudioTracks().length || 0,
+                },
+              }, `BaseAudioBridge: failed to restore track: ${error.message}`);
+            }
+          } else {
+            logger.warn({
+              logCode: 'base_audio_bridge_no_track_to_enable',
+              extraInfo: {
+                bridgeName: this.bridgeName,
+                hasSenderTrack: !!sender.track,
+                hasInputStream: !!this.inputStream,
+                senderId: sender.id,
+              },
+            }, 'BaseAudioBridge: no track available to enable');
+          }
+        } else {
+          // Disable track
+          if (track && track.kind === 'audio') {
+            // Save original track reference from inputStream (more reliable than sender.track)
+            // This ensures we can restore it later even if sender.track becomes null
+            if (this.inputStream && this.inputStream.getAudioTracks().length > 0) {
+              const inputTrack = this.inputStream.getAudioTracks()[0];
+              // Only update saved track if it's different or not saved yet
+              if (!this.savedAudioTrack || this.savedAudioTrack.id !== inputTrack.id) {
+                this.savedAudioTrack = inputTrack;
+                logger.info({
+                  logCode: 'base_audio_bridge_saved_track',
+                  extraInfo: {
+                    bridgeName: this.bridgeName,
+                    trackId: inputTrack.id,
+                    trackReadyState: inputTrack.readyState,
+                    senderTrackId: track.id,
+                  },
+                }, 'BaseAudioBridge: saved audio track from inputStream before muting');
+              }
+            }
+            
+            // Simply disable the track - don't replace with null to avoid track ending
+            track.enabled = false;
+            logger.info({
+              logCode: 'base_audio_bridge_track_disabled',
+              extraInfo: {
+                bridgeName: this.bridgeName,
+                trackId: track.id,
+                senderId: sender.id,
+                trackEnabled: track.enabled,
+              },
+            }, 'BaseAudioBridge: disabled audio track');
+            disabledCount++;
+          }
+        }
+        
         // Also ensure track is not muted (muted is different from enabled)
         // enabled controls whether audio is sent, muted is a separate state
         if (shouldEnable && track.muted) {
@@ -103,11 +200,6 @@ export default class BaseAudioBridge {
               trackReadyState: track.readyState,
             },
           }, 'BaseAudioBridge: track is muted (read-only property)');
-        }
-        if (shouldEnable) {
-          enabledCount++;
-        } else {
-          disabledCount++;
         }
       }
     });

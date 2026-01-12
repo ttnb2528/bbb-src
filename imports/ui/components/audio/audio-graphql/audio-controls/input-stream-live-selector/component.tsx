@@ -15,6 +15,7 @@ import {
   notify,
   toggleMuteMicrophone,
   toggleMuteMicrophoneSystem,
+  getLastToggleTime,
 } from './service';
 import useMeeting from '/imports/ui/core/hooks/useMeeting';
 import logger from '/imports/startup/client/logger';
@@ -201,13 +202,19 @@ const InputStreamLiveSelector: React.FC<InputStreamLiveSelectorProps> = ({
   }, [permissionStatus]);
 
   useEffect(() => {
-    // If the user has no input device, is connected to audio and unmuted,
+    // If the user has no input device (listen-only), is connected to audio and unmuted,
     // they need to be *muted* by the system. Further attempts to unmute
     // will open the audio settings modal instead.
-    if (inputDeviceId === 'listen-only' && isConnected && !muted) {
-      toggleMuteMicrophoneSystem(muted, toggleVoice);
+    // Use AudioManager._isMuted for immediate check, not GraphQL muted state
+    // @ts-ignore - temporary while hybrid (meteor+GraphQl)
+    const isMutedVar = AudioManager._isMuted?.value;
+    const isMutedFromAudioManager = isMutedVar ? isMutedVar() : true;
+    if (inputDeviceId === 'listen-only' && isConnected && !isMutedFromAudioManager) {
+      // eslint-disable-next-line no-console
+      console.log('[InputStreamLiveSelectorContainer] Auto-muting for listen-only mode');
+      toggleMuteMicrophoneSystem(true, toggleVoice);
     }
-  }, [inputDeviceId, isConnected, muted]);
+  }, [inputDeviceId, isConnected, toggleVoice]);
 
   return (
     <>
@@ -308,7 +315,17 @@ const InputStreamLiveSelectorContainer: React.FC<InputStreamLiveSelectorContaine
   const { data: talkingUsers } = useWhoIsTalking();
   const { data: unmutedUsers } = useWhoIsUnmuted();
   const talking = Boolean(currentUser?.userId && talkingUsers[currentUser.userId]);
-  const muted = Boolean(currentUser?.userId && !unmutedUsers[currentUser.userId]);
+  
+  // Use AudioManager reactive var for muted state as source of truth (updates immediately)
+  // GraphQL unmutedUsers may update slowly, causing icon to not update when toggling mute
+  // @ts-ignore - temporary while hybrid (meteor+GraphQl)
+  const isMutedVar = AudioManager._isMuted?.value;
+  const isMutedFromAudioManager = isMutedVar ? useReactiveVar(isMutedVar) as boolean : null;
+  // Get GraphQL muted state for comparison
+  const mutedFromGraphQL = Boolean(currentUser?.userId && !unmutedUsers[currentUser.userId]);
+  
+  // Fallback to GraphQL if AudioManager not available, but prioritize AudioManager
+  const muted = isMutedFromAudioManager !== null ? isMutedFromAudioManager : mutedFromGraphQL;
 
   const { data: currentMeeting } = useMeeting((m) => {
     return {
@@ -393,6 +410,23 @@ const InputStreamLiveSelectorContainer: React.FC<InputStreamLiveSelectorContaine
   // @ts-ignore - temporary while hybrid (meteor+GraphQl)
   const supportsTransparentListenOnly = useReactiveVar(AudioManager._transparentListenOnlySupported.value) as boolean;
   const isConnected = useIsAudioConnected();
+
+  // Sync AudioManager.isMuted from GraphQL if there's a conflict (GraphQL is source of truth for initial state)
+  // This fixes the issue where icon shows mic crossed when joining mic for the first time
+  // BUT: Don't sync if user just toggled mute (within TOGGLE_SYNC_DELAY ms) to prevent overriding user action
+  const TOGGLE_SYNC_DELAY = 2000; // Don't sync from GraphQL for 2 seconds after user toggle
+  React.useEffect(() => {
+    if (isMutedVar && isMutedFromAudioManager !== null && isMutedFromAudioManager !== mutedFromGraphQL) {
+      const timeSinceLastToggle = Date.now() - getLastToggleTime();
+      // Only sync if AudioManager says muted but GraphQL says unmuted (user just joined mic)
+      // AND user hasn't toggled mute recently (to prevent overriding user action)
+      if (isMutedFromAudioManager && !mutedFromGraphQL && isConnected && timeSinceLastToggle > TOGGLE_SYNC_DELAY) {
+        // eslint-disable-next-line no-console
+        console.log('[InputStreamLiveSelectorContainer] Syncing AudioManager.isMuted from GraphQL (unmuted)');
+        AudioManager.isMuted = false;
+      }
+    }
+  }, [isMutedFromAudioManager, mutedFromGraphQL, isConnected, isMutedVar]);
 
   const updateInputDevices = (devices: InputDeviceInfo[] = []) => {
     AudioManager.inputDevices = devices;

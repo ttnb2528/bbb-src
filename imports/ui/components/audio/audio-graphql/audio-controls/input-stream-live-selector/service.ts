@@ -46,6 +46,12 @@ export const muteLoadingState: ReactiveVar<boolean> = makeVar(false);
 
 export const useIsMuteLoading = () => useReactiveVar(muteLoadingState);
 
+// Track last toggle time to prevent GraphQL sync from overriding user action
+let lastToggleTime = 0;
+
+// Export function to get last toggle time
+export const getLastToggleTime = () => lastToggleTime;
+
 const toggleMute = (
   muted: boolean,
   toggleVoice: (userId: string, muted: boolean) => void,
@@ -53,6 +59,9 @@ const toggleMute = (
 ) => {
   const meetingStaticStore = meetingStaticData.getMeetingData();
   const toggle = (storageKey: string) => {
+    // Record toggle time to prevent GraphQL sync from overriding
+    lastToggleTime = Date.now();
+    
     if (muted) {
       if (AudioManager.inputDeviceId === 'listen-only') {
         // User is in duplex audio, passive-sendrecv, but has no input device set
@@ -65,6 +74,22 @@ const toggleMute = (
         extraInfo: { logType: actionType },
       }, 'microphone unmuted');
       Storage.setItem(storageKey, false);
+      // Update AudioManager.isMuted immediately for UI to react
+      // GraphQL subscription will confirm this later
+      AudioManager.isMuted = false;
+      // Actually enable the audio track immediately (don't wait for GraphQL)
+      if (AudioManager.bridge) {
+        AudioManager.unmute();
+        logger.info({
+          logCode: 'audiomanager_unmute_called',
+          extraInfo: { logType: actionType },
+        }, 'AudioManager.unmute() called');
+      } else {
+        logger.warn({
+          logCode: 'audiomanager_unmute_no_bridge',
+          extraInfo: { logType: actionType },
+        }, 'AudioManager.unmute() called but bridge is not available');
+      }
       toggleVoice(Auth.userID as string, false);
     } else {
       logger.info({
@@ -72,6 +97,22 @@ const toggleMute = (
         extraInfo: { logType: actionType },
       }, 'microphone muted');
       Storage.setItem(storageKey, true);
+      // Update AudioManager.isMuted immediately for UI to react
+      // GraphQL subscription will confirm this later
+      AudioManager.isMuted = true;
+      // Actually disable the audio track immediately (don't wait for GraphQL)
+      if (AudioManager.bridge) {
+        AudioManager.mute();
+        logger.info({
+          logCode: 'audiomanager_mute_called',
+          extraInfo: { logType: actionType },
+        }, 'AudioManager.mute() called');
+      } else {
+        logger.warn({
+          logCode: 'audiomanager_mute_no_bridge',
+          extraInfo: { logType: actionType },
+        }, 'AudioManager.mute() called but bridge is not available');
+      }
       toggleVoice(Auth.userID as string, true);
     }
   };

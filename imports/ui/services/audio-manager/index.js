@@ -785,6 +785,16 @@ class AudioManager {
 
   onVoiceUserChanges(fields = {}) {
     if (fields.muted !== undefined && fields.muted !== this.isMuted) {
+      logger.info({
+        logCode: 'audiomanager_voice_user_changes_muted',
+        extraInfo: {
+          bridge: this.bridgeName,
+          previousMuted: this.isMuted,
+          newMuted: fields.muted,
+          timestamp: Date.now(),
+        },
+      }, `onVoiceUserChanges: muted changed from ${this.isMuted} to ${fields.muted}`);
+      
       this.isMuted = fields.muted;
 
       if (this.isMuted) {
@@ -1741,10 +1751,26 @@ class AudioManager {
   }
 
   mute() {
+    logger.info({
+      logCode: 'audiomanager_mute_method_called',
+      extraInfo: {
+        bridge: this.bridgeName,
+        hasBridge: !!this.bridge,
+        bridgeName: this.bridge?.bridgeName,
+      },
+    }, 'AudioManager.mute() method called');
     this.setSenderTrackEnabled(false);
   }
 
   unmute() {
+    logger.info({
+      logCode: 'audiomanager_unmute_method_called',
+      extraInfo: {
+        bridge: this.bridgeName,
+        hasBridge: !!this.bridge,
+        bridgeName: this.bridge?.bridgeName,
+      },
+    }, 'AudioManager.unmute() method called');
     this.setSenderTrackEnabled(true);
   }
 
