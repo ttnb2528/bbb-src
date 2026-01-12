@@ -104,6 +104,7 @@ export interface User {
   size: number;
   away: boolean;
   raiseHand: boolean;
+  listenOnly?: boolean;
   userLockSettings: userLockSettings;
   sessionCurrent: sessionCurrent;
   livekit?: Livekit;

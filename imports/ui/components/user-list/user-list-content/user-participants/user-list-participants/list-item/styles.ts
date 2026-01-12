@@ -261,13 +261,19 @@ const Avatar = styled.div<AvatarProps>`
     }
   `}
 
-  ${({ voice }) => voice && `
+  // Audio indicator priority:
+  // - muted/unmuted mic shown only when voice && !listenOnly
+  // - noVoice only when !listenOnly
+  // - listenOnly overrides everything else
+
+  ${({ voice, muted, listenOnly }) => voice && !listenOnly && !muted && `
     &:after {
       content: "\\00a0\\e931\\00a0";
       background-color: ${colorSuccess};
       top: 1.375rem;
       left: 1.375rem;
       right: auto;
+      bottom: auto;
 
       [dir="rtl"] & {
         left: auto;
@@ -280,13 +286,14 @@ const Avatar = styled.div<AvatarProps>`
     }
   `}
 
-  ${({ muted }) => muted && `
+  ${({ voice, muted, listenOnly }) => voice && !listenOnly && muted && `
     &:after {
       content: "\\00a0\\e932\\00a0";
       background-color: ${colorDanger};
       opacity: 1 !important;
       width: 1.2rem;
       height: 1.2rem;
+      bottom: auto;
       z-index: 3 !important; /* Đảm bảo muted indicator hiển thị */
     }
   `}
@@ -298,17 +305,19 @@ const Avatar = styled.div<AvatarProps>`
       width: 1.2rem;
       height: 1.2rem;
       background-color: ${colorSuccess};
+      bottom: auto;
       z-index: 3 !important; /* Đảm bảo listenOnly indicator hiển thị */
     }
   `}
 
-  ${({ noVoice }) => noVoice && `
+  ${({ noVoice, listenOnly }) => noVoice && !listenOnly && `
     &:after {
       content: "";
       background-color: ${colorOffWhite};
       top: 1.375rem;
       left: 1.375rem;
       right: auto;
+      bottom: auto;
 
       [dir="rtl"] & {
         left: auto;

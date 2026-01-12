@@ -213,50 +213,57 @@ const Avatar = styled.div`
     }
   `}
 
-  ${({ voice }) => voice && `
-    &:after {
-      content: "\\00a0\\e931\\00a0";
-      background-color: ${colorSuccess};
-      top: 1.375rem;
-      left: 1.375rem;
-      right: auto;
-
-      [dir="rtl"] & {
-        left: auto;
-        right: 1.375rem;
-      }
-      opacity: 1;
-      width: 1.2rem;
-      height: 1.2rem;
-    }
-  `}
-
-  ${({ muted }) => muted && `
+  // Priority order for audio icons (listenOnly should override others):
+  // - muted/unmuted mic icons apply when voice && !listenOnly
+  // - noVoice applies only when !listenOnly
+  // - listenOnly overrides all (placed last)
+  
+  ${({ voice, muted, listenOnly }) => voice && !listenOnly && muted && `
     &:after {
       content: "\\00a0\\e932\\00a0";
       background-color: ${colorDanger};
       opacity: 1;
       width: 1.2rem;
       height: 1.2rem;
+      top: 1.375rem;
+      left: 1.375rem;
+      right: auto;
+      bottom: auto;
+
+      [dir="rtl"] & {
+        left: auto;
+        right: 1.375rem;
+      }
     }
   `}
 
-  ${({ listenOnly }) => listenOnly && `
+  ${({ voice, muted, listenOnly }) => voice && !listenOnly && !muted && `
     &:after {
-      content: "\\00a0\\e90c\\00a0";
+      content: "\\00a0\\e931\\00a0";
+      background-color: ${colorSuccess};
       opacity: 1;
       width: 1.2rem;
       height: 1.2rem;
+      top: 1.375rem;
+      left: 1.375rem;
+      right: auto;
+      bottom: auto;
+
+      [dir="rtl"] & {
+        left: auto;
+        right: 1.375rem;
+      }
     }
   `}
 
-  ${({ noVoice }) => noVoice && `
+  ${({ noVoice, listenOnly }) => noVoice && !listenOnly && `
     &:after {
       content: "";
       background-color: ${colorOffWhite};
       top: 1.375rem;
       left: 1.375rem;
       right: auto;
+      bottom: auto;
 
       [dir="rtl"] & {
         left: auto;
@@ -266,6 +273,26 @@ const Avatar = styled.div`
       opacity: 1;
       width: 1.2rem;
       height: 1.2rem;
+    }
+  `}
+
+  // listenOnly overrides everything else
+  ${({ listenOnly }) => listenOnly && `
+    &:after {
+      content: "\\00a0\\e90c\\00a0";
+      background-color: ${colorSuccess};
+      opacity: 1;
+      width: 1.2rem;
+      height: 1.2rem;
+      top: 1.375rem;
+      left: 1.375rem;
+      right: auto;
+      bottom: auto;
+
+      [dir="rtl"] & {
+        left: auto;
+        right: 1.375rem;
+      }
     }
   `}
 `;
