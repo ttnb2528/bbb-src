@@ -19,6 +19,8 @@ import { useIsReactionsEnabled } from '/imports/ui/services/features';
 import useWhoIsTalking from '/imports/ui/core/hooks/useWhoIsTalking';
 import useWhoIsUnmuted from '/imports/ui/core/hooks/useWhoIsUnmuted';
 import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
+import AudioManager from '/imports/ui/services/audio-manager';
+import { useReactiveVar } from '@apollo/client';
 
 const messages = defineMessages({
   moderator: {
@@ -105,10 +107,44 @@ const UserListItem: React.FC<UserListItemProps> = ({ user, lockSettings, index }
   const intl = useIntl();
   const { data: talkingUsers } = useWhoIsTalking();
   const { data: unmutedUsers } = useWhoIsUnmuted();
+  
+  // For current user, use AudioManager state for immediate updates
+  // For other users, use GraphQL state
+  const isCurrentUser = user.userId === Auth.userID;
+  // @ts-ignore - temporary while hybrid (meteor+GraphQl)
+  const isConnectedFromAudioManager = useReactiveVar(AudioManager._isConnected.value) as boolean;
+  // @ts-ignore - temporary while hybrid (meteor+GraphQl)
+  const isDeafenedFromAudioManager = useReactiveVar(AudioManager._isDeafened.value) as boolean;
+  // @ts-ignore - temporary while hybrid (meteor+GraphQl)
+  const isListenOnlyFromAudioManager = useReactiveVar(AudioManager._isListenOnly.value) as boolean;
+  // @ts-ignore - temporary while hybrid (meteor+GraphQl)
+  const inputDeviceIdFromAudioManager = useReactiveVar(AudioManager._inputDeviceId.value) as string | null;
+  // @ts-ignore - temporary while hybrid (meteor+GraphQl)
+  const isMutedFromAudioManager = useReactiveVar(AudioManager._isMuted.value) as boolean;
+  
+  // Use AudioManager state for current user, GraphQL for others
+  const joinedAudio = isCurrentUser 
+    ? isConnectedFromAudioManager && !isDeafenedFromAudioManager
+    : (user.voice?.joined && !user.voice?.deafened);
+  
+  const listenOnlyFromState = isCurrentUser
+    ? (isListenOnlyFromAudioManager || inputDeviceIdFromAudioManager === 'listen-only')
+    : (user.voice?.listenOnly || user.voice?.listenOnlyInputDevice || user?.listenOnly);
+  
+  // Use AudioManager muted state for current user, GraphQL for others
+  const mutedState = isCurrentUser
+    ? isMutedFromAudioManager
+    : !unmutedUsers[user.userId];
+  
   const voiceUser = {
     ...user.voice,
+    joined: joinedAudio,
+    listenOnly: listenOnlyFromState,
+    listenOnlyInputDevice: isCurrentUser 
+      ? (inputDeviceIdFromAudioManager === 'listen-only')
+      : (user.voice?.listenOnlyInputDevice || user?.listenOnly),
     talking: talkingUsers[user.userId],
-    muted: !unmutedUsers[user.userId],
+    muted: mutedState,
   };
   const subs = [];
 
@@ -230,14 +266,11 @@ const UserListItem: React.FC<UserListItemProps> = ({ user, lockSettings, index }
   const animations = Settings?.application?.animations;
 
   // ======= tính flag audio một lần =======
-  const isInAudio = !!voiceUser?.joined && !voiceUser?.deafened;
+  // Use joinedAudio from above (which uses AudioManager for current user)
+  const isInAudio = !!joinedAudio;
 
   // chỉ coi là listen-only khi ĐANG trong audio
-  const listenOnlyBase = (
-    voiceUser?.listenOnly
-    || voiceUser?.listenOnlyInputDevice
-    || user?.listenOnly
-  );
+  const listenOnlyBase = listenOnlyFromState;
 
   const listenOnlyFlag = isInAudio && !!listenOnlyBase;
 
