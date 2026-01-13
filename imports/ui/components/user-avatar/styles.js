@@ -162,7 +162,7 @@ const Avatar = styled.div`
       opacity: 1;
       top: ${userIndicatorsOffset};
       left: ${userIndicatorsOffset};
-      bottom: auto;
+      
       right: auto;
       border-radius: 5px;
       background-color: ${colorPrimary};
@@ -191,7 +191,7 @@ const Avatar = styled.div`
       opacity: 1;
       top: ${userIndicatorsOffset};
       left: ${userIndicatorsOffset};
-      bottom: auto;
+      
       right: auto;
       border-radius: 5px;
       background-color: ${colorPrimary};
@@ -228,7 +228,7 @@ const Avatar = styled.div`
       top: 1.375rem;
       left: 1.375rem;
       right: auto;
-      bottom: auto;
+      
 
       [dir="rtl"] & {
         left: auto;
@@ -247,7 +247,7 @@ const Avatar = styled.div`
       top: 1.375rem;
       left: 1.375rem;
       right: auto;
-      bottom: auto;
+      
 
       [dir="rtl"] & {
         left: auto;
@@ -263,7 +263,7 @@ const Avatar = styled.div`
       top: 1.375rem;
       left: 1.375rem;
       right: auto;
-      bottom: auto;
+      
 
       [dir="rtl"] & {
         left: auto;
@@ -287,7 +287,7 @@ const Avatar = styled.div`
       top: 1.375rem;
       left: 1.375rem;
       right: auto;
-      bottom: auto;
+      
 
       [dir="rtl"] & {
         left: auto;

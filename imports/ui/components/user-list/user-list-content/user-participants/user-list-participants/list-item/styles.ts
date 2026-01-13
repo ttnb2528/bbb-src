@@ -270,10 +270,9 @@ const Avatar = styled.div<AvatarProps>`
     &:after {
       content: "\\00a0\\e931\\00a0";
       background-color: ${colorSuccess};
-      top: 1.375rem;
-      left: 1.375rem;
-      right: auto;
-      bottom: auto;
+      //top: 1.375rem;
+      //left: 1.375rem;
+      //right: auto;
 
       [dir="rtl"] & {
         left: auto;
@@ -293,7 +292,6 @@ const Avatar = styled.div<AvatarProps>`
       opacity: 1 !important;
       width: 1.2rem;
       height: 1.2rem;
-      bottom: auto;
       z-index: 3 !important; /* Đảm bảo muted indicator hiển thị */
     }
   `}
@@ -305,7 +303,6 @@ const Avatar = styled.div<AvatarProps>`
       width: 1.2rem;
       height: 1.2rem;
       background-color: ${colorSuccess};
-      bottom: auto;
       z-index: 3 !important; /* Đảm bảo listenOnly indicator hiển thị */
     }
   `}
@@ -314,14 +311,13 @@ const Avatar = styled.div<AvatarProps>`
     &:after {
       content: "";
       background-color: ${colorOffWhite};
-      top: 1.375rem;
-      left: 1.375rem;
-      right: auto;
-      bottom: auto;
+      //top: 1.2rem;
+      //left: 1.2rem;
+      //right: auto;
 
       [dir="rtl"] & {
-        left: auto;
-        right: 1.375rem;
+        //left: auto;
+        //right: 1.375rem;
       }
 
       opacity: 1 !important;
