@@ -309,8 +309,15 @@ const Avatar = styled.div<AvatarProps>`
 
   ${({ noVoice, listenOnly }) => noVoice && !listenOnly && `
     &:after {
-      content: "";
+      content: "\\00a0\\e963\\00a0";
       background-color: ${colorOffWhite};
+      color: ${colorGrayDark};
+      font-family: 'bbb-icons';
+      font-size: .65rem;
+      line-height: 0;
+      text-align: center;
+      vertical-align: middle;
+      letter-spacing: -.65rem;
       //top: 1.2rem;
       //left: 1.2rem;
       //right: auto;

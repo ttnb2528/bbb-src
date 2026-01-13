@@ -229,6 +229,24 @@ const UserListItem: React.FC<UserListItemProps> = ({ user, lockSettings, index }
   const Settings = getSettingsSingletonInstance();
   const animations = Settings?.application?.animations;
 
+  // ======= tính flag audio một lần =======
+  const isInAudio = !!voiceUser?.joined && !voiceUser?.deafened;
+
+  // chỉ coi là listen-only khi ĐANG trong audio
+  const listenOnlyBase = (
+    voiceUser?.listenOnly
+    || voiceUser?.listenOnlyInputDevice
+    || user?.listenOnly
+  );
+
+  const listenOnlyFlag = isInAudio && !!listenOnlyBase;
+
+  // mic (voice) chỉ khi đang trong audio và KHÔNG listen-only
+  const voiceFlag = isInAudio && !listenOnlyFlag;
+
+  // không tham gia audio: không inAudio và không listen-only
+  const noVoiceFlag = !isInAudio && !listenOnlyFlag;
+
   return (
     <Styled.UserItemContents id={`user-index-${index}`} tabIndex={-1} data-test={(user.userId === Auth.userID) ? 'userListItemCurrent' : 'userListItem'} role="listitem">
       <Styled.Avatar
@@ -239,9 +257,9 @@ const UserListItem: React.FC<UserListItemProps> = ({ user, lockSettings, index }
         presenter={user.presenter}
         talking={voiceUser?.talking}
         muted={voiceUser?.muted}
-        listenOnly={voiceUser?.listenOnly || voiceUser?.listenOnlyInputDevice}
-        voice={voiceUser?.joined && !voiceUser?.deafened}
-        noVoice={!voiceUser?.joined || voiceUser?.deafened}
+        listenOnly={listenOnlyFlag}
+        voice={voiceFlag}
+        noVoice={noVoiceFlag}
         color={user.color}
         whiteboardAccess={hasWhiteboardAccess}
         animations={animations}
