@@ -40,68 +40,48 @@ const WelcomeMessage = styled.div`
 
 const Container = styled.div<{ isFullWidth: boolean }>`
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
   box-sizing: border-box;
   text-align: left;
-  gap: 1.5rem;
+  gap: 0.75rem;
+`;
 
-  & > div {
-    flex: ${({ isFullWidth }) => (isFullWidth ? '1 1 100%' : '1 1 calc(50% - 0.75rem)')};
-    box-sizing: border-box;
-    padding: ${({ isFullWidth }) => (isFullWidth ? '0' : '0 1rem')};
-    overflow: auto;
-    overflow-wrap: break-word;
-    min-width: 0;
-  }
+const Section = styled.div`
+  padding: 0.9rem 1.1rem;
+  border-radius: 0.6rem;
+  background: #ffffff;
+  box-sizing: border-box;
+`;
 
-  & div p {
-    margin: 0.5rem 0;
-    line-height: 1.5;
-    word-break: break-word;
-  }
+const LinkText = styled.div`
+  font-size: 0.8rem;
+  line-height: 1.5;
+  word-break: break-all;
+  margin-bottom: 0.4rem;
 
-  ${({ isFullWidth }) => !isFullWidth && `
-    &::before {
-      content: '';
-      position: absolute;
-      height: 50%;
-      left: 50%;
-      width: 1px;
-      background-color: ${colorGrayLightest};
-      transform: translateX(-50%);
-    }
-  `}
-
-  & a {
+  a {
     color: ${colorPrimary};
     text-decoration: none;
 
-    &:focus {
-      color: ${colorPrimary};
-      text-decoration: underline;
-    }
     &:hover {
-      filter: brightness(90%);
-      text-decoration: underline;
-    }
-    &:active {
-      filter: brightness(85%);
-      text-decoration: underline;
-    }
-    &:hover:focus {
-      filter: brightness(90%);
-      text-decoration: underline;
-    }
-    &:focus:active {
-      filter: brightness(85%);
       text-decoration: underline;
     }
   }
 `;
 
+const Description = styled.p`
+  margin: 0;
+  font-size: 0.8rem;
+  color: ${colorGrayDark};
+  opacity: 0.85;
+  line-height: 1.4;
+`;
+
 const JoinTitle = styled.h2`
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   text-transform: uppercase;
   color: ${colorGrayDark};
   font-weight: 600;
@@ -140,6 +120,9 @@ export const Chevron = styled.div`
 export default {
   WelcomeMessage,
   Container,
+  Section,
+  LinkText,
+  Description,
   JoinTitle,
   CopyButton,
   Chevron,

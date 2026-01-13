@@ -219,7 +219,7 @@ const GlobalStyle = createGlobalStyle`
   #app-leave-meeting-menu .MuiPaper-root {
     @media (min-width: 768px) {
       top: auto !important;
-      bottom: -22px !important;
+      bottom: 72px !important;
       transform-origin: bottom right !important;
       transition: transform 0.18s ease-out, opacity 0.18s ease-out;
     }
