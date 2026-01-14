@@ -73,7 +73,7 @@ const GlobalStyle = createGlobalStyle`
     
     /* Smooth animation cho menu items - đảm bảo hiển thị đầy đủ */
     .MuiPaper-root-mobile .MuiList-root {
-      padding: 8px 0 72px 0 !important; /* Thêm padding-bottom = CloseButton height (56px) + gap (16px) để không bị che */
+      padding: 8px 20px 72px 20px !important; /* Thêm padding trái/phải 20px để nội dung không sát trái, padding-bottom = CloseButton height (56px) + gap (16px) để không bị che */
       overflow-y: auto !important; /* Scroll khi content nhiều */
       overflow-x: hidden !important;
       flex: 1 1 auto !important; /* Cho phép list mở rộng để fill không gian còn lại */
@@ -111,8 +111,16 @@ const GlobalStyle = createGlobalStyle`
     }
     
     /* Đảm bảo CloseButton không che nội dung - thêm margin-top nếu cần */
-    .MuiPaper-root-mobile .MuiList-root + button[class*="CloseButton"] {
+    .MuiPaper-root-mobile .MuiList-root + button[class*="CloseButton"],
+    .MuiPaper-root-mobile button[class*="CloseButton"] {
       flex-shrink: 0 !important; /* Không cho CloseButton shrink */
+      left: 0 !important; /* Đảm bảo căn trái */
+      right: 0 !important; /* Đảm bảo căn phải */
+      width: 100% !important; /* Full width */
+      margin-left: 0 !important; /* Không có margin trái */
+      margin-right: 0 !important; /* Không có margin phải */
+      padding-left: 0 !important; /* Không có padding trái */
+      padding-right: 0 !important; /* Không có padding phải */
     }
     
     .MuiMenuItem-root {
