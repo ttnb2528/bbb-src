@@ -40,10 +40,10 @@ const GlobalStyle = createGlobalStyle`
       right: 0 !important;
       max-width: none !important;
       max-height: 95vh !important;
-      /* Min-height động: tối thiểu 60vh để đảm bảo hiển thị đủ content */
-      /* Nếu content ít: menu sẽ nhỏ hơn, nếu content nhiều: menu sẽ mở rộng đến max-height */
-      /* Cân bằng giữa việc hiển thị đủ và không chiếm quá nhiều màn hình */
-      min-height: 60vh !important;
+      /* QUAN TRỌNG: Hiển thị theo nội dung, không fix cứng 60vh */
+      /* Nếu content ít: menu sẽ nhỏ theo content */
+      /* Nếu content nhiều: menu sẽ mở rộng đến max-height và có scroll */
+      min-height: auto !important; /* Bỏ min-height cố định, để theo content */
       height: auto !important;
       border-radius: 20px 20px 0 0 !important;
       box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3) !important;
@@ -73,20 +73,46 @@ const GlobalStyle = createGlobalStyle`
     
     /* Smooth animation cho menu items - đảm bảo hiển thị đầy đủ */
     .MuiPaper-root-mobile .MuiList-root {
-      padding: 8px 0 !important;
-      overflow-y: auto !important;
+      padding: 8px 0 72px 0 !important; /* Thêm padding-bottom = CloseButton height (56px) + gap (16px) để không bị che */
+      overflow-y: auto !important; /* Scroll khi content nhiều */
       overflow-x: hidden !important;
-      flex: 1 1 auto !important;
+      flex: 1 1 auto !important; /* Cho phép list mở rộng để fill không gian còn lại */
       min-height: 0 !important;
-      /* Cho phép list mở rộng, nhưng giới hạn để tránh vượt quá màn hình */
-      /* Trừ đi chiều cao của close button (3.5rem = 56px) */
-      max-height: calc(95vh - 56px) !important;
+      /* QUAN TRỌNG: Cho phép list tự điều chỉnh height theo content */
+      /* Nếu content ít: list sẽ nhỏ theo content (nhưng vẫn có padding-bottom) */
+      /* Nếu content nhiều: list sẽ mở rộng đến max-height và scroll */
+      /* Trừ đi chiều cao của close button (3.5rem = 56px) và gap */
+      max-height: calc(95vh - 56px - 16px) !important; /* Trừ CloseButton + gap */
       -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: thin !important;
+      scrollbar-color: rgba(0, 0, 0, 0.2) transparent !important;
+    }
+    
+    /* Scrollbar styling cho mobile */
+    .MuiPaper-root-mobile .MuiList-root::-webkit-scrollbar {
+      width: 4px !important;
+    }
+    
+    .MuiPaper-root-mobile .MuiList-root::-webkit-scrollbar-track {
+      background: transparent !important;
+    }
+    
+    .MuiPaper-root-mobile .MuiList-root::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.2) !important;
+      border-radius: 2px !important;
     }
     
     /* Đảm bảo menu tự mở rộng theo content khi có nhiều items */
     .MuiPaper-root-mobile {
-      /* Menu sẽ tự điều chỉnh height từ min-height đến max-height dựa trên content */
+      /* Menu sẽ tự điều chỉnh height theo content, không fix cứng */
+      /* Nếu content ít: height = content height + CloseButton height */
+      /* Nếu content nhiều: height = max-height và list sẽ scroll */
+      /* Đảm bảo CloseButton luôn visible và không che content */
+    }
+    
+    /* Đảm bảo CloseButton không che nội dung - thêm margin-top nếu cần */
+    .MuiPaper-root-mobile .MuiList-root + button[class*="CloseButton"] {
+      flex-shrink: 0 !important; /* Không cho CloseButton shrink */
     }
     
     .MuiMenuItem-root {
