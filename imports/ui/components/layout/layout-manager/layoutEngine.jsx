@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { layoutSelect, layoutSelectInput, layoutSelectOutput } from '/imports/ui/components/layout/context';
 import DEFAULT_VALUES from '/imports/ui/components/layout/defaultValues';
-import { LAYOUT_TYPE, DEVICE_TYPE } from '/imports/ui/components/layout/enums';
+import { LAYOUT_TYPE, DEVICE_TYPE, CAMERADOCK_POSITION } from '/imports/ui/components/layout/enums';
 
 import CustomLayout from '/imports/ui/components/layout/layout-manager/customLayout';
 import SmartLayout from '/imports/ui/components/layout/layout-manager/smartLayout';
@@ -93,13 +93,25 @@ const LayoutEngine = () => {
       && !isSharedNotesPinned && !genericContentId;
 
     if (!isOpen || isGeneralMediaOff) {
-      cameraDockBounds.width = mediaAreaBounds.width;
-      cameraDockBounds.maxWidth = mediaAreaBounds.width;
+      // QUAN TRỌNG: VideoStrip (CONTENT_TOP) phải full width màn hình, không bị giới hạn bởi sidebar
+      const isCameraTop = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP;
+      if (isCameraTop) {
+        // VideoStrip luôn full width viewport
+        const fullViewportWidth = windowWidth();
+        cameraDockBounds.width = fullViewportWidth;
+        cameraDockBounds.maxWidth = fullViewportWidth;
+        cameraDockBounds.minWidth = fullViewportWidth;
+        cameraDockBounds.left = 0;
+        cameraDockBounds.right = null;
+      } else {
+        cameraDockBounds.width = mediaAreaBounds.width;
+        cameraDockBounds.maxWidth = mediaAreaBounds.width;
+        cameraDockBounds.left = !isRTL ? mediaAreaBounds.left : 0;
+        cameraDockBounds.right = isRTL ? sidebarSize : null;
+      }
       cameraDockBounds.height = mediaAreaBounds.height;
       cameraDockBounds.maxHeight = mediaAreaBounds.height;
       cameraDockBounds.top = mediaAreaBounds.top;
-      cameraDockBounds.left = !isRTL ? mediaAreaBounds.left : 0;
-      cameraDockBounds.right = isRTL ? sidebarSize : null;
     }
 
     if (fullscreen.group === 'webcams') {

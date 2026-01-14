@@ -458,14 +458,26 @@ const CustomLayout = (props) => {
       // Khi camera ở trên: đặt sát lên trên cùng (top = 0) để giảm khoảng trống phía trên
       // Trên mobile: top = 0 để sát trên cùng (giống như đã fix trên laptop)
       cameraDockBounds.top = isMobile && isCameraTop ? 0 : effectiveNavBarHeight;
-      cameraDockBounds.left = mediaAreaBounds.left;
-      cameraDockBounds.right = isRTL ? sidebarSize : null;
       
-      // Improved width constraints: ensure minimum usable width
-      const minUsableWidth = Math.max(320, mediaAreaBounds.width * 0.5); // At least 320px or 50% of available width
-      cameraDockBounds.minWidth = minUsableWidth;
-      cameraDockBounds.width = mediaAreaBounds.width;
-      cameraDockBounds.maxWidth = mediaAreaBounds.width;
+      // QUAN TRỌNG: VideoStrip (CONTENT_TOP) phải full width màn hình, không bị giới hạn bởi sidebar
+      // Dùng windowWidth() thay vì mediaAreaBounds.width để đảm bảo full width
+      if (isCameraTop) {
+        // VideoStrip luôn full width viewport, không bị ảnh hưởng bởi sidebar
+        const fullViewportWidth = windowWidth();
+        cameraDockBounds.left = 0; // Bắt đầu từ mép trái màn hình
+        cameraDockBounds.right = null; // Không set right để full width
+        cameraDockBounds.minWidth = fullViewportWidth; // Min = full width
+        cameraDockBounds.width = fullViewportWidth; // Width = full width
+        cameraDockBounds.maxWidth = fullViewportWidth; // Max = full width
+      } else {
+        // Camera ở bottom: vẫn dùng mediaAreaBounds như cũ
+        cameraDockBounds.left = mediaAreaBounds.left;
+        cameraDockBounds.right = isRTL ? sidebarSize : null;
+        const minUsableWidth = Math.max(320, mediaAreaBounds.width * 0.5);
+        cameraDockBounds.minWidth = minUsableWidth;
+        cameraDockBounds.width = mediaAreaBounds.width;
+        cameraDockBounds.maxWidth = mediaAreaBounds.width;
+      }
       
       // Improved height constraints: ensure reasonable min/max
       cameraDockBounds.minHeight = Math.max(cameraDockMinHeight, mediaAreaBounds.height * 0.10);
@@ -991,10 +1003,12 @@ const CustomLayout = (props) => {
     const finalActionBarHeight = isMobile ? actionBarFinalHeight : actionBarHeight;
     const mediaAreaNewHeight = windowHeight() - finalActionBarHeight - sidebarPanelHeight - bannerHeight - panelButtonsHeight;
 
+    // QUAN TRỌNG: Dùng mediaAreaWidth (đã trừ sidebar) thay vì windowWidth() để cam lớn thụt vào khi sidebar mở
+    // mediaAreaWidth đã được tính ở trên (dòng 782-788) với logic trừ sidebar width và gutter
     layoutContextDispatch({
       type: ACTIONS.SET_MEDIA_AREA_SIZE,
       value: {
-        width: windowWidth(),
+        width: mediaAreaWidth, // Dùng mediaAreaWidth đã tính (đã trừ sidebar), không dùng windowWidth()
         height: mediaAreaNewHeight,
       },
     });

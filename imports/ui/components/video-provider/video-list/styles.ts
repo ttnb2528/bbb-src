@@ -175,10 +175,11 @@ const VideoStrip = styled.div<{
   height: clamp(108px, 9vh, 132px) !important; /* Nhỏ gọn hơn */
   min-height: 108px !important; /* Ensure minimum usable height */
   max-height: 132px !important; /* Maximum height */
-  /* Luôn dùng viewport width, không dùng % để tránh bị giới hạn bởi parent */
+  /* QUAN TRỌNG: Width cố định = full viewport width (trừ padding) để scroll ngay khi content vượt quá */
+  /* Không dùng fit-content vì nó sẽ tự mở rộng thay vì scroll */
+  width: calc(100vw - 28px) !important; /* Full viewport width minus padding - cố định */
   max-width: calc(100vw - 28px) !important; /* Don't exceed viewport width minus padding */
-  width: fit-content !important; /* Auto width based on content */
-  min-width: 150px !important; /* Minimum width to show at least one camera */
+  min-width: calc(100vw - 28px) !important; /* Đảm bảo luôn full width */
   scroll-behavior: smooth;
   cursor: grab;
   box-shadow: none;
@@ -214,7 +215,9 @@ const VideoStrip = styled.div<{
     /* Bỏ box-shadow trên mobile để gọn hơn */
     box-shadow: none;
     /* Ensure VideoStrip doesn't overflow at high zoom - luôn dùng viewport width */
+    width: calc(100vw - 24px) !important; /* Full width cố định để scroll */
     max-width: calc(100vw - 24px) !important;
+    min-width: calc(100vw - 24px) !important;
     left: 8px !important;
     top: 16px !important; /* Thấp xuống một chút trên mobile */
     position: fixed !important;
@@ -230,7 +233,9 @@ const VideoStrip = styled.div<{
     /* Bỏ box-shadow trên mobile để gọn hơn */
     box-shadow: none;
     /* Ensure VideoStrip doesn't overflow at high zoom - luôn dùng viewport width */
+    width: calc(100vw - 16px) !important; /* Full width cố định để scroll */
     max-width: calc(100vw - 16px) !important;
+    min-width: calc(100vw - 16px) !important;
     left: 6px !important;
     top: 14px !important; /* Thấp xuống một chút trên phone */
     position: fixed !important;
