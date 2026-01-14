@@ -104,7 +104,9 @@ export const AudioDropdown = styled(ButtonEmoji)`
   span {
     i {
       width: 10px !important;
-      bottom: 1px;
+      top: 1px !important;
+      left: 5px !important;
+      bottom: auto !important;
       
       /* Mobile: giảm size icon arrow để không quá bự */
       @media ${smallOnly} {

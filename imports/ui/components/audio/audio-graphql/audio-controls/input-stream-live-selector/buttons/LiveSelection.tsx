@@ -356,23 +356,12 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
           aria-hidden="true"
         />
       ) : null}
-      {(shouldTreatAsMicrophone() && isMobile) && (
-        <MuteToggle
-          talking={talking}
-          muted={muted}
-          disabled={disabled || isAudioLocked}
-          isAudioLocked={isAudioLocked}
-          toggleMuteMicrophone={toggleMuteMicrophone}
-          away={away}
-          noInputDevice={noInputDevice}
-          openAudioSettings={openAudioSettings}
-        />
-      )}
+      {/* Bỏ MuteToggle riêng trên mobile - chỉ dùng trong BBBMenu trigger để tránh hiển thị 2 icon */}
       <BBBMenu
         customStyles={!isMobile ? customStyles : null}
         trigger={(
           <>
-            {shouldTreatAsMicrophone() && !isMobile
+            {shouldTreatAsMicrophone()
               ? (
                 <MuteToggle
                   talking={talking}
@@ -393,6 +382,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
                   actAsDeviceSelector={isMobile}
                 />
               )}
+            {/* Trên mobile: vẫn hiển thị AudioDropdown nhưng nhỏ hơn (đã fix size trong styles) */}
             <Styled.AudioDropdown
               data-test="audioDropdownMenu"
               emoji="device_list_selector"
