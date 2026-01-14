@@ -108,6 +108,17 @@ const Center = styled.div`
       height: 40px !important;
       flex-shrink: 0 !important;
     }
+    
+    /* Tách riêng nút arrow dropdown (AudioDropdown) - nhỏ hơn các nút khác */
+    button[data-test="audioDropdownMenu"],
+    button[aria-label*="Change audio device"],
+    button[aria-label*="audio device"] {
+      min-width: 20px !important;
+      min-height: 20px !important;
+      width: 20px !important;
+      height: 20px !important;
+      flex-shrink: 0 !important;
+    }
   }
 
   @media ${hasPhoneWidth} {
@@ -120,6 +131,17 @@ const Center = styled.div`
       min-height: 48px !important;
       width: 48px !important;
       height: 48px !important;
+      flex-shrink: 0 !important;
+    }
+    
+    /* Tách riêng nút arrow dropdown (AudioDropdown) - nhỏ hơn các nút khác */
+    button[data-test="audioDropdownMenu"],
+    button[aria-label*="Change audio device"],
+    button[aria-label*="audio device"] {
+      min-width: 20px !important;
+      min-height: 20px !important;
+      width: 20px !important;
+      height: 20px !important;
       flex-shrink: 0 !important;
     }
   }
@@ -160,6 +182,17 @@ const Right = styled.div`
       height: 40px !important;
       flex-shrink: 0 !important;
     }
+    
+    /* Tách riêng nút arrow dropdown (AudioDropdown) - nhỏ hơn các nút khác */
+    button[data-test="audioDropdownMenu"],
+    button[aria-label*="Change audio device"],
+    button[aria-label*="audio device"] {
+      min-width: 20px !important;
+      min-height: 20px !important;
+      width: 20px !important;
+      height: 20px !important;
+      flex-shrink: 0 !important;
+    }
   }
 
   @media ${hasPhoneWidth} {
@@ -171,6 +204,17 @@ const Right = styled.div`
       min-height: 48px !important;
       width: 48px !important;
       height: 48px !important;
+      flex-shrink: 0 !important;
+    }
+    
+    /* Tách riêng nút arrow dropdown (AudioDropdown) - nhỏ hơn các nút khác */
+    button[data-test="audioDropdownMenu"],
+    button[aria-label*="Change audio device"],
+    button[aria-label*="audio device"] {
+      min-width: 20px !important;
+      min-height: 20px !important;
+      width: 20px !important;
+      height: 20px !important;
       flex-shrink: 0 !important;
     }
   }

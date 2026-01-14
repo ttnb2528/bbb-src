@@ -105,6 +105,12 @@ export const AudioDropdown = styled(ButtonEmoji)`
     i {
       width: 10px !important;
       bottom: 1px;
+      
+      /* Mobile: giảm size icon arrow để không quá bự */
+      @media ${smallOnly} {
+        width: 8px !important;
+        font-size: 0.75rem !important;
+      }
     }
   }
 `;
