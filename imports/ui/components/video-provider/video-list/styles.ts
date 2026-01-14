@@ -157,13 +157,15 @@ const CustomLayoutContainer = styled.div<{
 // VideoStrip luôn full màn hình, không bị ảnh hưởng bởi sidebar
 const VideoStrip = styled.div<{
   $hasSharedContent?: boolean;
+  $hasSidebarOpen?: boolean;
 }>`
   position: fixed !important; /* Fixed để luôn full màn hình, không bị ảnh hưởng bởi container */
   top: 12px !important; /* Thấp xuống một chút, không sát trên quá */
   left: 10px !important; /* Dock về bên trái */
   right: auto !important; /* Đảm bảo không bị giới hạn bởi right */
   transform: none !important;
-  z-index: 10 !important; /* Above MainStage */
+  /* QUAN TRỌNG: Trên mobile, khi sidebar mở, giảm z-index để sidebar hiển thị trên video strip */
+  z-index: ${({ $hasSidebarOpen }) => ($hasSidebarOpen ? 5 : 10)} !important; /* Above MainStage, below sidebar when open */
   display: flex !important;
   gap: clamp(6px, 0.65vw, 10px); /* Tăng gap giữa các cam nhỏ */
   // padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '6px 10px 10px 10px' : '8px 10px 10px 10px')};
@@ -221,6 +223,8 @@ const VideoStrip = styled.div<{
     left: 8px !important;
     top: 16px !important; /* Thấp xuống một chút trên mobile */
     position: fixed !important;
+    /* QUAN TRỌNG: Trên mobile, khi sidebar mở, giảm z-index để sidebar hiển thị trên video strip */
+    z-index: ${({ $hasSidebarOpen }) => ($hasSidebarOpen ? 5 : 10)} !important;
   }
 
   @media ${hasPhoneWidth} {
@@ -239,6 +243,8 @@ const VideoStrip = styled.div<{
     left: 6px !important;
     top: 14px !important; /* Thấp xuống một chút trên phone */
     position: fixed !important;
+    /* QUAN TRỌNG: Trên mobile, khi sidebar mở, giảm z-index để sidebar hiển thị trên video strip */
+    z-index: ${({ $hasSidebarOpen }) => ($hasSidebarOpen ? 5 : 10)} !important;
   }
 `;
 

@@ -492,24 +492,6 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       }) || streams[0];
     }
 
-    // 3) Strip: gi? t?t c? streams, s?p x?p presenter lên d?u
-    const sortedStripStreams = [...streams].sort((a, b) => {
-      const anyA = a as any;
-      const anyB = b as any;
-
-      const aIsPresenter = (a.type === VIDEO_TYPES.STREAM && anyA?.user?.presenter)
-        || (a.type === VIDEO_TYPES.GRID && anyA?.presenter)
-        || (anyA?.user?.role === 'MODERATOR' || anyA?.role === 'MODERATOR');
-
-      const bIsPresenter = (b.type === VIDEO_TYPES.STREAM && anyB?.user?.presenter)
-        || (b.type === VIDEO_TYPES.GRID && anyB?.presenter)
-        || (anyB?.user?.role === 'MODERATOR' || anyB?.role === 'MODERATOR');
-
-      if (aIsPresenter && !bIsPresenter) return -1;
-      if (!aIsPresenter && bIsPresenter) return 1;
-      return 0;
-    });
-
     return (
       <Styled.CustomLayoutContainer $hasSharedContent={hasSharedContent}>
         {/* Khung trung tâm to - chỉ hiển thị khi không share content */}
@@ -527,7 +509,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   }
 
   renderVideoStrip() {
-    const { streams, hasSharedContent } = this.props;
+    const { streams, hasSharedContent, hasSidebarOpen } = this.props;
 
     // Strip: gi? t?t c? streams, s?p x?p presenter lên d?u
     const sortedStripStreams = [...streams].sort((a, b) => {
@@ -550,6 +532,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     return (
       <Styled.VideoStrip
         $hasSharedContent={hasSharedContent}
+        $hasSidebarOpen={hasSidebarOpen}
         onWheel={this.handleStripWheel}
       >
         {sortedStripStreams.map((item) => this.renderVideoItem(item, true))}

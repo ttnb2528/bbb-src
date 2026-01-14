@@ -967,7 +967,8 @@ const CustomLayout = (props) => {
       type: ACTIONS.SET_SIDEBAR_CONTENT_OUTPUT,
       value: {
         // Mobile: ẩn panel Chat/Notes ở dưới, user có thể mở qua private chat modal
-        display: isMobile ? false : true,
+        // Nhưng nếu có panel nào mở (user list/chat), vẫn hiển thị
+        display: isMobile ? (sidebarContentInput.isOpen || hasSidebarPanel) : true,
         minWidth: minChatNotesWidth,
         width: sidebarContentNewWidth,
         maxWidth: maxChatNotesWidth, // Max width cố định cho desktop
@@ -980,7 +981,8 @@ const CustomLayout = (props) => {
         currentPanelType,
         tabOrder: DEFAULT_VALUES.sidebarContentTabOrder,
         isResizable: false, // Tắt tính năng resize sidebar
-        zIndex: 10,
+        // QUAN TRỌNG: Trên mobile, tăng z-index cao hơn VideoStrip (5) để sidebar hiển thị trên video strip
+        zIndex: isMobile ? 15 : 10,
       },
     });
 
