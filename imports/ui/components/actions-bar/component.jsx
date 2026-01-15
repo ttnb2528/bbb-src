@@ -762,10 +762,10 @@ class ActionsBar extends PureComponent {
               ) : (
                 <>
                   {/* Desktop: Hiển thị tất cả các nút */}
-                  {/* Info button - dùng icon settings hoặc custom SVG */}
+                  {/* Info button - dùng icon warning (dấu chấm than) để thể hiện thông tin chi tiết phòng */}
                   <Button
                     label={intl.formatMessage({ id: 'app.navBar.openDetailsTooltip', defaultMessage: 'Session' })}
-                    icon="settings"
+                    icon="warning"
                     color="default"
                     size="md"
                     onClick={() => this.setModalIsOpen(true)}
