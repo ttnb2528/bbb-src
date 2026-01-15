@@ -103,15 +103,17 @@ export const DangerColor = {
 export const AudioDropdown = styled(ButtonEmoji)`
   span {
     i {
+      /* Desktop: giữ nguyên vị trí icon như mặc định, chỉ chỉnh width nhẹ */
       width: 10px !important;
-      top: 1px !important;
-      left: 5px !important;
-      bottom: auto !important;
-      
-      /* Mobile: giảm size icon arrow để không quá bự */
+      bottom: 1px;
+
+      /* Mobile: giảm size + tinh chỉnh vị trí icon cho đẹp */
       @media ${smallOnly} {
         width: 8px !important;
         font-size: 0.75rem !important;
+        top: 1px !important;
+        left: 5px !important;
+        bottom: auto !important;
       }
     }
   }
