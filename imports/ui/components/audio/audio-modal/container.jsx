@@ -77,7 +77,7 @@ const AudioModalContainer = (props) => {
   } = window.meetingClientSettings.public.media.localEchoTest;
 
   const forceListenOnlyAttendee = forceListenOnly && !isModerator;
-  const inputDeviceId = useReactiveVar(AudioManager._inputDeviceId.value);
+  const reactiveInputDeviceId = useReactiveVar(AudioManager._inputDeviceId.value);
   const outputDeviceId = useReactiveVar(AudioManager._outputDeviceId.value);
   const showPermissionsOvelay = useReactiveVar(AudioManager._isWaitingPermissions.value);
   const isConnecting = useReactiveVar(AudioManager._isConnecting.value);
@@ -95,6 +95,14 @@ const AudioModalContainer = (props) => {
   const permissionStatus = useReactiveVar(AudioManager._permissionStatus.value);
   const { userLocks } = useLockContext();
   const isListenOnlyInputDevice = Service.inputDeviceId() === 'listen-only';
+  // Khi người dùng đã rời audio và thiết bị đầu vào hiện đang là 'listen-only',
+  // chúng ta không nên dùng giá trị này làm mặc định cho modal lần sau.
+  // Thay vào đó, ưu tiên:
+  // - Thiết bị microphone đã lưu trước đó (getStoredAudioInputDeviceId), nếu có
+  // - Hoặc để trống ('') để trình duyệt chọn thiết bị mặc định
+  const effectiveInputDeviceId = (!isUsingAudio && reactiveInputDeviceId === 'listen-only')
+    ? (getStoredAudioInputDeviceId() || '')
+    : reactiveInputDeviceId;
   const devicesAlreadyConfigured = skipEchoTestIfPreviousDevice
     && !!getStoredAudioInputDeviceId();
   const joinFullAudioImmediately = !isListenOnlyInputDevice
@@ -134,7 +142,7 @@ const AudioModalContainer = (props) => {
     <AudioModal
       away={away}
       forceListenOnlyAttendee={forceListenOnlyAttendee}
-      inputDeviceId={inputDeviceId}
+      inputDeviceId={effectiveInputDeviceId}
       outputDeviceId={outputDeviceId}
       showPermissionsOvelay={showPermissionsOvelay}
       isUsingAudio={isUsingAudio}
