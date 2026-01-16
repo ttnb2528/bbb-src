@@ -24,14 +24,9 @@ const intlMessages = defineMessages({
     defaultMessage: 'Users',
   },
   chatLabel: {
-    id: 'app.chat.title',
-    description: 'Chat label',
-    defaultMessage: 'Chat',
-  },
-  privateChatLabel: {
-    id: 'app.chat.privateChat',
-    description: 'Private chat label',
-    defaultMessage: 'Messages',
+    id: 'app.chat.titlePublic',
+    description: 'Public chat label',
+    defaultMessage: 'Public Chat',
   },
 });
 
@@ -42,9 +37,7 @@ const propTypes = {
   onOpenSettings: PropTypes.func.isRequired,
   onToggleUserList: PropTypes.func.isRequired,
   onToggleChat: PropTypes.func.isRequired,
-  onTogglePrivateChat: PropTypes.func.isRequired,
   sidebarContent: PropTypes.object,
-  privateUnreadCount: PropTypes.number,
   // Props cho Activities menu (ActionsDropdown)
   amIPresenter: PropTypes.bool,
   onOpenActivities: PropTypes.func,
@@ -64,9 +57,7 @@ class MoreMenu extends PureComponent {
       onOpenSettings,
       onToggleUserList,
       onToggleChat,
-      onTogglePrivateChat,
       sidebarContent,
-      privateUnreadCount,
       amIPresenter,
       onOpenActivities,
     } = this.props;
@@ -104,17 +95,6 @@ class MoreMenu extends PureComponent {
           this.setState({ isDropdownOpen: false });
         },
         'aria-expanded': sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT,
-      },
-      {
-        key: 'list-item-private-chat',
-        icon: 'chat',
-        label: privateUnreadCount > 0
-          ? `${intl.formatMessage(intlMessages.privateChatLabel)} (${privateUnreadCount})`
-          : intl.formatMessage(intlMessages.privateChatLabel),
-        onClick: () => {
-          onTogglePrivateChat();
-          this.setState({ isDropdownOpen: false });
-        },
       },
     ];
 

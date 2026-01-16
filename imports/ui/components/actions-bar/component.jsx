@@ -747,9 +747,7 @@ class ActionsBar extends PureComponent {
                     onOpenSettings={() => this.setModalIsOpen(true)}
                     onToggleUserList={this.handleToggleUserList}
                     onToggleChat={this.handleToggleChat}
-                    onTogglePrivateChat={this.handleTogglePrivateChat}
                     sidebarContent={sidebarContent}
-                    privateUnreadCount={privateUnreadCount}
                     amIPresenter={amIPresenter}
                     onOpenActivities={() => this.setActivitiesModalOpen(true)}
                   />
@@ -792,7 +790,7 @@ class ActionsBar extends PureComponent {
                   {/* Chat button - dùng icon group_chat cho public chat */}
                   <Styled.BadgeWrapper>
                     <Button
-                      label={intl.formatMessage({ id: 'app.chat.title', defaultMessage: 'Chat' })}
+                      label={intl.formatMessage({ id: 'app.chat.titlePublic', defaultMessage: 'Public Chat' })}
                       icon="group_chat"
                       color="default"
                       size="md"
@@ -802,25 +800,6 @@ class ActionsBar extends PureComponent {
                       data-test="toggleChat"
                       aria-expanded={sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT}
                     />
-                  </Styled.BadgeWrapper>
-                  
-                  {/* Private Chat button - với badge notification */}
-                  <Styled.BadgeWrapper>
-                    <Button
-                      label={intl.formatMessage({ id: 'app.chat.privateChat', defaultMessage: 'Messages' })}
-                      icon="chat"
-                      color="default"
-                      size="md"
-                      onClick={this.handleTogglePrivateChat}
-                      hideLabel
-                      circle
-                      data-test="togglePrivateChat"
-                    />
-                    {privateUnreadCount > 0 && (
-                      <Styled.UnreadBadge>
-                        {privateUnreadCount > 99 ? '99+' : privateUnreadCount}
-                      </Styled.UnreadBadge>
-                    )}
                   </Styled.BadgeWrapper>
                   
                   {/* Options dropdown */}

@@ -7,7 +7,7 @@
     "app.chat.inputLabel": "Nội dung cho chat {chatName}",
     "app.chat.inputPlaceholder": "Gửi tin nhắn đến {chatName}",
     "app.chat.title": "Chat",
-    "app.chat.titlePublic": "Chat",
+    "app.chat.titlePublic": "Chat công khai",
     "app.chat.titlePrivate": "Chat với {participantName}",
     "app.chat.privateChat": "Tin nhắn riêng",
     "app.chat.noPrivateChats": "Không có tin nhắn riêng",
