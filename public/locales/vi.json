@@ -115,5 +115,7 @@
     "app.video.cancel": "Hủy bỏ",
     "app.externalVideo.close": "Đóng",
     "app.navBar.userListToggleBtnLabel": "Thành viên",
-    "app.navBar.openDetailsTooltip": "Phiên"
+    "app.navBar.openDetailsTooltip": "Chi tiết phòng",
+    "app.toast.setEmoji.raiseHand": "Bạn đã giơ tay",
+    "app.toast.setEmoji.lowerHand": "Bạn đã hạ tay"
 }

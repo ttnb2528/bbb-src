@@ -31,19 +31,20 @@ const Modal = styled.div<{ $minimized: boolean }>`
   /* Mobile responsive */
   @media ${smallOnly} {
     width: ${({ $minimized }) => ($minimized ? '48px' : '100vw')};
-    height: ${({ $minimized }) => ($minimized ? '48px' : '100vh')};
+    height: ${({ $minimized }) => ($minimized ? '48px' : '85vh')};
     max-width: ${({ $minimized }) => ($minimized ? '48px' : '100vw')};
-    max-height: ${({ $minimized }) => ($minimized ? '48px' : '100vh')};
-    min-height: ${({ $minimized }) => ($minimized ? '48px' : '100vh')};
-    border-radius: ${({ $minimized }) => ($minimized ? '50%' : '0')};
+    max-height: ${({ $minimized }) => ($minimized ? '48px' : '85vh')};
+    min-height: ${({ $minimized }) => ($minimized ? '48px' : '60vh')};
+    border-radius: ${({ $minimized }) => ($minimized ? '50%' : '8px 8px 0 0')};
   }
 
   @media ${hasPhoneWidth} {
     width: ${({ $minimized }) => ($minimized ? '44px' : '100vw')};
-    height: ${({ $minimized }) => ($minimized ? '44px' : '100vh')};
+    height: ${({ $minimized }) => ($minimized ? '44px' : '85vh')};
     max-width: ${({ $minimized }) => ($minimized ? '44px' : '100vw')};
-    max-height: ${({ $minimized }) => ($minimized ? '44px' : '100vh')};
-    min-height: ${({ $minimized }) => ($minimized ? '44px' : '100vh')};
+    max-height: ${({ $minimized }) => ($minimized ? '44px' : '85vh')};
+    min-height: ${({ $minimized }) => ($minimized ? '44px' : '60vh')};
+    border-radius: ${({ $minimized }) => ($minimized ? '50%' : '8px 8px 0 0')};
   }
 `;
 
