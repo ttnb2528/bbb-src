@@ -207,6 +207,7 @@ const ChatMessageList: React.FC<ChatListProps> = ({
   const [userLoadedBackUntilPage, setUserLoadedBackUntilPage] = useState<number | null>(null);
   const [lastMessageCreatedAt, setLastMessageCreatedAt] = useState<string>('');
   const [followingTail, setFollowingTail] = React.useState(true);
+  const hasScrolledToBottom = React.useRef(false); // Track nếu đã scroll đến cuối bằng nút
   const [showStartSentinel, setShowStartSentinel] = React.useState(false);
   const [focusedMessageElement, setFocusedMessageElement] = React.useState<HTMLElement | null>();
   const [loadingPages, setLoadingPages] = useState(new Set<number>());
@@ -298,14 +299,25 @@ const ChatMessageList: React.FC<ChatListProps> = ({
   useEffect(() => {
     if (isEndSentinelVisible) {
       startObservingStickyScroll();
+      // Chỉ tự động set followingTail = true nếu chưa scroll đến cuối bằng nút
+      // hoặc nếu đã scroll đến cuối bằng nút thì giữ nguyên followingTail = true
+      if (!hasScrolledToBottom.current || followingTail) {
+        toggleFollowingTail(true);
+      }
     } else {
       stopObservingStickyScroll();
+      // Chỉ set followingTail = false nếu chưa scroll đến cuối bằng nút
+      // Nếu đã scroll đến cuối bằng nút, giữ nguyên followingTail = true
+      if (!hasScrolledToBottom.current) {
+        toggleFollowingTail(false);
+      }
     }
-    toggleFollowingTail(isEndSentinelVisible);
   }, [isEndSentinelVisible]);
 
   useEffect(() => {
     if (isStartSentinelVisible) {
+      // Khi scroll lên trên, reset flag để cho phép nút hiện lại nếu có tin nhắn mới
+      hasScrolledToBottom.current = false;
       if (followingTail) {
         toggleFollowingTail(false);
       }
@@ -424,6 +436,14 @@ const ChatMessageList: React.FC<ChatListProps> = ({
       } else {
         container.scrollTop = container.scrollHeight - container.offsetHeight;
         setIsScrollingDisabled(false);
+        // Đánh dấu đã scroll đến cuối bằng nút
+        hasScrolledToBottom.current = true;
+        // Sau khi scroll xong, đảm bảo followingTail được set thành true
+        // để nút "MORE MESSAGES BELOW" biến mất
+        // Sử dụng setTimeout để đảm bảo scroll animation hoàn tất trước khi update state
+        setTimeout(() => {
+          toggleFollowingTail(true);
+        }, 100);
       }
     };
 
