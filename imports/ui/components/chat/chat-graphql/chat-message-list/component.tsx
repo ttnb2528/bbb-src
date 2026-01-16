@@ -10,8 +10,9 @@ import { defineMessages, useIntl } from 'react-intl';
 import useChat from '/imports/ui/core/hooks/useChat';
 import useIntersectionObserver from '/imports/ui/hooks/useIntersectionObserver';
 import { ChatEvents } from '/imports/ui/core/enums/chat';
-import { layoutSelect } from '/imports/ui/components/layout/context';
+import { layoutSelect, layoutSelectInput } from '/imports/ui/components/layout/context';
 import { Layout } from '/imports/ui/components/layout/layoutTypes';
+import { PANELS } from '/imports/ui/components/layout/enums';
 import { Message } from '/imports/ui/Types/message';
 import ChatListPage from './page/component';
 import LAST_SEEN_MUTATION from './queries';
@@ -329,15 +330,29 @@ const ChatMessageList: React.FC<ChatListProps> = ({
   }, [chatId]);
 
   useEffect(() => {
+    // Chỉ mark as seen khi panel đang mở (người dùng đang xem chat)
+    // Điều này đảm bảo badge chỉ biến mất khi người dùng thực sự xem tin nhắn
     if (lastMessageCreatedAt !== '') {
-      setMessageAsSeenMutation({
-        variables: {
-          chatId,
-          lastSeenAt: lastMessageCreatedAt,
-        },
-      });
+      try {
+        const sidebarContent = layoutSelectInput((i: any) => i.sidebarContent);
+        const isChatPanelOpen = sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT;
+        
+        // Chỉ gọi mutation khi panel đang mở
+        if (isChatPanelOpen) {
+          setMessageAsSeenMutation({
+            variables: {
+              chatId,
+              lastSeenAt: lastMessageCreatedAt,
+            },
+          });
+        }
+        // Khi panel đóng, không gọi mutation để badge có thể hiển thị
+      } catch (e) {
+        // Fallback: nếu không lấy được sidebarContent, không gọi mutation
+        // Để đảm bảo badge không bị mất khi panel đóng
+      }
     }
-  }, [lastMessageCreatedAt]);
+  }, [lastMessageCreatedAt, chatId, setMessageAsSeenMutation]);
 
   useEffect(() => {
     const handler = (e: Event) => {

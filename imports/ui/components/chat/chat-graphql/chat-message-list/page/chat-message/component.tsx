@@ -45,8 +45,9 @@ import { CHAT_DELETE_MESSAGE_MUTATION } from './mutations';
 import { Popover } from '@mui/material';
 import { EmojiPicker, EmojiPickerWrapper } from './message-toolbar/styles';
 import { isMobile } from '/imports/utils/deviceInfo';
-import { layoutSelect } from '/imports/ui/components/layout/context';
+import { layoutSelect, layoutSelectInput } from '/imports/ui/components/layout/context';
 import { Layout } from '/imports/ui/components/layout/layoutTypes';
+import { PANELS } from '/imports/ui/components/layout/enums';
 
 interface ChatMessageProps {
   message: Message;
@@ -338,10 +339,32 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
       startScrollEndEventPolling();
     };
     if (message && scrollRef.current && messageRef.current) {
-      if (isInViewport(messageRef.current)) {
-        markMessageAsSeen(message);
-      } else {
-        scrollRef.current.addEventListener('scroll', callbackFunction);
+      // Chỉ mark as seen khi panel đang mở VÀ message nằm trong viewport
+      // Điều này đảm bảo badge chỉ biến mất khi người dùng thực sự xem tin nhắn
+      try {
+        const sidebarContent = layoutSelectInput((i: any) => i.sidebarContent);
+        const isChatPanelOpen = sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT;
+        
+        // Chỉ mark as seen khi:
+        // 1. Panel đang mở (người dùng đang xem chat)
+        // 2. Message nằm trong viewport (người dùng có thể thấy)
+        // Điều này ngăn việc tự động mark as seen khi panel đóng
+        if (isInViewport(messageRef.current) && isChatPanelOpen) {
+          markMessageAsSeen(message);
+        } else {
+          // Khi panel đóng hoặc message không trong viewport, không mark as seen
+          // Chỉ mark khi panel mở và người dùng thực sự xem
+          if (isChatPanelOpen) {
+            scrollRef.current.addEventListener('scroll', callbackFunction);
+          }
+        }
+      } catch (e) {
+        // Fallback: nếu không lấy được sidebarContent, vẫn mark as seen như cũ
+        if (isInViewport(messageRef.current)) {
+          markMessageAsSeen(message);
+        } else {
+          scrollRef.current.addEventListener('scroll', callbackFunction);
+        }
       }
     }
     return () => {

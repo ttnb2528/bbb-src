@@ -131,6 +131,15 @@ const ActionsBarContainer = (props) => {
       .reduce((sum, c) => sum + (c.totalUnread || 0), 0);
   }, [chats]);
 
+  // Lấy unread count của public chat
+  const publicChatUnreadCount = React.useMemo(() => {
+    if (!chats) return 0;
+    const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+    const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+    const publicChat = chats.find((c) => c.chatId === PUBLIC_GROUP_CHAT_ID);
+    return publicChat?.totalUnread || 0;
+  }, [chats]);
+
   if (actionsBarStyle.display === false) return null;
   if (!currentMeeting) return null;
 
@@ -185,6 +194,7 @@ const ActionsBarContainer = (props) => {
         currentUserId: currentUser?.userId,
         isDirectLeaveButtonEnabled,
         privateUnreadCount,
+        publicChatUnreadCount,
         meetingId: currentMeeting?.meetingId,
       }
     }

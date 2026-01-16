@@ -634,6 +634,7 @@ class ActionsBar extends PureComponent {
       currentUserId,
       isDirectLeaveButtonEnabled,
       privateUnreadCount,
+      publicChatUnreadCount,
       meetingId,
     } = this.props;
 
@@ -804,6 +805,12 @@ class ActionsBar extends PureComponent {
                       data-test="toggleChat"
                       aria-expanded={sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT}
                     />
+                    {/* Hiển thị badge khi panel đóng và có tin nhắn chưa đọc */}
+                    {publicChatUnreadCount > 0 && !(sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT) && (
+                      <Styled.UnreadBadge>
+                        {publicChatUnreadCount > 99 ? '99+' : publicChatUnreadCount}
+                      </Styled.UnreadBadge>
+                    )}
                   </Styled.BadgeWrapper>
                   
                   {/* Options dropdown */}

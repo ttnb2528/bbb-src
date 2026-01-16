@@ -79,7 +79,7 @@ const Chat: React.FC<ChatProps> = ({ isRTL, mode = 'sidebar', chatId }) => {
     };
   }, []);
 
-  const handleSelectPrivateChat = (selectedChatId: string) => {
+  const handleSelectPrivateChat = (_selectedChatId: string) => {
     // Dispatch event để Actions Bar mở private chat modal
     // Event này sẽ được xử lý bởi ActionsBar component
   };
@@ -98,7 +98,11 @@ const Chat: React.FC<ChatProps> = ({ isRTL, mode = 'sidebar', chatId }) => {
     </Styled.ChatWrapper>
   );
 };
-export const ChatLoading: React.FC<ChatProps> = ({ isRTL }) => {
+interface ChatLoadingProps {
+  isRTL: boolean;
+}
+
+export const ChatLoading: React.FC<ChatLoadingProps> = ({ isRTL }) => {
   const { isChrome } = browserInfo;
   return (
     <Styled.Chat isRTL={isRTL} isChrome={isChrome}>
@@ -177,7 +181,7 @@ const ChatContainer: React.FC<ChatContainerProps> = ({ mode = 'sidebar', chatId:
   // Không cần check sidebarContentPanel nữa vì parent đã đảm bảo activePanel === PANELS.CHAT
   // Sử dụng finalIdChatOpen nếu có, fallback về PUBLIC_GROUP_CHAT_ID trong sidebar mode
   const chatIdToUse = finalIdChatOpen || (mode === 'sidebar' && sidebarContent.sidebarContentPanel === PANELS.CHAT ? PUBLIC_GROUP_CHAT_ID : idChatOpen);
-  if (!chatIdToUse && !isLocked) return <ChatLoading isRTL={isRTL} chatId="" />;
+  if (!chatIdToUse && !isLocked) return <ChatLoading isRTL={isRTL} />;
   return <Chat isRTL={isRTL} mode={mode} chatId={chatIdToUse} />;
 };
 
