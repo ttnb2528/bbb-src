@@ -26,6 +26,7 @@ import LeaveMeetingButtonContainer from '../nav-bar/leave-meeting-button/contain
 import OptionsDropdownContainer from '../nav-bar/options-dropdown/container';
 import ConnectionStatusButtonContainer from '../connection-status/button/container';
 import ConnectionStatusService from '../connection-status/service';
+import FullscreenService from '/imports/ui/components/common/fullscreen-button/service';
 import Icon from '/imports/ui/components/common/icon/icon-ts/component';
 import Tooltip from '/imports/ui/components/common/tooltip/component';
 import SessionDetailsModal from '/imports/ui/components/session-details/component';
@@ -750,6 +751,9 @@ class ActionsBar extends PureComponent {
                     sidebarContent={sidebarContent}
                     amIPresenter={amIPresenter}
                     onOpenActivities={() => this.setActivitiesModalOpen(true)}
+                    handleToggleFullscreen={() => FullscreenService.toggleFullScreen()}
+                    showConnectionStatus={ConnectionStatusService.isEnabled()}
+                    isMeteorConnected={isMeteorConnected}
                   />
                   
                   {/* Leave Meeting button - rõ ràng, màu đỏ */}

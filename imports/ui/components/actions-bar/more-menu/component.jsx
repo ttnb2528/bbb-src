@@ -6,6 +6,12 @@ import Button from '/imports/ui/components/common/button/component';
 import Styled from './styles';
 import { PANELS, ACTIONS } from '../../layout/enums';
 import deviceInfo from '/imports/utils/deviceInfo';
+import AboutContainer from '/imports/ui/components/about/container';
+import ShortcutHelpComponent from '/imports/ui/components/shortcut-help/component';
+import OptionsMenuContainer from '/imports/ui/components/settings/container';
+import FullscreenService from '/imports/ui/components/common/fullscreen-button/service';
+import ConnectionStatusModalContainer from '/imports/ui/components/connection-status/modal/container';
+import browserInfo from '/imports/utils/browserInfo';
 
 const intlMessages = defineMessages({
   moreLabel: {
@@ -14,9 +20,9 @@ const intlMessages = defineMessages({
     defaultMessage: 'More',
   },
   settingsLabel: {
-    id: 'app.navBar.openDetailsTooltip',
+    id: 'app.navBar.optionsDropdown.settingsLabel',
     description: 'Settings label',
-    defaultMessage: 'Session',
+    defaultMessage: 'Settings',
   },
   userListLabel: {
     id: 'app.navBar.userListToggleBtnLabel',
@@ -27,6 +33,31 @@ const intlMessages = defineMessages({
     id: 'app.chat.titlePublic',
     description: 'Public chat label',
     defaultMessage: 'Public Chat',
+  },
+  fullscreenLabel: {
+    id: 'app.navBar.optionsDropdown.fullscreenLabel',
+    description: 'Fullscreen label',
+  },
+  exitFullscreenLabel: {
+    id: 'app.navBar.optionsDropdown.exitFullscreenLabel',
+    description: 'Exit fullscreen label',
+  },
+  aboutLabel: {
+    id: 'app.navBar.optionsDropdown.aboutLabel',
+    description: 'About label',
+  },
+  helpLabel: {
+    id: 'app.navBar.optionsDropdown.helpLabel',
+    description: 'Help label',
+  },
+  hotkeysLabel: {
+    id: 'app.navBar.optionsDropdown.hotkeysLabel',
+    description: 'Hotkeys label',
+  },
+  connectionStatusLabel: {
+    id: 'app.navBar.optionsDropdown.connectionStatusLabel',
+    description: 'Connection Status label',
+    defaultMessage: 'Connection Status',
   },
 });
 
@@ -41,14 +72,45 @@ const propTypes = {
   // Props cho Activities menu (ActionsDropdown)
   amIPresenter: PropTypes.bool,
   onOpenActivities: PropTypes.func,
+  // Props từ OptionsDropdown
+  handleToggleFullscreen: PropTypes.func,
+  showConnectionStatus: PropTypes.bool,
+  isMeteorConnected: PropTypes.bool,
 };
+
+const { isSafari, isValidSafariVersion } = browserInfo;
+const { isIphone } = deviceInfo;
+const noIOSFullscreen = !!(((isSafari && !isValidSafariVersion) || isIphone));
+const FULLSCREEN_CHANGE_EVENT = isSafari ? 'webkitfullscreenchange' : 'fullscreenchange';
 
 class MoreMenu extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
       isDropdownOpen: false,
+      isAboutModalOpen: false,
+      isShortcutHelpModalOpen: false,
+      isOptionsMenuModalOpen: false,
+      isConnectionStatusModalOpen: false,
+      isFullscreen: false,
     };
+    this.onFullscreenChange = this.onFullscreenChange.bind(this);
+  }
+
+  componentDidMount() {
+    document.documentElement.addEventListener(FULLSCREEN_CHANGE_EVENT, this.onFullscreenChange);
+  }
+
+  componentWillUnmount() {
+    document.documentElement.removeEventListener(FULLSCREEN_CHANGE_EVENT, this.onFullscreenChange);
+  }
+
+  onFullscreenChange() {
+    const { isFullscreen } = this.state;
+    const newIsFullscreen = FullscreenService.isFullScreen(document.documentElement);
+    if (isFullscreen !== newIsFullscreen) {
+      this.setState({ isFullscreen: newIsFullscreen });
+    }
   }
 
   renderMenuItems() {
@@ -60,7 +122,13 @@ class MoreMenu extends PureComponent {
       sidebarContent,
       amIPresenter,
       onOpenActivities,
+      handleToggleFullscreen,
+      showConnectionStatus,
     } = this.props;
+
+    const { isFullscreen } = this.state;
+    const ALLOW_FULLSCREEN = window.meetingClientSettings?.public?.app?.allowFullscreen;
+    const { showHelpButton: helpButton, helpLink } = window.meetingClientSettings?.public?.app || {};
 
     const menuItems = [
       {
@@ -68,8 +136,7 @@ class MoreMenu extends PureComponent {
         icon: 'settings',
         label: intl.formatMessage(intlMessages.settingsLabel),
         onClick: () => {
-          onOpenSettings();
-          this.setState({ isDropdownOpen: false });
+          this.setState({ isOptionsMenuModalOpen: true, isDropdownOpen: false });
         },
       },
       {
@@ -120,47 +187,154 @@ class MoreMenu extends PureComponent {
       );
     }
 
+    // Thêm separator trước các options từ desktop
+    menuItems.push({
+      key: 'separator-options',
+      isSeparator: true,
+    });
+
+    // Fullscreen option
+    if (!noIOSFullscreen && ALLOW_FULLSCREEN && handleToggleFullscreen) {
+      const fullscreenLabel = isFullscreen
+        ? intl.formatMessage(intlMessages.exitFullscreenLabel)
+        : intl.formatMessage(intlMessages.fullscreenLabel);
+      const fullscreenIcon = isFullscreen ? 'exit_fullscreen' : 'fullscreen';
+
+      menuItems.push({
+        key: 'list-item-fullscreen',
+        icon: fullscreenIcon,
+        label: fullscreenLabel,
+        onClick: () => {
+          handleToggleFullscreen();
+          this.setState({ isDropdownOpen: false });
+        },
+      });
+    }
+
+    // About option
+    menuItems.push({
+      key: 'list-item-about',
+      icon: 'about',
+      label: intl.formatMessage(intlMessages.aboutLabel),
+      onClick: () => {
+        this.setState({ isAboutModalOpen: true, isDropdownOpen: false });
+      },
+    });
+
+    // Help option
+    if (helpButton) {
+      menuItems.push({
+        key: 'list-item-help',
+        icon: 'help',
+        iconRight: 'popout_window',
+        label: intl.formatMessage(intlMessages.helpLabel),
+        onClick: () => {
+          if (helpLink) {
+            window.open(helpLink);
+          }
+          this.setState({ isDropdownOpen: false });
+        },
+      });
+    }
+
+    // Keyboard shortcuts
+    menuItems.push({
+      key: 'list-item-shortcuts',
+      icon: 'shortcuts',
+      label: intl.formatMessage(intlMessages.hotkeysLabel),
+      onClick: () => {
+        this.setState({ isShortcutHelpModalOpen: true, isDropdownOpen: false });
+      },
+    });
+
+    // Connection Status
+    if (showConnectionStatus) {
+      menuItems.push({
+        key: 'separator-connection',
+        isSeparator: true,
+      });
+      menuItems.push({
+        key: 'list-item-connection-status',
+        icon: 'network',
+        label: intl.formatMessage(intlMessages.connectionStatusLabel),
+        onClick: () => {
+          this.setState({ isConnectionStatusModalOpen: true, isDropdownOpen: false });
+        },
+      });
+    }
+
     return menuItems;
+  }
+
+  renderModal(isOpen, setIsOpen, priority, Component, otherOptions) {
+    return isOpen ? (
+      <Component
+        {...{
+          ...otherOptions,
+          onRequestClose: () => setIsOpen(false),
+          priority,
+          setIsOpen,
+          isOpen,
+        }}
+      />
+    ) : null;
   }
 
   render() {
     const { intl } = this.props;
-    const { isDropdownOpen } = this.state;
+    const {
+      isDropdownOpen,
+      isAboutModalOpen,
+      isShortcutHelpModalOpen,
+      isOptionsMenuModalOpen,
+      isConnectionStatusModalOpen,
+    } = this.state;
 
     if (!deviceInfo.isMobile) return null;
 
     const customStyles = { top: '1rem' };
 
     return (
-      <BBBMenu
-        customStyles={customStyles}
-        trigger={(
-          <Styled.MoreButton
-            label={intl.formatMessage(intlMessages.moreLabel)}
-            icon="more"
-            data-test="moreMenuButton"
-            color="default"
-            size="md"
-            circle
-            hideLabel
-            onClick={() => null}
+      <>
+        <BBBMenu
+          customStyles={customStyles}
+          trigger={(
+            <Styled.MoreButton
+              label={intl.formatMessage(intlMessages.moreLabel)}
+              icon="more"
+              data-test="moreMenuButton"
+              color="default"
+              size="md"
+              circle
+              hideLabel
+              onClick={() => null}
+            />
+          )}
+          actions={this.renderMenuItems()}
+          opts={{
+            id: 'actions-bar-more-menu',
+            keepMounted: true,
+            transitionDuration: 120, // mượt hơn khi mở
+            elevation: 3,
+            getcontentanchorel: null,
+            fullwidth: 'true',
+            anchorOrigin: { vertical: 'bottom', horizontal: 'right' },
+            transformorigin: { vertical: 'top', horizontal: 'right' },
+          }}
+          onCloseCallback={() => {
+            this.setState({ isDropdownOpen: false });
+          }}
+        />
+        {this.renderModal(isAboutModalOpen, (value) => this.setState({ isAboutModalOpen: value }), 'low', AboutContainer)}
+        {this.renderModal(isShortcutHelpModalOpen, (value) => this.setState({ isShortcutHelpModalOpen: value }), 'low', ShortcutHelpComponent)}
+        {this.renderModal(isOptionsMenuModalOpen, (value) => this.setState({ isOptionsMenuModalOpen: value }), 'low', OptionsMenuContainer)}
+        {isConnectionStatusModalOpen && (
+          <ConnectionStatusModalContainer
+            isModalOpen={isConnectionStatusModalOpen}
+            setModalIsOpen={(value) => this.setState({ isConnectionStatusModalOpen: value })}
           />
         )}
-        actions={this.renderMenuItems()}
-        opts={{
-          id: 'actions-bar-more-menu',
-          keepMounted: true,
-          transitionDuration: 120, // mượt hơn khi mở
-          elevation: 3,
-          getcontentanchorel: null,
-          fullwidth: 'true',
-          anchorOrigin: { vertical: 'bottom', horizontal: 'right' },
-          transformorigin: { vertical: 'top', horizontal: 'right' },
-        }}
-        onCloseCallback={() => {
-          this.setState({ isDropdownOpen: false });
-        }}
-      />
+      </>
     );
   }
 }
