@@ -7,6 +7,7 @@ import Styled from './styles';
 import ChatMessageListContainer from './chat-message-list/component';
 import ChatMessageFormContainer from './chat-message-form/component';
 import ChatTypingIndicatorContainer from './chat-typing-indicator/component';
+import PrivateChatSidebar from './private-chat-sidebar/component';
 import { PANELS, ACTIONS } from '/imports/ui/components/layout/enums';
 import usePendingChat from '/imports/ui/core/local-states/usePendingChat';
 import useChat from '/imports/ui/core/hooks/useChat';
@@ -26,6 +27,14 @@ interface ChatProps {
 const Chat: React.FC<ChatProps> = ({ isRTL, mode = 'sidebar', chatId }) => {
   const { isChrome } = browserInfo;
   const isEditingMessage = useRef(false);
+
+  // Kiểm tra xem có phải public chat không
+  const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+  const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+  const isPublicChat = chatId === PUBLIC_GROUP_CHAT_ID;
+
+  // Chỉ hiển thị private chat sidebar khi ở sidebar mode và đang ở public chat
+  const showPrivateChatSidebar = mode === 'sidebar' && isPublicChat;
 
   React.useEffect(() => {
     const handleMouseDown = (e: MouseEvent) => {
@@ -70,13 +79,23 @@ const Chat: React.FC<ChatProps> = ({ isRTL, mode = 'sidebar', chatId }) => {
     };
   }, []);
 
+  const handleSelectPrivateChat = (selectedChatId: string) => {
+    // Dispatch event để Actions Bar mở private chat modal
+    // Event này sẽ được xử lý bởi ActionsBar component
+  };
+
   return (
+    <Styled.ChatWrapper>
     <Styled.Chat isRTL={isRTL} isChrome={isChrome} mode={mode}>
       <ChatHeader mode={mode} chatId={chatId} />
       <ChatMessageListContainer chatId={chatId} mode={mode} />
       <ChatMessageFormContainer chatId={chatId} mode={mode} />
       <ChatTypingIndicatorContainer chatId={chatId} />
     </Styled.Chat>
+      {showPrivateChatSidebar && (
+        <PrivateChatSidebar onSelectChat={handleSelectPrivateChat} />
+      )}
+    </Styled.ChatWrapper>
   );
 };
 export const ChatLoading: React.FC<ChatProps> = ({ isRTL }) => {

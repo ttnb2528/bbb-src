@@ -9,6 +9,14 @@ interface ChatProps {
   mode?: 'sidebar' | 'modal';
 }
 
+export const ChatWrapper = styled.div`
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+`;
+
 export const Chat = styled.div<ChatProps>`
   background-color: ${colorWhite};
   padding: ${({ mode }) => (mode === 'modal' ? '0.5rem' : '0.75rem')};
@@ -69,4 +77,4 @@ const ChatMessages = styled.div`
   user-select: text;
 `;
 
-export default { Chat, ChatMessages, ChatContent };
+export default { ChatWrapper, Chat, ChatMessages, ChatContent };
