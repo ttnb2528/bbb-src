@@ -378,6 +378,7 @@ const ChatMessageList: React.FC<ChatListProps> = ({
     ? (sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT)
     : (mode === 'modal' || (sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT));
   
+  // Mark as seen khi panel mở
   useEffect(() => {
     // Reset flag khi panel đóng để có thể mark lại khi mở lại
     if (!isChatPanelOpen) {
@@ -387,9 +388,7 @@ const ChatMessageList: React.FC<ChatListProps> = ({
     
     // Khi panel mở: mark as seen ngay lập tức (chỉ cần mở là đánh dấu đã đọc)
     if (isChatPanelOpen && !hasMarkedAsSeenRef.current) {
-      // Sử dụng timestamp hiện tại để đánh dấu tất cả messages là đã seen
       const timestampToUse = new Date().toISOString();
-      
       hasMarkedAsSeenRef.current = true;
       setMessageAsSeenMutation({
         variables: {
@@ -399,6 +398,29 @@ const ChatMessageList: React.FC<ChatListProps> = ({
       });
     }
   }, [isChatPanelOpen, chatId, setMessageAsSeenMutation]);
+
+  // Mark as seen khi có message mới và chat đang mở (cho private chat)
+  useEffect(() => {
+    // Chỉ áp dụng cho private chat
+    if (isPublicChat || !isChatPanelOpen) return;
+    
+    // Khi có message mới (lastMessageCreatedAt thay đổi) và chat đang mở, mark as seen ngay
+    if (lastMessageCreatedAt !== '') {
+      // Reset flag để có thể mark lại với timestamp mới
+      hasMarkedAsSeenRef.current = false;
+      
+      // Mark với timestamp của message mới
+      setMessageAsSeenMutation({
+        variables: {
+          chatId,
+          lastSeenAt: lastMessageCreatedAt,
+        },
+      });
+      
+      // Set flag lại để tránh mark nhiều lần cho cùng một message
+      hasMarkedAsSeenRef.current = true;
+    }
+  }, [lastMessageCreatedAt, isChatPanelOpen, chatId, setMessageAsSeenMutation, isPublicChat]);
 
   useEffect(() => {
     const handler = (e: Event) => {

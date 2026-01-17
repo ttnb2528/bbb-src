@@ -314,7 +314,6 @@ const ChatListPageContainer: React.FC<ChatListPageContainerProps> = ({
 }) => {
   const CHAT_CONFIG = window.meetingClientSettings.public.chat;
   const PUBLIC_GROUP_CHAT_KEY = CHAT_CONFIG.public_group_id;
-  const PRIVATE_MESSAGE_READ_FEEDBACK_ENABLED = CHAT_CONFIG.privateMessageReadFeedback.enabled;
 
   const isPublicChat = chatId === PUBLIC_GROUP_CHAT_KEY;
   const chatQuery = isPublicChat
@@ -323,7 +322,8 @@ const ChatListPageContainer: React.FC<ChatListPageContainerProps> = ({
   const defaultVariables = { offset: (page) * pageSize, limit: pageSize };
   const variables = isPublicChat
     ? defaultVariables : { ...defaultVariables, requestedChatId: chatId };
-  const isPrivateReadFeedbackEnabled = !isPublicChat && PRIVATE_MESSAGE_READ_FEEDBACK_ENABLED;
+  // Luôn enable read feedback cho private chat (không cần check config)
+  const isPrivateReadFeedbackEnabled = !isPublicChat;
 
   const {
     data,

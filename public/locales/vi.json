@@ -26,6 +26,8 @@
     "app.chat.multi.typing": "Nhiều người đang gõ",
     "app.chat.one.typing": "{userName} đang gõ",
     "app.chat.two.typing": "{userName1} và{userName2} đang gõ",
+    "app.chat.messageRead": "Tin nhắn đã được xem",
+    "app.chat.messageSent": "Tin nhắn đã gửi",
     "app.captions.label": "Phụ đề",
     "app.captions.menu.close": "Đóng",
     "app.captions.menu.start": "Bắt đầu",
