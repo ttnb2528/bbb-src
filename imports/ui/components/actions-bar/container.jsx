@@ -194,7 +194,7 @@ const ActionsBarContainer = (props) => {
         currentUserId: currentUser?.userId,
         isDirectLeaveButtonEnabled,
         privateUnreadCount,
-        publicChatUnreadCount,
+        publicChatUnreadCount, // Đảm bảo prop này được truyền sau cùng để không bị override
         meetingId: currentMeeting?.meetingId,
       }
     }

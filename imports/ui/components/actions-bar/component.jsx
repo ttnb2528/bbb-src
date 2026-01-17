@@ -755,6 +755,8 @@ class ActionsBar extends PureComponent {
                     handleToggleFullscreen={() => FullscreenService.toggleFullScreen()}
                     showConnectionStatus={ConnectionStatusService.isEnabled()}
                     isMeteorConnected={isMeteorConnected}
+                    publicChatUnreadCount={publicChatUnreadCount}
+                    privateUnreadCount={privateUnreadCount}
                   />
                   
                   {/* Leave Meeting button - rõ ràng, màu đỏ */}

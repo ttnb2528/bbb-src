@@ -76,6 +76,9 @@ const propTypes = {
   handleToggleFullscreen: PropTypes.func,
   showConnectionStatus: PropTypes.bool,
   isMeteorConnected: PropTypes.bool,
+  // Props cho unread badge
+  publicChatUnreadCount: PropTypes.number,
+  privateUnreadCount: PropTypes.number,
 };
 
 const { isSafari, isValidSafariVersion } = browserInfo;
@@ -124,6 +127,8 @@ class MoreMenu extends PureComponent {
       onOpenActivities,
       handleToggleFullscreen,
       showConnectionStatus,
+      publicChatUnreadCount,
+      privateUnreadCount,
     } = this.props;
 
     const { isFullscreen } = this.state;
@@ -156,7 +161,20 @@ class MoreMenu extends PureComponent {
       {
         key: 'list-item-chat',
         icon: 'group_chat',
-        label: intl.formatMessage(intlMessages.chatLabel),
+        label: (() => {
+          // Tính tổng unread count (public + private) để hiển thị trong menu
+          const totalUnreadInMenu = (publicChatUnreadCount || 0) + (privateUnreadCount || 0);
+          return (
+            <Styled.MenuItemLabel>
+              <span>{intl.formatMessage(intlMessages.chatLabel)}</span>
+              {totalUnreadInMenu > 0 && (
+                <Styled.MenuItemBadge>
+                  {totalUnreadInMenu > 99 ? '99+' : totalUnreadInMenu}
+                </Styled.MenuItemBadge>
+              )}
+            </Styled.MenuItemLabel>
+          );
+        })(),
         onClick: () => {
           onToggleChat();
           this.setState({ isDropdownOpen: false });
@@ -281,7 +299,7 @@ class MoreMenu extends PureComponent {
   }
 
   render() {
-    const { intl } = this.props;
+    const { intl, publicChatUnreadCount, privateUnreadCount, sidebarContent } = this.props;
     const {
       isDropdownOpen,
       isAboutModalOpen,
@@ -293,22 +311,38 @@ class MoreMenu extends PureComponent {
     if (!deviceInfo.isMobile) return null;
 
     const customStyles = { top: '1rem' };
+    
+    // Kiểm tra panel chat có đang mở không
+    const isChatPanelOpen = sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT;
+    
+    // Tính tổng unread count (public + private)
+    const totalUnreadCount = (publicChatUnreadCount || 0) + (privateUnreadCount || 0);
+    
+    // Hiển thị badge khi panel đóng và có tin nhắn chưa đọc
+    const shouldShowBadge = totalUnreadCount > 0 && !isChatPanelOpen;
 
     return (
       <>
         <BBBMenu
           customStyles={customStyles}
           trigger={(
-            <Styled.MoreButton
-              label={intl.formatMessage(intlMessages.moreLabel)}
-              icon="more"
-              data-test="moreMenuButton"
-              color="default"
-              size="md"
-              circle
-              hideLabel
-              onClick={() => null}
-            />
+            <Styled.BadgeWrapper>
+              <Styled.MoreButton
+                label={intl.formatMessage(intlMessages.moreLabel)}
+                icon="more"
+                data-test="moreMenuButton"
+                color="default"
+                size="md"
+                circle
+                hideLabel
+                onClick={() => null}
+              />
+              {shouldShowBadge && (
+                <Styled.UnreadBadge>
+                  {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+                </Styled.UnreadBadge>
+              )}
+            </Styled.BadgeWrapper>
           )}
           actions={this.renderMenuItems()}
           opts={{
