@@ -47,6 +47,8 @@ import { EmojiPicker, EmojiPickerWrapper } from './message-toolbar/styles';
 import { isMobile } from '/imports/utils/deviceInfo';
 import { layoutSelect } from '/imports/ui/components/layout/context';
 import { Layout } from '/imports/ui/components/layout/layoutTypes';
+import BBBMenu from '/imports/ui/components/common/menu/component';
+import { CHAT_CREATE_WITH_USER } from '/imports/ui/components/user-list/user-list-content/user-participants/user-list-participants/user-actions/mutations';
 
 interface ChatMessageProps {
   message: Message;
@@ -189,6 +191,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
   const [isToolbarReactionPopoverOpen, setIsToolbarReactionPopoverOpen] = React.useState(false);
   const [keyboardFocused, setKeyboardFocused] = React.useState(false);
   const [isTryingToDelete, setIsTryingToDelete] = React.useState(false);
+  const [isAvatarMenuOpen, setIsAvatarMenuOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const animationInitialTimestamp = React.useRef(0);
   const animationInitialScrollPosition = React.useRef(0);
@@ -197,6 +200,43 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
   const onFocusTrapDeactivation = React.useRef<(() => void) | null>(null);
 
   const [chatDeleteMessage] = useMutation(CHAT_DELETE_MESSAGE_MUTATION);
+  const [chatCreateWithUser] = useMutation(CHAT_CREATE_WITH_USER);
+  
+  // Menu items cho avatar (chỉ có "Start a private chat")
+  const avatarMenuItems = React.useMemo(() => {
+    if (!isPublicChat || !message.user?.userId || meetingDisablePrivateChat) {
+      return [];
+    }
+    
+    return [
+      {
+        allowed: true,
+        key: 'userName',
+        label: message.user.name,
+        isTitle: true,
+      },
+      {
+        allowed: true,
+        key: 'startPrivateChat',
+        label: intl.formatMessage({ id: 'app.userList.menu.chat.label' }),
+        onClick: () => {
+          setIsAvatarMenuOpen(false);
+          chatCreateWithUser({
+            variables: {
+              userId: message.user.userId,
+            },
+          });
+          // Dispatch event để mở private chat modal
+          window.dispatchEvent(new CustomEvent('openPrivateChatModal', {
+            detail: { userId: message.user.userId },
+          }));
+        },
+        icon: 'chat',
+        dataTest: 'startPrivateChat',
+      },
+    ];
+  }, [isPublicChat, message.user?.userId, message.user?.name, meetingDisablePrivateChat, intl, chatCreateWithUser]);
+  
   const onDeleteConfirmation = useCallback(() => {
     chatDeleteMessage({
       variables: {
@@ -830,13 +870,41 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
         {(shouldRenderAvatar || shouldRenderHeader) && (
           <ChatHeading>
             {shouldRenderAvatar && (
-              <ChatAvatar
-                avatar={message.user?.avatar || ''}
-                color={messageContent.color}
-                moderator={messageContent.isModerator}
-              >
-                {avatarDisplay}
-              </ChatAvatar>
+              isPublicChat && !meetingDisablePrivateChat && message.user?.userId ? (
+                <BBBMenu
+                  trigger={
+                    <div
+                      tabIndex={-1}
+                      onClick={() => setIsAvatarMenuOpen((prev) => !prev)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          setIsAvatarMenuOpen((prev) => !prev);
+                        }
+                      }}
+                      style={{ display: 'inline-block', cursor: 'pointer' }}
+                    >
+                      <ChatAvatar
+                        avatar={message.user?.avatar || ''}
+                        color={messageContent.color}
+                        moderator={messageContent.isModerator}
+                      >
+                        {avatarDisplay}
+                      </ChatAvatar>
+                    </div>
+                  }
+                  actions={avatarMenuItems}
+                  onCloseCallback={() => setIsAvatarMenuOpen(false)}
+                  open={isAvatarMenuOpen}
+                />
+              ) : (
+                <ChatAvatar
+                  avatar={message.user?.avatar || ''}
+                  color={messageContent.color}
+                  moderator={messageContent.isModerator}
+                >
+                  {avatarDisplay}
+                </ChatAvatar>
+              )
             )}
             {shouldRenderHeader && (
               <ChatMessageHeader

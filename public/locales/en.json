@@ -15,6 +15,7 @@
     "app.chat.titlePublic": "Public Chat",
     "app.chat.titlePrivate": "Chat with {participantName}",
     "app.chat.privateChat": "Private Messages",
+    "app.chat.openPrivateChat": "Open private chat",
     "app.chat.noPrivateChats": "No private messages",
     "app.chat.partnerDisconnected": "{participantName} has left the session",
     "app.chat.closeChatLabel": "Close {chatName}",

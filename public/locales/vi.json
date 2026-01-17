@@ -10,6 +10,7 @@
     "app.chat.titlePublic": "Chat công khai",
     "app.chat.titlePrivate": "Chat với {participantName}",
     "app.chat.privateChat": "Tin nhắn riêng",
+    "app.chat.openPrivateChat": "Mở chat riêng",
     "app.chat.noPrivateChats": "Không có tin nhắn riêng",
     "app.chat.partnerDisconnected": "{participantName} cuộc trò truyện còn lại",
     "app.chat.closeChatLabel": "Đóng {chatName}",
