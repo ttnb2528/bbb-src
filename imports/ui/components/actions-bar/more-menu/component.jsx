@@ -180,6 +180,22 @@ class MoreMenu extends PureComponent {
           this.setState({ isDropdownOpen: false });
         },
         'aria-expanded': sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT,
+        // Thêm data attribute để có thể style riêng
+        'data-no-hover': 'true',
+        // Override styles trực tiếp để xóa hiệu ứng
+        customStyles: {
+          '&:hover': {
+            backgroundColor: 'transparent !important',
+          },
+          '&:focus': {
+            backgroundColor: 'transparent !important',
+            outline: 'none !important',
+          },
+          '&:active': {
+            backgroundColor: 'transparent !important',
+            transform: 'none !important',
+          },
+        },
       },
     ];
 

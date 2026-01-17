@@ -176,6 +176,8 @@ class BBBMenu extends React.Component {
             id={dataTest}
             data-test={dataTest}
             data-key={`menuItem-${dataTest}`}
+            {...(a['data-no-hover'] ? { 'data-no-hover': a['data-no-hover'] } : {})}
+            className={a['data-no-hover'] ? 'no-hover-effect' : undefined}
             disableRipple
             disableGutters
             disabled={disabled || isTitle}

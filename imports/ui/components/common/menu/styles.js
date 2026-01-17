@@ -229,6 +229,64 @@ const BBBMenuItem = styled(MenuItem)`
         color: inherit !important;
     }
   `}
+  
+  /* Xóa hiệu ứng hover và click cho menu item có data-no-hover hoặc className no-hover-effect */
+  &[data-no-hover="true"],
+  &.no-hover-effect {
+    /* Xóa tất cả transitions */
+    transition: none !important;
+    
+    /* Xóa ripple effect */
+    .MuiTouchRipple-root,
+    .MuiTouchRipple-ripple {
+      display: none !important;
+      opacity: 0 !important;
+    }
+    
+    /* Xóa pseudo elements */
+    &::before,
+    &::after {
+      display: none !important;
+      content: none !important;
+    }
+    
+    /* Xóa tất cả hiệu ứng hover, focus, active */
+    &:hover,
+    &:focus,
+    &:active,
+    &:focus-visible,
+    &.Mui-focusVisible,
+    &.Mui-selected {
+      background-color: transparent !important;
+      background: transparent !important;
+      transform: none !important;
+      color: inherit !important;
+      outline: none !important;
+      box-shadow: none !important;
+      
+      i {
+        color: inherit !important;
+      }
+      
+      div,
+      div div,
+      div div div,
+      span {
+        color: inherit !important;
+        background-color: transparent !important;
+        background: transparent !important;
+      }
+    }
+    
+    /* Override Material-UI styles với độ ưu tiên cao nhất */
+    &[class*="Mui"] {
+      &:hover,
+      &:focus,
+      &:active {
+        background-color: transparent !important;
+      }
+    }
+  }
 `;
 
 const Skeleton = styled.div`
