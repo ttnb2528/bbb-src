@@ -109,15 +109,36 @@ const lastSeenAtVar = makeVar<{ [key: string]: number }>({});
 const chatIdVar = makeVar<string>('');
 
 const dispatchLastSeen = () => setTimeout(() => {
+  const currentChatId = chatIdVar();
+  const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+  const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+  const isPublicChat = currentChatId === PUBLIC_GROUP_CHAT_ID;
+  
   const lastSeenQueueValue = lastSeenQueue();
-  if (lastSeenQueueValue[chatIdVar()]) {
-    const lastTimeQueue = Array.from(lastSeenQueueValue[chatIdVar()]);
+  if (lastSeenQueueValue[currentChatId]) {
+    const lastTimeQueue = Array.from(lastSeenQueueValue[currentChatId]);
     const lastSeenTime = Math.max(...lastTimeQueue);
     const lastSeenAtVarValue = lastSeenAtVar();
-    if (lastSeenTime > (lastSeenAtVarValue[chatIdVar()] ?? 0)) {
-      lastSeenAtVar({ ...lastSeenAtVar(), [chatIdVar()]: lastSeenTime });
-      setter()[chatIdVar()](new Date(lastSeenTime).toISOString());
+    if (lastSeenTime > (lastSeenAtVarValue[currentChatId] ?? 0)) {
+      lastSeenAtVar({ ...lastSeenAtVar(), [currentChatId]: lastSeenTime });
+      const lastSeenAtISO = new Date(lastSeenTime).toISOString();
+      if (isPublicChat) {
+        console.log('[Public Chat] dispatchLastSeen - calling setter', {
+          chatId: currentChatId,
+          lastSeenTime,
+          lastSeenAtISO,
+        });
+      }
+      setter()[currentChatId](lastSeenAtISO);
+    } else if (isPublicChat) {
+      console.log('[Public Chat] dispatchLastSeen - NOT updating (time not newer)', {
+        chatId: currentChatId,
+        lastSeenTime,
+        currentLastSeen: lastSeenAtVarValue[currentChatId],
+      });
     }
+  } else if (isPublicChat) {
+    console.log('[Public Chat] dispatchLastSeen - no queue for chatId', currentChatId);
   }
 }, 500);
 
@@ -332,6 +353,9 @@ const ChatMessageList: React.FC<ChatListProps> = ({
     }
   }, [isStartSentinelVisible]);
 
+  // Sử dụng ref để track xem đã mark as seen chưa, tránh mark nhiều lần
+  const hasMarkedAsSeenRef = React.useRef(false);
+  
   useEffect(() => {
     setter({
       ...setter(),
@@ -339,32 +363,42 @@ const ChatMessageList: React.FC<ChatListProps> = ({
     });
     chatIdVar(chatId);
     setLastMessageCreatedAt('');
+    // Reset flag khi chatId thay đổi (panel đóng/mở hoặc chuyển chat)
+    hasScrolledToBottom.current = false;
+    hasMarkedAsSeenRef.current = false;
   }, [chatId]);
 
+  // Đơn giản: chỉ cần mở sidebar chat là đánh dấu tất cả messages là đã đọc
+  // Watch sidebarContent để detect khi panel mở/đóng
+  const sidebarContent = layoutSelectInput((i: any) => i.sidebarContent);
+  const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+  const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+  const isPublicChat = chatId === PUBLIC_GROUP_CHAT_ID;
+  const isChatPanelOpen = isPublicChat 
+    ? (sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT)
+    : (mode === 'modal' || (sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT));
+  
   useEffect(() => {
-    // Chỉ mark as seen khi panel đang mở (người dùng đang xem chat)
-    // Điều này đảm bảo badge chỉ biến mất khi người dùng thực sự xem tin nhắn
-    if (lastMessageCreatedAt !== '') {
-      try {
-        const sidebarContent = layoutSelectInput((i: any) => i.sidebarContent);
-        const isChatPanelOpen = sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT;
-        
-        // Chỉ gọi mutation khi panel đang mở
-        if (isChatPanelOpen) {
-          setMessageAsSeenMutation({
-            variables: {
-              chatId,
-              lastSeenAt: lastMessageCreatedAt,
-            },
-          });
-        }
-        // Khi panel đóng, không gọi mutation để badge có thể hiển thị
-      } catch (e) {
-        // Fallback: nếu không lấy được sidebarContent, không gọi mutation
-        // Để đảm bảo badge không bị mất khi panel đóng
-      }
+    // Reset flag khi panel đóng để có thể mark lại khi mở lại
+    if (!isChatPanelOpen) {
+      hasMarkedAsSeenRef.current = false;
+      return;
     }
-  }, [lastMessageCreatedAt, chatId, setMessageAsSeenMutation]);
+    
+    // Khi panel mở: mark as seen ngay lập tức (chỉ cần mở là đánh dấu đã đọc)
+    if (isChatPanelOpen && !hasMarkedAsSeenRef.current) {
+      // Sử dụng timestamp hiện tại để đánh dấu tất cả messages là đã seen
+      const timestampToUse = new Date().toISOString();
+      
+      hasMarkedAsSeenRef.current = true;
+      setMessageAsSeenMutation({
+        variables: {
+          chatId,
+          lastSeenAt: timestampToUse,
+        },
+      });
+    }
+  }, [isChatPanelOpen, chatId, setMessageAsSeenMutation]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -464,6 +498,10 @@ const ChatMessageList: React.FC<ChatListProps> = ({
   }, []);
 
   const renderUnreadNotification = useMemo(() => {
+    // Reset flag khi không còn unread messages (đã đọc hết)
+    if (totalUnread === 0) {
+      hasScrolledToBottom.current = false;
+    }
     if (totalUnread && !followingTail) {
       return (
         <UnreadButton

@@ -805,12 +805,16 @@ class ActionsBar extends PureComponent {
                       data-test="toggleChat"
                       aria-expanded={sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT}
                     />
-                    {/* Hiển thị badge khi panel đóng và có tin nhắn chưa đọc */}
-                    {publicChatUnreadCount > 0 && !(sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT) && (
-                      <Styled.UnreadBadge>
-                        {publicChatUnreadCount > 99 ? '99+' : publicChatUnreadCount}
-                      </Styled.UnreadBadge>
-                    )}
+                    {/* Hiển thị badge khi panel đóng và có tin nhắn chưa đọc (public + private) */}
+                    {(() => {
+                      const totalUnreadCount = publicChatUnreadCount + privateUnreadCount;
+                      const isChatPanelOpen = sidebarContent?.isOpen && sidebarContent?.sidebarContentPanel === PANELS.CHAT;
+                      return totalUnreadCount > 0 && !isChatPanelOpen ? (
+                        <Styled.UnreadBadge>
+                          {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+                        </Styled.UnreadBadge>
+                      ) : null;
+                    })()}
                   </Styled.BadgeWrapper>
                   
                   {/* Options dropdown */}
