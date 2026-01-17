@@ -57,6 +57,54 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   // Lưu vị trí popup trước khi minimize để restore khi expand
   const savedPositionRef = useRef<{ left: number; top: number } | null>(null);
   
+  // Handle click outside để đóng modal
+  useEffect(() => {
+    if (!isOpen || isMinimized) return;
+    
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Bỏ qua nếu click vào modal hoặc các element con của modal
+      if (modalRef.current && modalRef.current.contains(target)) {
+        return;
+      }
+      
+      // Trên desktop: đóng khi click bất kỳ đâu ngoài modal
+      // Trên mobile: chỉ đóng khi click vào overlay (vì modal fullscreen)
+      if (isMobileViewport()) {
+        // Mobile: chỉ đóng khi click vào overlay
+        const isOverlay = target.classList.contains('PrivateChatModal__overlay') ||
+                         target.classList.contains('ReactModal__Overlay') ||
+                         (target.parentElement && target.parentElement.classList.contains('ReactModal__Overlay'));
+        if (isOverlay) {
+          onRequestClose();
+        }
+      } else {
+        // Desktop: đóng khi click bất kỳ đâu ngoài modal
+        // Bỏ qua nếu click vào các modal khác hoặc actions bar
+        const isOtherModal = target.closest('[class*="modal"]') && 
+                            !target.closest('.PrivateChatModal__overlay') &&
+                            !target.closest('.PrivateChatModal__content');
+        const isActionsBar = target.closest('[data-test="actionsBar"]') ||
+                            target.closest('[class*="actions-bar"]');
+        
+        if (!isOtherModal && !isActionsBar) {
+          onRequestClose();
+        }
+      }
+    };
+    
+    // Thêm event listener với delay nhỏ để tránh trigger ngay khi mở
+    const timeoutId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, isMinimized, onRequestClose]);
+  
   // Sử dụng chatId từ props (flow mới)
   const { data: chats } = useChat((chat) => ({
     chatId: chat.chatId,
@@ -338,8 +386,8 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       className="PrivateChatModal__content"
       overlayClassName={`PrivateChatModal__overlay ${isMinimized ? 'PrivateChatModal__overlay--minimized' : ''}`}
       appElement={document.getElementById('app') || undefined}
-      shouldCloseOnOverlayClick={false}
-      shouldCloseOnEsc={false}
+      shouldCloseOnOverlayClick={!isMinimized}
+      shouldCloseOnEsc={!isMinimized}
       style={{
         content: {
           top: isMobileViewport() ? '0' : `${position.top}px`,
@@ -355,6 +403,15 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
           width: isMobileViewport() ? '100vw' : 'auto',
           height: isMobileViewport() ? '100vh' : 'auto',
           ...style, // Merge với style từ props
+        },
+        overlay: {
+          backgroundColor: isMinimized ? 'transparent' : 'rgba(0, 0, 0, 0.1)',
+          zIndex: 1000,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
         },
       }}
     >
