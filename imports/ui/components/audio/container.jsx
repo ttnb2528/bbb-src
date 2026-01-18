@@ -179,6 +179,24 @@ const AudioContainer = (props) => {
       }
       return Promise.resolve(false);
     }
+    
+    // Nếu autoJoin = true, tự động join listen-only (không mở modal)
+    if (autoJoin && !userSelectedMicrophone) {
+      // Tự động join listen-only
+      joinListenOnly().catch(() => {
+        // Nếu join listen-only fail, mở modal để user chọn
+        Session.setItem('audioModalIsOpen', true);
+        openAudioModal();
+      });
+      didMountAutoJoin = true;
+      
+      if (enableVideo && autoShareWebcam) {
+        openVideoPreviewModal();
+      }
+      return Promise.resolve(true);
+    }
+    
+    // Nếu user đã chọn microphone trước đó, mở modal như bình thường
     Session.setItem('audioModalIsOpen', true);
     if (enableVideo && autoShareWebcam) {
       openAudioModal();
@@ -203,12 +221,15 @@ const AudioContainer = (props) => {
   const joinAudio = useCallback(() => {
     if (Service.isConnected()) return;
 
-    if (userSelectedMicrophone) {
+    // Mặc định join listen-only khi user vào meeting
+    // Chỉ join microphone nếu user đã chọn microphone trước đó
+    if (userSelectedMicrophone && !userSelectedListenOnly) {
       joinMicrophone({ skipEchoTest: true, muted: meeting?.voiceSettings?.muteOnStart });
       return;
     }
 
-    if (userSelectedListenOnly) joinListenOnly();
+    // Mặc định join listen-only
+    joinListenOnly();
   }, [userSelectedMicrophone, userSelectedListenOnly, meeting?.voiceSettings?.muteOnStart]);
 
   useEffect(() => {

@@ -279,6 +279,7 @@ const InputStreamLiveSelector: React.FC<InputStreamLiveSelectorProps> = ({
               handleLeaveAudio={handleLeaveAudio}
               meetingIsBreakout={meetingIsBreakout}
               actAsDeviceSelector={enableDynamicAudioDeviceSelection && isMobile}
+              openAudioSettings={openAudioSettings}
             />
           </>
         )

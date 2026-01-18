@@ -19,6 +19,7 @@ interface ListenOnlyProps {
   handleLeaveAudio: (meetingIsBreakout: boolean) => void;
   meetingIsBreakout: boolean;
   actAsDeviceSelector: boolean;
+  openAudioSettings?: () => void;
 }
 
 export const ListenOnly: React.FC<ListenOnlyProps> = ({
@@ -26,16 +27,37 @@ export const ListenOnly: React.FC<ListenOnlyProps> = ({
   handleLeaveAudio,
   meetingIsBreakout,
   actAsDeviceSelector,
+  openAudioSettings,
 }) => {
   const intl = useIntl();
   const leaveAudioShourtcut = useShortcut('leaveAudio');
+  
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    
+    // Nếu đang ở listen-only mode, mở audio settings để chọn microphone thay vì tắt
+    if (listenOnly && openAudioSettings) {
+      openAudioSettings();
+    } else if (actAsDeviceSelector) {
+      // Không làm gì nếu actAsDeviceSelector
+      return;
+    } else {
+      // Nếu không phải listen-only, tắt audio như bình thường
+      handleLeaveAudio(meetingIsBreakout);
+    }
+  };
+  
   return (
     // eslint-disable-next-line jsx-a11y/no-access-key
     <Button
-      aria-label={intl.formatMessage(intlMessages.leaveAudio)}
-      label={actAsDeviceSelector
+      aria-label={listenOnly && openAudioSettings 
         ? intl.formatMessage(intlMessages.changeAudioDevice)
         : intl.formatMessage(intlMessages.leaveAudio)}
+      label={actAsDeviceSelector
+        ? intl.formatMessage(intlMessages.changeAudioDevice)
+        : (listenOnly && openAudioSettings
+          ? intl.formatMessage(intlMessages.changeAudioDevice)
+          : intl.formatMessage(intlMessages.leaveAudio))}
       accessKey={leaveAudioShourtcut}
       data-test="leaveListenOnly"
       hideLabel
@@ -43,12 +65,7 @@ export const ListenOnly: React.FC<ListenOnlyProps> = ({
       icon={listenOnly ? 'listen' : 'volume_level_2'}
       size="lg"
       circle
-      onClick={actAsDeviceSelector
-        ? () => null
-        : (e: React.MouseEvent<HTMLButtonElement>) => {
-          e.stopPropagation();
-          handleLeaveAudio(meetingIsBreakout);
-        }}
+      onClick={handleClick}
     />
   );
 };

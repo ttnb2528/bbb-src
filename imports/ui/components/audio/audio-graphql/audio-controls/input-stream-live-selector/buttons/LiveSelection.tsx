@@ -293,14 +293,8 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
     onClick: () => openAudioSettings(),
   } as MenuOptionItemType;
 
-  const leaveAudioOption = {
-    icon: 'logout',
-    label: intl.formatMessage(intlMessages.leaveAudio),
-    key: 'leaveAudioOption',
-    dataTest: 'leaveAudio',
-    customStyles: Styled.DangerColor,
-    onClick: () => handleLeaveAudio(meetingIsBreakout),
-  };
+  // Bỏ leaveAudioOption - không cho phép tắt audio hoàn toàn
+  // Thay vào đó, khi ở listen-only mode, click vào nút sẽ mở audio settings để chọn microphone
   const dropdownListComplete = inputDeviceList
     .concat({
       key: 'separator-01',
@@ -312,7 +306,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
       isSeparator: true,
     } as MenuSeparatorItemType);
   if (shouldTreatAsMicrophone()) dropdownListComplete.push(audioSettingsOption);
-  dropdownListComplete.push(leaveAudioOption);
+  // Không push leaveAudioOption nữa
 
   audioSettingsDropdownItems.forEach((audioSettingsDropdownItem:
     PluginSdk.AudioSettingsDropdownInterface) => {
@@ -380,6 +374,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
                   handleLeaveAudio={handleLeaveAudio}
                   meetingIsBreakout={meetingIsBreakout}
                   actAsDeviceSelector={isMobile}
+                  openAudioSettings={openAudioSettings}
                 />
               )}
             {/* Trên mobile: vẫn hiển thị AudioDropdown nhưng nhỏ hơn (đã fix size trong styles) */}
@@ -393,7 +388,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
             />
           </>
         )}
-        actions={!isAudioLocked ? dropdownListComplete : [leaveAudioOption]}
+        actions={!isAudioLocked ? dropdownListComplete : []}
         opts={{
           id: 'audio-selector-dropdown-menu',
           keepMounted: true,
