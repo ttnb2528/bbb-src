@@ -159,11 +159,9 @@ const VideoStrip = styled.div<{
   $hasSharedContent?: boolean;
   $hasSidebarOpen?: boolean;
 }>`
-  position: fixed !important; /* Fixed để luôn full màn hình, không bị ảnh hưởng bởi container */
-  top: 12px !important; /* Thấp xuống một chút, không sát trên quá */
-  left: 10px !important; /* Dock về bên trái */
-  right: auto !important; /* Đảm bảo không bị giới hạn bởi right */
-  transform: none !important;
+  position: relative !important; /* Relative để nằm trong flex container */
+  flex: 1; /* Chiếm phần còn lại của wrapper */
+  min-width: 0; /* Cho phép shrink */
   /* QUAN TRỌNG: Trên mobile, khi sidebar mở, giảm z-index để sidebar hiển thị trên video strip */
   z-index: ${({ $hasSidebarOpen }) => ($hasSidebarOpen ? 5 : 10)} !important; /* Above MainStage, below sidebar when open */
   display: flex !important;
@@ -177,16 +175,15 @@ const VideoStrip = styled.div<{
   height: clamp(108px, 9vh, 132px) !important; /* Nhỏ gọn hơn */
   min-height: 108px !important; /* Ensure minimum usable height */
   max-height: 132px !important; /* Maximum height */
-  /* QUAN TRỌNG: Width cố định = full viewport width (trừ padding) để scroll ngay khi content vượt quá */
-  /* Không dùng fit-content vì nó sẽ tự mở rộng thay vì scroll */
-  width: calc(100vw - 28px) !important; /* Full viewport width minus padding - cố định */
-  max-width: calc(100vw - 28px) !important; /* Don't exceed viewport width minus padding */
-  min-width: calc(100vw - 28px) !important; /* Đảm bảo luôn full width */
+  /* Width sẽ được tính từ flex container */
+  width: 100%;
+  max-width: 100%;
   scroll-behavior: smooth;
   cursor: grab;
   box-shadow: none;
   /* Ensure VideoStrip scales properly with zoom */
   box-sizing: border-box;
+  pointer-events: auto; /* Cho phép scroll và tương tác */
 
   &:active {
     cursor: grabbing;
@@ -216,13 +213,10 @@ const VideoStrip = styled.div<{
     gap: clamp(8px, 1.5vw, 12px); /* Tăng gap để các cam không dính nhau */
     /* Bỏ box-shadow trên mobile để gọn hơn */
     box-shadow: none;
-    /* Ensure VideoStrip doesn't overflow at high zoom - luôn dùng viewport width */
-    width: calc(100vw - 24px) !important; /* Full width cố định để scroll */
-    max-width: calc(100vw - 24px) !important;
-    min-width: calc(100vw - 24px) !important;
-    left: 8px !important;
-    top: 16px !important; /* Thấp xuống một chút trên mobile */
-    position: fixed !important;
+    /* Width sẽ được tính từ flex container */
+    width: 100%;
+    max-width: 100%;
+    position: relative !important;
     /* QUAN TRỌNG: Trên mobile, khi sidebar mở, giảm z-index để sidebar hiển thị trên video strip */
     z-index: ${({ $hasSidebarOpen }) => ($hasSidebarOpen ? 5 : 10)} !important;
   }
@@ -236,13 +230,10 @@ const VideoStrip = styled.div<{
     gap: clamp(6px, 1.2vw, 10px); /* Tăng gap để các cam không dính nhau */
     /* Bỏ box-shadow trên mobile để gọn hơn */
     box-shadow: none;
-    /* Ensure VideoStrip doesn't overflow at high zoom - luôn dùng viewport width */
-    width: calc(100vw - 16px) !important; /* Full width cố định để scroll */
-    max-width: calc(100vw - 16px) !important;
-    min-width: calc(100vw - 16px) !important;
-    left: 6px !important;
-    top: 14px !important; /* Thấp xuống một chút trên phone */
-    position: fixed !important;
+    /* Width sẽ được tính từ flex container */
+    width: 100%;
+    max-width: 100%;
+    position: relative !important;
     /* QUAN TRỌNG: Trên mobile, khi sidebar mở, giảm z-index để sidebar hiển thị trên video strip */
     z-index: ${({ $hasSidebarOpen }) => ($hasSidebarOpen ? 5 : 10)} !important;
   }
@@ -424,6 +415,101 @@ const StagePlaceholder = styled.div`
   opacity: 0.6;
 `;
 
+// Wrapper cho VideoStrip và scroll arrows
+const VideoStripWrapper = styled.div`
+  position: fixed !important;
+  top: 12px !important;
+  left: 10px !important;
+  right: 10px !important;
+  z-index: 10 !important;
+  pointer-events: none; /* Cho phép click qua wrapper, chỉ click vào arrows và strip */
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: calc(100vw - 20px) !important; /* Full width minus padding */
+  max-width: calc(100vw - 20px) !important;
+
+  /* Mobile responsive */
+  @media ${smallOnly} {
+    top: 16px !important;
+    left: 8px !important;
+    right: 8px !important;
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+  }
+
+  @media ${hasPhoneWidth} {
+    top: 14px !important;
+    left: 6px !important;
+    right: 6px !important;
+    width: calc(100vw - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+  }
+`;
+
+// Mũi tên scroll (trái/phải) - nằm 2 bên của dải camera
+const ScrollArrow = styled.button<{
+  $position: 'left' | 'right';
+}>`
+  position: relative;
+  z-index: 12; /* Above VideoStrip */
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  outline: none;
+  pointer-events: auto; /* Cho phép click vào arrow */
+  flex-shrink: 0;
+
+  /* Icon styling */
+  svg,
+  i {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    opacity: 0.9;
+    color: inherit;
+  }
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  /* Mobile responsive */
+  @media ${smallOnly} {
+    width: 28px;
+    height: 28px;
+    
+    i {
+      font-size: 14px;
+    }
+  }
+
+  @media ${hasPhoneWidth} {
+    width: 24px;
+    height: 24px;
+    
+    i {
+      font-size: 12px;
+    }
+  }
+`;
+
 export default {
   NextPageButton,
   PreviousPageButton,
@@ -433,8 +519,10 @@ export default {
   Break,
   CustomLayoutContainer,
   VideoStrip,
+  VideoStripWrapper,
   VideoStripItem,
   MainStage,
   PresenterStageVideo,
   StagePlaceholder,
+  ScrollArrow,
 };

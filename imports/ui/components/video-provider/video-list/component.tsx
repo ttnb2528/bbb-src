@@ -15,6 +15,7 @@ import { Output } from '/imports/ui/components/layout/layoutTypes';
 import { VideoItem } from '/imports/ui/components/video-provider/types';
 import { VIDEO_TYPES } from '/imports/ui/components/video-provider/enums';
 import { UserCameraHelperAreas } from '../../plugins-engine/extensible-areas/components/user-camera-helper/types';
+import Icon from '/imports/ui/components/common/icon/component';
 
 const intlMessages = defineMessages({
   autoplayBlockedDesc: {
@@ -101,6 +102,8 @@ interface VideoListState {
     columns: number;
   },
   autoplayBlocked: boolean,
+  canScrollLeft: boolean,
+  canScrollRight: boolean,
 }
 
 class VideoList extends Component<VideoListProps, VideoListState> {
@@ -109,6 +112,8 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   private grid: HTMLDivElement | null;
 
   private canvas: HTMLDivElement | null;
+
+  private stripRef: React.RefObject<HTMLDivElement>;
 
   private failedMediaElements: unknown[];
 
@@ -127,11 +132,14 @@ class VideoList extends Component<VideoListProps, VideoListState> {
         width: 0,
       },
       autoplayBlocked: false,
+      canScrollLeft: false,
+      canScrollRight: false,
     };
 
     this.ticking = false;
     this.grid = null;
     this.canvas = null;
+    this.stripRef = React.createRef<HTMLDivElement>();
     this.failedMediaElements = [];
     this.handleCanvasResize = throttle(this.handleCanvasResize.bind(this), 66,
       {
@@ -142,12 +150,19 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     this.handleAllowAutoplay = this.handleAllowAutoplay.bind(this);
     this.handlePlayElementFailed = this.handlePlayElementFailed.bind(this);
     this.autoplayWasHandled = false;
+    this.updateScrollButtons = this.updateScrollButtons.bind(this);
+    this.handleScrollLeft = this.handleScrollLeft.bind(this);
+    this.handleScrollRight = this.handleScrollRight.bind(this);
   }
 
   componentDidMount() {
     this.handleCanvasResize();
     window.addEventListener('resize', this.handleCanvasResize, false);
     window.addEventListener('videoPlayFailed', this.handlePlayElementFailed);
+    // Update scroll buttons sau khi mount
+    setTimeout(() => {
+      this.updateScrollButtons();
+    }, 100);
   }
 
   componentDidUpdate(prevProps: VideoListProps) {
@@ -169,6 +184,10 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       || cameraDockHeight !== prevCameraDockHeight
       || streams.length !== prevStreams.length) {
       this.handleCanvasResize();
+      // Update scroll buttons khi streams thay đổi
+      setTimeout(() => {
+        this.updateScrollButtons();
+      }, 100);
     }
   }
 
@@ -470,7 +489,53 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     const strip = e.currentTarget;
     e.preventDefault();
     strip.scrollLeft += e.deltaY;
+    // Update scroll buttons sau khi scroll
+    setTimeout(() => {
+      this.updateScrollButtons();
+    }, 50);
   };
+
+  // Update scroll buttons visibility
+  updateScrollButtons() {
+    if (!this.stripRef.current) return;
+    
+    const strip = this.stripRef.current;
+    const canScrollLeft = strip.scrollLeft > 0;
+    const canScrollRight = strip.scrollLeft < (strip.scrollWidth - strip.clientWidth - 1);
+    
+    this.setState({
+      canScrollLeft,
+      canScrollRight,
+    });
+  }
+
+  // Handler scroll left (scroll sang trái để xem phần bên trái)
+  handleScrollLeft() {
+    if (!this.stripRef.current) return;
+    
+    const strip = this.stripRef.current;
+    // Scroll qua 1 cam (khoảng 140px + gap) - scroll sang trái
+    const scrollAmount = 150;
+    strip.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    
+    setTimeout(() => {
+      this.updateScrollButtons();
+    }, 300);
+  }
+
+  // Handler scroll right (scroll sang phải để xem phần bên phải)
+  handleScrollRight() {
+    if (!this.stripRef.current) return;
+    
+    const strip = this.stripRef.current;
+    // Scroll qua 1 cam (khoảng 140px + gap) - scroll sang phải
+    const scrollAmount = 150;
+    strip.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    
+    setTimeout(() => {
+      this.updateScrollButtons();
+    }, 300);
+  }
 
   renderVideoList() {
     const { streams, focusedId, hasSharedContent } = this.props;
@@ -510,6 +575,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
 
   renderVideoStrip() {
     const { streams, hasSharedContent, hasSidebarOpen } = this.props;
+    const { canScrollLeft, canScrollRight } = this.state;
 
     // Strip: gi? t?t c? streams, s?p x?p presenter lên d?u
     const sortedStripStreams = [...streams].sort((a, b) => {
@@ -530,13 +596,37 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     });
 
     return (
-      <Styled.VideoStrip
-        $hasSharedContent={hasSharedContent}
-        $hasSidebarOpen={hasSidebarOpen}
-        onWheel={this.handleStripWheel}
-      >
-        {sortedStripStreams.map((item) => this.renderVideoItem(item, true))}
-      </Styled.VideoStrip>
+      <Styled.VideoStripWrapper>
+        {canScrollLeft && (
+          <Styled.ScrollArrow
+            $position="left"
+            onClick={this.handleScrollLeft}
+            role="button"
+            aria-label="Scroll left to see more"
+          >
+            <Icon iconName="left_arrow" />
+          </Styled.ScrollArrow>
+        )}
+        <Styled.VideoStrip
+          ref={this.stripRef}
+          $hasSharedContent={hasSharedContent}
+          $hasSidebarOpen={hasSidebarOpen}
+          onWheel={this.handleStripWheel}
+          onScroll={this.updateScrollButtons}
+        >
+          {sortedStripStreams.map((item) => this.renderVideoItem(item, true))}
+        </Styled.VideoStrip>
+        {canScrollRight && (
+          <Styled.ScrollArrow
+            $position="right"
+            onClick={this.handleScrollRight}
+            role="button"
+            aria-label="Scroll right to see more"
+          >
+            <Icon iconName="right_arrow" />
+          </Styled.ScrollArrow>
+        )}
+      </Styled.VideoStripWrapper>
     );
   }
 
