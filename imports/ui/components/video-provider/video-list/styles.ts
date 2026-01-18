@@ -255,7 +255,7 @@ const VideoStripItem = styled.div<{
   position: relative;
   /* Use viewport-relative units for better zoom handling */
   /* Improved clamp: better scaling at different zoom levels */
-  width: clamp(110px, min(12vw, 15%), 190px); /* Bigger default size */
+  width: clamp(90px, min(10vw, 12%), 140px); /* Giảm chiều rộng để gọn hơn */
   height: 100%;
   flex-shrink: 0;
   border-radius: 8px;
@@ -268,17 +268,17 @@ const VideoStripItem = styled.div<{
   video {
     aspect-ratio: 4 / 3 !important;
   }
-  min-width: 150px;
-  max-width: 210px; /* Slightly larger max */
+  min-width: 90px;
+  max-width: 140px; /* Giảm max-width để gọn hơn */
   /* Ensure proper scaling with zoom */
   box-sizing: border-box;
 
   ${({ $isPresenter }) => $isPresenter && `
     /* Border nổi bật cho presenter/host */
     border: 3px solid #FF6B35 !important;
-    width: clamp(150px, min(14vw, 17%), 210px); /* Larger for presenter */
-    min-width: 150px;
-    max-width: 210px;
+    width: clamp(110px, min(12vw, 14%), 160px); /* Giảm kích thước presenter để gọn hơn */
+    min-width: 110px;
+    max-width: 160px;
     /* Bỏ scale để video hiển thị đủ nội dung, không bị zoom */
   `}
 
@@ -292,15 +292,15 @@ const VideoStripItem = styled.div<{
   /* Mobile responsive */
   @media ${smallOnly} {
     /* Điều chỉnh kích thước cam cho phù hợp với tablet */
-    width: clamp(90px, min(18vw, 20%), 130px); /* Tăng kích thước một chút cho dễ nhìn */
+    width: clamp(75px, min(15vw, 18%), 110px); /* Giảm kích thước để gọn hơn */
     border-radius: 6px;
-    min-width: 90px;
-    max-width: 130px;
+    min-width: 75px;
+    max-width: 110px;
 
     ${({ $isPresenter }) => $isPresenter && `
-      width: clamp(110px, min(20vw, 22%), 150px); /* Presenter lớn hơn một chút */
-      min-width: 110px;
-      max-width: 150px;
+      width: clamp(90px, min(18vw, 20%), 130px); /* Giảm kích thước presenter */
+      min-width: 90px;
+      max-width: 130px;
       transform: none; /* Bỏ scale để không bị lệch */
     `}
 
@@ -313,15 +313,15 @@ const VideoStripItem = styled.div<{
 
   @media ${hasPhoneWidth} {
     /* Điều chỉnh kích thước cam cho phù hợp với phone */
-    width: clamp(100px, min(22vw, 26%), 110px); /* Tăng kích thước một chút cho dễ nhìn */
+    width: clamp(80px, min(20vw, 24%), 100px); /* Giảm kích thước để gọn hơn */
     border-radius: 4px;
-    min-width: 100px;
-    max-width: 110px;
+    min-width: 80px;
+    max-width: 100px;
 
     ${({ $isPresenter }) => $isPresenter && `
-      width: clamp(105px, min(26vw, 30%), 130px); /* Presenter lớn hơn một chút */
-      min-width: 105px;
-      max-width: 130px;
+      width: clamp(90px, min(24vw, 28%), 120px); /* Giảm kích thước presenter */
+      min-width: 90px;
+      max-width: 120px;
       transform: none; /* Bỏ scale để không bị lệch */
     `}
   }

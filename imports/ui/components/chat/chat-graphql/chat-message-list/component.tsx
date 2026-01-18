@@ -355,7 +355,7 @@ const ChatMessageList: React.FC<ChatListProps> = ({
 
   // Sử dụng ref để track xem đã mark as seen chưa, tránh mark nhiều lần
   const hasMarkedAsSeenRef = React.useRef(false);
-  
+
   useEffect(() => {
     setter({
       ...setter(),
