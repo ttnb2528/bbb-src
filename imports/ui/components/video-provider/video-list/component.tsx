@@ -119,6 +119,12 @@ class VideoList extends Component<VideoListProps, VideoListState> {
 
   private autoplayWasHandled: boolean;
 
+  private isDragging: boolean;
+
+  private dragStartX: number;
+
+  private dragStartScrollLeft: number;
+
   constructor(props: VideoListProps) {
     super(props);
 
@@ -141,6 +147,9 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     this.canvas = null;
     this.stripRef = React.createRef<HTMLDivElement>();
     this.failedMediaElements = [];
+    this.isDragging = false;
+    this.dragStartX = 0;
+    this.dragStartScrollLeft = 0;
     this.handleCanvasResize = throttle(this.handleCanvasResize.bind(this), 66,
       {
         leading: true,
@@ -153,12 +162,21 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     this.updateScrollButtons = this.updateScrollButtons.bind(this);
     this.handleScrollLeft = this.handleScrollLeft.bind(this);
     this.handleScrollRight = this.handleScrollRight.bind(this);
+    this.handleStripMouseDown = this.handleStripMouseDown.bind(this);
+    this.handleStripMouseMove = this.handleStripMouseMove.bind(this);
+    this.handleStripMouseUp = this.handleStripMouseUp.bind(this);
+    this.handleStripMouseLeave = this.handleStripMouseLeave.bind(this);
+    this.handleGlobalMouseMove = this.handleGlobalMouseMove.bind(this);
+    this.handleGlobalMouseUp = this.handleGlobalMouseUp.bind(this);
   }
 
   componentDidMount() {
     this.handleCanvasResize();
     window.addEventListener('resize', this.handleCanvasResize, false);
     window.addEventListener('videoPlayFailed', this.handlePlayElementFailed);
+    // Thêm global mouse event listeners cho drag scroll (dùng capture phase để bắt sớm)
+    document.addEventListener('mousemove', this.handleGlobalMouseMove, true);
+    document.addEventListener('mouseup', this.handleGlobalMouseUp, true);
     // Update scroll buttons sau khi mount
     setTimeout(() => {
       this.updateScrollButtons();
@@ -194,6 +212,9 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   componentWillUnmount() {
     window.removeEventListener('resize', this.handleCanvasResize, false);
     window.removeEventListener('videoPlayFailed', this.handlePlayElementFailed);
+    // Xóa global mouse event listeners
+    document.removeEventListener('mousemove', this.handleGlobalMouseMove, true);
+    document.removeEventListener('mouseup', this.handleGlobalMouseUp, true);
   }
 
   handleAllowAutoplay() {
@@ -495,6 +516,91 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     }, 50);
   };
 
+  // Handler cho drag scroll - mouse down
+  handleStripMouseDown(e: React.MouseEvent<HTMLDivElement>) {
+    if (!this.stripRef.current) return;
+    
+    const target = e.target as HTMLElement;
+    
+    // Không drag nếu click vào video, button, hoặc các element tương tác
+    if (
+      target.tagName === 'VIDEO' ||
+      target.tagName === 'BUTTON' ||
+      target.closest('video') ||
+      target.closest('button') ||
+      target.closest('[data-test="webcamItem"]') ||
+      target.closest('[data-test="webcamItemTalkingUser"]')
+    ) {
+      return;
+    }
+    
+    // Bắt đầu drag
+    this.isDragging = true;
+    this.dragStartX = e.pageX;
+    this.dragStartScrollLeft = this.stripRef.current.scrollLeft;
+    
+    // Thay đổi cursor và prevent text selection
+    if (this.stripRef.current) {
+      this.stripRef.current.style.cursor = 'grabbing';
+      this.stripRef.current.style.userSelect = 'none';
+    }
+    
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  // Handler cho drag scroll - mouse move
+  handleStripMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    if (!this.isDragging || !this.stripRef.current) return;
+    
+    e.preventDefault();
+    const x = e.pageX;
+    const walk = (x - this.dragStartX) * 1.5; // Tốc độ scroll (có thể điều chỉnh)
+    this.stripRef.current.scrollLeft = this.dragStartScrollLeft - walk;
+    
+    // Update scroll buttons
+    this.updateScrollButtons();
+  }
+
+  // Handler cho drag scroll - mouse up
+  handleStripMouseUp() {
+    if (!this.isDragging) return;
+    
+    this.isDragging = false;
+    
+    // Khôi phục cursor
+    if (this.stripRef.current) {
+      this.stripRef.current.style.cursor = 'grab';
+      this.stripRef.current.style.userSelect = '';
+    }
+  }
+
+  // Handler cho drag scroll - mouse leave (khi chuột ra khỏi vùng)
+  handleStripMouseLeave() {
+    // Không cần làm gì, global handlers sẽ xử lý
+  }
+
+  // Global mouse move handler (để drag hoạt động khi chuột ra ngoài VideoStrip)
+  handleGlobalMouseMove(e: MouseEvent) {
+    if (!this.isDragging || !this.stripRef.current) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    const x = e.pageX;
+    const walk = (x - this.dragStartX) * 1.5; // Tốc độ scroll (có thể điều chỉnh)
+    this.stripRef.current.scrollLeft = this.dragStartScrollLeft - walk;
+    
+    // Update scroll buttons
+    this.updateScrollButtons();
+  }
+
+  // Global mouse up handler (để kết thúc drag khi chuột ra ngoài VideoStrip)
+  handleGlobalMouseUp() {
+    if (this.isDragging) {
+      this.handleStripMouseUp();
+    }
+  }
+
   // Update scroll buttons visibility
   updateScrollButtons() {
     if (!this.stripRef.current) return;
@@ -613,6 +719,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
           $hasSidebarOpen={hasSidebarOpen}
           onWheel={this.handleStripWheel}
           onScroll={this.updateScrollButtons}
+          onMouseDown={this.handleStripMouseDown}
         >
           {sortedStripStreams.map((item) => this.renderVideoItem(item, true))}
         </Styled.VideoStrip>

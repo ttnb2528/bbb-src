@@ -189,19 +189,13 @@ const VideoStrip = styled.div<{
     cursor: grabbing;
   }
 
+  /* Ẩn scrollbar nhưng vẫn cho phép scroll */
   &::-webkit-scrollbar {
-    height: 6px;
+    display: none;
   }
-
-  &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.5);
-    border-radius: 3px;
-  }
+  
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 
   /* Mobile responsive - đẩy lên cao hơn bằng cách giảm padding-top */
   @media ${smallOnly} {
