@@ -17,7 +17,7 @@ const colorBlueLighterChannel = '146 188 234';
 
 const colorTransparent = 'var(--color-transparent, #ff000000)';
 
-const colorPrimary = 'var(--color-primary, #FF6B35)';
+const colorPrimary = 'var(--color-primary, #6366F1)'; // Indigo - Modern & Professional
 const colorDanger = 'var(--color-danger, #DF2721)';
 const colorDangerDark = 'var(--color-danger-dark, #AE1010)';
 const colorSuccess = 'var(--color-success, #008081)';
@@ -49,11 +49,12 @@ const btnDefaultGhostBg = 'var(--btn-default-bg, rgba(255, 255, 255, 0.1))'; // 
 const btnDefaultGhostBorder = 'var(--btn-default-border, rgba(255, 255, 255, 0.5))'; // colorWhite, 50%
 const btnDefaultGhostActiveBg = 'var(--btn-default-active-bg, rgba(255, 255, 255, 0.2))'; // colorWhite, 20%
 
-const btnPrimaryBorder = 'var(--btn-primary-border, rgba(15, 112, 215, 0.5))'; // colorPrimary, 50%
+// Indigo color palette - đồng bộ với colorPrimary
+const btnPrimaryBorder = 'var(--btn-primary-border, rgba(99, 102, 241, 0.5))'; // Indigo 50% opacity
 const btnPrimaryColor = `var(--btn-primary-color, ${colorWhite})`;
 const btnPrimaryBg = `var(--btn-primary-bg, ${colorPrimary})`;
-const btnPrimaryHoverBg = 'var(--btn-primary-hover-bg, #0C57A7)';
-const btnPrimaryActiveBg = 'var(--btn-primary-active-bg, #0A4B8F)';
+const btnPrimaryHoverBg = 'var(--btn-primary-hover-bg, #4F46E5)'; // Indigo darker
+const btnPrimaryActiveBg = 'var(--btn-primary-active-bg, #4338CA)'; // Indigo darkest
 
 const btnSuccessBorder = `var(--btn-success-border, ${colorSuccess})`;
 const btnSuccessColor = `var(--btn-success-color, ${colorWhite})`;

@@ -74,7 +74,7 @@ export const ChatWrapper = styled.div<ChatWrapperProps>`
   }
 
   ${({ isPresentationUpload }) => isPresentationUpload && `
-      border-left: 2px solid #0F70D7;
+      border-left: 2px solid #6366F1; /* Indigo */
       margin-top: 1rem;
       padding: 0.5rem;
       word-break: break-word;

@@ -442,7 +442,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
         return {
           name: pollData.quiz
             ? intl.formatMessage(intlMessages.quizResult) : intl.formatMessage(intlMessages.pollResult),
-          color: '#3B48A9',
+          color: '#6366F1', // Indigo
           isModerator: true,
           component: (
             <ChatPollContent metadata={message.messageMetadata} />
@@ -457,7 +457,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
       case ChatMessageType.PRESENTATION:
         return {
           name: '',
-          color: '#0F70D7',
+          color: '#6366F1', // Indigo
           isModerator: false,
           isPresentationUpload: true,
           isSystemSender: true,
@@ -490,7 +490,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
       case ChatMessageType.BREAKOUT_ROOM:
         return {
           name: message.senderName,
-          color: '#0F70D7',
+          color: '#6366F1', // Indigo
           isModerator: true,
           isSystemSender: true,
           component: (
@@ -505,7 +505,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
       case ChatMessageType.API:
         return {
           name: message.senderName,
-          color: '#0F70D7',
+          color: '#6366F1', // Indigo
           isModerator: true,
           isSystemSender: true,
           component: (
@@ -524,7 +524,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
           : `${message.senderName} ${intl.formatMessage(intlMessages.userNotAway)}`;
         return {
           name: message.senderName,
-          color: '#0F70D7',
+          color: '#6366F1', // Indigo
           isModerator: true,
           isSystemSender: true,
           component: (
@@ -548,7 +548,7 @@ const ChatMessage = React.forwardRef<ChatMessageRef, ChatMessageProps>(({
           : `${intl.formatMessage(intlMessages.userIsPresenter, { presenterName: message.senderName })}`;
         return {
           name: message.senderName,
-          color: '#0F70D7',
+          color: '#6366F1', // Indigo
           isModerator: true,
           isSystemSender: true,
           component: (

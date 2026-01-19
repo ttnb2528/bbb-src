@@ -260,7 +260,7 @@ const VideoStripItem = styled.div<{
 
   ${({ $isPresenter }) => $isPresenter && `
     /* Border nổi bật cho presenter/host */
-    border: 3px solid #FF6B35 !important;
+    border: 3px solid #6366F1 !important; /* Indigo */
     width: clamp(110px, min(12vw, 14%), 160px); /* Giảm kích thước presenter để gọn hơn */
     min-width: 110px;
     max-width: 160px;

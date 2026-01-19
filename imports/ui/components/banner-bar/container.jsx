@@ -7,7 +7,7 @@ const BannerContainer = (props) => {
   const bannerBar = layoutSelectInput((i) => i.bannerBar);
   const { hasBanner } = bannerBar;
   const layoutContextDispatch = layoutDispatch();
-  const color = useStorageKey('bannerColor') || '#0F70D7';
+  const color = useStorageKey('bannerColor') || '#6366F1'; // Indigo
   const text = useStorageKey('bannerText') || '';
 
   return <BannerComponent {...{ hasBanner, layoutContextDispatch, color, text, ...props }} />;

@@ -1,7 +1,7 @@
 import { defineMessages } from 'react-intl';
 import { escapeHtml } from '/imports/utils/string-utils';
 
-const POLL_AVATAR_COLOR = '#3B48A9';
+const POLL_AVATAR_COLOR = '#6366F1'; // Indigo
 const MAX_POLL_RESULT_BARS = 10;
 const MAX_POLL_RESULT_KEY_LENGTH = 30;
 const POLL_BAR_CHAR = '\u220E';
