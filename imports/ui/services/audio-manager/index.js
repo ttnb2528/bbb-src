@@ -537,6 +537,11 @@ class AudioManager {
     return this.onAudioJoining
       .bind(this)()
       .then(() => {
+        // Đảm bảo isMuted được set đúng trước khi join
+        if (muted) {
+          this.isMuted = true;
+        }
+        
         const callOptions = {
           isListenOnly: false,
           extension: null,
@@ -544,7 +549,17 @@ class AudioManager {
           bypassGUM: this.shouldBypassGUM(),
           muted,
         };
-        return this.joinAudio(callOptions, this.callStateCallback);
+        return this.joinAudio(callOptions, this.callStateCallback).then(() => {
+          // Sau khi join xong, đảm bảo track được disable nếu muted
+          if (muted && this.isConnected) {
+            // Delay một chút để đảm bảo track đã được add vào peer connection
+            setTimeout(() => {
+              if (this.isMuted) {
+                this.setSenderTrackEnabled(false);
+              }
+            }, 300);
+          }
+        });
       });
   }
 
@@ -824,6 +839,16 @@ class AudioManager {
     // undeafened. Callers that specify deafened = true should handle this case
     // accordingly by calling this method again when the user is undeafened.
     if (deafened) return;
+    
+    // Đảm bảo track được disable nếu isMuted = true sau khi join xong
+    if (this.isMuted && !this.isListenOnly && this.bridge) {
+      // Delay một chút để đảm bảo track đã được add vào peer connection
+      setTimeout(() => {
+        if (this.isMuted) {
+          this.setSenderTrackEnabled(false);
+        }
+      }, 200);
+    }
 
     try {
       if (!this.isListenOnly) {
@@ -1289,13 +1314,19 @@ class AudioManager {
             },
           }, 'Enabling sender track after switching from listen-only to microphone');
           
-          // Always enable sender track when switching from listen-only to microphone
-          // This ensures the track is enabled and ready to send audio, regardless of mute state
-          // The mute state (isMuted) is managed by the server and affects UI, but track.enabled
-          // controls whether audio is actually sent over WebRTC
-          // NOTE: Even if isMuted is true, we enable the track because the user explicitly
-          // switched to microphone mode, indicating they want to send audio
+          // Enable sender track when switching from listen-only to microphone
+          // BUT: If isMuted is true, disable it immediately after enabling
+          // This ensures the track is ready but respects the mute state
           this.setSenderTrackEnabled(true);
+          
+          // If muted, disable track immediately to prevent audio from being sent
+          if (this.isMuted) {
+            setTimeout(() => {
+              if (this.isMuted) {
+                this.setSenderTrackEnabled(false);
+              }
+            }, 100);
+          }
           
           // For SFU bridge, if the bridge role is still 'recvonly' or 'passive-sendrecv',
           // we may need to rejoin audio to change the role to 'sendrecv'.
@@ -1431,7 +1462,7 @@ class AudioManager {
                           }
                           
                           // Enable sender track after a delay to ensure replaceTrack completed
-                          // This must be done even if isMuted is true, because we're restoring after rejoin
+                          // BUT: If isMuted is true, disable it immediately after enabling
                           setTimeout(() => {
                             this.setSenderTrackEnabled(true);
                             
@@ -1442,6 +1473,15 @@ class AudioManager {
                                   track.enabled = true;
                                 }
                               });
+                            }
+                            
+                            // If muted, disable track immediately to prevent audio from being sent
+                            if (this.isMuted) {
+                              setTimeout(() => {
+                                if (this.isMuted) {
+                                  this.setSenderTrackEnabled(false);
+                                }
+                              }, 100);
                             }
                           }, 200);
                         }
@@ -1513,6 +1553,15 @@ class AudioManager {
                   track.enabled = true;
                 }
               });
+            }
+            
+            // If muted, disable track immediately to prevent audio from being sent
+            if (this.isMuted) {
+              setTimeout(() => {
+                if (this.isMuted) {
+                  this.setSenderTrackEnabled(false);
+                }
+              }, 100);
             }
           }, 200);
         } else if (this.isMuted && !this._isRestoringAfterRejoin) {

@@ -418,15 +418,26 @@ const InputStreamLiveSelectorContainer: React.FC<InputStreamLiveSelectorContaine
   // Sync AudioManager.isMuted from GraphQL if there's a conflict (GraphQL is source of truth for initial state)
   // This fixes the issue where icon shows mic crossed when joining mic for the first time
   // BUT: Don't sync if user just toggled mute (within TOGGLE_SYNC_DELAY ms) to prevent overriding user action
+  // IMPORTANT: Don't sync if we auto-joined with muted=true (to prevent unmuting)
   const TOGGLE_SYNC_DELAY = 2000; // Don't sync from GraphQL for 2 seconds after user toggle
   React.useEffect(() => {
     if (isMutedVar && isMutedFromAudioManager !== null && isMutedFromAudioManager !== mutedFromGraphQL) {
       const timeSinceLastToggle = Date.now() - getLastToggleTime();
+      
+      // Check if this is an auto-join with muted (check storage)
+      // We need to import Session properly, but for now use a workaround
+      let wasAutoJoin = false;
+      try {
+        const Session = require('/imports/ui/services/storage/in-memory').default;
+        wasAutoJoin = Session.getItem('audioModalIsOpen') === null;
+      } catch (e) {
+        // If can't check, assume not auto-join to be safe
+      }
+      
       // Only sync if AudioManager says muted but GraphQL says unmuted (user just joined mic)
       // AND user hasn't toggled mute recently (to prevent overriding user action)
-      if (isMutedFromAudioManager && !mutedFromGraphQL && isConnected && timeSinceLastToggle > TOGGLE_SYNC_DELAY) {
-        // eslint-disable-next-line no-console
-        console.log('[InputStreamLiveSelectorContainer] Syncing AudioManager.isMuted from GraphQL (unmuted)');
+      // AND this is NOT an auto-join with muted (to prevent unmuting when we want to stay muted)
+      if (isMutedFromAudioManager && !mutedFromGraphQL && isConnected && timeSinceLastToggle > TOGGLE_SYNC_DELAY && !wasAutoJoin) {
         AudioManager.isMuted = false;
       }
     }

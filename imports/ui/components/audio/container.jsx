@@ -24,6 +24,10 @@ import { SETTINGS } from '../../services/settings/enums';
 import { useStorageKey } from '../../services/storage/hooks';
 import useMeeting from '../../core/hooks/useMeeting';
 import useWhoIsUnmuted from '../../core/hooks/useWhoIsUnmuted';
+import useIsAudioConnected from './audio-graphql/hooks/useIsAudioConnected';
+import Storage from '../../services/storage/session';
+import Auth from '../../services/auth';
+import meetingStaticData from '../../core/singletons/meetingStaticData';
 import AudioService, {
   CLIENT_DID_USER_SELECT_MICROPHONE_KEY,
   CLIENT_DID_USER_SELECT_LISTEN_ONLY_KEY,
@@ -180,13 +184,57 @@ const AudioContainer = (props) => {
       return Promise.resolve(false);
     }
     
-    // Nếu autoJoin = true, tự động join listen-only (không mở modal)
-    if (autoJoin && !userSelectedMicrophone) {
-      // Tự động join listen-only
-      joinListenOnly().catch(() => {
-        // Nếu join listen-only fail, mở modal để user chọn
-        Session.setItem('audioModalIsOpen', true);
-        openAudioModal();
+    // Nếu autoJoin = true, tự động join microphone với mic tắt (muted)
+    // User có thể bật mic khi cần nói
+    if (autoJoin && !userSelectedMicrophone && !userSelectedListenOnly) {
+      // Set storage trước để đảm bảo recoverMicState sẽ mute mic
+      // Điều này ngăn logic recover state unmute mic
+      const meetingStaticStore = meetingStaticData.getMeetingData();
+      const isBreakout = meetingStaticStore?.isBreakout;
+      const parentId = meetingStaticStore?.breakoutPolicies?.parentId;
+      const meetingId = isBreakout && parentId ? parentId : Auth.meetingID;
+      const MUTED_KEY = 'muted';
+      const storageKey = `${MUTED_KEY}_${meetingId}`;
+      Storage.setItem(storageKey, true); // Set muted = true trong storage
+      
+      // Mute ngay qua GraphQL trước khi join để đảm bảo server state
+      if (currentUser?.userId) {
+        toggleVoice(currentUser.userId, true);
+      }
+      
+      // Tự động join microphone với mic tắt (muted)
+      joinMicrophone({ 
+        skipEchoTest: true, 
+        muted: true // Mặc định mic tắt, user sẽ bật khi cần
+      }).then(() => {
+        // Mute lại ngay sau khi join xong để đảm bảo
+        // recoverMicState thường chạy trong event 'started', nên cần delay lâu hơn
+        // để đảm bảo recoverMicState đã chạy xong
+        setTimeout(() => {
+          if (Service.isConnected() && !Service.isListenOnly() && !Service.isMuted()) {
+            if (currentUser?.userId) {
+              toggleVoice(currentUser.userId, true);
+            }
+            toggleMuteMicrophone(true, toggleVoice);
+          }
+        }, 500); // Delay lâu hơn để đảm bảo recoverMicState đã chạy xong
+        
+        // Mute lại sau 1.5s để đảm bảo (backup)
+        setTimeout(() => {
+          if (Service.isConnected() && !Service.isListenOnly() && !Service.isMuted()) {
+            if (currentUser?.userId) {
+              toggleVoice(currentUser.userId, true);
+            }
+            toggleMuteMicrophone(true, toggleVoice);
+          }
+        }, 1500);
+      }).catch(() => {
+        // Nếu join microphone fail, thử join listen-only
+        joinListenOnly().catch(() => {
+          // Nếu cả hai đều fail, mở modal để user chọn
+          Session.setItem('audioModalIsOpen', true);
+          openAudioModal();
+        });
       });
       didMountAutoJoin = true;
       
@@ -221,16 +269,20 @@ const AudioContainer = (props) => {
   const joinAudio = useCallback(() => {
     if (Service.isConnected()) return;
 
-    // Mặc định join listen-only khi user vào meeting
-    // Chỉ join microphone nếu user đã chọn microphone trước đó
-    if (userSelectedMicrophone && !userSelectedListenOnly) {
-      joinMicrophone({ skipEchoTest: true, muted: meeting?.voiceSettings?.muteOnStart });
+    // Mặc định join microphone ở trạng thái muted
+    // User có thể bật mic khi cần nói
+    if (userSelectedListenOnly) {
+      // Chỉ join listen-only nếu user đã chọn listen-only trước đó
+      joinListenOnly();
       return;
     }
 
-    // Mặc định join listen-only
-    joinListenOnly();
-  }, [userSelectedMicrophone, userSelectedListenOnly, meeting?.voiceSettings?.muteOnStart]);
+    // Mặc định join microphone với mic tắt
+    joinMicrophone({ 
+      skipEchoTest: true, 
+      muted: true // Mặc định mic tắt, user sẽ bật khi cần
+    });
+  }, [userSelectedMicrophone, userSelectedListenOnly]);
 
   useEffect(() => {
     // Data is not loaded yet.
@@ -271,6 +323,37 @@ const AudioContainer = (props) => {
       Service.updateAudioConstraints(microphoneConstraints);
     }
   }, [microphoneConstraints]);
+
+  // Đảm bảo mic được mute khi auto join với muted: true
+  // Listen vào isConnected để mute ngay khi connected
+  const isConnected = useIsAudioConnected();
+  const prevIsConnected = usePreviousValue(isConnected);
+  useEffect(() => {
+    // Chỉ áp dụng khi auto join và chưa có user selection (mặc định join với mic tắt)
+    const wasAutoJoin = Session.getItem('audioModalIsOpen') === null && didMountAutoJoin;
+    
+    // Mute ngay khi chuyển từ disconnected sang connected
+    if (wasAutoJoin && prevIsConnected === false && isConnected === true && !Service.isListenOnly()) {
+      // Mute ngay khi connected
+      if (currentUser?.userId) {
+        toggleVoice(currentUser.userId, true);
+      }
+      // Delay một chút để đảm bảo AudioManager đã update state
+      setTimeout(() => {
+        if (!Service.isMuted()) {
+          toggleMuteMicrophone(true, toggleVoice);
+        }
+      }, 200);
+    }
+    
+    // Cũng mute nếu đã connected và mic chưa mute (backup)
+    if (wasAutoJoin && isConnected && !Service.isListenOnly() && !Service.isMuted()) {
+      if (currentUser?.userId) {
+        toggleVoice(currentUser.userId, true);
+      }
+      toggleMuteMicrophone(true, toggleVoice);
+    }
+  }, [isConnected, prevIsConnected, toggleVoice, currentUser?.userId]);
 
   useEffect(() => {
     if (Service.isConnected() && !Service.isListenOnly()) {
