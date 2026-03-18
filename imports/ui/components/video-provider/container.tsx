@@ -1,8 +1,8 @@
-import React, { useEffect } from 'react';
-import { useMutation, useReactiveVar } from '@apollo/client';
-import useMeeting from '/imports/ui/core/hooks/useMeeting';
-import useMeetingSettings from '/imports/ui/core/local-states/useMeetingSettings';
-import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
+import React, { useEffect } from "react";
+import { useMutation, useReactiveVar } from "@apollo/client";
+import useMeeting from "/imports/ui/core/hooks/useMeeting";
+import useMeetingSettings from "/imports/ui/core/local-states/useMeetingSettings";
+import useCurrentUser from "/imports/ui/core/hooks/useCurrentUser";
 import {
   useCurrentVideoPageIndex,
   useExitVideo,
@@ -13,44 +13,44 @@ import {
   useMyPageSize,
   useStopVideo,
   useVideoStreams,
-} from './hooks';
-import { CAMERA_BROADCAST_START } from './mutations';
-import VideoProvider from './component';
-import LiveKitCameraBridge from '/imports/ui/components/video-provider/livekit-camera-bridge/component';
-import VideoService from './service';
-import { Output } from '/imports/ui/components/layout/layoutTypes';
-import { VideoItem } from './types';
-import { debounce } from '/imports/utils/debounce';
-import useSettings from '/imports/ui/services/settings/hooks/useSettings';
-import { SETTINGS } from '/imports/ui/services/settings/enums';
-import { useStorageKey } from '/imports/ui/services/storage/hooks';
-import ConnectionStatus from '/imports/ui/core/graphql/singletons/connectionStatus';
+} from "./hooks";
+import { CAMERA_BROADCAST_START } from "./mutations";
+import VideoProvider from "./component";
+import LiveKitCameraBridge from "/imports/ui/components/video-provider/livekit-camera-bridge/component";
+import VideoService from "./service";
+import { Output } from "/imports/ui/components/layout/layoutTypes";
+import { VideoItem } from "./types";
+import { debounce } from "/imports/utils/debounce";
+import useSettings from "/imports/ui/services/settings/hooks/useSettings";
+import { SETTINGS } from "/imports/ui/services/settings/enums";
+// import { useStorageKey } removed
+import ConnectionStatus from "/imports/ui/core/graphql/singletons/connectionStatus";
 import {
   useConnectingStream,
   setConnectingStream,
   setVideoState,
   useVideoState,
-} from './state';
-import { VIDEO_TYPES } from './enums';
+} from "./state";
+import { VIDEO_TYPES } from "./enums";
 
 interface VideoProviderContainerProps {
   focusedId: string;
-  cameraDock: Output['cameraDock'];
-  handleVideoFocus:(id: string) => void;
+  cameraDock: Output["cameraDock"];
+  handleVideoFocus: (id: string) => void;
 }
 
-const VideoProviderContainer: React.FC<VideoProviderContainerProps> = (props) => {
-  const {
-    cameraDock,
-    focusedId,
-    handleVideoFocus,
-  } = props;
+const VideoProviderContainer: React.FC<VideoProviderContainerProps> = (
+  props,
+) => {
+  const { cameraDock, focusedId, handleVideoFocus } = props;
   const [cameraBroadcastStart] = useMutation(CAMERA_BROADCAST_START);
   const [meetingSettings] = useMeetingSettings();
   const connectingStream = useConnectingStream();
 
   const sendUserShareWebcam = (cameraId: string) => {
-    return cameraBroadcastStart({ variables: { cameraId, contentType: 'camera' } });
+    return cameraBroadcastStart({
+      variables: { cameraId, contentType: "camera" },
+    });
   };
 
   const playStart = (cameraId: string) => {
@@ -61,9 +61,8 @@ const VideoProviderContainer: React.FC<VideoProviderContainerProps> = (props) =>
     }
   };
 
-  const {
-    debounceTime: CAMERA_QUALITY_THR_DEBOUNCE = 2500,
-  } = meetingSettings.public.kurento.cameraQualityThresholds;
+  const { debounceTime: CAMERA_QUALITY_THR_DEBOUNCE = 2500 } =
+    meetingSettings.public.kurento.cameraQualityThresholds;
 
   const applyCameraProfile = debounce(
     VideoService.applyCameraProfile,
@@ -81,13 +80,15 @@ const VideoProviderContainer: React.FC<VideoProviderContainerProps> = (props) =>
     userId: user.userId,
   }));
 
-  const currentUserId = currentUser?.userId ?? '';
+  const currentUserId = currentUser?.userId ?? "";
   // @ts-ignore Untyped object
   const { paginationEnabled } = useSettings(SETTINGS.APPLICATION);
   // @ts-ignore Untyped object
   const { viewParticipantsWebcams } = useSettings(SETTINGS.DATA_SAVING);
 
-  const isClientConnected = useReactiveVar(ConnectionStatus.getConnectedStatusVar());
+  const isClientConnected = useReactiveVar(
+    ConnectionStatus.getConnectedStatusVar(),
+  );
 
   const {
     streams,
@@ -100,21 +101,22 @@ const VideoProviderContainer: React.FC<VideoProviderContainerProps> = (props) =>
   let usersVideo: VideoItem[] = streams;
 
   if (gridUsers.length > 0) {
-    usersVideo = usersVideo.concat(gridUsers);
+    // Lọc bỏ những user đã bật webcam (đã có trong danh sách streams)
+    const gridUsersFiltered = gridUsers.filter(
+      (gu: any) => !streams.some((s: any) => s.userId === gu.userId),
+    );
+    usersVideo = usersVideo.concat(gridUsersFiltered);
   }
 
   if (
-    currentMeeting?.usersPolicies?.webcamsOnlyForModerator
-    && currentUser?.locked
+    currentMeeting?.usersPolicies?.webcamsOnlyForModerator &&
+    currentUser?.locked
   ) {
     usersVideo = usersVideo.filter(
-      (uv) => (
-        (
-          (uv.type === VIDEO_TYPES.STREAM && uv.user.isModerator)
-          || (uv.type === VIDEO_TYPES.GRID && uv.isModerator)
-        )
-        || uv.userId === currentUserId
-      ),
+      (uv) =>
+        (uv.type === VIDEO_TYPES.STREAM && uv.user.isModerator) ||
+        (uv.type === VIDEO_TYPES.GRID && uv.isModerator) ||
+        uv.userId === currentUserId,
     );
   }
 
@@ -127,7 +129,7 @@ const VideoProviderContainer: React.FC<VideoProviderContainerProps> = (props) =>
   const myPageSize = useMyPageSize();
   const { numberOfPages } = useVideoState();
   const isPaginationEnabled = useIsPaginationEnabled();
-  const isGridEnabled = useStorageKey('isGridEnabled') as boolean;
+  const isGridEnabled = true; // Đảm bảo component VideoProvider luôn được mount
 
   useEffect(() => {
     if (isPaginationEnabled) {
@@ -149,15 +151,23 @@ const VideoProviderContainer: React.FC<VideoProviderContainerProps> = (props) =>
         currentVideoPageIndex: 0,
       });
     }
-  }, [myPageSize, numberOfPages, totalNumberOfOtherStreams, isPaginationEnabled]);
+  }, [
+    myPageSize,
+    numberOfPages,
+    totalNumberOfOtherStreams,
+    isPaginationEnabled,
+  ]);
 
   // Clean up local connecting stream state if the stream is connected
   useEffect(() => {
     if (!connectingStream) return;
 
-    const streamIsConnected = streams && streams.some(
-      (s) => s.type === VIDEO_TYPES.STREAM && s.stream === connectingStream.stream,
-    );
+    const streamIsConnected =
+      streams &&
+      streams.some(
+        (s) =>
+          s.type === VIDEO_TYPES.STREAM && s.stream === connectingStream.stream,
+      );
 
     if (streamIsConnected) setConnectingStream(null);
   }, [streams, connectingStream]);
@@ -186,12 +196,12 @@ const VideoProviderContainer: React.FC<VideoProviderContainerProps> = (props) =>
   };
 
   switch (currentMeeting?.cameraBridge) {
-    case 'livekit':
+    case "livekit":
       return (
         // eslint-disable-next-line react/jsx-props-no-spreading
         <LiveKitCameraBridge {...providerProps} />
       );
-    case 'bbb-webrtc-sfu':
+    case "bbb-webrtc-sfu":
     default:
       return (
         // eslint-disable-next-line react/jsx-props-no-spreading

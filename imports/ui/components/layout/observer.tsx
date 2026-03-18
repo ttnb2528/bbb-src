@@ -1,26 +1,35 @@
-import { useEffect, useRef, useState } from 'react';
-import { layoutDispatch, layoutSelect, layoutSelectInput } from './context';
+import { useEffect, useRef, useState } from "react";
+import { layoutDispatch, layoutSelect, layoutSelectInput } from "./context";
+import { ACTIONS, DEVICE_TYPE, LAYOUT_TYPE, PANELS } from "./enums";
 import {
-  ACTIONS, DEVICE_TYPE, LAYOUT_TYPE, PANELS,
-} from './enums';
+  isMobile,
+  isTablet,
+  isTabletPortrait,
+  isTabletLandscape,
+  isDesktop,
+} from "./utils";
+import { getSettingsSingletonInstance } from "/imports/ui/services/settings";
+import { Input, Layout } from "./layoutTypes";
+import { throttle } from "/imports/utils/throttle";
+import { SETTINGS } from "/imports/ui/services/settings/enums";
+import useSettings from "/imports/ui/services/settings/hooks/useSettings";
+import getFromUserSettings from "/imports/ui/services/users-settings";
+import useMeeting from "/imports/ui/core/hooks/useMeeting";
+import MediaService from "/imports/ui/components/media/service";
 import {
-  isMobile, isTablet, isTabletPortrait, isTabletLandscape, isDesktop,
-} from './utils';
-import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
-import { Input, Layout } from './layoutTypes';
-import { throttle } from '/imports/utils/throttle';
-import { SETTINGS } from '/imports/ui/services/settings/enums';
-import useSettings from '/imports/ui/services/settings/hooks/useSettings';
-import getFromUserSettings from '/imports/ui/services/users-settings';
-import useMeeting from '/imports/ui/core/hooks/useMeeting';
-import MediaService from '/imports/ui/components/media/service';
-import { useVideoStreams, useVideoStreamsCount } from '/imports/ui/components/video-provider/hooks';
-import { useIsChatEnabled, useIsPresentationEnabled, useIsScreenSharingEnabled } from '/imports/ui/services/features';
-import useUserChangedLocalSettings from '/imports/ui/services/settings/hooks/useUserChangedLocalSettings';
-import Session from '/imports/ui/services/storage/in-memory';
-import deviceInfo from '/imports/utils/deviceInfo';
+  useVideoStreams,
+  useVideoStreamsCount,
+} from "/imports/ui/components/video-provider/hooks";
+import {
+  useIsChatEnabled,
+  useIsPresentationEnabled,
+  useIsScreenSharingEnabled,
+} from "/imports/ui/services/features";
+import useUserChangedLocalSettings from "/imports/ui/services/settings/hooks/useUserChangedLocalSettings";
+import Session from "/imports/ui/services/storage/in-memory";
+import deviceInfo from "/imports/utils/deviceInfo";
 
-const MOBILE_MEDIA = 'only screen and (max-width: 40em)';
+const MOBILE_MEDIA = "only screen and (max-width: 40em)";
 
 const LayoutObserver: React.FC = () => {
   const layoutType = useRef<string | null>(null);
@@ -35,17 +44,19 @@ const LayoutObserver: React.FC = () => {
   const { sidebarContentPanel } = sidebarContent;
 
   const [layoutIsReady, setLayoutIsReady] = useState(false);
-  const [, setEnableResize] = useState(!window.matchMedia(MOBILE_MEDIA).matches);
-  const { selectedLayout } = useSettings(SETTINGS.APPLICATION) as { selectedLayout: string };
-  const {
-    data: currentMeeting,
-  } = useMeeting((m) => ({
+  const [, setEnableResize] = useState(
+    !window.matchMedia(MOBILE_MEDIA).matches,
+  );
+  const { selectedLayout } = useSettings(SETTINGS.APPLICATION) as {
+    selectedLayout: string;
+  };
+  const { data: currentMeeting } = useMeeting((m) => ({
     layout: m.layout,
     componentsFlags: m.componentsFlags,
   }));
 
   const isThereWebcam = useVideoStreamsCount() > 0;
-  const { streams: videoStream } = useVideoStreams();
+  const { streams: videoStream, gridUsers } = useVideoStreams();
   const isScreenSharingEnabled = useIsScreenSharingEnabled();
   const isPresentationEnabled = useIsPresentationEnabled();
   const isChatEnabled = useIsChatEnabled();
@@ -57,7 +68,9 @@ const LayoutObserver: React.FC = () => {
   const { isOpen: presentationIsOpen } = presentationInput;
 
   const { currentLayoutType } = currentMeeting?.layout || {};
-  const meetingLayout = currentLayoutType && LAYOUT_TYPE[currentLayoutType as keyof typeof LAYOUT_TYPE];
+  const meetingLayout =
+    currentLayoutType &&
+    LAYOUT_TYPE[currentLayoutType as keyof typeof LAYOUT_TYPE];
   const isSharingVideo = currentMeeting?.componentsFlags?.hasExternalVideo;
 
   const setDeviceType = () => {
@@ -76,24 +89,24 @@ const LayoutObserver: React.FC = () => {
     }
   };
 
-  const throttledDeviceType = throttle(
-    () => setDeviceType(),
-    50, { trailing: true, leading: true },
-  );
+  const throttledDeviceType = throttle(() => setDeviceType(), 50, {
+    trailing: true,
+    leading: true,
+  });
 
   useEffect(() => {
     const Settings = getSettingsSingletonInstance();
 
     layoutContextDispatch({
       type: ACTIONS.SET_IS_RTL,
-      value: document.documentElement.getAttribute('dir') === 'rtl',
+      value: document.documentElement.getAttribute("dir") === "rtl",
     });
 
     const APP_CONFIG = window.meetingClientSettings.public.app;
     const DESKTOP_FONT_SIZE = APP_CONFIG.desktopFontSize;
     const MOBILE_FONT_SIZE = APP_CONFIG.mobileFontSize;
     const fontSize = isMobile() ? MOBILE_FONT_SIZE : DESKTOP_FONT_SIZE;
-    document.getElementsByTagName('html')[0].style.fontSize = fontSize;
+    document.getElementsByTagName("html")[0].style.fontSize = fontSize;
 
     layoutContextDispatch({
       type: ACTIONS.SET_FONT_SIZE,
@@ -102,26 +115,28 @@ const LayoutObserver: React.FC = () => {
 
     layoutContextDispatch({
       type: ACTIONS.SET_HAS_ACTIONBAR,
-      value: !(getFromUserSettings('bbb_hide_actions_bar', false)
-        || getFromUserSettings('bbb_hide_controls', false)),
+      value: !(
+        getFromUserSettings("bbb_hide_actions_bar", false) ||
+        getFromUserSettings("bbb_hide_controls", false)
+      ),
     });
 
     layoutContextDispatch({
       type: ACTIONS.SET_HIDE_NAVBAR_TOP_ROW,
-      value: getFromUserSettings('bbb_hide_controls', false),
+      value: getFromUserSettings("bbb_hide_controls", false),
     });
 
     layoutContextDispatch({
       type: ACTIONS.SET_HAS_NAVBAR,
-      value: !getFromUserSettings('bbb_hide_nav_bar', false),
+      value: !getFromUserSettings("bbb_hide_nav_bar", false),
     });
 
     layoutContextDispatch({
       type: ACTIONS.SET_HIDE_NOTIFICATION_TOASTS,
-      value: getFromUserSettings('bbb_hide_notifications', false),
+      value: getFromUserSettings("bbb_hide_notifications", false),
     });
 
-    window.addEventListener('localeChanged', () => {
+    window.addEventListener("localeChanged", () => {
       layoutContextDispatch({
         type: ACTIONS.SET_IS_RTL,
         value: Settings.application.isRTL,
@@ -138,10 +153,10 @@ const LayoutObserver: React.FC = () => {
     });
 
     handleWindowResize();
-    window.addEventListener('resize', handleWindowResize, false);
+    window.addEventListener("resize", handleWindowResize, false);
 
     return () => {
-      window.removeEventListener('resize', handleWindowResize, false);
+      window.removeEventListener("resize", handleWindowResize, false);
     };
   }, []);
 
@@ -150,11 +165,11 @@ const LayoutObserver: React.FC = () => {
     const PUBLIC_CHAT_ID = CHAT_CONFIG.public_group_id;
 
     if (
-      selectedLayout?.toLowerCase?.()?.includes?.('focus')
-      && !sidebarContentIsOpen
-      && deviceType !== DEVICE_TYPE.MOBILE
-      && numCameras > 0
-      && presentationIsOpen
+      selectedLayout?.toLowerCase?.()?.includes?.("focus") &&
+      !sidebarContentIsOpen &&
+      deviceType !== DEVICE_TYPE.MOBILE &&
+      numCameras > 0 &&
+      presentationIsOpen
     ) {
       setTimeout(() => {
         layoutContextDispatch({
@@ -179,10 +194,10 @@ const LayoutObserver: React.FC = () => {
 
   useEffect(() => {
     if (
-      layoutContextDispatch
-      && (typeof meetingLayout !== 'undefined')
-      && (layoutType.current !== meetingLayout)
-      && sharedNotesInput?.isPinned
+      layoutContextDispatch &&
+      typeof meetingLayout !== "undefined" &&
+      layoutType.current !== meetingLayout &&
+      sharedNotesInput?.isPinned
     ) {
       layoutType.current = meetingLayout;
       layoutContextDispatch({
@@ -211,11 +226,18 @@ const LayoutObserver: React.FC = () => {
   });
 
   useEffect(() => {
+    let usersVideoLength = videoStream.length;
+    if (gridUsers.length > 0) {
+      const gridUsersFiltered = gridUsers.filter(
+        (gu: any) => !videoStream.some((s: any) => s.userId === gu.userId),
+      );
+      usersVideoLength += gridUsersFiltered.length;
+    }
     layoutContextDispatch({
       type: ACTIONS.SET_NUM_CAMERAS,
-      value: videoStream.length,
+      value: Math.max(usersVideoLength, 1), // Always at least 1 to ensure dock renders
     });
-  }, [videoStream.length]);
+  }, [videoStream.length, gridUsers.length]);
 
   useEffect(() => {
     if (layoutIsReady) {
@@ -244,7 +266,7 @@ const LayoutObserver: React.FC = () => {
   }, [layoutIsReady]);
 
   useEffect(() => {
-    if (Session.equals('layoutReady', true)) {
+    if (Session.equals("layoutReady", true)) {
       if (!checkedUserSettings.current) {
         const Settings = getSettingsSingletonInstance();
         Settings.save(setLocalSettings);

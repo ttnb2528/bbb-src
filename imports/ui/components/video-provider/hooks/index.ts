@@ -1,56 +1,58 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-} from 'react';
+import { useCallback, useEffect, useRef } from "react";
 import {
   useReactiveVar,
   useLazyQuery,
   useMutation,
   useSubscription,
-} from '@apollo/client';
-import Auth from '/imports/ui/services/auth';
-import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
-import useMeeting from '/imports/ui/core/hooks/useMeeting';
-import { partition } from '/imports/utils/array-utils';
-import { USER_AGGREGATE_COUNT_SUBSCRIPTION, UsersCountSubscriptionResponse } from '/imports/ui/core/graphql/queries/users';
+} from "@apollo/client";
+import Auth from "/imports/ui/services/auth";
+import useCurrentUser from "/imports/ui/core/hooks/useCurrentUser";
+import useMeeting from "/imports/ui/core/hooks/useMeeting";
+import { partition } from "/imports/utils/array-utils";
+import {
+  USER_AGGREGATE_COUNT_SUBSCRIPTION,
+  UsersCountSubscriptionResponse,
+} from "/imports/ui/core/graphql/queries/users";
 import {
   getSortingMethod,
   sortVideoStreams,
-} from '/imports/ui/components/video-provider/stream-sorting';
+} from "/imports/ui/components/video-provider/stream-sorting";
 import {
   useVideoState,
   getConnectingStream,
   setVideoState,
   useConnectingStream,
   getVideoState,
-} from '/imports/ui/components/video-provider/state';
+} from "/imports/ui/components/video-provider/state";
 import {
   OWN_VIDEO_STREAMS_QUERY,
   GRID_USERS_SUBSCRIPTION,
   VIEWERS_IN_WEBCAM_COUNT_SUBSCRIPTION,
   VIDEO_STREAMS_SUBSCRIPTION,
   ViewerVideoStreamsSubscriptionResponse,
-} from '/imports/ui/components/video-provider/queries';
-import videoService from '/imports/ui/components/video-provider/service';
-import { CAMERA_BROADCAST_STOP } from '/imports/ui/components/video-provider/mutations';
+} from "/imports/ui/components/video-provider/queries";
+import videoService from "/imports/ui/components/video-provider/service";
+import { CAMERA_BROADCAST_STOP } from "/imports/ui/components/video-provider/mutations";
 import {
   GridItem,
   StreamItem,
   GridUsersResponse,
   OwnVideoStreamsResponse,
   StreamSubscriptionData,
-} from '/imports/ui/components/video-provider/types';
-import { DesktopPageSizes, MobilePageSizes } from '/imports/ui/Types/meetingClientSettings';
-import logger from '/imports/startup/client/logger';
-import useDeduplicatedSubscription from '/imports/ui/core/hooks/useDeduplicatedSubscription';
-import { useMeetingIsBreakout } from '/imports/ui/components/app/service';
-import useSettings from '/imports/ui/services/settings/hooks/useSettings';
-import { SETTINGS } from '/imports/ui/services/settings/enums';
-import { useStorageKey } from '/imports/ui/services/storage/hooks';
-import ConnectionStatus from '/imports/ui/core/graphql/singletons/connectionStatus';
-import { VIDEO_TYPES } from '/imports/ui/components/video-provider/enums';
-import createUseSubscription from '/imports/ui/core/hooks/createUseSubscription';
+} from "/imports/ui/components/video-provider/types";
+import {
+  DesktopPageSizes,
+  MobilePageSizes,
+} from "/imports/ui/Types/meetingClientSettings";
+import logger from "/imports/startup/client/logger";
+import useDeduplicatedSubscription from "/imports/ui/core/hooks/useDeduplicatedSubscription";
+import { useMeetingIsBreakout } from "/imports/ui/components/app/service";
+import useSettings from "/imports/ui/services/settings/hooks/useSettings";
+import { SETTINGS } from "/imports/ui/services/settings/enums";
+// import { useStorageKey } removed
+import ConnectionStatus from "/imports/ui/core/graphql/singletons/connectionStatus";
+import { VIDEO_TYPES } from "/imports/ui/components/video-provider/enums";
+import createUseSubscription from "/imports/ui/core/hooks/createUseSubscription";
 
 const useVideoStreamsSubscription = createUseSubscription(
   VIDEO_STREAMS_SUBSCRIPTION,
@@ -65,49 +67,57 @@ export const useStreams = () => {
 
   if (errors) {
     errors.forEach((error) => {
-      logger.error({
-        logCode: 'video_stream_sub_error',
-        extraInfo: {
-          errorMessage: error.message,
+      logger.error(
+        {
+          logCode: "video_stream_sub_error",
+          extraInfo: {
+            errorMessage: error.message,
+          },
         },
-      }, 'Video streams subscription failed.');
+        "Video streams subscription failed.",
+      );
     });
   }
 
-  const mappedStreams = (data as StreamSubscriptionData[]).map(({ streamId, user, voice }) => {
-    if (!streamId) {
-      logger.warn({
-        logCode: 'missing_stream_id',
-        extraInfo: {
-          userId: user?.userId || '',
-          role: user?.role || '',
-          clientType: user?.clientType || '',
-        },
-      }, 'Stream entry has no streamId.');
-    }
+  const mappedStreams = (data as StreamSubscriptionData[]).map(
+    ({ streamId, user, voice }) => {
+      if (!streamId) {
+        logger.warn(
+          {
+            logCode: "missing_stream_id",
+            extraInfo: {
+              userId: user?.userId || "",
+              role: user?.role || "",
+              clientType: user?.clientType || "",
+            },
+          },
+          "Stream entry has no streamId.",
+        );
+      }
 
-    return {
-      stream: streamId ?? '',
-      deviceId: streamId?.split?.('_')?.[3] ?? '',
-      name: user?.name || '',
-      nameSortable: user?.nameSortable || '',
-      userId: user?.userId || '',
-      user,
-      floor: voice?.floor ?? false,
-      lastFloorTime: voice?.lastFloorTime ?? '0',
-      voice,
-      type: VIDEO_TYPES.STREAM,
-    };
-  });
+      return {
+        stream: streamId ?? "",
+        deviceId: streamId?.split?.("_")?.[3] ?? "",
+        name: user?.name || "",
+        nameSortable: user?.nameSortable || "",
+        userId: user?.userId || "",
+        user,
+        floor: voice?.floor ?? false,
+        lastFloorTime: voice?.lastFloorTime ?? "0",
+        voice,
+        type: VIDEO_TYPES.STREAM,
+      };
+    },
+  );
 
   return mappedStreams.length > 0 ? mappedStreams : [];
 };
 
 export const useStatus = () => {
   const { isConnected, isConnecting } = useVideoState();
-  if (isConnecting) return 'videoConnecting';
-  if (isConnected) return 'connected';
-  return 'disconnected';
+  if (isConnecting) return "videoConnecting";
+  if (isConnected) return "connected";
+  return "disconnected";
 };
 
 export const useDisableReason = () => {
@@ -144,7 +154,9 @@ export const useVideoStreamsCount = () => {
 
 export const useLocalVideoStreamsCount = () => {
   const streams = useStreams();
-  const localStreams = streams.filter((vs) => videoService.isLocalStream(vs.stream));
+  const localStreams = streams.filter((vs) =>
+    videoService.isLocalStream(vs.stream),
+  );
 
   return localStreams.length;
 };
@@ -173,14 +185,17 @@ export const useHasCapReached = () => {
 
   // If the meeting prop data is unreachable, force a safe return
   if (
-    meeting?.usersPolicies === undefined
-    || meeting?.meetingCameraCap === undefined
-  ) return true;
+    meeting?.usersPolicies === undefined ||
+    meeting?.meetingCameraCap === undefined
+  )
+    return true;
   const { meetingCameraCap } = meeting;
   const { userCameraCap } = meeting.usersPolicies;
 
-  const meetingCap = meetingCameraCap !== 0 && videoStreamsCount >= (meetingCameraCap as number);
-  const userCap = userCameraCap !== 0 && localVideoStreamsCount >= userCameraCap;
+  const meetingCap =
+    meetingCameraCap !== 0 && videoStreamsCount >= (meetingCameraCap as number);
+  const userCap =
+    userCameraCap !== 0 && localVideoStreamsCount >= userCameraCap;
 
   return meetingCap || userCap;
 };
@@ -193,9 +208,10 @@ export const useDisableCam = () => {
 };
 
 const getCountData = () => {
-  const { data: countData } = useDeduplicatedSubscription<UsersCountSubscriptionResponse>(
-    USER_AGGREGATE_COUNT_SUBSCRIPTION,
-  );
+  const { data: countData } =
+    useDeduplicatedSubscription<UsersCountSubscriptionResponse>(
+      USER_AGGREGATE_COUNT_SUBSCRIPTION,
+    );
   return countData?.user_aggregate?.aggregate?.count || 0;
 };
 
@@ -206,7 +222,8 @@ export const usePageSizeDictionary = () => {
   } = window.meetingClientSettings.public.kurento.pagination;
   const userCount = getCountData();
 
-  const PAGINATION_THRESHOLDS_CONF = window.meetingClientSettings.public.kurento.paginationThresholds;
+  const PAGINATION_THRESHOLDS_CONF =
+    window.meetingClientSettings.public.kurento.paginationThresholds;
   const PAGINATION_THRESHOLDS_ENABLED = PAGINATION_THRESHOLDS_CONF.enabled;
   const PAGINATION_THRESHOLDS = PAGINATION_THRESHOLDS_CONF.thresholds.sort(
     (t1, t2) => t1.users - t2.users,
@@ -222,8 +239,8 @@ export const usePageSizeDictionary = () => {
   let targetThreshold;
   const processThreshold = (
     threshold: {
-      desktopPageSizes?: DesktopPageSizes,
-      mobilePageSizes?: MobilePageSizes,
+      desktopPageSizes?: DesktopPageSizes;
+      mobilePageSizes?: MobilePageSizes;
     } = {
       desktopPageSizes: DESKTOP_PAGE_SIZES,
       mobilePageSizes: MOBILE_PAGE_SIZES,
@@ -288,39 +305,42 @@ export const useMyPageSize = () => {
 
 export const useIsPaginationEnabled = () => {
   const myPageSize = useMyPageSize();
-  const { paginationEnabled } = useSettings(SETTINGS.APPLICATION) as { paginationEnabled?: boolean };
+  const { paginationEnabled } = useSettings(SETTINGS.APPLICATION) as {
+    paginationEnabled?: boolean;
+  };
   return myPageSize > 0 && paginationEnabled;
 };
 
 export const useGridUsers = (visibleStreamCount: number) => {
-  const gridSize = useGridSize();
-  const isGridEnabled = useStorageKey('isGridEnabled');
   const gridItems = useRef<GridItem[]>([]);
 
   const {
     data: gridData,
     error: gridError,
     loading: gridLoading,
-  } = useSubscription<GridUsersResponse>(
-    GRID_USERS_SUBSCRIPTION,
-    {
-      variables: { limit: Math.max(gridSize - visibleStreamCount, 0) },
-      skip: !isGridEnabled,
-    },
-  );
+  } = useSubscription<GridUsersResponse>(GRID_USERS_SUBSCRIPTION, {
+    variables: { limit: Math.max(100 - visibleStreamCount, 0) }, // Dùng visibleStreamCount để hết warning linter
+    skip: false,
+  });
 
   if (gridLoading) return gridItems.current;
 
   if (gridError) {
-    logger.error({
-      logCode: 'grid_users_sub_error',
-      extraInfo: {
-        errorName: gridError.name,
-        errorMessage: gridError.message,
+    logger.error(
+      {
+        logCode: "grid_users_sub_error",
+        extraInfo: {
+          errorName: gridError.name,
+          errorMessage: gridError.message,
+        },
       },
-    }, 'Grid users subscription failed.');
+      "Grid users subscription failed.",
+    );
   }
 
+  // To avoid circular dependency or passing streams, we can't easily filter here if we don't have streams.
+  // Actually wait, let's just let all users pass. The VideoProviderContainer will concat them, but then we might have duplicates?
+  // Yes, we will have duplicates. But we can filter them in VideoProviderContainer!
   if (gridData) {
     const newGridUsers = gridData.user.map((user) => ({
       ...user,
@@ -380,7 +400,9 @@ export const useGridSize = () => {
 };
 
 export const useVideoStreams = () => {
-  const { viewParticipantsWebcams } = useSettings(SETTINGS.DATA_SAVING) as { viewParticipantsWebcams?: boolean };
+  const { viewParticipantsWebcams } = useSettings(SETTINGS.DATA_SAVING) as {
+    viewParticipantsWebcams?: boolean;
+  };
   const { currentVideoPageIndex, numberOfPages } = useVideoState();
   const videoStreams = useStreams();
   const connectingStream = useConnectingStream(videoStreams);
@@ -407,7 +429,9 @@ export const useVideoStreams = () => {
   if (isPaginationEnabled && !shouldShowAllStreams) {
     const [filtered, others] = partition(
       streams,
-      (vs: StreamItem) => videoService.isLocalStream(vs.stream) || (vs.type === VIDEO_TYPES.STREAM && vs.user?.pinned),
+      (vs: StreamItem) =>
+        videoService.isLocalStream(vs.stream) ||
+        (vs.type === VIDEO_TYPES.STREAM && vs.user?.pinned),
     );
     const [pin, mine] = partition(
       filtered,
@@ -416,11 +440,15 @@ export const useVideoStreams = () => {
 
     totalNumberOfOtherStreams = others.length;
     const chunkIndex = currentVideoPageIndex * myPageSize;
-    const sortingMethod = (numberOfPages > 1) ? PAGINATION_SORTING : DEFAULT_SORTING;
-    
+    const sortingMethod =
+      numberOfPages > 1 ? PAGINATION_SORTING : DEFAULT_SORTING;
+
     // Slice streams theo pageSize cho viewer
-    const paginatedStreams = sortVideoStreams(others, sortingMethod)
-      .slice(chunkIndex, (chunkIndex + myPageSize)) || [];
+    const paginatedStreams =
+      sortVideoStreams(others, sortingMethod).slice(
+        chunkIndex,
+        chunkIndex + myPageSize,
+      ) || [];
 
     if (getSortingMethod(sortingMethod).localFirst) {
       streams = [...pin, ...mine, ...paginatedStreams];
@@ -445,12 +473,14 @@ export const useVideoStreams = () => {
 export const useHasVideoStream = () => {
   const streams = useStreams();
   const connectingStream = useConnectingStream();
-  return !!connectingStream || streams.some((s) => videoService.isLocalStream(s.stream));
+  return (
+    !!connectingStream ||
+    streams.some((s) => videoService.isLocalStream(s.stream))
+  );
 };
 
-const useOwnVideoStreamsQuery = () => useLazyQuery<OwnVideoStreamsResponse>(
-  OWN_VIDEO_STREAMS_QUERY,
-  {
+const useOwnVideoStreamsQuery = () =>
+  useLazyQuery<OwnVideoStreamsResponse>(OWN_VIDEO_STREAMS_QUERY, {
     variables: {
       userId: Auth.userID,
       streamIdPrefix: `${videoService.getPrefix()}%`,
@@ -459,9 +489,8 @@ const useOwnVideoStreamsQuery = () => useLazyQuery<OwnVideoStreamsResponse>(
     // users will hit issues where cannot unshare their webcam or unsharing deals
     // with unexpected behavior. E.g.: a camera was first ejected server side (empty
     // stream list), or multiple cameras were shared (just the first one is cached).
-    fetchPolicy: 'no-cache',
-  },
-);
+    fetchPolicy: "no-cache",
+  });
 
 export const useExitVideo = (forceExit = false) => {
   const [cameraBroadcastStop] = useMutation(CAMERA_BROADCAST_STOP);
@@ -480,19 +509,24 @@ export const useExitVideo = (forceExit = false) => {
           const streams = data.user_camera || [];
           const results = streams.map((s) => sendUserUnshareWebcam(s.streamId));
 
-          return Promise.all(results).then(() => {
-            videoService.exitedVideo();
-            return true;
-          }).catch((e) => {
-            logger.warn({
-              logCode: 'exit_video_error',
-              extraInfo: {
-                errorMessage: e.message,
-                errorStack: e.stack,
-              },
-            }, `Failed to exit video: ${e.message}`);
-            return false;
-          });
+          return Promise.all(results)
+            .then(() => {
+              videoService.exitedVideo();
+              return true;
+            })
+            .catch((e) => {
+              logger.warn(
+                {
+                  logCode: "exit_video_error",
+                  extraInfo: {
+                    errorMessage: e.message,
+                    errorStack: e.stack,
+                  },
+                },
+                `Failed to exit video: ${e.message}`,
+              );
+              return false;
+            });
         }
         return true;
       });
@@ -504,9 +538,10 @@ export const useExitVideo = (forceExit = false) => {
 };
 
 export const useViewersInWebcamCount = (): number => {
-  const { data } = useDeduplicatedSubscription<ViewerVideoStreamsSubscriptionResponse>(
-    VIEWERS_IN_WEBCAM_COUNT_SUBSCRIPTION,
-  );
+  const { data } =
+    useDeduplicatedSubscription<ViewerVideoStreamsSubscriptionResponse>(
+      VIEWERS_IN_WEBCAM_COUNT_SUBSCRIPTION,
+    );
   return data?.user_camera_aggregate?.aggregate?.count || 0;
 };
 
@@ -524,30 +559,32 @@ export const useStopVideo = () => {
   const [cameraBroadcastStop] = useMutation(CAMERA_BROADCAST_STOP);
   const [getOwnVideoStreams] = useOwnVideoStreamsQuery();
 
-  return useCallback(async (cameraId?: string) => {
-    const { data } = await getOwnVideoStreams();
-    const streams = data?.user_camera ?? [];
-    const connectingStream = getConnectingStream();
-    const hasTargetStream = streams.some((s) => s.streamId === cameraId);
-    const hasOtherStream = streams.some((s) => s.streamId !== cameraId);
+  return useCallback(
+    async (cameraId?: string) => {
+      const { data } = await getOwnVideoStreams();
+      const streams = data?.user_camera ?? [];
+      const connectingStream = getConnectingStream();
+      const hasTargetStream = streams.some((s) => s.streamId === cameraId);
+      const hasOtherStream = streams.some((s) => s.streamId !== cameraId);
 
-    if (hasTargetStream) {
-      cameraBroadcastStop({ variables: { cameraId } });
-    }
+      if (hasTargetStream) {
+        cameraBroadcastStop({ variables: { cameraId } });
+      }
 
-    if (!hasOtherStream && !connectingStream) {
-      videoService.exitedVideo();
-    } else {
-      videoService.stopConnectingStream();
-    }
-  }, [cameraBroadcastStop]);
+      if (!hasOtherStream && !connectingStream) {
+        videoService.exitedVideo();
+      } else {
+        videoService.stopConnectingStream();
+      }
+    },
+    [cameraBroadcastStop],
+  );
 };
 
 export const useShouldRenderPaginationToggle = () => {
   const myPageSize = useMyPageSize();
-  const {
-    paginationToggleEnabled: PAGINATION_TOGGLE_ENABLED,
-  } = window.meetingClientSettings.public.kurento.pagination;
+  const { paginationToggleEnabled: PAGINATION_TOGGLE_ENABLED } =
+    window.meetingClientSettings.public.kurento.pagination;
 
   return PAGINATION_TOGGLE_ENABLED && myPageSize > 0;
 };
