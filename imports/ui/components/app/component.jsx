@@ -1,111 +1,112 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import { defineMessages, injectIntl } from 'react-intl';
-import ReactModal from 'react-modal';
-import browserInfo from '/imports/utils/browserInfo';
-import deviceInfo from '/imports/utils/deviceInfo';
-import Session from '/imports/ui/services/storage/in-memory';
-import PollingContainer from '/imports/ui/components/polling/container';
-import logger from '/imports/startup/client/logger';
-import ActivityCheckContainer from '/imports/ui/components/activity-check/container';
-import ToastContainer from '/imports/ui/components/common/toast/container';
-import KEY_CODES from '/imports/utils/keyCodes';
-import WakeLockContainer from '../wake-lock/container';
-import NotificationsBarContainer from '../notifications-bar/container';
-import AudioContainer from '../audio/container';
-import BannerBarContainer from '/imports/ui/components/banner-bar/container';
-import RaiseHandNotifier from '/imports/ui/components/raisehand-notifier/container';
-import ManyWebcamsNotifier from '/imports/ui/components/video-provider/many-users-notify/container';
-import AudioCaptionsSpeechContainer from '/imports/ui/components/audio/audio-graphql/audio-captions/speech/component';
-import UploaderContainer from '/imports/ui/components/presentation/presentation-uploader/container';
-import ScreenReaderAlertContainer from '../screenreader-alert/container';
-import ScreenReaderAlertAdapter from '../screenreader-alert/adapter';
-import WebcamContainer from '../webcam/component';
-import PresentationContainer from '../presentation/container';
-import ScreenshareContainer from '../screenshare/container';
-import ExternalVideoPlayerContainer from '../external-video-player/external-video-player-graphql/component';
-import GenericContentMainAreaContainer from '../generic-content/generic-main-content/container';
-import EmojiRainContainer from '../emoji-rain/container';
-import Styled from './styles';
-import LayoutEngine from '../layout/layout-manager/layoutEngine';
-import NavBarContainer from '../nav-bar/container';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import { defineMessages, injectIntl } from "react-intl";
+import ReactModal from "react-modal";
+import browserInfo from "/imports/utils/browserInfo";
+import deviceInfo from "/imports/utils/deviceInfo";
+import Session from "/imports/ui/services/storage/in-memory";
+import PollingContainer from "/imports/ui/components/polling/container";
+import logger from "/imports/startup/client/logger";
+import ActivityCheckContainer from "/imports/ui/components/activity-check/container";
+import ToastContainer from "/imports/ui/components/common/toast/container";
+import KEY_CODES from "/imports/utils/keyCodes";
+import WakeLockContainer from "../wake-lock/container";
+import NotificationsBarContainer from "../notifications-bar/container";
+import AudioContainer from "../audio/container";
+import BannerBarContainer from "/imports/ui/components/banner-bar/container";
+import RaiseHandNotifier from "/imports/ui/components/raisehand-notifier/container";
+import ManyWebcamsNotifier from "/imports/ui/components/video-provider/many-users-notify/container";
+import AudioCaptionsSpeechContainer from "/imports/ui/components/audio/audio-graphql/audio-captions/speech/component";
+import UploaderContainer from "/imports/ui/components/presentation/presentation-uploader/container";
+import ScreenReaderAlertContainer from "../screenreader-alert/container";
+import ScreenReaderAlertAdapter from "../screenreader-alert/adapter";
+import WebcamContainer from "../webcam/component";
+import PresentationContainer from "../presentation/container";
+import ScreenshareContainer from "../screenshare/container";
+import ExternalVideoPlayerContainer from "../external-video-player/external-video-player-graphql/component";
+import GenericContentMainAreaContainer from "../generic-content/generic-main-content/container";
+import EmojiRainContainer from "../emoji-rain/container";
+import Styled from "./styles";
+import LayoutEngine from "../layout/layout-manager/layoutEngine";
+import NavBarContainer from "../nav-bar/container";
 // Sidebar-navigation đã được gộp vào sidebar-content với tabs - không cần import nữa
 // import SidebarNavigationContainer from '../sidebar-navigation/container';
-import SidebarContentContainer from '../sidebar-content/container';
-import PluginsEngineManager from '../plugins-engine/manager';
-import Notifications from '../notifications/component';
-import { PANELS, ACTIONS } from '../layout/enums';
-import GlobalStyles from '/imports/ui/stylesheets/styled-components/globalStyles';
-import ActionsBarContainer from '../actions-bar/container';
-import PushLayoutEngine from '../layout/push-layout/pushLayoutEngine';
-import NotesContainer from '/imports/ui/components/notes/component';
-import MobilePanelButtonsContainer from '../mobile-panel-buttons/container';
-import AppService from '/imports/ui/components/app/service';
-import PresentationUploaderToastContainer from '/imports/ui/components/presentation/presentation-toast/presentation-uploader-toast/container';
-import BreakoutJoinConfirmationContainerGraphQL from '../breakout-join-confirmation/breakout-join-confirmation-graphql/component';
-import FloatingWindowContainer from '/imports/ui/components/floating-window/container';
-import ChatAlertContainerGraphql from '../chat/chat-graphql/alert/component';
-import { notify } from '/imports/ui/services/notification';
-import VoiceActivityAdapter from '../../core/adapters/voice-activity';
-import LayoutObserver from '../layout/observer';
-import BBBLiveKitRoomContainer from '/imports/ui/components/livekit/component';
+import SidebarContentContainer from "../sidebar-content/container";
+import PluginsEngineManager from "../plugins-engine/manager";
+import Notifications from "../notifications/component";
+import { PANELS, ACTIONS } from "../layout/enums";
+import GlobalStyles from "/imports/ui/stylesheets/styled-components/globalStyles";
+import ActionsBarContainer from "../actions-bar/container";
+import PushLayoutEngine from "../layout/push-layout/pushLayoutEngine";
+import NotesContainer from "/imports/ui/components/notes/component";
+import MobilePanelButtonsContainer from "../mobile-panel-buttons/container";
+import AppService from "/imports/ui/components/app/service";
+import PresentationUploaderToastContainer from "/imports/ui/components/presentation/presentation-toast/presentation-uploader-toast/container";
+import BreakoutJoinConfirmationContainerGraphQL from "../breakout-join-confirmation/breakout-join-confirmation-graphql/component";
+import FloatingWindowContainer from "/imports/ui/components/floating-window/container";
+import ChatAlertContainerGraphql from "../chat/chat-graphql/alert/component";
+import FloatingChatContainer from "../chat/floating-chat/container";
+import { notify } from "/imports/ui/services/notification";
+import VoiceActivityAdapter from "../../core/adapters/voice-activity";
+import LayoutObserver from "../layout/observer";
+import BBBLiveKitRoomContainer from "/imports/ui/components/livekit/component";
 
 const intlMessages = defineMessages({
   userListLabel: {
-    id: 'app.userList.label',
-    description: 'Aria-label for Userlist Nav',
+    id: "app.userList.label",
+    description: "Aria-label for Userlist Nav",
   },
   chatLabel: {
-    id: 'app.chat.label',
-    description: 'Aria-label for Chat Section',
+    id: "app.chat.label",
+    description: "Aria-label for Chat Section",
   },
   actionsBarLabel: {
-    id: 'app.actionsBar.label',
-    description: 'Aria-label for ActionsBar Section',
+    id: "app.actionsBar.label",
+    description: "Aria-label for ActionsBar Section",
   },
   clearedReaction: {
-    id: 'app.toast.clearedReactions.label',
-    description: 'message for cleared reactions',
+    id: "app.toast.clearedReactions.label",
+    description: "message for cleared reactions",
   },
   raisedHand: {
-    id: 'app.toast.setEmoji.raiseHand',
-    description: 'toast message for raised hand notification',
+    id: "app.toast.setEmoji.raiseHand",
+    description: "toast message for raised hand notification",
   },
   loweredHand: {
-    id: 'app.toast.setEmoji.lowerHand',
-    description: 'toast message for lowered hand notification',
+    id: "app.toast.setEmoji.lowerHand",
+    description: "toast message for lowered hand notification",
   },
   away: {
-    id: 'app.toast.setEmoji.away',
-    description: 'toast message for set away notification',
+    id: "app.toast.setEmoji.away",
+    description: "toast message for set away notification",
   },
   notAway: {
-    id: 'app.toast.setEmoji.notAway',
-    description: 'toast message for remove away notification',
+    id: "app.toast.setEmoji.notAway",
+    description: "toast message for remove away notification",
   },
   meetingMuteOn: {
-    id: 'app.toast.meetingMuteOn.label',
-    description: 'message used when meeting has been muted',
+    id: "app.toast.meetingMuteOn.label",
+    description: "message used when meeting has been muted",
   },
   meetingMuteOff: {
-    id: 'app.toast.meetingMuteOff.label',
-    description: 'message used when meeting has been unmuted',
+    id: "app.toast.meetingMuteOff.label",
+    description: "message used when meeting has been unmuted",
   },
   pollPublishedLabel: {
-    id: 'app.whiteboard.annotations.poll',
-    description: 'message displayed when a poll is published',
+    id: "app.whiteboard.annotations.poll",
+    description: "message displayed when a poll is published",
   },
   defaultViewLabel: {
-    id: 'app.title.defaultViewLabel',
-    description: 'view name appended to document title',
+    id: "app.title.defaultViewLabel",
+    description: "view name appended to document title",
   },
   promotedLabel: {
-    id: 'app.toast.promotedLabel',
-    description: 'notification message when promoted',
+    id: "app.toast.promotedLabel",
+    description: "notification message when promoted",
   },
   demotedLabel: {
-    id: 'app.toast.demotedLabel',
-    description: 'notification message when demoted',
+    id: "app.toast.demotedLabel",
+    description: "notification message when demoted",
   },
 });
 
@@ -131,7 +132,8 @@ class App extends Component {
 
     this.setPresentationFitToWidth = this.setPresentationFitToWidth.bind(this);
     this.setAudioModalIsOpen = this.setAudioModalIsOpen.bind(this);
-    this.setVideoPreviewModalIsOpen = this.setVideoPreviewModalIsOpen.bind(this);
+    this.setVideoPreviewModalIsOpen =
+      this.setVideoPreviewModalIsOpen.bind(this);
     this.customPollShortcutHandler = this.customPollShortcutHandler.bind(this);
     this.logJoin = this.logJoin.bind(this);
   }
@@ -142,23 +144,29 @@ class App extends Component {
     const { isJoinLogged } = this.state;
     const { isPollingEnabled } = this.props;
 
-    Session.setItem('videoPreviewFirstOpen', true);
+    Session.setItem("videoPreviewFirstOpen", true);
 
-    ReactModal.setAppElement('#app');
+    ReactModal.setAppElement("#app");
 
-    const body = document.getElementsByTagName('body')[0];
+    const body = document.getElementsByTagName("body")[0];
 
     if (browserName) {
-      body.classList.add(`browser-${browserName.split(' ').pop().toLowerCase()}`);
+      body.classList.add(
+        `browser-${browserName.split(" ").pop().toLowerCase()}`,
+      );
     }
 
-    body.classList.add(`os-${osName.split(' ').shift().toLowerCase()}`);
+    body.classList.add(`os-${osName.split(" ").shift().toLowerCase()}`);
 
-    window.ondragover = (e) => { e.preventDefault(); };
-    window.ondrop = (e) => { e.preventDefault(); };
+    window.ondragover = (e) => {
+      e.preventDefault();
+    };
+    window.ondrop = (e) => {
+      e.preventDefault();
+    };
 
     if (isPollingEnabled) {
-      window.addEventListener('keydown', this.customPollShortcutHandler);
+      window.addEventListener("keydown", this.customPollShortcutHandler);
     }
 
     if (!isJoinLogged) {
@@ -169,12 +177,8 @@ class App extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const {
-      currentUserAway,
-      currentUserRaiseHand,
-      intl,
-      fitToWidth,
-    } = this.props;
+    const { currentUserAway, currentUserRaiseHand, intl, fitToWidth } =
+      this.props;
 
     const { isJoinLogged } = this.state;
 
@@ -182,17 +186,25 @@ class App extends Component {
 
     if (prevProps.currentUserAway !== currentUserAway) {
       if (currentUserAway === true) {
-        notify(intl.formatMessage(intlMessages.away), 'info', 'user');
+        notify(intl.formatMessage(intlMessages.away), "info", "user");
       } else {
-        notify(intl.formatMessage(intlMessages.notAway), 'info', 'clear_status');
+        notify(
+          intl.formatMessage(intlMessages.notAway),
+          "info",
+          "clear_status",
+        );
       }
     }
 
     if (prevProps.currentUserRaiseHand !== currentUserRaiseHand) {
       if (currentUserRaiseHand === true) {
-        notify(intl.formatMessage(intlMessages.raisedHand), 'info', 'user');
+        notify(intl.formatMessage(intlMessages.raisedHand), "info", "user");
       } else {
-        notify(intl.formatMessage(intlMessages.loweredHand), 'info', 'clear_status');
+        notify(
+          intl.formatMessage(intlMessages.loweredHand),
+          "info",
+          "clear_status",
+        );
       }
     }
 
@@ -214,7 +226,7 @@ class App extends Component {
     }
 
     if (isPollingEnabled) {
-      window.removeEventListener('keydown', this.customPollShortcutHandler);
+      window.removeEventListener("keydown", this.customPollShortcutHandler);
     }
   }
 
@@ -233,15 +245,14 @@ class App extends Component {
   }
 
   customPollShortcutHandler(e) {
-    const {
-      altKey, ctrlKey, metaKey, keyCode,
-    } = e;
+    const { altKey, ctrlKey, metaKey, keyCode } = e;
     const { layoutContextDispatch } = this.props;
-    const isPollShortcut = altKey && keyCode === KEY_CODES.P && (ctrlKey || metaKey);
+    const isPollShortcut =
+      altKey && keyCode === KEY_CODES.P && (ctrlKey || metaKey);
 
     if (isPollShortcut) {
-      if (Session.equals('pollInitiated', true)) {
-        Session.setItem('resetPollPanel', true);
+      if (Session.equals("pollInitiated", true)) {
+        Session.setItem("resetPollPanel", true);
       }
 
       layoutContextDispatch({
@@ -253,8 +264,8 @@ class App extends Component {
         value: PANELS.POLL,
       });
 
-      Session.setItem('forcePollOpen', true);
-      Session.setItem('customPollShortcut', true);
+      Session.setItem("forcePollOpen", true);
+      Session.setItem("customPollShortcut", true);
     }
   }
 
@@ -262,16 +273,21 @@ class App extends Component {
     const { isJoinLogged } = this.state;
     const { meetingId, meetingName, isBreakout } = this.props;
 
-    const logMessage = isBreakout ? 'User joined breakout room' : 'User joined main room';
+    const logMessage = isBreakout
+      ? "User joined breakout room"
+      : "User joined main room";
 
     if (!isJoinLogged && meetingId) {
-      logger.info({
-        logCode: 'app_component_componentdidmount',
-        extraInfo: {
-          meetingId,
-          meetingName,
+      logger.info(
+        {
+          logCode: "app_component_componentdidmount",
+          extraInfo: {
+            meetingId,
+            meetingName,
+          },
         },
-      }, logMessage);
+        logMessage,
+      );
       this.setState({ isJoinLogged: true });
     }
   }
@@ -283,10 +299,7 @@ class App extends Component {
   }
 
   renderActionsBar() {
-    const {
-      hideActionsBar,
-      presentationIsOpen,
-    } = this.props;
+    const { hideActionsBar, presentationIsOpen } = this.props;
 
     if (hideActionsBar) return null;
 
@@ -299,24 +312,19 @@ class App extends Component {
   }
 
   renderAudioCaptions() {
-    const {
-      audioCaptions,
-      captionsStyle,
-    } = this.props;
+    const { audioCaptions, captionsStyle } = this.props;
 
     if (!audioCaptions) return null;
 
     return (
       <Styled.CaptionsWrapper
         role="region"
-        style={
-          {
-            position: 'absolute',
-            left: captionsStyle.left,
-            right: captionsStyle.right,
-            maxWidth: captionsStyle.maxWidth,
-          }
-        }
+        style={{
+          position: "absolute",
+          left: captionsStyle.left,
+          right: captionsStyle.right,
+          maxWidth: captionsStyle.maxWidth,
+        }}
       >
         {audioCaptions}
       </Styled.CaptionsWrapper>
@@ -361,8 +369,8 @@ class App extends Component {
         <Styled.Layout
           id="layout"
           style={{
-            width: '100%',
-            height: '100%',
+            width: "100%",
+            height: "100%",
           }}
         >
           <ActivityCheckContainer />
@@ -373,54 +381,45 @@ class App extends Component {
           <SidebarContentContainer isSharedNotesPinned={isSharedNotesPinned} />
           <NavBarContainer main="new" />
           <WebcamContainer />
-          {
-            !isNonMediaLayout
-              && <ExternalVideoPlayerContainer />
-          }
+          {!isNonMediaLayout && <ExternalVideoPlayerContainer />}
           <GenericContentMainAreaContainer
             genericMainContentId={genericMainContentId}
           />
-          {
-          shouldShowPresentation
-            ? (
-              <PresentationContainer
-                setPresentationFitToWidth={this.setPresentationFitToWidth}
-                fitToWidth={presentationFitToWidth}
-                darkTheme={darkTheme}
-                presentationIsOpen={presentationIsOpen}
-              />
-            )
-            : null
-            }
-          {
-            !isNonMediaLayout
-            && <ScreenshareContainer shouldShowScreenshare={shouldShowScreenshare} />
-          }
+          {shouldShowPresentation ? (
+            <PresentationContainer
+              setPresentationFitToWidth={this.setPresentationFitToWidth}
+              fitToWidth={presentationFitToWidth}
+              darkTheme={darkTheme}
+              presentationIsOpen={presentationIsOpen}
+            />
+          ) : null}
+          {!isNonMediaLayout && (
+            <ScreenshareContainer
+              shouldShowScreenshare={shouldShowScreenshare}
+            />
+          )}
 
-          {isSharedNotesPinned
-            ? (
-              <NotesContainer
-                area="media"
-              />
-            ) : null}
+          {isSharedNotesPinned ? <NotesContainer area="media" /> : null}
           <AudioCaptionsSpeechContainer />
           {this.renderAudioCaptions()}
-          { (
-            !hideNotificationToasts
-            && isNotificationEnabled) && <PresentationUploaderToastContainer intl={intl} /> }
+          {!hideNotificationToasts && isNotificationEnabled && (
+            <PresentationUploaderToastContainer intl={intl} />
+          )}
           <UploaderContainer />
           <BreakoutJoinConfirmationContainerGraphQL />
           <BBBLiveKitRoomContainer />
-          <AudioContainer {...{
-            isAudioModalOpen,
-            setAudioModalIsOpen: this.setAudioModalIsOpen,
-            isVideoPreviewModalOpen,
-            setVideoPreviewModalIsOpen: this.setVideoPreviewModalIsOpen,
-          }}
+          <FloatingChatContainer />
+          <AudioContainer
+            {...{
+              isAudioModalOpen,
+              setAudioModalIsOpen: this.setAudioModalIsOpen,
+              isVideoPreviewModalOpen,
+              setVideoPreviewModalIsOpen: this.setVideoPreviewModalIsOpen,
+            }}
           />
-          { (
-            !hideNotificationToasts
-            && isNotificationEnabled) && <ToastContainer rtl /> }
+          {!hideNotificationToasts && isNotificationEnabled && (
+            <ToastContainer rtl />
+          )}
           <ChatAlertContainerGraphql />
           {isRaiseHandEnabled && <RaiseHandNotifier />}
           <ManyWebcamsNotifier />
