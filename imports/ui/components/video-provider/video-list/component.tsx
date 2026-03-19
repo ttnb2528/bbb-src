@@ -682,19 +682,26 @@ class VideoList extends Component<VideoListProps, VideoListState> {
 
     // 2) N?u chua có, fallback sang presenter / moderator / stream d?u tiên
     if (!stageStream) {
-      stageStream =
-        streams.find((item) => {
+      stageStream = streams.find((item) => {
+        const anyItem = item as any;
+        return (
+          (item.type === VIDEO_TYPES.STREAM && anyItem?.user?.presenter) ||
+          (item.type === VIDEO_TYPES.GRID && anyItem?.presenter)
+        );
+      });
+
+      if (!stageStream) {
+        stageStream = streams.find((item) => {
           const anyItem = item as any;
-          if (item.type === VIDEO_TYPES.STREAM && anyItem?.user?.presenter)
-            return true;
-          if (item.type === VIDEO_TYPES.GRID && anyItem?.presenter) return true;
-          if (
-            anyItem?.user?.role === "MODERATOR" ||
-            anyItem?.role === "MODERATOR"
-          )
-            return true;
-          return false;
-        }) || streams[0];
+          return (
+            anyItem?.user?.role === "MODERATOR" || anyItem?.role === "MODERATOR"
+          );
+        });
+      }
+
+      if (!stageStream) {
+        stageStream = streams[0];
+      }
     }
 
     return (
