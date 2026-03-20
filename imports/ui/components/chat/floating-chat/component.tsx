@@ -3,6 +3,9 @@ import * as Styled from "./styles";
 import { useMutation } from "@apollo/client";
 import { CHAT_SEND_MESSAGE } from "../chat-graphql/chat-message-form/mutations";
 import EmojiPickerComponent from "/imports/ui/components/emoji-picker/component";
+import Icon from "/imports/ui/components/common/icon/component";
+import ReactMarkdown from "react-markdown";
+import { messageToMarkdown } from "/imports/ui/components/chat/chat-graphql/service";
 
 interface Message {
   messageSequence: number;
@@ -18,9 +21,17 @@ interface Props {
   messages: Message[];
   hasSharedContent: boolean;
   chatId: string;
+  isSidebarOpen?: boolean;
+  sidebarWidth?: number;
 }
 
-const FloatingChat = ({ messages, hasSharedContent, chatId }: Props) => {
+const FloatingChat = ({
+  messages,
+  hasSharedContent,
+  chatId,
+  isSidebarOpen,
+  sidebarWidth,
+}: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [inputValue, setInputValue] = useState("");
@@ -78,54 +89,92 @@ const FloatingChat = ({ messages, hasSharedContent, chatId }: Props) => {
       .catch(console.error);
   };
 
-  return (
-    <Styled.FloatingChatContainer hasSharedContent={hasSharedContent}>
-      <Styled.MessageScrollArea ref={scrollRef}>
-        {messages.map((msg) => (
-          <Styled.FloatingMessageItem key={msg.messageId}>
-            <Styled.SenderName color={msg.user?.color}>
-              {msg.senderName || "User"}
-            </Styled.SenderName>
-            <Styled.MessageContent
-              dangerouslySetInnerHTML={{ __html: msg.message }}
-            />
-          </Styled.FloatingMessageItem>
-        ))}
-      </Styled.MessageScrollArea>
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const prevMessagesLength = useRef(messages.length);
 
-      <Styled.ChatInputForm onSubmit={handleSend}>
-        {showEmojiPicker && (
-          <Styled.EmojiPickerWrapper>
-            <EmojiPickerComponent onEmojiSelect={handleEmojiSelect} />
-          </Styled.EmojiPickerWrapper>
+  useEffect(() => {
+    if (isExpanded) {
+      setUnreadCount(0);
+    } else {
+      if (messages.length > prevMessagesLength.current) {
+        // Only increment if new messages are appended
+        setUnreadCount(
+          (prev: number) =>
+            prev + (messages.length - prevMessagesLength.current),
+        );
+      }
+    }
+    prevMessagesLength.current = messages.length;
+  }, [messages.length, isExpanded]);
+
+  return (
+    <Styled.FloatingChatContainer
+      $hasSharedContent={hasSharedContent}
+      $isSidebarOpen={isSidebarOpen}
+      $sidebarWidth={sidebarWidth}
+    >
+      <Styled.ChatHeader
+        onClick={() => setIsExpanded(!isExpanded)}
+        $isExpanded={isExpanded}
+        title={isExpanded ? "Thu gọn chat" : "Hiển thị chat"}
+      >
+        <Icon iconName={isExpanded ? "up_arrow" : "group_chat"} />
+        {!isExpanded && unreadCount > 0 && (
+          <Styled.UnreadBadge>
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </Styled.UnreadBadge>
         )}
-        <Styled.EmojiButton
-          type="button"
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-        >
-          😀
-        </Styled.EmojiButton>
-        <Styled.ChatInput
-          ref={textareaRef}
-          value={inputValue}
-          onChange={handleInput}
-          onKeyDown={handleKeyDown}
-          rows={1}
-          placeholder="Gửi lên Chat công khai..."
-        />
-        <Styled.SendButton type="submit" disabled={!inputValue.trim()}>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+      </Styled.ChatHeader>
+
+      <Styled.ChatContentWrapper $isExpanded={isExpanded}>
+        <Styled.MessageScrollArea ref={scrollRef}>
+          {messages.map((msg) => (
+            <Styled.FloatingMessageItem key={msg.messageId}>
+              <Styled.SenderName color={msg.user?.color}>
+                {msg.senderName || "User"}
+              </Styled.SenderName>
+              <Styled.MessageContent>
+                <ReactMarkdown
+                  linkTarget="_blank"
+                  allowedElements={
+                    window.meetingClientSettings?.public?.chat
+                      ?.allowedElements || []
+                  }
+                  unwrapDisallowed
+                >
+                  {messageToMarkdown(msg.message || "")}
+                </ReactMarkdown>
+              </Styled.MessageContent>
+            </Styled.FloatingMessageItem>
+          ))}
+        </Styled.MessageScrollArea>
+
+        <Styled.ChatInputForm onSubmit={handleSend}>
+          {showEmojiPicker && (
+            <Styled.EmojiPickerWrapper>
+              <EmojiPickerComponent onEmojiSelect={handleEmojiSelect} />
+            </Styled.EmojiPickerWrapper>
+          )}
+          <Styled.EmojiButton
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
           >
-            <path
-              d="M2.01 21L23 12 2.01 3 2 10L17 12 2 14z"
-              fill="currentColor"
-            />
-          </svg>
-        </Styled.SendButton>
-      </Styled.ChatInputForm>
+            😀
+          </Styled.EmojiButton>
+          <Styled.ChatInput
+            ref={textareaRef}
+            value={inputValue}
+            onChange={handleInput}
+            onKeyDown={handleKeyDown}
+            rows={1}
+            placeholder="Gửi lên Chat công khai..."
+          />
+          <Styled.SendButton type="submit" disabled={!inputValue.trim()}>
+            <Icon iconName="send" />
+          </Styled.SendButton>
+        </Styled.ChatInputForm>
+      </Styled.ChatContentWrapper>
     </Styled.FloatingChatContainer>
   );
 };

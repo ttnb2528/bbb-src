@@ -5,25 +5,93 @@ const fadeIn = keyframes`
   100% { opacity: 1; transform: translateY(0); }
 `;
 
-export const FloatingChatContainer = styled.div`
+export const FloatingChatContainer = styled.div<{
+  $hasSharedContent?: boolean;
+  $isSidebarOpen?: boolean;
+  $sidebarWidth?: number;
+}>`
   position: absolute;
   /* Giảm z-index xuống để các popup menu (như Options) đè lên trên khung Chat */
   z-index: 50;
   bottom: 110px;
-  right: 1.5rem;
-  width: 400px;
+  right: ${(props: any) =>
+    props.$isSidebarOpen
+      ? `calc(${props.$sidebarWidth}px + 1.5rem)`
+      : "1.5rem"};
+  width: 360px;
   max-width: 80vw;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  transition: all 0.3s ease-in-out;
+  align-items: stretch; /* Stretch children to fill width */
+  transition: right 0.3s ease-in-out;
+  pointer-events: none;
 
   ${(props: any) =>
-    props.hasSharedContent &&
+    props.$hasSharedContent &&
     css`
       bottom: 90px;
-      max-width: 300px;
+      max-width: 340px;
     `}
+`;
+
+export const ChatHeader = styled.div<{ $isExpanded?: boolean }>`
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: ${(props: any) =>
+    props.$isExpanded ? "transparent" : "rgba(0, 0, 0, 0.5)"};
+  backdrop-filter: ${(props: any) =>
+    props.$isExpanded ? "none" : "blur(10px)"};
+  -webkit-backdrop-filter: ${(props: any) =>
+    props.$isExpanded ? "none" : "blur(10px)"};
+  padding: ${(props: any) => (props.$isExpanded ? "4px" : "12px")};
+  border-radius: 50%;
+  margin-bottom: ${(props: any) => (props.$isExpanded ? "4px" : "0")};
+  color: ${(props: any) =>
+    props.$isExpanded ? "rgba(255,255,255,0.7)" : "white"};
+  cursor: pointer;
+  pointer-events: auto;
+  border: 1px solid
+    ${(props: any) =>
+      props.$isExpanded ? "transparent" : "rgba(255, 255, 255, 0.15)"};
+  box-shadow: ${(props: any) =>
+    props.$isExpanded ? "none" : "0 4px 12px rgba(0, 0, 0, 0.25)"};
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  width: ${(props: any) => (props.$isExpanded ? "32px" : "48px")};
+  height: ${(props: any) => (props.$isExpanded ? "32px" : "48px")};
+  align-self: flex-end;
+
+  &:hover {
+    background-color: ${(props: any) =>
+      props.$isExpanded ? "rgba(255,255,255,0.1)" : "rgba(255, 255, 255, 0.2)"};
+    color: white;
+  }
+
+  i {
+    font-size: ${(props: any) => (props.$isExpanded ? "1.1rem" : "1.3rem")};
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform: ${(props: any) =>
+      props.$isExpanded ? "rotate(90deg)" : "rotate(0deg)"};
+  }
+`;
+
+export const ChatContentWrapper = styled.div<{ $isExpanded?: boolean }>`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  opacity: ${(props: any) => (props.$isExpanded ? 1 : 0)};
+  transform: ${(props: any) =>
+    props.$isExpanded
+      ? "translateY(0) scale(1)"
+      : "translateY(10px) scale(0.95)"};
+  transform-origin: bottom right;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  pointer-events: ${(props: any) => (props.$isExpanded ? "auto" : "none")};
+  max-height: ${(props: any) => (props.$isExpanded ? "60vh" : "0px")};
+  overflow: hidden;
 `;
 
 export const MessageScrollArea = styled.div`
@@ -66,7 +134,7 @@ export const FloatingMessageItem = styled.div`
 
 export const SenderName = styled.span`
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 1rem;
   margin-bottom: 2px;
   /* Bỏ màu mặc định của BigBlueButton vì nó toàn màu tối (tím, xanh đậm) gây khó đọc trên nền đen mờ */
   color: rgba(255, 255, 255, 0.6);
@@ -74,7 +142,7 @@ export const SenderName = styled.span`
 `;
 
 export const MessageContent = styled.div`
-  font-size: 0.95rem;
+  font-size: 1.1rem;
   line-height: 1.3;
   word-break: break-word;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
@@ -98,7 +166,7 @@ export const ChatInput = styled.textarea`
   background: transparent;
   border: none;
   color: white;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   padding: 0.5rem 0.5rem;
   outline: none;
   resize: none;
@@ -156,4 +224,24 @@ export const SendButton = styled.button`
     width: 20px;
     height: 20px;
   }
+`;
+
+export const UnreadBadge = styled.div`
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: #ff3b30;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  border: 2px solid #1c1c1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 `;

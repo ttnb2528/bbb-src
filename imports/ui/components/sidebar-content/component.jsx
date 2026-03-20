@@ -1,24 +1,28 @@
-import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
-import { Resizable } from 're-resizable';
-import { ACTIONS, PANELS } from '../layout/enums';
-import { layoutSelectInput, layoutDispatch, layoutSelect } from '../layout/context';
-import ChatContainer from '/imports/ui/components/chat/chat-graphql/component';
-import usePendingChat from '/imports/ui/core/local-states/usePendingChat';
-import PollContainer from '/imports/ui/components/poll/container';
-import BreakoutRoomContainer from '../breakout-room/breakout-room/component';
-import TimerContainer from '/imports/ui/components/timer/panel/component';
-import GuestUsersManagementPanel from '/imports/ui/components/waiting-users/waiting-users-graphql/component';
-import Styled from './styles';
-import ErrorBoundary from '/imports/ui/components/common/error-boundary/component';
-import FallbackView from '/imports/ui/components/common/fallback-errors/fallback-view/component';
-import GenericContentSidekickContainer from '/imports/ui/components/generic-content/generic-sidekick-content/container';
-import deviceInfo from '/imports/utils/deviceInfo';
+import React, { useState, useEffect, useRef } from "react";
+import PropTypes from "prop-types";
+import { Resizable } from "re-resizable";
+import { ACTIONS, PANELS } from "../layout/enums";
+import {
+  layoutSelectInput,
+  layoutDispatch,
+  layoutSelect,
+} from "../layout/context";
+import ChatContainer from "/imports/ui/components/chat/chat-graphql/component";
+import usePendingChat from "/imports/ui/core/local-states/usePendingChat";
+import PollContainer from "/imports/ui/components/poll/container";
+import BreakoutRoomContainer from "../breakout-room/breakout-room/component";
+import TimerContainer from "/imports/ui/components/timer/panel/component";
+import GuestUsersManagementPanel from "/imports/ui/components/waiting-users/waiting-users-graphql/component";
+import Styled from "./styles";
+import ErrorBoundary from "/imports/ui/components/common/error-boundary/component";
+import FallbackView from "/imports/ui/components/common/fallback-errors/fallback-view/component";
+import GenericContentSidekickContainer from "/imports/ui/components/generic-content/generic-sidekick-content/container";
+import deviceInfo from "/imports/utils/deviceInfo";
 // Import user list components
-import UserListParticipantsContainer from '../user-list/user-list-content/user-participants/user-list-participants/component';
-import UserTitleContainer from '../user-list/user-list-graphql/user-participants-title/component';
-import GuestPanelOpenerContainer from '../user-list/user-list-graphql/user-participants-title/guest-panel-opener/component';
-import GuestWaitingNotification from '../sidebar-navigation/guest-waiting-notification/component';
+import UserListParticipantsContainer from "../user-list/user-list-content/user-participants/user-list-participants/component";
+import UserTitleContainer from "../user-list/user-list-graphql/user-participants-title/component";
+import GuestPanelOpenerContainer from "../user-list/user-list-graphql/user-participants-title/guest-panel-opener/component";
+import GuestWaitingNotification from "../sidebar-navigation/guest-waiting-notification/component";
 
 const propTypes = {
   top: PropTypes.number.isRequired,
@@ -66,13 +70,27 @@ const SidebarContent = (props) => {
   const sidebarRef = useRef(null);
 
   const COLLAPSED_HEIGHT = 52;
-  const [isCollapsed, setIsCollapsed] = useState(height <= COLLAPSED_HEIGHT + 4);
+  const [isCollapsed, setIsCollapsed] = useState(
+    height <= COLLAPSED_HEIGHT + 4,
+  );
 
-  // Fallback: nếu panel bị set về NONE (khi bấm nút back trong header chat),
-  // ta vẫn giữ CHÁT làm mặc định để không bị mất panel
+  // Lưu lại panel trước đó để không bị flash UI khi panel set về NONE và đóng lại
+  const [lastActivePanel, setLastActivePanel] = useState(
+    sidebarContentPanel || PANELS.CHAT,
+  );
+
+  useEffect(() => {
+    if (sidebarContentPanel && sidebarContentPanel !== PANELS.NONE) {
+      setLastActivePanel(sidebarContentPanel);
+    }
+  }, [sidebarContentPanel]);
+
+  // Fallback: nếu panel bị set về NONE,
+  // nếu đang đóng thì giữ form của last panel để khỏi bị giật hình (flash),
+  // nếu đang mở thì fallback sang CHAT.
   let activePanel = sidebarContentPanel;
   if (!activePanel || activePanel === PANELS.NONE) {
-    activePanel = PANELS.CHAT; // default
+    activePanel = isOpen ? PANELS.CHAT : lastActivePanel;
   }
 
   useEffect(() => {
@@ -99,13 +117,16 @@ const SidebarContent = (props) => {
 
     // Listen to visualViewport resize events (keyboard open/close)
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportResize);
+      window.visualViewport.addEventListener("resize", handleViewportResize);
       handleViewportResize(); // Check initial state
     }
 
     return () => {
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleViewportResize);
+        window.visualViewport.removeEventListener(
+          "resize",
+          handleViewportResize,
+        );
       }
     };
   }, [activePanel]);
@@ -128,15 +149,15 @@ const SidebarContent = (props) => {
     });
   };
 
-  const smallSidebar = width < (maxWidth / 2);
-  const pollDisplay = sidebarContentPanel === PANELS.POLL ? 'inherit' : 'none';
+  const smallSidebar = width < maxWidth / 2;
+  const pollDisplay = sidebarContentPanel === PANELS.POLL ? "inherit" : "none";
 
   // Luôn ép mở Public Chat khi ở panel CHÁT để tránh mở private chat trong panel ngang
   // Force set public chat ID mỗi khi component render và ở tab CHAT
   // Điều này đảm bảo sidebar-content luôn hiển thị public chat, ngay cả khi private modal thay đổi idChatOpen
   const idChatOpen = layoutSelect((i) => i.idChatOpen);
   const [pendingChat, setPendingChat] = usePendingChat();
-  
+
   // Clear pendingChat khi sidebar-content đang mở để tránh conflict với private modal
   // Khi user click "Start Private Chat" từ user list, pendingChat sẽ được set
   // Nhưng sidebar-content không nên xử lý nó, để private modal xử lý thay
@@ -144,10 +165,10 @@ const SidebarContent = (props) => {
     if (activePanel === PANELS.CHAT && pendingChat) {
       // Clear pendingChat để không trigger logic trong ChatContainer
       // Private modal sẽ xử lý pendingChat riêng
-      setPendingChat('');
+      setPendingChat("");
     }
   }, [activePanel, pendingChat, setPendingChat]);
-  
+
   useEffect(() => {
     const CHAT_CONFIG = window.meetingClientSettings.public.chat;
     const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
@@ -172,12 +193,15 @@ const SidebarContent = (props) => {
 
   // Không dùng tab nữa, chỉ dùng panel được set từ actions-bar
 
-  const expandedHeight = Math.min(Math.max(minHeight * 2, 260), maxHeight || window.innerHeight * 0.5);
-  
+  const expandedHeight = Math.min(
+    Math.max(minHeight * 2, 260),
+    maxHeight || window.innerHeight * 0.5,
+  );
+
   // Tính toán translateX để panel trượt từ bên phải vào
   // Dùng isOpen để control ẩn/hiện: khi isOpen = false → ẩn ra ngoài (translateX = 100%)
   // Khi isOpen = true → hiển thị (translateX = 0)
-  const translateXOffset = isOpen ? '0' : '100%';
+  const translateXOffset = isOpen ? "0" : "100%";
 
   const toggleCollapsed = () => {
     // Toggle isOpen state để ẩn/hiện sidebar
@@ -209,14 +233,16 @@ const SidebarContent = (props) => {
         setResizeStartWidth(resizableWidth);
         setResizeStartHeight(resizableHeight);
       }}
-      onResize={(...[, , , delta]) => setSidebarContentSize(delta.width, delta.height)}
+      onResize={(...[, , , delta]) =>
+        setSidebarContentSize(delta.width, delta.height)
+      }
       onResizeStop={() => {
         setIsResizing(false);
         setResizeStartWidth(0);
         setResizeStartHeight(0);
       }}
       style={{
-        position: 'absolute',
+        position: "absolute",
         top,
         left,
         right,
@@ -224,26 +250,34 @@ const SidebarContent = (props) => {
         width,
         height: resizableHeight,
         // Animation mượt mà cho trượt ngang từ bên phải
-        transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-        willChange: 'transform, height',
+        transition:
+          "transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.2s, visibility 0.2s",
+        willChange: "transform, height, opacity, visibility",
         transform: `translateX(${translateXOffset})`,
+        opacity: isOpen ? 1 : 0,
+        pointerEvents: isOpen ? "auto" : "none",
+        visibility: isOpen ? "visible" : "hidden",
         // Xử lý keyboard: điều chỉnh height để sidebar không bị đẩy lên khi keyboard mở
-        ...(deviceInfo.isMobile && keyboardHeight > 0 && activePanel === PANELS.CHAT ? {
-          height: `${Math.max(resizableHeight - keyboardHeight, minHeight)}px`,
-        } : {}),
+        ...(deviceInfo.isMobile &&
+        keyboardHeight > 0 &&
+        activePanel === PANELS.CHAT
+          ? {
+              height: `${Math.max(resizableHeight - keyboardHeight, minHeight)}px`,
+            }
+          : {}),
       }}
       handleStyles={{
         left: {
-          width: '4px',
-          height: '100vh',
-          left: '-2px',
-          cursor: 'ew-resize',
+          width: "4px",
+          height: "100vh",
+          left: "-2px",
+          cursor: "ew-resize",
         },
         right: {
-          width: '12px',
-          height: '100vh',
-          right: '-12px',
-          cursor: 'ew-resize',
+          width: "12px",
+          height: "100vh",
+          right: "-12px",
+          cursor: "ew-resize",
         },
       }}
     >
@@ -251,28 +285,38 @@ const SidebarContent = (props) => {
         <Styled.ContentArea>
           {/* Tab People - User List */}
           {activePanel === PANELS.USERLIST && (
-            <ErrorBoundary fallbackComponent={() => <FallbackView />} from="sidebar-content-userlist">
+            <ErrorBoundary
+              fallbackComponent={() => <FallbackView />}
+              from="sidebar-content-userlist"
+            >
               <UserTitleContainer />
               <GuestPanelOpenerContainer />
               <GuestWaitingNotification />
               <UserListParticipantsContainer />
             </ErrorBoundary>
           )}
-          
+
           {/* Tab Chat */}
           {activePanel === PANELS.CHAT && (
-            <ErrorBoundary fallbackComponent={() => <FallbackView />} from="sidebar-content">
+            <ErrorBoundary
+              fallbackComponent={() => <FallbackView />}
+              from="sidebar-content"
+            >
               <ChatContainer mode="sidebar" />
             </ErrorBoundary>
           )}
-          
+
           {/* Các panel khác (POLL, TIMER, etc.) */}
           {activePanel === PANELS.BREAKOUT && <BreakoutRoomContainer />}
-          {activePanel === PANELS.TIMER && <TimerContainer isModerator={amIModerator} />}
-          {activePanel === PANELS.WAITING_USERS && <GuestUsersManagementPanel />}
+          {activePanel === PANELS.TIMER && (
+            <TimerContainer isModerator={amIModerator} />
+          )}
+          {activePanel === PANELS.WAITING_USERS && (
+            <GuestUsersManagementPanel />
+          )}
           {activePanel === PANELS.POLL && (
             <Styled.Poll
-              style={{ minWidth, top: '0', display: pollDisplay }}
+              style={{ minWidth, top: "0", display: pollDisplay }}
               id="pollPanel"
             >
               <PollContainer
@@ -282,11 +326,12 @@ const SidebarContent = (props) => {
               />
             </Styled.Poll>
           )}
-          {activePanel.includes && activePanel.includes(PANELS.GENERIC_CONTENT_SIDEKICK) && (
-            <GenericContentSidekickContainer
-              genericSidekickContentId={activePanel}
-            />
-          )}
+          {activePanel.includes &&
+            activePanel.includes(PANELS.GENERIC_CONTENT_SIDEKICK) && (
+              <GenericContentSidekickContainer
+                genericSidekickContentId={activePanel}
+              />
+            )}
         </Styled.ContentArea>
       </Styled.SidebarContentWrapper>
     </Resizable>

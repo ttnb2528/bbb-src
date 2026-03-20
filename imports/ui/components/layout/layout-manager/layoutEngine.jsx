@@ -1,21 +1,29 @@
-import React, { useEffect } from 'react';
-import { layoutSelect, layoutSelectInput, layoutSelectOutput } from '/imports/ui/components/layout/context';
-import DEFAULT_VALUES from '/imports/ui/components/layout/defaultValues';
-import { LAYOUT_TYPE, DEVICE_TYPE, CAMERADOCK_POSITION } from '/imports/ui/components/layout/enums';
+import React, { useEffect } from "react";
+import {
+  layoutSelect,
+  layoutSelectInput,
+  layoutSelectOutput,
+} from "/imports/ui/components/layout/context";
+import DEFAULT_VALUES from "/imports/ui/components/layout/defaultValues";
+import {
+  LAYOUT_TYPE,
+  DEVICE_TYPE,
+  CAMERADOCK_POSITION,
+} from "/imports/ui/components/layout/enums";
 
-import CustomLayout from '/imports/ui/components/layout/layout-manager/customLayout';
-import SmartLayout from '/imports/ui/components/layout/layout-manager/smartLayout';
-import PresentationFocusLayout from '/imports/ui/components/layout/layout-manager/presentationFocusLayout';
-import VideoFocusLayout from '/imports/ui/components/layout/layout-manager/videoFocusLayout';
-import CamerasOnlyLayout from '/imports/ui/components/layout/layout-manager/camerasOnly';
-import PresentationOnlyLayout from '/imports/ui/components/layout/layout-manager/presentationOnlyLayout';
-import ParticipantsAndChatOnlyLayout from '/imports/ui/components/layout/layout-manager/participantsAndChatOnlyLayout';
-import PluginsOnlyLayout from '/imports/ui/components/layout/layout-manager/pluginsOnly';
-import { useIsPresentationEnabled } from '/imports/ui/services/features';
-import Session from '/imports/ui/services/storage/in-memory';
-import MediaOnlyLayout from './mediaOnlyLayout';
-import { usePrevious } from '../../whiteboard/utils';
-import { getWaitLayout } from '../utils';
+import CustomLayout from "/imports/ui/components/layout/layout-manager/customLayout";
+import SmartLayout from "/imports/ui/components/layout/layout-manager/smartLayout";
+import PresentationFocusLayout from "/imports/ui/components/layout/layout-manager/presentationFocusLayout";
+import VideoFocusLayout from "/imports/ui/components/layout/layout-manager/videoFocusLayout";
+import CamerasOnlyLayout from "/imports/ui/components/layout/layout-manager/camerasOnly";
+import PresentationOnlyLayout from "/imports/ui/components/layout/layout-manager/presentationOnlyLayout";
+import ParticipantsAndChatOnlyLayout from "/imports/ui/components/layout/layout-manager/participantsAndChatOnlyLayout";
+import PluginsOnlyLayout from "/imports/ui/components/layout/layout-manager/pluginsOnly";
+import { useIsPresentationEnabled } from "/imports/ui/services/features";
+import Session from "/imports/ui/services/storage/in-memory";
+import MediaOnlyLayout from "./mediaOnlyLayout";
+import { usePrevious } from "../../whiteboard/utils";
+import { getWaitLayout } from "../utils";
 
 const LayoutEngine = () => {
   const bannerBarInput = layoutSelectInput((i) => i.bannerBar);
@@ -28,7 +36,9 @@ const LayoutEngine = () => {
   const sidebarNavigationInput = layoutSelectInput((i) => i.sidebarNavigation);
   const sidebarContentInput = layoutSelectInput((i) => i.sidebarContent);
   const externalVideoInput = layoutSelectInput((i) => i.externalVideo);
-  const genericMainContentInput = layoutSelectInput((i) => i.genericMainContent);
+  const genericMainContentInput = layoutSelectInput(
+    (i) => i.genericMainContent,
+  );
   const screenShareInput = layoutSelectInput((i) => i.screenShare);
   const sharedNotesInput = layoutSelectInput((i) => i.sharedNotes);
 
@@ -47,8 +57,11 @@ const LayoutEngine = () => {
   const isMobile = deviceType === DEVICE_TYPE.MOBILE;
   const isTablet = deviceType === DEVICE_TYPE.TABLET;
   // Use visualViewport-aware viewport size (captures browser zoom changes)
-  const windowWidth = () => window.visualViewport?.width || window.document.documentElement.clientWidth;
-  const windowHeight = () => window.visualViewport?.height || window.document.documentElement.clientHeight;
+  const windowWidth = () =>
+    window.visualViewport?.width || window.document.documentElement.clientWidth;
+  const windowHeight = () =>
+    window.visualViewport?.height ||
+    window.document.documentElement.clientHeight;
   const min = (value1, value2) => (value1 <= value2 ? value1 : value2);
   const max = (value1, value2) => (value1 >= value2 ? value1 : value2);
 
@@ -56,9 +69,11 @@ const LayoutEngine = () => {
     // If it has build one time, then set the flag to true
     // This will prevent layout-engine to initiate the enforced layout with the
     // default configurations.
-    const hasLayoutEngineLoadedOnce = Session.getItem('hasLayoutEngineLoadedOnce');
+    const hasLayoutEngineLoadedOnce = Session.getItem(
+      "hasLayoutEngineLoadedOnce",
+    );
     if (!hasLayoutEngineLoadedOnce) {
-      Session.setItem('hasLayoutEngineLoadedOnce', true);
+      Session.setItem("hasLayoutEngineLoadedOnce", true);
     }
   }, []);
 
@@ -66,7 +81,9 @@ const LayoutEngine = () => {
     const { hasNotification } = notificationsBarInput;
     const { hasBanner } = bannerBarInput;
     const bannerHeight = hasBanner ? DEFAULT_VALUES.bannerHeight : 0;
-    const notificationHeight = hasNotification ? DEFAULT_VALUES.bannerHeight : 0;
+    const notificationHeight = hasNotification
+      ? DEFAULT_VALUES.bannerHeight
+      : 0;
 
     return bannerHeight + notificationHeight;
   };
@@ -80,7 +97,10 @@ const LayoutEngine = () => {
 
     const cameraDockBounds = {};
 
-    if (cameraDockInput.numCameras === 0 && selectedLayout !== LAYOUT_TYPE.VIDEO_FOCUS) {
+    if (
+      cameraDockInput.numCameras === 0 &&
+      selectedLayout !== LAYOUT_TYPE.VIDEO_FOCUS
+    ) {
       cameraDockBounds.width = 0;
       cameraDockBounds.height = 0;
 
@@ -88,13 +108,17 @@ const LayoutEngine = () => {
     }
 
     const hasPresentation = isPresentationEnabled && slidesLength !== 0;
-    const isGeneralMediaOff = !hasPresentation
-      && !hasExternalVideo && !hasScreenShare
-      && !isSharedNotesPinned && !genericContentId;
+    const isGeneralMediaOff =
+      !hasPresentation &&
+      !hasExternalVideo &&
+      !hasScreenShare &&
+      !isSharedNotesPinned &&
+      !genericContentId;
 
     if (!isOpen || isGeneralMediaOff) {
       // QUAN TRỌNG: VideoStrip (CONTENT_TOP) phải full width màn hình, không bị giới hạn bởi sidebar
-      const isCameraTop = cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP;
+      const isCameraTop =
+        cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_TOP;
       if (isCameraTop) {
         // VideoStrip luôn full width viewport
         const fullViewportWidth = windowWidth();
@@ -114,7 +138,7 @@ const LayoutEngine = () => {
       cameraDockBounds.top = mediaAreaBounds.top;
     }
 
-    if (fullscreen.group === 'webcams') {
+    if (fullscreen.group === "webcams") {
       cameraDockBounds.width = windowWidth();
       cameraDockBounds.minWidth = windowWidth();
       cameraDockBounds.maxWidth = windowWidth();
@@ -135,7 +159,9 @@ const LayoutEngine = () => {
   const calculatesNavbarHeight = () => {
     const { navBarHeight } = DEFAULT_VALUES;
 
-    const finalHeight = navBarOutput.hideTopRow ? navBarHeight / 2 : navBarHeight;
+    const finalHeight = navBarOutput.hideTopRow
+      ? navBarHeight / 2
+      : navBarHeight;
 
     return navBarInput.hasNavBar ? finalHeight : 0;
   };
@@ -176,10 +202,10 @@ const LayoutEngine = () => {
     const { actionBarHeight, actionBarPadding } = DEFAULT_VALUES;
 
     const BASE_FONT_SIZE = 14; // 90% font size
-    const height = ((actionBarHeight / BASE_FONT_SIZE) * fontSize);
+    const height = (actionBarHeight / BASE_FONT_SIZE) * fontSize;
 
     return {
-      height: height + (actionBarPadding * 2),
+      height: height + actionBarPadding * 2,
       innerHeight: height,
       padding: actionBarPadding,
     };
@@ -204,10 +230,7 @@ const LayoutEngine = () => {
   };
 
   const calculatesSidebarNavWidth = () => {
-    const {
-      sidebarNavMinWidth,
-      sidebarNavMaxWidth,
-    } = DEFAULT_VALUES;
+    const { sidebarNavMinWidth, sidebarNavMaxWidth } = DEFAULT_VALUES;
 
     const { isOpen, width: sidebarNavWidth } = sidebarNavigationInput;
 
@@ -221,9 +244,15 @@ const LayoutEngine = () => {
         maxWidth = windowWidth();
       } else {
         if (sidebarNavWidth === 0) {
-          width = min(max((windowWidth() * 0.2), sidebarNavMinWidth), sidebarNavMaxWidth);
+          width = min(
+            max(windowWidth() * 0.2, sidebarNavMinWidth),
+            sidebarNavMaxWidth,
+          );
         } else {
-          width = min(max(sidebarNavWidth, sidebarNavMinWidth), sidebarNavMaxWidth);
+          width = min(
+            max(sidebarNavWidth, sidebarNavMinWidth),
+            sidebarNavMaxWidth,
+          );
         }
         minWidth = sidebarNavMinWidth;
         maxWidth = sidebarNavMaxWidth;
@@ -269,23 +298,14 @@ const LayoutEngine = () => {
   };
 
   const calculatesSidebarContentWidth = () => {
-    const {
-      sidebarContentMinWidth,
-      sidebarContentMaxWidth,
-    } = DEFAULT_VALUES;
+    const { sidebarContentMinWidth, sidebarContentMaxWidth } = DEFAULT_VALUES;
 
     const { isOpen, width: sidebarContentWidth } = sidebarContentInput;
 
     let minWidth = 0;
     let width = 0;
     let maxWidth = 0;
-    // Responsive width that scales with viewport (helps when browser zoom changes)
     const viewportWidth = window.visualViewport?.width || windowWidth();
-    // Target ~22-26% of viewport for sidebar when open, clamped by min/max (smaller than before)
-    const responsiveWidth = min(
-      max(viewportWidth * 0.24, sidebarContentMinWidth),
-      sidebarContentMaxWidth,
-    );
 
     if (isOpen) {
       if (isMobile) {
@@ -293,17 +313,12 @@ const LayoutEngine = () => {
         width = windowWidth();
         maxWidth = windowWidth();
       } else {
-        // If user has a stored width, let it shrink with zoom by favoring the smaller between stored and responsive
+        // Force width to be narrower (300px default, max 340px) regardless of old cache
         const storedWidth = sidebarContentWidth || 0;
-        const targetWidth = storedWidth > 0
-          ? min(storedWidth, responsiveWidth)
-          : responsiveWidth;
-        width = min(
-          max(targetWidth, sidebarContentMinWidth),
-          sidebarContentMaxWidth,
-        );
-        minWidth = sidebarContentMinWidth;
-        maxWidth = sidebarContentMaxWidth;
+        const targetWidth = storedWidth > 0 ? storedWidth : 300;
+        width = min(max(targetWidth, 250), 340);
+        minWidth = 250;
+        maxWidth = 400;
       }
     }
     return {
@@ -320,10 +335,9 @@ const LayoutEngine = () => {
 
     if (isMobile) top = navBarHeight + bannerAreaHeight();
 
-    let left = isMobile ? 0 : sidebarNavWidth;
-    let right = isMobile ? 0 : sidebarNavWidth;
-    left = !isRTL ? left : null;
-    right = isRTL ? right : null;
+    // Force sidebar overlay on the right side
+    let left = null;
+    let right = 0;
 
     const zIndex = isMobile ? 11 : 2;
 
@@ -335,7 +349,11 @@ const LayoutEngine = () => {
     };
   };
 
-  const calculatesMediaAreaBounds = (sidebarNavWidth, sidebarContentWidth, margin = 0) => {
+  const calculatesMediaAreaBounds = (
+    sidebarNavWidth,
+    sidebarContentWidth,
+    margin = 0,
+  ) => {
     const { height: actionBarHeight } = calculatesActionbarHeight();
     const navBarHeight = calculatesNavbarHeight();
 
@@ -344,13 +362,15 @@ const LayoutEngine = () => {
     if (isMobile) {
       width = windowWidth();
     } else {
-      left = !isRTL ? sidebarNavWidth + sidebarContentWidth : 0;
-      width = windowWidth() - sidebarNavWidth - sidebarContentWidth;
+      left = 0; // Để full width màn hình
+      width = windowWidth(); // Bỏ trừ đi sidebar nội dung để nó tràn viền
     }
 
     return {
-      width: width - (2 * margin),
-      height: windowHeight() - (navBarHeight + actionBarHeight + bannerAreaHeight() + (2 * margin)),
+      width: width - 2 * margin,
+      height:
+        windowHeight() -
+        (navBarHeight + actionBarHeight + bannerAreaHeight() + 2 * margin),
       top: navBarHeight + bannerAreaHeight() + margin,
       left: left + margin,
     };
@@ -374,39 +394,77 @@ const LayoutEngine = () => {
     prevLayout,
   };
 
-  const layout = document.getElementById('layout');
+  const layout = document.getElementById("layout");
   if (skipLayoutEngineRender) return null;
   switch (selectedLayout) {
     case LAYOUT_TYPE.CUSTOM_LAYOUT:
-      layout?.setAttribute('data-layout', LAYOUT_TYPE.CUSTOM_LAYOUT);
-      return <CustomLayout {...common} isPresentationEnabled={isPresentationEnabled} />;
+      layout?.setAttribute("data-layout", LAYOUT_TYPE.CUSTOM_LAYOUT);
+      return (
+        <CustomLayout
+          {...common}
+          isPresentationEnabled={isPresentationEnabled}
+        />
+      );
     case LAYOUT_TYPE.SMART_LAYOUT:
-      layout?.setAttribute('data-layout', LAYOUT_TYPE.SMART_LAYOUT);
-      return <SmartLayout {...common} isPresentationEnabled={isPresentationEnabled} />;
+      layout?.setAttribute("data-layout", LAYOUT_TYPE.SMART_LAYOUT);
+      return (
+        <SmartLayout
+          {...common}
+          isPresentationEnabled={isPresentationEnabled}
+        />
+      );
     case LAYOUT_TYPE.PRESENTATION_FOCUS:
-      layout?.setAttribute('data-layout', LAYOUT_TYPE.PRESENTATION_FOCUS);
-      return <PresentationFocusLayout {...common} isPresentationEnabled={isPresentationEnabled} />;
+      layout?.setAttribute("data-layout", LAYOUT_TYPE.PRESENTATION_FOCUS);
+      return (
+        <PresentationFocusLayout
+          {...common}
+          isPresentationEnabled={isPresentationEnabled}
+        />
+      );
     case LAYOUT_TYPE.VIDEO_FOCUS:
-      layout?.setAttribute('data-layout', LAYOUT_TYPE.VIDEO_FOCUS);
-      return <VideoFocusLayout {...common} isPresentationEnabled={isPresentationEnabled} />;
+      layout?.setAttribute("data-layout", LAYOUT_TYPE.VIDEO_FOCUS);
+      return (
+        <VideoFocusLayout
+          {...common}
+          isPresentationEnabled={isPresentationEnabled}
+        />
+      );
     case LAYOUT_TYPE.CAMERAS_ONLY:
-      layout?.setAttribute('data-layout', LAYOUT_TYPE.CAMERAS_ONLY);
+      layout?.setAttribute("data-layout", LAYOUT_TYPE.CAMERAS_ONLY);
       return <CamerasOnlyLayout {...common} />;
     case LAYOUT_TYPE.PRESENTATION_ONLY:
-      layout?.setAttribute('data-layout', LAYOUT_TYPE.PRESENTATION_ONLY);
+      layout?.setAttribute("data-layout", LAYOUT_TYPE.PRESENTATION_ONLY);
       return <PresentationOnlyLayout {...common} />;
     case LAYOUT_TYPE.PARTICIPANTS_AND_CHAT_ONLY:
-      layout?.setAttribute('data-layout', LAYOUT_TYPE.PARTICIPANTS_AND_CHAT_ONLY);
+      layout?.setAttribute(
+        "data-layout",
+        LAYOUT_TYPE.PARTICIPANTS_AND_CHAT_ONLY,
+      );
       return <ParticipantsAndChatOnlyLayout {...common} />;
     case LAYOUT_TYPE.MEDIA_ONLY:
-      layout?.setAttribute('data-layout', LAYOUT_TYPE.MEDIA_ONLY);
-      return <MediaOnlyLayout {...common} isPresentationEnabled={isPresentationEnabled} />;
+      layout?.setAttribute("data-layout", LAYOUT_TYPE.MEDIA_ONLY);
+      return (
+        <MediaOnlyLayout
+          {...common}
+          isPresentationEnabled={isPresentationEnabled}
+        />
+      );
     case LAYOUT_TYPE.PLUGINS_ONLY:
-      layout?.setAttribute('data-layout', LAYOUT_TYPE.PLUGINS_ONLY);
-      return <PluginsOnlyLayout {...common} isPresentationEnabled={isPresentationEnabled} />;
+      layout?.setAttribute("data-layout", LAYOUT_TYPE.PLUGINS_ONLY);
+      return (
+        <PluginsOnlyLayout
+          {...common}
+          isPresentationEnabled={isPresentationEnabled}
+        />
+      );
     default:
-      layout?.setAttribute('data-layout', LAYOUT_TYPE.CUSTOM_LAYOUT);
-      return <CustomLayout {...common} isPresentationEnabled={isPresentationEnabled} />;
+      layout?.setAttribute("data-layout", LAYOUT_TYPE.CUSTOM_LAYOUT);
+      return (
+        <CustomLayout
+          {...common}
+          isPresentationEnabled={isPresentationEnabled}
+        />
+      );
   }
 };
 

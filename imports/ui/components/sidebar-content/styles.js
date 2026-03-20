@@ -1,5 +1,8 @@
-import styled from 'styled-components';
-import { colorWhite, colorGrayLight } from '/imports/ui/stylesheets/styled-components/palette';
+import styled from "styled-components";
+import {
+  colorWhite,
+  colorGrayLight,
+} from "/imports/ui/stylesheets/styled-components/palette";
 import {
   borderSize,
   navbarHeight,
@@ -7,15 +10,25 @@ import {
   borderRadius,
   xsPadding,
   smPaddingY,
-} from '/imports/ui/stylesheets/styled-components/general';
-import { smallOnly, mediumUp } from '/imports/ui/stylesheets/styled-components/breakpoints';
+} from "/imports/ui/stylesheets/styled-components/general";
+import {
+  smallOnly,
+  mediumUp,
+} from "/imports/ui/stylesheets/styled-components/breakpoints";
 
 const SidebarContentWrapper = styled.div`
   width: 100%;
   height: 100%;
-  background-color: ${colorWhite};
-  border-radius: ${borderRadius} 0 0 0;
-  border: none;
+  background-color: rgba(15, 15, 15, 0.45) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+
+  * {
+    color: rgba(255, 255, 255, 0.95) !important;
+  }
   overflow: visible; /* cho phép nút handle lộ ra phía ngoài */
   display: flex;
   flex-direction: column;
@@ -26,9 +39,10 @@ const SidebarContentWrapper = styled.div`
      (layoutEngine đã tự động tạo khoảng cách giữa video và sidebar) */
 
   /* Hiệu ứng trượt ngang mượt mà */
-  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
-              height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition:
+    transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: transform, height;
 
   /* Không cần data-collapsed vì transform đã xử lý việc ẩn/hiện */
@@ -58,7 +72,10 @@ const SideHandle = styled.button`
   justify-content: center;
   cursor: pointer;
   font-weight: 600;
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:focus {
     outline: none;
@@ -74,7 +91,9 @@ const SideHandle = styled.button`
   }
 
   /* Hiệu ứng nhẹ khi expanded */
-  ${({ 'data-collapsed': collapsed }) => !collapsed && `
+  ${({ "data-collapsed": collapsed }) =>
+    !collapsed &&
+    `
     i[class*="icon-bbb-chat"] {
       transform: scale(1.1) translateX(4px);
     }
@@ -90,7 +109,6 @@ const SideHandle = styled.button`
     transform: scale(0.95);
   }
 `;
-
 
 // Area to render selected content
 const ContentArea = styled.div`
@@ -119,7 +137,7 @@ const Poll = styled.div`
   outline-style: solid;
   order: 2;
   height: 100%;
-  background-color: ${colorWhite};
+  background-color: transparent !important;
   min-width: 20em;
   padding: ${smPaddingX};
 
@@ -132,7 +150,7 @@ const Poll = styled.div`
     height: auto;
     top: ${navbarHeight};
     overflow: auto;
-     &.no-padding {
+    &.no-padding {
       padding: 0;
     }
   }
@@ -146,8 +164,8 @@ const Poll = styled.div`
 // Tab Bar - giống Google Meet
 const TabBar = styled.div`
   display: flex;
-  border-bottom: 1px solid ${colorGrayLight};
-  background-color: ${colorWhite};
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: transparent !important;
   flex-shrink: 0;
   padding: 0 ${smPaddingX};
 `;
@@ -167,13 +185,14 @@ const Tab = styled.button`
   position: relative;
 
   &[data-active="true"],
-  ${({ active }) => active && `
+  ${({ active }) =>
+      active &&
+      `
     color: #1a73e8;
     border-bottom-color: #1a73e8;
     font-weight: 600;
   `}
-
-  &:hover {
+    &:hover {
     background-color: rgba(0, 0, 0, 0.04);
   }
 

@@ -1,33 +1,33 @@
-const colorWhite = 'var(--color-white, #FFF)';
-const colorOffWhite = 'var(--color-off-white, #F3F6F9)';
+const colorWhite = "var(--color-white, #FFF)";
+const colorOffWhite = "var(--color-off-white, #F3F6F9)";
 
-const colorBlack = 'var(--color-black, #000000)';
+const colorBlack = "var(--color-black, #000000)";
 
-const colorGray = 'var(--color-gray, #4E5A66)';
-const colorGrayDark = 'var(--color-gray-dark, #06172A)';
-const colorGrayLight = 'var(--color-gray-light, #8B9AA8)';
-const colorGrayLighter = 'var(--color-gray-lighter, #A7B3BD)';
-const colorGrayLightest = 'var(--color-gray-lightest, #D4D9DF)';
+const colorGray = "var(--color-gray, #4E5A66)";
+const colorGrayDark = "var(--color-gray-dark, #06172A)";
+const colorGrayLight = "var(--color-gray-light, #8B9AA8)";
+const colorGrayLighter = "var(--color-gray-lighter, #A7B3BD)";
+const colorGrayLightest = "var(--color-gray-lightest, #D4D9DF)";
 
-const colorBlueLight = 'var(--color-blue-light, #54a1f3)';
-const colorBlueLighter = 'var(--color-blue-lighter, #92BCEA)';
-const colorBlueLightest = 'var(--color-blue-lightest, #E4ECF2)';
-const colorBlueLightestChannel = '228 236 242';
-const colorBlueLighterChannel = '146 188 234';
+const colorBlueLight = "var(--color-blue-light, #54a1f3)";
+const colorBlueLighter = "var(--color-blue-lighter, #92BCEA)";
+const colorBlueLightest = "var(--color-blue-lightest, #E4ECF2)";
+const colorBlueLightestChannel = "228 236 242";
+const colorBlueLighterChannel = "146 188 234";
 
-const colorTransparent = 'var(--color-transparent, #ff000000)';
+const colorTransparent = "var(--color-transparent, #ff000000)";
 
-const colorPrimary = 'var(--color-primary, #6366F1)'; // Indigo - Modern & Professional
-const colorDanger = 'var(--color-danger, #DF2721)';
-const colorDangerDark = 'var(--color-danger-dark, #AE1010)';
-const colorSuccess = 'var(--color-success, #008081)';
-const colorWarning = 'var(--color-warning, purple)';
+const colorPrimary = "var(--color-primary, #6366F1)"; // Indigo - Modern & Professional
+const colorDanger = "var(--color-danger, #DF2721)";
+const colorDangerDark = "var(--color-danger-dark, #AE1010)";
+const colorSuccess = "var(--color-success, #008081)";
+const colorWarning = "var(--color-warning, purple)";
 const colorOffline = `var(--color-offline, ${colorGrayLight})`;
-const colorMuted = 'var(--color-muted, #586571)';
-const colorMutedBackground = 'var(--color-muted-background, #F3F6F9)';
+const colorMuted = "var(--color-muted, #586571)";
+const colorMutedBackground = "var(--color-muted-background, #F3F6F9)";
 
 const colorBackground = `var(--color-background, ${colorGrayDark})`;
-const colorOverlay = 'var(--color-overlay, rgba(6, 23, 42, 0.75))';
+const colorOverlay = "var(--color-overlay, rgba(6, 23, 42, 0.75))";
 
 const userListBg = `var(--user-list-bg, ${colorOffWhite})`;
 const userListText = `var(--user-list-text, ${colorGray})`;
@@ -36,8 +36,8 @@ const colorGrayLabel = `var(--color-gray-label, ${colorGray})`;
 const colorText = `var(--color-text, ${colorGray})`;
 const colorLink = `var(--color-link, ${colorPrimary})`;
 
-const listItemBgHover = 'var(--list-item-bg-hover, #DCE4ED)';
-const colorTipBg = 'var(--color-tip-bg, #333333)';
+const listItemBgHover = "var(--list-item-bg-hover, rgba(255, 255, 255, 0.12))";
+const colorTipBg = "var(--color-tip-bg, #333333)";
 const itemFocusBorder = `var(--item-focus-border, ${colorBlueLighter})`;
 
 const btnDefaultColor = `var(--btn-default-color, ${colorGray})`;
@@ -45,16 +45,18 @@ const btnDefaultBg = `var(--btn-default-bg, ${colorWhite})`;
 const btnDefaultBorder = `var(--btn-default-border, ${colorWhite})`;
 
 const btnDefaultGhostColor = `var(--btn-default-color, ${colorWhite})`;
-const btnDefaultGhostBg = 'var(--btn-default-bg, rgba(255, 255, 255, 0.1))'; // colorWhite, 10%
-const btnDefaultGhostBorder = 'var(--btn-default-border, rgba(255, 255, 255, 0.5))'; // colorWhite, 50%
-const btnDefaultGhostActiveBg = 'var(--btn-default-active-bg, rgba(255, 255, 255, 0.2))'; // colorWhite, 20%
+const btnDefaultGhostBg = "var(--btn-default-bg, rgba(255, 255, 255, 0.1))"; // colorWhite, 10%
+const btnDefaultGhostBorder =
+  "var(--btn-default-border, rgba(255, 255, 255, 0.5))"; // colorWhite, 50%
+const btnDefaultGhostActiveBg =
+  "var(--btn-default-active-bg, rgba(255, 255, 255, 0.2))"; // colorWhite, 20%
 
 // Indigo color palette - đồng bộ với colorPrimary
-const btnPrimaryBorder = 'var(--btn-primary-border, rgba(99, 102, 241, 0.5))'; // Indigo 50% opacity
+const btnPrimaryBorder = "var(--btn-primary-border, rgba(99, 102, 241, 0.5))"; // Indigo 50% opacity
 const btnPrimaryColor = `var(--btn-primary-color, ${colorWhite})`;
 const btnPrimaryBg = `var(--btn-primary-bg, ${colorPrimary})`;
-const btnPrimaryHoverBg = 'var(--btn-primary-hover-bg, #4F46E5)'; // Indigo darker
-const btnPrimaryActiveBg = 'var(--btn-primary-active-bg, #4338CA)'; // Indigo darkest
+const btnPrimaryHoverBg = "var(--btn-primary-hover-bg, #4F46E5)"; // Indigo darker
+const btnPrimaryActiveBg = "var(--btn-primary-active-bg, #4338CA)"; // Indigo darkest
 
 const btnSuccessBorder = `var(--btn-success-border, ${colorSuccess})`;
 const btnSuccessColor = `var(--btn-success-color, ${colorWhite})`;
@@ -67,7 +69,7 @@ const btnWarningBg = `var(--btn-warning-bg, ${colorWarning})`;
 const btnDangerBorder = `var(--btn-danger-border, ${colorDanger})`;
 const btnDangerColor = `var(--btn-danger-color, ${colorWhite})`;
 const btnDangerBg = `var(--btn-danger-bg, ${colorDanger})`;
-const btnDangerBgHover = 'var(--btn-danger-bg-hover, #C61C1C)';
+const btnDangerBgHover = "var(--btn-danger-bg-hover, #C61C1C)";
 
 const btnDarkBorder = `var(--btn-dark-border, ${colorDanger})`;
 const btnDarkColor = `var(--btn-dark-color, ${colorWhite})`;
@@ -87,26 +89,30 @@ const userThumbnailBorder = `var(--user-thumbnail-border, ${colorGrayLight})`;
 const loaderBg = `var(--loader-bg, ${colorGrayDark})`;
 const loaderBullet = `var(--loader-bullet, ${colorWhite})`;
 
-const systemMessageBackgroundColor = 'var(--system-message-background-color, #F9FBFC)';
-const systemMessageBorderColor = 'var(--system-message-border-color, #C5CDD4)';
+const systemMessageBackgroundColor =
+  "var(--system-message-background-color, #F9FBFC)";
+const systemMessageBorderColor = "var(--system-message-border-color, #C5CDD4)";
 const systemMessageFontColor = `var(--system-message-font-color, ${colorGrayDark})`;
-const highlightedMessageBackgroundColor = 'var(--system-message-background-color, #fef9f1)';
-const highlightedMessageBorderColor = 'var(--system-message-border-color, #B5D3F7)';
-const emphasizedMessageBackgroundColor = 'var(--emphasized-message-background-color, #E9F1F9)';
+const highlightedMessageBackgroundColor =
+  "var(--system-message-background-color, #fef9f1)";
+const highlightedMessageBorderColor =
+  "var(--system-message-border-color, #B5D3F7)";
+const emphasizedMessageBackgroundColor =
+  "var(--emphasized-message-background-color, #E9F1F9)";
 const colorHeading = `var(--color-heading, ${colorGrayDark})`;
-const palettePlaceholderText = 'var(--palette-placeholder-text, #787675)';
-const pollAnnotationGray = 'var(--poll-annotation-gray, #333333)';
+const palettePlaceholderText = "var(--palette-placeholder-text, #787675)";
+const pollAnnotationGray = "var(--poll-annotation-gray, #333333)";
 
 const toolbarButtonBorderColor = `var(--toolbar-button-border-color, ${colorGrayLighter})`;
 const toolbarListColor = `var(--toolbar-list-color, ${colorGray})`;
 const toolbarButtonBg = `var(--toolbar-button-bg, ${btnDefaultBg})`;
-const toolbarListBg = 'var(--toolbar-list-bg, #DDD)';
-const toolbarListBgFocus = 'var(--toolbar-list-bg-focus, #C6C6C6)';
-const colorContentBackground = 'var(--color-content-background, #1B2A3A)';
+const toolbarListBg = "var(--toolbar-list-bg, #DDD)";
+const toolbarListBgFocus = "var(--toolbar-list-bg-focus, #C6C6C6)";
+const colorContentBackground = "var(--color-content-background, #1B2A3A)";
 
 const dropdownBg = `var(--dropdown-bg, ${colorWhite})`;
 
-const pollStatsBorderColor = 'var(--poll-stats-border-color, #D4D9DF)';
+const pollStatsBorderColor = "var(--poll-stats-border-color, #D4D9DF)";
 const pollBlue = `var(--poll-blue, ${colorPrimary})`;
 
 const toastDefaultColor = `var(--toast-default-color, ${colorWhite})`;
@@ -121,30 +127,36 @@ const toastSuccessBg = `var(--toast-success-bg, ${colorSuccess})`;
 const toastErrorColor = `var(--toast-error-color, ${colorWhite})`;
 const toastErrorBg = `var(--toast-error-bg, ${colorDanger})`;
 
-const webcamBackgroundColor = 'var(--webcam-background-color, #001428FF)';
-const webcamPlaceholderBorder = 'var(--webcam-placeholder-border, rgba(255, 255, 255, 0.5))'; // colorWhite, 50%
+const webcamBackgroundColor = "var(--webcam-background-color, #001428FF)";
+const webcamPlaceholderBorder =
+  "var(--webcam-placeholder-border, rgba(255, 255, 255, 0.5))"; // colorWhite, 50%
 
 const toastWarningColor = `var(--toast-warning-color, ${colorWhite})`;
 const toastWarningBg = `var(--toast-warning-bg, ${colorWarning})`;
 
-const SegmentedButtonRingOffsetShadow = 'var(--ring-offset-shadow, 0 0 #0000)';
-const SegmentedButtonRingShadow = 'var(--ring-shadow, 0 0 #0000)';
-const SegmentedButtonBoxShadowSm = 'var(--shadow, 0 1px 2px 0 rgba(0, 0, 0, 0.05))';
-const slate900 = 'var(--slate-900, #111827)';
-const darkCyanLime = 'var(--dark-cyan-lime, #16A34A)';
+const SegmentedButtonRingOffsetShadow = "var(--ring-offset-shadow, 0 0 #0000)";
+const SegmentedButtonRingShadow = "var(--ring-shadow, 0 0 #0000)";
+const SegmentedButtonBoxShadowSm =
+  "var(--shadow, 0 1px 2px 0 rgba(0, 0, 0, 0.05))";
+const slate900 = "var(--slate-900, #111827)";
+const darkCyanLime = "var(--dark-cyan-lime, #16A34A)";
 
-const colorInfoBoxQuizText = 'var(--color-info-box-quiz-text, #15803D)';
-const colorInfoBoxQuizBg = 'var(--color-info-box-quiz-bg, #F0FDF4)';
-const colorInfoBoxQuizBorder = 'var(--color-info-box-quiz-border, #BBF7D0)';
+const colorInfoBoxQuizText = "var(--color-info-box-quiz-text, #15803D)";
+const colorInfoBoxQuizBg = "var(--color-info-box-quiz-bg, #F0FDF4)";
+const colorInfoBoxQuizBorder = "var(--color-info-box-quiz-border, #BBF7D0)";
 
-const colorSelectedCorrectAnswerText = 'var(--color-selected-correct-answer-text, #A16207)';
-const colorSelectedCorrectAnswerBg = 'var(--color-selected-correct-answer-bg, #FEF9C3)';
+const colorSelectedCorrectAnswerText =
+  "var(--color-selected-correct-answer-text, #A16207)";
+const colorSelectedCorrectAnswerBg =
+  "var(--color-selected-correct-answer-bg, #FEF9C3)";
 
-const colorSelectedCorrectAnswerTextActive = 'var(--color-selected-correct-answer-text-active, #15803D)';
-const colorSelectedCorrectAnswerBgActive = 'var(--color-selected-correct-answer-bg-active, #DCFCE7)';
+const colorSelectedCorrectAnswerTextActive =
+  "var(--color-selected-correct-answer-text-active, #15803D)";
+const colorSelectedCorrectAnswerBgActive =
+  "var(--color-selected-correct-answer-bg-active, #DCFCE7)";
 
-const colorGreen600 = 'var(--color-green-600, #16A34A)';
-const colorGreen100 = 'var(--color-green-100, #DCFCE7)';
+const colorGreen600 = "var(--color-green-600, #16A34A)";
+const colorGreen100 = "var(--color-green-100, #DCFCE7)";
 
 export {
   colorWhite,

@@ -1,18 +1,18 @@
-import styled from 'styled-components';
-import Icon from '/imports/ui/components/common/icon/component';
-import { lineHeightComputed } from '/imports/ui/stylesheets/styled-components/typography';
+import styled from "styled-components";
+import Icon from "/imports/ui/components/common/icon/component";
+import { lineHeightComputed } from "/imports/ui/stylesheets/styled-components/typography";
 import {
   colorGrayDark,
   colorPrimary,
   colorWhite,
   colorText,
-} from '/imports/ui/stylesheets/styled-components/palette';
-import { borderSize } from '/imports/ui/stylesheets/styled-components/general';
-import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
+} from "/imports/ui/stylesheets/styled-components/palette";
+import { borderSize } from "/imports/ui/stylesheets/styled-components/general";
+import { smallOnly } from "/imports/ui/stylesheets/styled-components/breakpoints";
 
 const ItemIcon = styled(Icon)`
   margin: 0 calc(${lineHeightComputed} / 2) 0 0;
-  color: ${colorText};
+  color: rgba(255, 255, 255, 0.85);
   flex: 0 0;
 
   [dir="rtl"] & {
@@ -21,7 +21,7 @@ const ItemIcon = styled(Icon)`
 `;
 
 const ItemLabel = styled.span`
-  color: ${colorGrayDark};
+  color: rgba(255, 255, 255, 0.95);
   font-size: 90%;
   flex: 1;
 `;
@@ -56,25 +56,24 @@ const Item = styled.li`
     outline-width: ${borderSize};
 
     cursor: pointer;
-    background-color: ${colorPrimary};
+    background-color: rgba(255, 255, 255, 0.15);
     color: ${colorWhite};
 
     & > span {
       color: ${colorWhite} !important;
     }
 
-    margin-left: -.25rem;
-    margin-right: -.25rem;
-    padding-left: .25rem;
-    padding-right: .25rem;
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
 
     [dir="rtl"] & {
-      margin-right: -.25rem;
-      margin-left: -.25rem;
-      padding-right: .25rem;
-      padding-left: .25rem;
+      margin-right: -0.25rem;
+      margin-left: -0.25rem;
+      padding-right: 0.25rem;
+      padding-left: 0.25rem;
     }
-
 
     @media ${smallOnly} {
       border-radius: 0.2rem;
@@ -86,8 +85,8 @@ const Item = styled.li`
   }
 
   &:focus {
-    box-shadow: 0 0 0 2px ${colorWhite}, 0 0 2px 4px rgba(${colorPrimary}, .4);
-    outline-style: solid;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+    outline-style: none;
   }
 `;
 

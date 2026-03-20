@@ -1,20 +1,24 @@
-import { createGlobalStyle } from 'styled-components';
-import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
+import { createGlobalStyle } from "styled-components";
+import { smallOnly } from "/imports/ui/stylesheets/styled-components/breakpoints";
 import {
   smPaddingX,
   borderRadius,
   borderSize,
   borderSizeSmall,
-} from '/imports/ui/stylesheets/styled-components/general';
+} from "/imports/ui/stylesheets/styled-components/general";
 import {
   dropdownBg,
   colorText,
   colorWhite,
   colorGrayLighter,
   colorOverlay,
-} from '/imports/ui/stylesheets/styled-components/palette';
+} from "/imports/ui/stylesheets/styled-components/palette";
 
 const GlobalStyle = createGlobalStyle`
+  html, body {
+    overflow: hidden !important;
+  }
+
   // BBBMenu - Mobile improvements
   @media ${smallOnly} {
     .MuiPopover-root {

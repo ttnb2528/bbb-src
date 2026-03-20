@@ -1,12 +1,18 @@
-import styled from 'styled-components';
-import { colorWhite, colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
-import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
-import { smPaddingX, smPaddingY } from '/imports/ui/stylesheets/styled-components/general';
+import styled from "styled-components";
+import {
+  colorWhite,
+  colorPrimary,
+} from "/imports/ui/stylesheets/styled-components/palette";
+import { smallOnly } from "/imports/ui/stylesheets/styled-components/breakpoints";
+import {
+  smPaddingX,
+  smPaddingY,
+} from "/imports/ui/stylesheets/styled-components/general";
 
 interface ChatProps {
   isChrome: boolean;
   isRTL: boolean;
-  mode?: 'sidebar' | 'modal';
+  mode?: "sidebar" | "modal";
 }
 
 export const ChatWrapper = styled.div`
@@ -18,8 +24,8 @@ export const ChatWrapper = styled.div`
 `;
 
 export const Chat = styled.div<ChatProps>`
-  background-color: ${colorWhite};
-  padding: ${({ mode }) => (mode === 'modal' ? '0.5rem' : '0.75rem')};
+  background-color: transparent !important;
+  padding: ${({ mode }) => (mode === "modal" ? "0.5rem" : "0.75rem")};
   display: flex;
   flex: 1 1 0%;
   flex-direction: column;
@@ -28,7 +34,7 @@ export const Chat = styled.div<ChatProps>`
   min-height: 0;
   height: 100%;
   user-select: none;
-  gap: ${({ mode }) => (mode === 'modal' ? '0.25rem' : '0.5rem')};
+  gap: ${({ mode }) => (mode === "modal" ? "0.25rem" : "0.5rem")};
 
   a {
     color: ${colorPrimary};
@@ -59,7 +65,9 @@ export const Chat = styled.div<ChatProps>`
     text-decoration-line: none;
   }
 
-  ${({ isChrome }) => isChrome && `
+  ${({ isChrome }) =>
+    isChrome &&
+    `
     transform: translateZ(0);
   `}
 

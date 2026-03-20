@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { layoutSelectInput } from "/imports/ui/components/layout/context";
-import { Input } from "/imports/ui/components/layout/layoutTypes";
 import { CHAT_MESSAGE_FLOATING_SUBSCRIPTION } from "./queries";
 import FloatingChatComponent from "./component";
 import useDeduplicatedSubscription from "/imports/ui/core/hooks/useDeduplicatedSubscription";
@@ -21,11 +20,30 @@ const FloatingChatContainer: React.FC = () => {
     },
   );
 
-  const presentationState = layoutSelectInput((i: Input) => i.presentation);
-  const screenShareState = layoutSelectInput((i: Input) => i.screenShare);
-  const hasPresentation = presentationState?.isOpen;
-  const hasScreenshare = screenShareState?.hasStream;
+  const hasPresentation = layoutSelectInput((i: any) => i.presentation?.isOpen);
+  const hasScreenshare = layoutSelectInput(
+    (i: any) => i.screenShare?.hasStream,
+  );
+  const isSidebarContentOpen = layoutSelectInput(
+    (i: any) => i.sidebarContent?.isOpen,
+  );
+  const sidebarContentWidth = layoutSelectInput(
+    (i: any) => i.sidebarContent?.width,
+  );
+  const isSidebarNavOpen = layoutSelectInput(
+    (i: any) => i.sidebarNavigation?.isOpen,
+  );
+  const sidebarNavWidth = layoutSelectInput(
+    (i: any) => i.sidebarNavigation?.width,
+  );
+
   const hasSharedContent = hasPresentation || hasScreenshare;
+  const isSidebarOpen = isSidebarContentOpen || isSidebarNavOpen;
+  let sidebarWidth = 0;
+  if (isSidebarContentOpen)
+    sidebarWidth = Math.min(Math.max(sidebarContentWidth || 300, 250), 340);
+  else if (isSidebarNavOpen)
+    sidebarWidth = Math.min(Math.max(sidebarNavWidth || 300, 250), 340);
 
   useEffect(() => {
     if (!chatMessagesHistory?.chat_message_public) return;
@@ -40,6 +58,8 @@ const FloatingChatContainer: React.FC = () => {
       const isPublicGroup = msg.chatId === PUBLIC_GROUP_CHAT_ID;
       const isSystemMsg =
         msg.messageType === ChatMessageType.USER_AWAY_STATUS_MSG ||
+        msg.messageType === ChatMessageType.USER_IS_PRESENTER_MSG ||
+        msg.messageType === ChatMessageType.PRESENTATION ||
         msg.messageType === ChatMessageType.CHAT_CLEAR ||
         msg.messageType === ChatMessageType.POLL;
 
@@ -59,6 +79,8 @@ const FloatingChatContainer: React.FC = () => {
       messages={visibleMessages}
       hasSharedContent={hasSharedContent}
       chatId={CURRENT_CHAT_CONFIG.public_group_id || "MAIN-PUBLIC-GROUP-CHAT"}
+      isSidebarOpen={isSidebarOpen}
+      sidebarWidth={sidebarWidth}
     />
   );
 };

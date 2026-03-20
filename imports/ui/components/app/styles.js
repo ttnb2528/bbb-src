@@ -1,5 +1,5 @@
-import styled from 'styled-components';
-import { FlexColumn } from '/imports/ui/stylesheets/styled-components/placeholders';
+import styled from "styled-components";
+import { FlexColumn } from "/imports/ui/stylesheets/styled-components/placeholders";
 
 const CaptionsWrapper = styled.div`
   height: auto;
@@ -7,10 +7,12 @@ const CaptionsWrapper = styled.div`
   left: 20%;
   z-index: 5;
   pointer-events: none;
-  user-select:none;
+  user-select: none;
 `;
 
-const Layout = styled(FlexColumn)``;
+const Layout = styled(FlexColumn)`
+  overflow-x: hidden;
+`;
 
 const DtfInvert = `
   body {

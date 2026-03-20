@@ -1,13 +1,16 @@
-import styled from 'styled-components';
-import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
+import styled from "styled-components";
+import { smallOnly } from "/imports/ui/stylesheets/styled-components/breakpoints";
 import {
   borderSize,
   borderRadius,
   dropdownCaretHeight,
   dropdownCaretWidth,
-} from '/imports/ui/stylesheets/styled-components/general';
-import { colorWhite, colorGray } from '/imports/ui/stylesheets/styled-components/palette';
-import { lineHeightComputed } from '/imports/ui/stylesheets/styled-components/typography';
+} from "/imports/ui/stylesheets/styled-components/general";
+import {
+  colorWhite,
+  colorGray,
+} from "/imports/ui/stylesheets/styled-components/palette";
+import { lineHeightComputed } from "/imports/ui/stylesheets/styled-components/typography";
 
 const Content = styled.div`
   outline: transparent;
@@ -15,10 +18,13 @@ const Content = styled.div`
   outline-style: solid;
   z-index: 9999;
   position: absolute;
-  background: ${colorWhite};
-  border-radius: ${borderRadius};
-  box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
-  border: 0;
+  background: rgba(15, 15, 15, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
   padding: calc(${lineHeightComputed} / 2);
 
   [dir="rtl"] & {
@@ -27,7 +33,7 @@ const Content = styled.div`
 
   &:after,
   &:before {
-    content: '';
+    content: "";
     position: absolute;
     width: 0;
     height: 0;
@@ -72,13 +78,13 @@ const Content = styled.div`
   &:after {
     border-left: ${dropdownCaretWidth} solid transparent;
     border-right: ${dropdownCaretWidth} solid transparent;
-    border-top: ${dropdownCaretHeight} solid ${colorWhite};
+    border-top: ${dropdownCaretHeight} solid rgba(25, 25, 25, 0.8);
     bottom: 0;
     margin-bottom: calc(${dropdownCaretHeight} * -1);
   }
 
   &:before {
-    border-top: ${dropdownCaretHeight} solid ${colorGray};
+    border-top: ${dropdownCaretHeight} solid rgba(255, 255, 255, 0.15);
   }
 
   transform: translateX(100%);
@@ -104,15 +110,29 @@ const Content = styled.div`
 const Scrollable = styled.div`
   @media ${smallOnly} {
     overflow-y: auto;
-    background: linear-gradient(white 30%, rgba(255,255,255,0)),
-      linear-gradient(rgba(255,255,255,0), white 70%) 0 100%,
+    background:
+      linear-gradient(white 30%, rgba(255, 255, 255, 0)),
+      linear-gradient(rgba(255, 255, 255, 0), white 70%) 0 100%,
       /* Shadows */
-      radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.2), rgba(0,0,0,0)),
-      radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.2), rgba(0,0,0,0)) 0 100%;
+        radial-gradient(
+          farthest-side at 50% 0,
+          rgba(0, 0, 0, 0.2),
+          rgba(0, 0, 0, 0)
+        ),
+      radial-gradient(
+          farthest-side at 50% 100%,
+          rgba(0, 0, 0, 0.2),
+          rgba(0, 0, 0, 0)
+        )
+        0 100%;
 
     background-repeat: no-repeat;
     background-color: transparent;
-    background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
+    background-size:
+      100% 40px,
+      100% 40px,
+      100% 14px,
+      100% 14px;
     background-attachment: local, local, scroll, scroll;
 
     // Fancy scroll
@@ -125,20 +145,30 @@ const Scrollable = styled.div`
       height: 0;
     }
     &::-webkit-scrollbar-thumb {
-      background: rgba(0,0,0,.25);
+      background: rgba(0, 0, 0, 0.25);
       border: none;
       border-radius: 50px;
     }
-    &::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.5); }
-    &::-webkit-scrollbar-thumb:active { background: rgba(0,0,0,.25); }
+    &::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.5);
+    }
+    &::-webkit-scrollbar-thumb:active {
+      background: rgba(0, 0, 0, 0.25);
+    }
     &::-webkit-scrollbar-track {
-      background: rgba(0,0,0,.25);
+      background: rgba(0, 0, 0, 0.25);
       border: none;
       border-radius: 50px;
     }
-    &::-webkit-scrollbar-track:hover { background: rgba(0,0,0,.25); }
-    &::-webkit-scrollbar-track:active { background: rgba(0,0,0,.25); }
-    &::-webkit-scrollbar-corner { background: 0 0; }
+    &::-webkit-scrollbar-track:hover {
+      background: rgba(0, 0, 0, 0.25);
+    }
+    &::-webkit-scrollbar-track:active {
+      background: rgba(0, 0, 0, 0.25);
+    }
+    &::-webkit-scrollbar-corner {
+      background: 0 0;
+    }
 
     position: absolute;
     top: 0;
