@@ -113,6 +113,49 @@ class ActionsBar extends PureComponent {
     }
   }
 
+  componentDidUpdate(prevProps) {
+    const { chats } = this.props;
+    if (chats && chats !== prevProps.chats) {
+      const CHAT_CONFIG = window.meetingClientSettings.public.chat;
+      const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
+
+      let hasNewPopups = false;
+      const stateUpdates = { ...this.state.openPrivateChats };
+
+      chats.forEach((chat) => {
+        if (chat.chatId === PUBLIC_GROUP_CHAT_ID) return;
+
+        const prevChat = prevProps.chats?.find((c) => c.chatId === chat.chatId);
+        const currentUnread = chat.totalUnread || 0;
+        const prevUnread = prevChat?.totalUnread || 0;
+
+        if (currentUnread > prevUnread) {
+          // Tiết lộ Chat Head
+          const existingChat = stateUpdates[chat.chatId];
+          if (!existingChat) {
+            stateUpdates[chat.chatId] = {
+              isOpen: true,
+              isMinimized: true,
+              position: null,
+            };
+            hasNewPopups = true;
+          } else if (!existingChat.isOpen) {
+            stateUpdates[chat.chatId] = {
+              ...existingChat,
+              isOpen: true,
+              isMinimized: true,
+            };
+            hasNewPopups = true;
+          }
+        }
+      });
+
+      if (hasNewPopups) {
+        this.setState({ openPrivateChats: stateUpdates });
+      }
+    }
+  }
+
   getCurrentTime() {
     const now = new Date();
     const hours = now.getHours();
@@ -840,23 +883,51 @@ class ActionsBar extends PureComponent {
                     />
 
                     {/* Toggle User List Sidebar */}
-                    <Button
-                      label={intl.formatMessage({
-                        id: "app.userList.label",
-                        defaultMessage: "User List",
-                      })}
-                      icon="user"
-                      color="default"
-                      size="md"
-                      onClick={this.handleToggleUserList}
-                      hideLabel
-                      circle
-                      data-test="toggleUserList"
-                      aria-expanded={
-                        sidebarContent?.isOpen &&
-                        sidebarContent?.sidebarContentPanel === PANELS.USERLIST
-                      }
-                    />
+                    <div style={{ position: "relative" }}>
+                      <Button
+                        label={intl.formatMessage({
+                          id: "app.userList.label",
+                          defaultMessage: "User List",
+                        })}
+                        icon="user"
+                        color="default"
+                        size="md"
+                        onClick={this.handleToggleUserList}
+                        hideLabel
+                        circle
+                        data-test="toggleUserList"
+                        aria-expanded={
+                          sidebarContent?.isOpen &&
+                          sidebarContent?.sidebarContentPanel ===
+                            PANELS.USERLIST
+                        }
+                      />
+                      {privateUnreadCount > 0 && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: -4,
+                            right: -4,
+                            backgroundColor: "#ff3b30",
+                            color: "white",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            padding: "2px 6px",
+                            minWidth: "18px",
+                            height: "18px",
+                            borderRadius: "9px",
+                            border: "2px solid #1c1c1e",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            pointerEvents: "none",
+                            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                          }}
+                        >
+                          {privateUnreadCount > 99 ? "99+" : privateUnreadCount}
+                        </div>
+                      )}
+                    </div>
 
                     {/* Options dropdown */}
                     <OptionsDropdownContainer

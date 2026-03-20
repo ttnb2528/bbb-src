@@ -1,26 +1,27 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { defineMessages, useIntl } from 'react-intl';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { defineMessages, useIntl } from "react-intl";
 // @ts-ignore
-import ReactModal from 'react-modal';
-import Styled from './styles';
-import ChatContainer from '/imports/ui/components/chat/chat-graphql/component';
-import Icon from '/imports/ui/components/common/icon/icon-ts/component';
-import Button from '/imports/ui/components/common/button/component';
-import useChat from '/imports/ui/core/hooks/useChat';
-import { Chat } from '/imports/ui/Types/chat';
-import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
-import { colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
+import ReactModal from "react-modal";
+import Styled from "./styles";
+import ChatContainer from "/imports/ui/components/chat/chat-graphql/component";
+import Icon from "/imports/ui/components/common/icon/icon-ts/component";
+import Button from "/imports/ui/components/common/button/component";
+import useChat from "/imports/ui/core/hooks/useChat";
+import { Chat } from "/imports/ui/Types/chat";
+import { GraphqlDataHookSubscriptionResponse } from "/imports/ui/Types/hook";
+import { colorPrimary } from "/imports/ui/stylesheets/styled-components/palette";
 
-const isMobileViewport = () => (typeof window !== 'undefined' && window.innerWidth <= 640);
+const isMobileViewport = () =>
+  typeof window !== "undefined" && window.innerWidth <= 640;
 
 const intlMessages = defineMessages({
   privateChatTitle: {
-    id: 'app.chat.titlePrivate',
-    description: 'Private chat title',
+    id: "app.chat.titlePrivate",
+    description: "Private chat title",
   },
   closeLabel: {
-    id: 'app.chat.closeChatLabel',
-    description: 'Close chat label',
+    id: "app.chat.closeChatLabel",
+    description: "Close chat label",
   },
 });
 
@@ -50,68 +51,84 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   const intl = useIntl();
   const [isMinimized, setIsMinimized] = useState(externalIsMinimized);
   const modalRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{ left: number; top: number } | null>(initialPosition || null);
-  const dragState = useRef<{ startX: number; startY: number; originLeft: number; originTop: number } | null>(null);
+  const [position, setPosition] = useState<{
+    left: number;
+    top: number;
+  } | null>(initialPosition || null);
+  const dragState = useRef<{
+    startX: number;
+    startY: number;
+    originLeft: number;
+    originTop: number;
+  } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const hasDragged = useRef(false);
   // Lưu vị trí popup trước khi minimize để restore khi expand
   const savedPositionRef = useRef<{ left: number; top: number } | null>(null);
-  
+
   // Handle click outside để đóng modal
   useEffect(() => {
     if (!isOpen || isMinimized) return;
-    
+
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      
+
       // Bỏ qua nếu click vào modal hoặc các element con của modal
       if (modalRef.current && modalRef.current.contains(target)) {
         return;
       }
-      
+
       // Trên desktop: đóng khi click bất kỳ đâu ngoài modal
       // Trên mobile: chỉ đóng khi click vào overlay (vì modal fullscreen)
       if (isMobileViewport()) {
         // Mobile: chỉ đóng khi click vào overlay
-        const isOverlay = target.classList.contains('PrivateChatModal__overlay') ||
-                         target.classList.contains('ReactModal__Overlay') ||
-                         (target.parentElement && target.parentElement.classList.contains('ReactModal__Overlay'));
+        const isOverlay =
+          target.classList.contains("PrivateChatModal__overlay") ||
+          target.classList.contains("ReactModal__Overlay") ||
+          (target.parentElement &&
+            target.parentElement.classList.contains("ReactModal__Overlay"));
         if (isOverlay) {
           onRequestClose();
         }
       } else {
         // Desktop: đóng khi click bất kỳ đâu ngoài modal
         // Bỏ qua nếu click vào các modal khác hoặc actions bar
-        const isOtherModal = target.closest('[class*="modal"]') && 
-                            !target.closest('.PrivateChatModal__overlay') &&
-                            !target.closest('.PrivateChatModal__content');
-        const isActionsBar = target.closest('[data-test="actionsBar"]') ||
-                            target.closest('[class*="actions-bar"]');
-        
+        const isOtherModal =
+          (target.closest('[class*="modal" i]') ||
+            target.closest(".MuiPopover-root") ||
+            target.closest('[class*="MuiPopover"]') ||
+            target.closest('[class*="emoji"]')) &&
+          !target.closest(".PrivateChatModal__overlay") &&
+          !target.closest(".PrivateChatModal__content");
+        const isActionsBar =
+          target.closest('[data-test="actionsBar"]') ||
+          target.closest('[class*="actions-bar"]');
+
         if (!isOtherModal && !isActionsBar) {
-          onRequestClose();
+          // Minimize into a Chat Head dock instead of closing completely
+          handleToggleMinimize();
         }
       }
     };
-    
+
     // Thêm event listener với delay nhỏ để tránh trigger ngay khi mở
     const timeoutId = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }, 100);
-    
+
     return () => {
       clearTimeout(timeoutId);
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, isMinimized, onRequestClose]);
-  
+
   // Sử dụng chatId từ props (flow mới)
   const { data: chats } = useChat((chat) => ({
     chatId: chat.chatId,
     participant: chat.participant,
     totalUnread: chat.totalUnread,
   })) as GraphqlDataHookSubscriptionResponse<Partial<Chat>[]>;
-  
+
   // Khởi tạo vị trí giữa màn hình khi mở modal
   useEffect(() => {
     // Ưu tiên sử dụng initialPosition từ parent nếu có
@@ -119,7 +136,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       setPosition(initialPosition);
       return;
     }
-    
+
     if (isOpen && position === null) {
       if (isMobileViewport()) {
         // Mobile: fullscreen, top-left corner
@@ -145,7 +162,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   // Sync isMinimized và position với props từ parent
   useEffect(() => {
     setIsMinimized(externalIsMinimized);
-    
+
     // Khi parent set isMinimized = true và có initialPosition (dock position), sync position
     if (externalIsMinimized && initialPosition) {
       setPosition(initialPosition);
@@ -154,11 +171,11 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       setPosition(initialPosition);
     }
   }, [externalIsMinimized, initialPosition]);
-  
+
   // Sync position với initialPosition khi parent update (chỉ khi không đang drag)
   useEffect(() => {
     if (isDragging) return; // Không sync khi đang drag
-    
+
     if (initialPosition && position) {
       // Chỉ update nếu position thay đổi đáng kể (tránh re-render không cần thiết)
       const deltaX = Math.abs(initialPosition.left - position.left);
@@ -170,7 +187,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       setPosition(initialPosition);
     }
   }, [initialPosition, isDragging]);
-  
+
   // Không cho minimized trên mobile để tránh UX rối
   useEffect(() => {
     if (isOpen && isMobileViewport() && isMinimized) setIsMinimized(false);
@@ -197,7 +214,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       e.preventDefault();
       const dx = e.clientX - dragState.current.startX;
       const dy = e.clientY - dragState.current.startY;
-      
+
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
         hasDragged.current = true;
       }
@@ -205,7 +222,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       // Tính toán vị trí mới không giới hạn
       const newLeft = dragState.current.originLeft + dx;
       const newTop = dragState.current.originTop + dy;
-      
+
       const newPosition = {
         left: newLeft,
         top: Math.max(0, newTop), // Chỉ giới hạn Y không âm
@@ -219,12 +236,12 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       dragState.current = null;
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDragging, position]);
 
@@ -233,7 +250,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
     if (isMobileViewport()) return; // mobile: bỏ qua minimize
     // Nếu vừa kéo thì bỏ qua click để không mở popup
     if (hasDragged.current) {
@@ -330,7 +347,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
         }
       }
     };
-    
+
     const handleTogglePrivateChatModal = () => {
       // Khi toggle và modal đã mở
       if (isOpen) {
@@ -343,12 +360,24 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
         }
       }
     };
-    
-    window.addEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
-    window.addEventListener('togglePrivateChatModal', handleTogglePrivateChatModal as EventListener);
+
+    window.addEventListener(
+      "openPrivateChatModal",
+      handleExternalOpenPrivateChat as EventListener,
+    );
+    window.addEventListener(
+      "togglePrivateChatModal",
+      handleTogglePrivateChatModal as EventListener,
+    );
     return () => {
-      window.removeEventListener('openPrivateChatModal', handleExternalOpenPrivateChat as EventListener);
-      window.removeEventListener('togglePrivateChatModal', handleTogglePrivateChatModal as EventListener);
+      window.removeEventListener(
+        "openPrivateChatModal",
+        handleExternalOpenPrivateChat as EventListener,
+      );
+      window.removeEventListener(
+        "togglePrivateChatModal",
+        handleTogglePrivateChatModal as EventListener,
+      );
     };
   }, [isOpen, isMinimized, onExpand, onRequestClose, chatId]); // Thêm chatId vào dependencies
 
@@ -369,9 +398,10 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   );
 
   // Chỉ hiển thị tên người khi đã chọn chat, nếu không thì hiển thị "Messages"
-  const activeChatName = chatId && activeChat?.participant?.name
-    ? activeChat.participant.name
-    : intl.formatMessage(intlMessages.privateChatTitle);
+  const activeChatName =
+    chatId && activeChat?.participant?.name
+      ? activeChat.participant.name
+      : intl.formatMessage(intlMessages.privateChatTitle);
 
   // Tính unread count cho active chat
   const unreadCount = activeChat?.totalUnread || 0;
@@ -384,30 +414,30 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       onRequestClose={onRequestClose}
       contentLabel={intl.formatMessage(intlMessages.privateChatTitle)}
       className="PrivateChatModal__content"
-      overlayClassName={`PrivateChatModal__overlay ${isMinimized ? 'PrivateChatModal__overlay--minimized' : ''}`}
-      appElement={document.getElementById('app') || undefined}
+      overlayClassName={`PrivateChatModal__overlay ${isMinimized ? "PrivateChatModal__overlay--minimized" : ""}`}
+      appElement={document.getElementById("app") || undefined}
       shouldCloseOnOverlayClick={!isMinimized}
       shouldCloseOnEsc={!isMinimized}
       style={{
         content: {
-          top: isMobileViewport() ? '0' : `${position.top}px`,
-          left: isMobileViewport() ? '0' : `${position.left}px`,
-          right: isMobileViewport() ? '0' : 'auto',
-          bottom: isMobileViewport() ? '0' : 'auto',
+          top: isMobileViewport() ? "0" : `${position.top}px`,
+          left: isMobileViewport() ? "0" : `${position.left}px`,
+          right: isMobileViewport() ? "0" : "auto",
+          bottom: isMobileViewport() ? "0" : "auto",
           margin: 0,
           padding: 0,
-          border: 'none',
-          borderRadius: isMobileViewport() ? '0' : '8px',
-          overflow: 'visible',
-          position: 'fixed',
-          width: isMobileViewport() ? '100vw' : 'auto',
-          height: isMobileViewport() ? '100vh' : 'auto',
+          border: "none",
+          borderRadius: isMobileViewport() ? "0" : "8px",
+          overflow: "visible",
+          position: "fixed",
+          width: isMobileViewport() ? "100vw" : "auto",
+          height: isMobileViewport() ? "100vh" : "auto",
           ...style, // Merge với style từ props
         },
         overlay: {
-          backgroundColor: isMinimized ? 'transparent' : 'rgba(0, 0, 0, 0.1)',
-          zIndex: 1000,
-          position: 'fixed',
+          backgroundColor: isMinimized ? "transparent" : "rgba(0, 0, 0, 0.1)",
+          zIndex: 995,
+          position: "fixed",
           top: 0,
           left: 0,
           right: 0,
@@ -415,10 +445,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
         },
       }}
     >
-      <Styled.Modal
-        ref={modalRef}
-        $minimized={isMinimized}
-      >
+      <Styled.Modal ref={modalRef} $minimized={isMinimized}>
         {isMinimized ? (
           // Khi minimized: hiển thị avatar của người đang chat, có thể kéo và đóng
           <Styled.MinimizedIcon
@@ -429,32 +456,41 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
                 hasDragged.current = false;
                 return;
               }
-              
+
               // Khi click vào icon minimized, dispatch event để parent xử lý
               // Parent sẽ quyết định expand hoặc toggle dock dựa trên số lượng chat minimized
-              window.dispatchEvent(new CustomEvent('clickMinimizedChatIcon', {
-                detail: { chatId },
-              }));
+              window.dispatchEvent(
+                new CustomEvent("clickMinimizedChatIcon", {
+                  detail: { chatId },
+                }),
+              );
             }}
           >
             {activeChat?.participant ? (
               <Styled.MinimizedAvatar
-                moderator={activeChat.participant.role === window.meetingClientSettings.public.user.role_moderator}
-                avatar={activeChat.participant.avatar || ''}
-                $backgroundColor={activeChat.participant.color
-                  ? (activeChat.participant.color.startsWith('#') ? activeChat.participant.color : `#${activeChat.participant.color}`)
-                  : colorPrimary}
+                moderator={
+                  activeChat.participant.role ===
+                  window.meetingClientSettings.public.user.role_moderator
+                }
+                avatar={activeChat.participant.avatar || ""}
+                $backgroundColor={
+                  activeChat.participant.color
+                    ? activeChat.participant.color.startsWith("#")
+                      ? activeChat.participant.color
+                      : `#${activeChat.participant.color}`
+                    : colorPrimary
+                }
               >
                 {activeChat.participant.avatar?.length === 0
-                  ? activeChat.participant.name?.toUpperCase().slice(0, 2) || ''
-                  : ''}
+                  ? activeChat.participant.name?.toUpperCase().slice(0, 2) || ""
+                  : ""}
               </Styled.MinimizedAvatar>
             ) : (
               <Icon iconName="chat" />
             )}
             {unreadCount > 0 && (
               <Styled.UnreadBadge>
-                {unreadCount > 99 ? '99+' : unreadCount}
+                {unreadCount > 99 ? "99+" : unreadCount}
               </Styled.UnreadBadge>
             )}
             <Styled.MinimizedClose
@@ -515,7 +551,8 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
                 ) : (
                   <Styled.EmptyState>
                     <span>
-                      Select a participant from the user list to start a private chat.
+                      Select a participant from the user list to start a private
+                      chat.
                     </span>
                   </Styled.EmptyState>
                 )}

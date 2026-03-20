@@ -301,7 +301,7 @@ const GlobalStyle = createGlobalStyle`
 
   // Private Chat Modal - Bỏ hoàn toàn overlay đen và blur
   .PrivateChatModal__overlay {
-    z-index: 1000;
+    z-index: 995;
     display: flex;
     align-items: flex-end;
     justify-content: flex-end;
