@@ -814,6 +814,7 @@ class ActionsBar extends PureComponent {
                       setMeetingLayout={setMeetingLayout}
                       setPushLayout={setPushLayout}
                       showPushLayout={showPushLayout}
+                      setPresentationFitToWidth={setPresentationFitToWidth}
                     />
                   </>
                 )}

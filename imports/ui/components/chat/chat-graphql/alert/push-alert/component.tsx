@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import injectNotify from '/imports/ui/components/common/toast/inject-notify/component';
-import { PANELS, ACTIONS } from '/imports/ui/components/layout/enums';
+import React, { useEffect } from "react";
+import injectNotify from "/imports/ui/components/common/toast/inject-notify/component";
+import { PANELS, ACTIONS } from "/imports/ui/components/layout/enums";
 
 interface ChatPushAlertProps {
   notify: (...args: unknown[]) => void;
@@ -14,7 +14,8 @@ interface ChatPushAlertProps {
 const ChatPushAlert: React.FC<ChatPushAlertProps> = (props) => {
   useEffect(() => {
     showNotify();
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const link = (title: React.ReactNode, chatId: string) => {
     const { layoutContextDispatch } = props;
@@ -46,19 +47,13 @@ const ChatPushAlert: React.FC<ChatPushAlertProps> = (props) => {
   };
 
   const showNotify = () => {
-    const {
-      notify,
-      chatId,
-      title,
-      content,
-      alertDuration,
-    } = props;
+    const { notify, chatId, title, content, alertDuration } = props;
 
     return notify(
       link(title, chatId),
-      'info',
-      'chat',
-      { autoClose: alertDuration },
+      "info",
+      "chat",
+      { autoClose: alertDuration, toastId: chatId },
       link(content, chatId),
       true,
     );

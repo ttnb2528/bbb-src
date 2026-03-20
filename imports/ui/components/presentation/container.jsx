@@ -1,37 +1,44 @@
-import React, {
-  useEffect, useMemo, useState,
-} from 'react';
-import PropTypes from 'prop-types';
-import { notify } from '/imports/ui/services/notification';
-import Presentation from '/imports/ui/components/presentation/component';
-import getFromUserSettings from '/imports/ui/services/users-settings';
+import React, { useEffect, useMemo, useState } from "react";
+import PropTypes from "prop-types";
+import { notify } from "/imports/ui/services/notification";
+import Presentation from "/imports/ui/components/presentation/component";
+import getFromUserSettings from "/imports/ui/services/users-settings";
 import {
-  useMutation, useLazyQuery, useSubscription, useQuery,
-} from '@apollo/client';
+  useMutation,
+  useLazyQuery,
+  useSubscription,
+  useQuery,
+} from "@apollo/client";
 import {
   layoutSelect,
   layoutSelectInput,
   layoutSelectOutput,
   layoutDispatch,
-} from '../layout/context';
-import { DEVICE_TYPE } from '../layout/enums';
-import MediaService from '../media/service';
+} from "../layout/context";
+import { DEVICE_TYPE } from "../layout/enums";
+import MediaService from "../media/service";
 import {
   CURRENT_PRESENTATION_PAGE_SUBSCRIPTION,
   CURRENT_PAGE_WRITERS_SUBSCRIPTION,
   ANNOTATION_HISTORY_STREAM,
   CURRENT_PAGE_ANNOTATIONS_QUERY,
-} from '/imports/ui/components/whiteboard/queries';
-import useMeeting from '/imports/ui/core/hooks/useMeeting';
-import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
-import { PRESENTATION_SET_ZOOM, PRESENTATION_SET_WRITERS } from './mutations';
-import { GET_USER_IDS } from '/imports/ui/core/graphql/queries/users';
-import useDeduplicatedSubscription from '../../core/hooks/useDeduplicatedSubscription';
-import useSettings from '/imports/ui/services/settings/hooks/useSettings';
-import { SETTINGS } from '/imports/ui/services/settings/enums';
+  PRESENTATIONS_SUBSCRIPTION,
+} from "/imports/ui/components/whiteboard/queries";
+import useMeeting from "/imports/ui/core/hooks/useMeeting";
+import useCurrentUser from "/imports/ui/core/hooks/useCurrentUser";
+import {
+  PRESENTATION_SET_ZOOM,
+  PRESENTATION_SET_WRITERS,
+  PRESENTATION_REMOVE,
+} from "./mutations";
+import { GET_USER_IDS } from "/imports/ui/core/graphql/queries/users";
+import useDeduplicatedSubscription from "../../core/hooks/useDeduplicatedSubscription";
+import useSettings from "/imports/ui/services/settings/hooks/useSettings";
+import { SETTINGS } from "/imports/ui/services/settings/enums";
 
 const fetchedpresentation = {};
-const FORCE_RESTORE_PRESENTATION_ON_NEW_EVENTS = 'bbb_force_restore_presentation_on_new_events';
+const FORCE_RESTORE_PRESENTATION_ON_NEW_EVENTS =
+  "bbb_force_restore_presentation_on_new_events";
 
 const PresentationContainer = (props) => {
   const [annotationStreamData, setAnnotationStreamData] = useState([]);
@@ -42,8 +49,11 @@ const PresentationContainer = (props) => {
   const { data: presentationPageData } = useDeduplicatedSubscription(
     CURRENT_PRESENTATION_PAGE_SUBSCRIPTION,
   );
+  const { data: allPresentationsData } = useDeduplicatedSubscription(
+    PRESENTATIONS_SUBSCRIPTION,
+  );
 
-  const { pres_page_curr: presentationPageArray } = (presentationPageData || {});
+  const { pres_page_curr: presentationPageArray } = presentationPageData || {};
   const currentPresentationPage = presentationPageArray?.[0];
   const slideSvgUrl = currentPresentationPage?.svgUrl;
   const currentPageId = currentPresentationPage?.pageId;
@@ -59,19 +69,17 @@ const PresentationContainer = (props) => {
     FORCE_RESTORE_PRESENTATION_ON_NEW_EVENTS,
     window.meetingClientSettings.public.presentation.restoreOnUpdate,
   );
-  const {
-    data: currentMeeting,
-  } = useMeeting((m) => ({
+  const { data: currentMeeting } = useMeeting((m) => ({
     createdTime: m.createdTime,
   }));
 
-  const { data: initialPageAnnotations, refetch: refetchInitialPageAnnotations } = useQuery(
-    CURRENT_PAGE_ANNOTATIONS_QUERY,
-    {
-      variables: { pageId: currentPageId },
-      skip: !currentPageId,
-    },
-  );
+  const {
+    data: initialPageAnnotations,
+    refetch: refetchInitialPageAnnotations,
+  } = useQuery(CURRENT_PAGE_ANNOTATIONS_QUERY, {
+    variables: { pageId: currentPageId },
+    skip: !currentPageId,
+  });
 
   const lastUpdatedAt = useMemo(() => {
     if (!initialPageAnnotations) return null;
@@ -81,10 +89,12 @@ const PresentationContainer = (props) => {
         ? new Date(currentMeeting.createdTime).toISOString()
         : null;
     }
-    return initialPageAnnotations.pres_annotation_curr.reduce((latest, annotation) => {
-      const updatedAt = new Date(annotation.lastUpdatedAt);
-      return updatedAt > latest ? updatedAt : latest;
-    }, new Date(0)).toISOString();
+    return initialPageAnnotations.pres_annotation_curr
+      .reduce((latest, annotation) => {
+        const updatedAt = new Date(annotation.lastUpdatedAt);
+        return updatedAt > latest ? updatedAt : latest;
+      }, new Date(0))
+      .toISOString();
   }, [initialPageAnnotations, currentMeeting?.createdTime]);
 
   const canStream = !!lastUpdatedAt;
@@ -93,8 +103,13 @@ const PresentationContainer = (props) => {
     variables: { pageId: currentPageId, updatedAt: lastUpdatedAt },
     skip: !currentPageId || !canStream,
     onData: ({ data: subscriptionData }) => {
-      const annotationStream = subscriptionData.data?.pres_annotation_history_curr_stream || [];
-      if (annotationStream.length > 0 && restoreOnUpdate && !presentationIsOpen) {
+      const annotationStream =
+        subscriptionData.data?.pres_annotation_history_curr_stream || [];
+      if (
+        annotationStream.length > 0 &&
+        restoreOnUpdate &&
+        !presentationIsOpen
+      ) {
         MediaService.setPresentationIsOpen(layoutContextDispatch, true);
       }
       setAnnotationStreamData(annotationStream);
@@ -103,8 +118,15 @@ const PresentationContainer = (props) => {
 
   const [presentationSetZoom] = useMutation(PRESENTATION_SET_ZOOM);
   const [presentationSetWriters] = useMutation(PRESENTATION_SET_WRITERS);
+  const [presentationRemove] = useMutation(PRESENTATION_REMOVE);
 
-  const [getUsers, { data: usersData }] = useLazyQuery(GET_USER_IDS, { fetchPolicy: 'no-cache' });
+  const removePresentation = (presentationId) => {
+    presentationRemove({ variables: { presentationId } });
+  };
+
+  const [getUsers, { data: usersData }] = useLazyQuery(GET_USER_IDS, {
+    fetchPolicy: "no-cache",
+  });
   const users = usersData?.user || [];
 
   const APP_CONFIG = window.meetingClientSettings.public.app;
@@ -160,27 +182,32 @@ const PresentationContainer = (props) => {
     lockSettings: m?.lockSettings,
   }));
 
-  const isViewersAnnotationsLocked = meeting ? meeting.lockSettings?.hideViewersAnnotation : true;
+  const isViewersAnnotationsLocked = meeting
+    ? meeting.lockSettings?.hideViewersAnnotation
+    : true;
 
   const multiUserData = {
-    active: whiteboardWritersData?.user_whiteboardWriteAccess?.filter(
-      (u) => !u.presenter,
-    ).length > 0,
+    active:
+      whiteboardWritersData?.user_whiteboardWriteAccess?.filter(
+        (u) => !u.presenter,
+      ).length > 0,
     size: whiteboardWritersData?.user_whiteboardWriteAccess?.length || 0,
   };
 
-  const currentSlide = currentPresentationPage ? {
-    content: currentPresentationPage.content,
-    current: currentPresentationPage.isCurrentPage,
-    height: currentPresentationPage.height,
-    width: currentPresentationPage.width,
-    id: currentPresentationPage.pageId,
-    imageUri: slideSvgUrl,
-    num: currentPresentationPage?.num,
-    presentationId: currentPresentationPage?.presentationId,
-    svgUri: slideSvgUrl,
-    infiniteWhiteboard: currentPresentationPage.infiniteWhiteboard,
-  } : null;
+  const currentSlide = currentPresentationPage
+    ? {
+        content: currentPresentationPage.content,
+        current: currentPresentationPage.isCurrentPage,
+        height: currentPresentationPage.height,
+        width: currentPresentationPage.width,
+        id: currentPresentationPage.pageId,
+        imageUri: slideSvgUrl,
+        num: currentPresentationPage?.num,
+        presentationId: currentPresentationPage?.presentationId,
+        svgUri: slideSvgUrl,
+        infiniteWhiteboard: currentPresentationPage.infiniteWhiteboard,
+      }
+    : null;
 
   let slidePosition;
   if (currentSlide) {
@@ -205,18 +232,20 @@ const PresentationContainer = (props) => {
     }
     const presentation = fetchedpresentation[presentationId];
 
-    if (PRELOAD_NEXT_SLIDE
-      && !presentation.fetchedSlide[currentSlide.num + PRELOAD_NEXT_SLIDE]
-      && presentation.canFetch) {
-      const nextSlidesSvgUrl = (currentPresentationPage.nextPagesSvg || [])
-        .map((url) => ({ svgUrl: url }));
-      const slidesToFetch = [
-        currentPresentationPage,
-        ...nextSlidesSvgUrl,
-      ];
+    if (
+      PRELOAD_NEXT_SLIDE &&
+      !presentation.fetchedSlide[currentSlide.num + PRELOAD_NEXT_SLIDE] &&
+      presentation.canFetch
+    ) {
+      const nextSlidesSvgUrl = (currentPresentationPage.nextPagesSvg || []).map(
+        (url) => ({ svgUrl: url }),
+      );
+      const slidesToFetch = [currentPresentationPage, ...nextSlidesSvgUrl];
 
       const promiseImageGet = slidesToFetch
-        .filter((s) => !fetchedpresentation[presentationId].fetchedSlide[s.svgUrl])
+        .filter(
+          (s) => !fetchedpresentation[presentationId].fetchedSlide[s.svgUrl],
+        )
         .map(async (slide) => {
           if (presentation.canFetch) presentation.canFetch = false;
           const image = await fetch(slide.svgUrl);
@@ -238,10 +267,10 @@ const PresentationContainer = (props) => {
 
   const { numCameras } = cameraDock;
   const { element } = fullscreen;
-  const fullscreenElementId = 'Presentation';
-  const fullscreenContext = (element === fullscreenElementId);
+  const fullscreenElementId = "Presentation";
+  const fullscreenContext = element === fullscreenElementId;
 
-  const isIphone = !!(navigator.userAgent.match(/iPhone/i));
+  const isIphone = !!navigator.userAgent.match(/iPhone/i);
 
   const { data: currentUser } = useCurrentUser((user) => ({
     presenter: user.presenter,
@@ -256,48 +285,53 @@ const PresentationContainer = (props) => {
     presentationAreaHeight: presentation?.height,
   };
 
-  if (layoutType === 'videoFocus' && presentation?.width === 0) return null;
+  if (layoutType === "videoFocus" && presentation?.width === 0) return null;
 
   return (
     <Presentation
-      {
-        ...{
-          layoutContextDispatch,
-          numCameras,
-          ...props,
-          userIsPresenter,
-          presentationBounds: presentation,
-          fullscreenContext,
-          fullscreenElementId,
-          isMobile: deviceType === DEVICE_TYPE.MOBILE,
-          isIphone,
-          currentSlide,
-          slidePosition,
-          hasWBAccess: currentUser?.whiteboardWriteAccess,
-          downloadPresentationUri: `${APP_CONFIG.bbbWebBase}/${currentPresentationPage?.downloadFileUri}`,
-          multiUser: multiUserData.active && presentationIsOpen,
-          presentationIsDownloadable: currentPresentationPage?.downloadable,
-          mountPresentation: !!currentSlide,
-          currentPresentationId: currentPresentationPage?.presentationId,
-          totalPages: currentPresentationPage?.totalPages || 0,
-          notify,
-          zoomSlide,
-          restoreOnUpdate,
-          addWhiteboardGlobalAccess: getUsers,
-          removeWhiteboardGlobalAccess,
-          multiUserSize: multiUserData.size,
-          isViewersAnnotationsLocked,
-          setPresentationIsOpen: MediaService.setPresentationIsOpen,
-          isDefaultPresentation: currentPresentationPage?.isDefaultPresentation,
-          presentationAreaSize,
-          currentUser,
-          currentPresentationPage,
-          layoutType: selectedLayout || '',
-          annotationStreamData,
-          initialPageAnnotations,
-          refetchInitialPageAnnotations,
-        }
-      }
+      {...{
+        layoutContextDispatch,
+        numCameras,
+        ...props,
+        userIsPresenter,
+        presentationBounds: presentation,
+        fullscreenContext,
+        fullscreenElementId,
+        isMobile: deviceType === DEVICE_TYPE.MOBILE,
+        isIphone,
+        currentSlide,
+        slidePosition,
+        hasWBAccess: currentUser?.whiteboardWriteAccess,
+        downloadPresentationUri: `${APP_CONFIG.bbbWebBase}/${currentPresentationPage?.downloadFileUri}`,
+        multiUser: multiUserData.active && presentationIsOpen,
+        presentationIsDownloadable: currentPresentationPage?.downloadable,
+        mountPresentation: !!currentSlide,
+        currentPresentationId: currentPresentationPage?.presentationId,
+        totalPages: currentPresentationPage?.totalPages || 0,
+        notify,
+        zoomSlide,
+        restoreOnUpdate,
+        addWhiteboardGlobalAccess: getUsers,
+        removeWhiteboardGlobalAccess,
+        multiUserSize: multiUserData.size,
+        isViewersAnnotationsLocked,
+        setPresentationIsOpen: MediaService.setPresentationIsOpen,
+        isDefaultPresentation:
+          currentPresentationPage?.isDefaultPresentation ||
+          currentPresentationPage?.presentationName === "default.pdf" ||
+          (allPresentationsData?.pres_presentation || []).find((p) => p.current)
+            ?.isDefault ||
+          (allPresentationsData?.pres_presentation || []).find((p) => p.current)
+            ?.name === "default.pdf",
+        presentationAreaSize,
+        currentUser,
+        currentPresentationPage,
+        layoutType: selectedLayout || "",
+        annotationStreamData,
+        initialPageAnnotations,
+        refetchInitialPageAnnotations,
+        removePresentation,
+      }}
     />
   );
 };

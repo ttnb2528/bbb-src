@@ -1,20 +1,30 @@
-import styled, { createGlobalStyle } from 'styled-components';
-import { colorOffWhite, colorWhite } from '/imports/ui/stylesheets/styled-components/palette';
+import styled, { createGlobalStyle } from "styled-components";
+import {
+  colorOffWhite,
+  colorWhite,
+} from "/imports/ui/stylesheets/styled-components/palette";
 
 const TldrawV2GlobalStyle = createGlobalStyle`
-  ${({ isPresenter, hasWBAccess }) => (!isPresenter && hasWBAccess) && `
+  ${({ isPresenter, hasWBAccess }) =>
+    !isPresenter &&
+    hasWBAccess &&
+    `
     [data-testid="tools.hand"] {
       display: none !important;
     }
   `}
 
-  ${({ isMultiUserActive }) => !isMultiUserActive && `
+  ${({ isMultiUserActive }) =>
+    !isMultiUserActive &&
+    `
     .tl-nametag {
       display: none;
     }
   `}
 
-  ${({ isToolbarVisible }) => (!isToolbarVisible) && `
+  ${({ isToolbarVisible }) =>
+    !isToolbarVisible &&
+    `
     .tlui-toolbar,
     .tlui-style-panel__wrapper {
       visibility: hidden;
@@ -60,11 +70,22 @@ const TldrawV2GlobalStyle = createGlobalStyle`
     width: auto !important;
   }
 
+  /* Fix hard-to-read "Loading asset" text when uploading/switching docs */
+  .tl-container [class*="loading"],
+  .tl-container [class*="Loading"] {
+    color: ${colorWhite} !important;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8) !important;
+    font-weight: 500;
+  }
+
   .tlui-popover__content {
     left: -50px !important;
   }
 
-  ${({ isPresenter, isMultiUserActive }) => !isPresenter && !isMultiUserActive && `
+  ${({ isPresenter, isMultiUserActive }) =>
+    !isPresenter &&
+    !isMultiUserActive &&
+    `
     .tl-cursor use {
       transform: scale(0.05)!important;
     }
@@ -91,14 +112,18 @@ const TldrawV2GlobalStyle = createGlobalStyle`
       0px 2px 6px rgba(0, 0, 0, 0.1);
   }
 
-  ${({ isRTL }) => (!isRTL) && `
+  ${({ isRTL }) =>
+    !isRTL &&
+    `
     .tlui-toolbar__extras {
       right: 0;
       left: 50px !important;
     }
   `}
 
-  ${({ isRTL }) => (isRTL) && `
+  ${({ isRTL }) =>
+    isRTL &&
+    `
     .tlui-toolbar__extras {
       right: 50px !important;
       left: 0;
@@ -110,7 +135,9 @@ const TldrawV2GlobalStyle = createGlobalStyle`
     }
   `}
 
-  ${({ bgSelected }) => (bgSelected) && `
+  ${({ bgSelected }) =>
+    bgSelected &&
+    `
       [data-testid="menu-item.toggle-lock"],
       [data-testid="menu-item.toggle-locked"],
       [data-testid="menu-item.paste"],
@@ -189,14 +216,15 @@ const TldrawV2GlobalStyle = createGlobalStyle`
       if (height <= minRange.height) return `${minRange.top}px`;
       if (height >= maxRange.height) return `${maxRange.top}px`;
 
-      const slope = (maxRange.top - minRange.top) / (maxRange.height - minRange.height);
+      const slope =
+        (maxRange.top - minRange.top) / (maxRange.height - minRange.height);
       const interpolatedTop = minRange.top + slope * (height - minRange.height);
       return `${interpolatedTop}px`;
     };
 
     const topValue = interpolateTop(presentationHeight);
 
-    let additionalStyles = '';
+    let additionalStyles = "";
     if (presentationHeight <= 405) {
       additionalStyles += `
         .tlui-layout__mobile .tlui-button__tool > .tlui-icon {
@@ -236,7 +264,9 @@ const TldrawV2GlobalStyle = createGlobalStyle`
     }
   }
 
-    ${({ cursorType }) => (cursorType) && `
+    ${({ cursorType }) =>
+      cursorType &&
+      `
       .tl-canvas {
         cursor: ${cursorType} !important;
       }
@@ -245,7 +275,8 @@ const TldrawV2GlobalStyle = createGlobalStyle`
 `;
 
 const EditableWBWrapper = styled.div`
-  &, & > :first-child {
+  &,
+  & > :first-child {
     cursor: inherit !important;
   }
 `;

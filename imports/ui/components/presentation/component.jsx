@@ -1,66 +1,71 @@
-import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
-import WhiteboardContainer from '/imports/ui/components/whiteboard/container';
-import { HUNDRED_PERCENT, MAX_PERCENT, MIN_PERCENT } from '/imports/utils/slideCalcUtils';
-import { SPACE } from '/imports/utils/keyCodes';
-import { defineMessages, injectIntl } from 'react-intl';
-import Session from '/imports/ui/services/storage/in-memory';
-import PresentationToolbarContainer from './presentation-toolbar/container';
-import PresentationMenu from './presentation-menu/container';
-import DownloadPresentationButton from './download-presentation-button/component';
-import Styled from './styles';
-import FullscreenService from '/imports/ui/components/common/fullscreen-button/service';
-import PollingContainer from '/imports/ui/components/polling/container';
-import { ACTIONS, LAYOUT_TYPE } from '../layout/enums';
-import DEFAULT_VALUES from '../layout/defaultValues';
-import { colorContentBackground } from '/imports/ui/stylesheets/styled-components/palette';
-import browserInfo from '/imports/utils/browserInfo';
-import { addAlert } from '../screenreader-alert/service';
-import { debounce } from '/imports/utils/debounce';
-import { throttle } from '/imports/utils/throttle';
-import LocatedErrorBoundary from '/imports/ui/components/common/error-boundary/located-error-boundary/component';
-import FallbackView from '/imports/ui/components/common/fallback-errors/fallback-view/component';
-import TooltipContainer from '/imports/ui/components/common/tooltip/container';
+import React, { PureComponent } from "react";
+import PropTypes from "prop-types";
+import WhiteboardContainer from "/imports/ui/components/whiteboard/container";
+import {
+  HUNDRED_PERCENT,
+  MAX_PERCENT,
+  MIN_PERCENT,
+} from "/imports/utils/slideCalcUtils";
+import { SPACE } from "/imports/utils/keyCodes";
+import { defineMessages, injectIntl } from "react-intl";
+import Session from "/imports/ui/services/storage/in-memory";
+import PresentationToolbarContainer from "./presentation-toolbar/container";
+import PresentationMenu from "./presentation-menu/container";
+import DownloadPresentationButton from "./download-presentation-button/component";
+import Button from "/imports/ui/components/common/button/component";
+import Styled from "./styles";
+import FullscreenService from "/imports/ui/components/common/fullscreen-button/service";
+import PollingContainer from "/imports/ui/components/polling/container";
+import { ACTIONS, LAYOUT_TYPE } from "../layout/enums";
+import DEFAULT_VALUES from "../layout/defaultValues";
+import { colorContentBackground } from "/imports/ui/stylesheets/styled-components/palette";
+import browserInfo from "/imports/utils/browserInfo";
+import { addAlert } from "../screenreader-alert/service";
+import { debounce } from "/imports/utils/debounce";
+import { throttle } from "/imports/utils/throttle";
+import LocatedErrorBoundary from "/imports/ui/components/common/error-boundary/located-error-boundary/component";
+import FallbackView from "/imports/ui/components/common/fallback-errors/fallback-view/component";
+import TooltipContainer from "/imports/ui/components/common/tooltip/container";
 
 const intlMessages = defineMessages({
   presentationLabel: {
-    id: 'app.presentationUploder.title',
-    description: 'presentation area element label',
+    id: "app.presentationUploder.title",
+    description: "presentation area element label",
   },
   downloadLabel: {
-    id: 'app.presentation.downloadLabel',
-    description: 'label for downloadable presentations',
+    id: "app.presentation.downloadLabel",
+    description: "label for downloadable presentations",
   },
   slideContentStart: {
-    id: 'app.presentation.startSlideContent',
-    description: 'Indicate the slide content start',
+    id: "app.presentation.startSlideContent",
+    description: "Indicate the slide content start",
   },
   slideContentEnd: {
-    id: 'app.presentation.endSlideContent',
-    description: 'Indicate the slide content end',
+    id: "app.presentation.endSlideContent",
+    description: "Indicate the slide content end",
   },
   slideContentChanged: {
-    id: 'app.presentation.changedSlideContent',
-    description: 'Indicate the slide content has changed',
+    id: "app.presentation.changedSlideContent",
+    description: "Indicate the slide content has changed",
   },
   noSlideContent: {
-    id: 'app.presentation.emptySlideContent',
-    description: 'No content available for slide',
+    id: "app.presentation.emptySlideContent",
+    description: "No content available for slide",
   },
   presentationHeader: {
-    id: 'playback.player.presentation.wrapper.aria',
-    description: 'Aria label for header navigation',
+    id: "playback.player.presentation.wrapper.aria",
+    description: "Aria label for header navigation",
   },
 });
 
 const { isSafari } = browserInfo;
 const FULLSCREEN_CHANGE_EVENT = isSafari
-  ? 'webkitfullscreenchange'
-  : 'fullscreenchange';
+  ? "webkitfullscreenchange"
+  : "fullscreenchange";
 
 const getToolbarHeight = () => {
   let height = 0;
-  const toolbarEl = document.getElementById('presentationToolbarWrapper');
+  const toolbarEl = document.getElementById("presentationToolbarWrapper");
   if (toolbarEl) {
     const { clientHeight } = toolbarEl;
     height = clientHeight;
@@ -87,15 +92,20 @@ class Presentation extends PureComponent {
       ignorePresentationRestoring: true,
     };
 
-    const PAN_ZOOM_INTERV = window.meetingClientSettings.public.presentation.panZoomInterval || 200;
+    const PAN_ZOOM_INTERV =
+      window.meetingClientSettings.public.presentation.panZoomInterval || 200;
 
     this.getSvgRef = this.getSvgRef.bind(this);
     this.zoomChanger = debounce(this.zoomChanger.bind(this), 200);
     this.updateLocalPosition = this.updateLocalPosition.bind(this);
-    this.panAndZoomChanger = throttle(this.panAndZoomChanger.bind(this), PAN_ZOOM_INTERV);
+    this.panAndZoomChanger = throttle(
+      this.panAndZoomChanger.bind(this),
+      PAN_ZOOM_INTERV,
+    );
     this.fitToWidthHandler = this.fitToWidthHandler.bind(this);
     this.onFullscreenChange = this.onFullscreenChange.bind(this);
-    this.getPresentationSizesAvailable = this.getPresentationSizesAvailable.bind(this);
+    this.getPresentationSizesAvailable =
+      this.getPresentationSizesAvailable.bind(this);
     this.handleResize = debounce(this.handleResize.bind(this), 200);
     this.setTldrawAPI = this.setTldrawAPI.bind(this);
     this.setIsPanning = this.setIsPanning.bind(this);
@@ -106,7 +116,7 @@ class Presentation extends PureComponent {
     this.onResize = () => setTimeout(this.handleResize.bind(this), 0);
     this.setPresentationRef = this.setPresentationRef.bind(this);
     this.setTldrawIsMounting = this.setTldrawIsMounting.bind(this);
-    Session.setItem('componentPresentationWillUnmount', false);
+    Session.setItem("componentPresentationWillUnmount", false);
   }
 
   static getDerivedStateFromProps(props, state) {
@@ -114,12 +124,13 @@ class Presentation extends PureComponent {
     const stateChange = { prevProps: props };
 
     if (
-      props.userIsPresenter
-      && (!prevProps || !prevProps.userIsPresenter)
-      && props.currentSlide
-      && props.slidePosition
+      props.userIsPresenter &&
+      (!prevProps || !prevProps.userIsPresenter) &&
+      props.currentSlide &&
+      props.slidePosition
     ) {
-      let potentialZoom = 100 / (props.slidePosition.viewBoxWidth / props.slidePosition.width);
+      let potentialZoom =
+        100 / (props.slidePosition.viewBoxWidth / props.slidePosition.width);
       potentialZoom = Math.max(
         HUNDRED_PERCENT,
         Math.min(MAX_PERCENT, potentialZoom),
@@ -131,8 +142,8 @@ class Presentation extends PureComponent {
 
     // When presenter is changed or slide changed we reset localPosition
     if (
-      prevProps.currentSlide?.id !== props.currentSlide?.id
-      || prevProps.userIsPresenter !== props.userIsPresenter
+      prevProps.currentSlide?.id !== props.currentSlide?.id ||
+      prevProps.userIsPresenter !== props.userIsPresenter
     ) {
       stateChange.localPosition = undefined;
     }
@@ -144,11 +155,11 @@ class Presentation extends PureComponent {
     this.getInitialPresentationSizes();
     if (this.refPresentationContainer) {
       this.refPresentationContainer.addEventListener(
-        'keydown',
+        "keydown",
         this.handlePanShortcut,
       );
       this.refPresentationContainer.addEventListener(
-        'keyup',
+        "keyup",
         this.handlePanShortcut,
       );
       this.refPresentationContainer.addEventListener(
@@ -156,7 +167,7 @@ class Presentation extends PureComponent {
         this.onFullscreenChange,
       );
     }
-    window.addEventListener('resize', this.onResize, false);
+    window.addEventListener("resize", this.onResize, false);
 
     const {
       currentSlide,
@@ -244,9 +255,9 @@ class Presentation extends PureComponent {
     }
 
     if (
-      currentSlide?.num != null
-      && prevProps?.currentSlide?.num != null
-      && currentSlide?.num !== prevProps.currentSlide?.num
+      currentSlide?.num != null &&
+      prevProps?.currentSlide?.num != null &&
+      currentSlide?.num !== prevProps.currentSlide?.num
     ) {
       addAlert(
         intl.formatMessage(intlMessages.slideContentChanged, {
@@ -268,22 +279,24 @@ class Presentation extends PureComponent {
           },
         });
       }
-      const presentationChanged = presentationId && presentationId !== currentPresentationId;
+      const presentationChanged =
+        presentationId && presentationId !== currentPresentationId;
 
       if (
-        !presentationIsOpen
-        && restoreOnUpdate
-        && (currentSlide || presentationChanged)
-        && !ignorePresentationRestoring
+        !presentationIsOpen &&
+        restoreOnUpdate &&
+        (currentSlide || presentationChanged) &&
+        !ignorePresentationRestoring
       ) {
         const slideChanged = currentSlide.id !== prevProps.currentSlide.id;
-        const positionChanged = slidePosition.viewBoxHeight
-            !== prevProps.slidePosition.viewBoxHeight
-          || slidePosition.viewBoxWidth !== prevProps.slidePosition.viewBoxWidth;
+        const positionChanged =
+          slidePosition.viewBoxHeight !==
+            prevProps.slidePosition.viewBoxHeight ||
+          slidePosition.viewBoxWidth !== prevProps.slidePosition.viewBoxWidth;
         if (
-          slideChanged
-          || positionChanged
-          || (presentationChanged && (hadPresentation || !isDefaultPresentation))
+          slideChanged ||
+          positionChanged ||
+          (presentationChanged && (hadPresentation || !isDefaultPresentation))
         ) {
           setPresentationIsOpen(layoutContextDispatch, !presentationIsOpen);
         }
@@ -297,9 +310,10 @@ class Presentation extends PureComponent {
       }
 
       if (
-        presentationBounds !== prevPresentationBounds
-        || (!presentationWidth && !presentationHeight)
-      ) this.onResize();
+        presentationBounds !== prevPresentationBounds ||
+        (!presentationWidth && !presentationHeight)
+      )
+        this.onResize();
     } else if (slidePosition) {
       const { width: currWidth, height: currHeight } = slidePosition;
 
@@ -317,8 +331,8 @@ class Presentation extends PureComponent {
     }
 
     if (
-      (zoom <= HUNDRED_PERCENT && isPanning && !fitToWidth)
-      || (!userIsPresenter && prevProps.userIsPresenter)
+      (zoom <= HUNDRED_PERCENT && isPanning && !fitToWidth) ||
+      (!userIsPresenter && prevProps.userIsPresenter)
     ) {
       this.setIsPanning();
     }
@@ -329,21 +343,21 @@ class Presentation extends PureComponent {
   }
 
   componentWillUnmount() {
-    Session.setItem('componentPresentationWillUnmount', true);
+    Session.setItem("componentPresentationWillUnmount", true);
     const { fullscreenContext, layoutContextDispatch } = this.props;
 
-    window.removeEventListener('resize', this.onResize, false);
+    window.removeEventListener("resize", this.onResize, false);
     if (this.refPresentationContainer) {
       this.refPresentationContainer.removeEventListener(
         FULLSCREEN_CHANGE_EVENT,
         this.onFullscreenChange,
       );
       this.refPresentationContainer.removeEventListener(
-        'keydown',
+        "keydown",
         this.handlePanShortcut,
       );
       this.refPresentationContainer.removeEventListener(
-        'keyup',
+        "keyup",
         this.handlePanShortcut,
       );
     }
@@ -352,8 +366,8 @@ class Presentation extends PureComponent {
       layoutContextDispatch({
         type: ACTIONS.SET_FULLSCREEN_ELEMENT,
         value: {
-          element: '',
-          group: '',
+          element: "",
+          group: "",
         },
       });
     }
@@ -364,9 +378,9 @@ class Presentation extends PureComponent {
     const { isPanning } = this.state;
     if (e.keyCode === SPACE && userIsPresenter) {
       switch (e.type) {
-        case 'keyup':
+        case "keyup":
           return isPanning && this.setIsPanning();
-        case 'keydown':
+        case "keydown":
           return !isPanning && this.setIsPanning();
         default:
       }
@@ -378,7 +392,7 @@ class Presentation extends PureComponent {
     const presentationSizes = this.getPresentationSizesAvailable();
     if (Object.keys(presentationSizes).length > 0) {
       // updating the size of the space available for the slide
-      if (!Session.getItem('componentPresentationWillUnmount')) {
+      if (!Session.getItem("componentPresentationWillUnmount")) {
         this.setState({
           presentationHeight: presentationSizes.presentationHeight,
           presentationWidth: presentationSizes.presentationWidth,
@@ -440,9 +454,11 @@ class Presentation extends PureComponent {
     };
 
     if (newPresentationAreaSize) {
-      presentationSizes.presentationWidth = newPresentationAreaSize.presentationAreaWidth;
-      presentationSizes.presentationHeight = newPresentationAreaSize.presentationAreaHeight
-        - (getToolbarHeight() || 0);
+      presentationSizes.presentationWidth =
+        newPresentationAreaSize.presentationAreaWidth;
+      presentationSizes.presentationHeight =
+        newPresentationAreaSize.presentationAreaHeight -
+        (getToolbarHeight() || 0);
       return presentationSizes;
     }
 
@@ -468,7 +484,9 @@ class Presentation extends PureComponent {
   zoomChanger(zoom) {
     const { currentSlide } = this.props;
     let boundZoom = parseInt(zoom, 10);
-    const min = currentSlide?.infiniteWhiteboard ? MIN_PERCENT : HUNDRED_PERCENT;
+    const min = currentSlide?.infiniteWhiteboard
+      ? MIN_PERCENT
+      : HUNDRED_PERCENT;
     if (boundZoom < min) {
       boundZoom = min;
     } else if (boundZoom > MAX_PERCENT) {
@@ -504,9 +522,8 @@ class Presentation extends PureComponent {
   calculateSize(viewBoxDimensions) {
     const { presentationHeight, presentationWidth } = this.state;
 
-    const {
-      userIsPresenter, currentSlide, slidePosition, fitToWidth,
-    } = this.props;
+    const { userIsPresenter, currentSlide, slidePosition, fitToWidth } =
+      this.props;
 
     if (!currentSlide || !slidePosition) {
       return { width: 0, height: 0 };
@@ -542,7 +559,7 @@ class Presentation extends PureComponent {
       if (svgHeight > presentationHeight) svgHeight = presentationHeight;
     }
 
-    if (typeof svgHeight !== 'number' || typeof svgWidth !== 'number') {
+    if (typeof svgHeight !== "number" || typeof svgWidth !== "number") {
       return { width: 0, height: 0 };
     }
 
@@ -577,6 +594,9 @@ class Presentation extends PureComponent {
       userIsPresenter,
       hasPoll,
       currentPresentationPage,
+      isDefaultPresentation,
+      currentPresentationId,
+      removePresentation,
     } = this.props;
     const { zoom, isPanning, tldrawAPI } = this.state;
 
@@ -584,11 +604,12 @@ class Presentation extends PureComponent {
 
     const { presentationToolbarMinWidth } = DEFAULT_VALUES;
 
-    const toolbarWidth = (this.refWhiteboardArea && svgWidth > presentationToolbarMinWidth)
-      || isMobile
-      || (layoutType === LAYOUT_TYPE.VIDEO_FOCUS && numCameras > 0)
-      ? svgWidth
-      : presentationToolbarMinWidth;
+    const toolbarWidth =
+      (this.refWhiteboardArea && svgWidth > presentationToolbarMinWidth) ||
+      isMobile ||
+      (layoutType === LAYOUT_TYPE.VIDEO_FOCUS && numCameras > 0)
+        ? svgWidth
+        : presentationToolbarMinWidth;
     return (
       <PresentationToolbarContainer
         {...{
@@ -609,7 +630,15 @@ class Presentation extends PureComponent {
         currentSlideNum={currentSlide.num}
         presentationId={currentSlide.presentationId}
         zoomChanger={this.zoomChanger}
-        fitToWidthHandler={this.fitToWidthHandler}
+        {...{
+          userIsPresenter,
+          isDefaultPresentation,
+          currentPresentationId,
+          removePresentation,
+          currentSlideNum: currentSlide.num,
+          numberOfSlides: totalPages,
+          fitToWidthHandler: this.fitToWidthHandler,
+        }}
         isFullscreen={fullscreenContext}
         fullscreenAction={ACTIONS.SET_FULLSCREEN_ELEMENT}
         fullscreenRef={this.refPresentationContainer}
@@ -693,6 +722,8 @@ class Presentation extends PureComponent {
       initialPageAnnotations,
       refetchInitialPageAnnotations,
       restoreOnUpdate,
+      removePresentation,
+      isDefaultPresentation,
     } = this.props;
 
     const {
@@ -733,11 +764,12 @@ class Presentation extends PureComponent {
 
     const { presentationToolbarMinWidth } = DEFAULT_VALUES;
 
-    const isLargePresentation = (svgWidth > presentationToolbarMinWidth || isMobile)
-      && !(
-        layoutType === LAYOUT_TYPE.VIDEO_FOCUS
-        && numCameras > 0
-        && !fullscreenContext
+    const isLargePresentation =
+      (svgWidth > presentationToolbarMinWidth || isMobile) &&
+      !(
+        layoutType === LAYOUT_TYPE.VIDEO_FOCUS &&
+        numCameras > 0 &&
+        !fullscreenContext
       );
 
     const containerWidth = isLargePresentation
@@ -751,15 +783,18 @@ class Presentation extends PureComponent {
       : intl.formatMessage(intlMessages.noSlideContent);
 
     const isVideoFocus = layoutType === LAYOUT_TYPE.VIDEO_FOCUS;
-    const presentationZIndex = fullscreenContext ? presentationBounds.zIndex : undefined;
+    const presentationZIndex = fullscreenContext
+      ? presentationBounds.zIndex
+      : undefined;
 
     const APP_CRASH_METADATA = {
-      logCode: 'whiteboard_crash',
-      logMessage: 'Possible whiteboard crash',
+      logCode: "whiteboard_crash",
+      logMessage: "Possible whiteboard crash",
     };
-    const presentationIsHidden = !presentationBounds
-      || presentationBounds.width === 0
-      || presentationBounds.height === 0;
+    const presentationIsHidden =
+      !presentationBounds ||
+      presentationBounds.width === 0 ||
+      presentationBounds.height === 0;
     if (!presentationIsOpen || presentationIsHidden) return null;
 
     return (
@@ -776,8 +811,8 @@ class Presentation extends PureComponent {
             right: presentationBounds.right,
             width: presentationBounds.width,
             height: presentationBounds.height,
-            display: !presentationIsOpen ? 'none' : 'flex',
-            overflow: 'hidden',
+            display: !presentationIsOpen ? "none" : "flex",
+            overflow: "hidden",
             zIndex: !isVideoFocus ? presentationZIndex : 1,
             background:
               layoutType === isVideoFocus && !fullscreenContext
@@ -785,7 +820,10 @@ class Presentation extends PureComponent {
                 : null,
           }}
         >
-          <h2 className="sr-only">{intl.formatMessage(intlMessages.presentationHeader)}</h2>
+          <h2 className="sr-only">
+            {intl.formatMessage(intlMessages.presentationHeader)}
+          </h2>
+
           <Styled.Presentation
             ref={(ref) => {
               this.refPresentation = ref;
@@ -798,11 +836,11 @@ class Presentation extends PureComponent {
             >
               <div
                 style={{
-                  position: 'absolute',
+                  position: "absolute",
                   width: svgDimensions.width < 0 ? 0 : svgDimensions.width,
                   height: svgDimensions.height < 0 ? 0 : svgDimensions.height,
-                  textAlign: 'center',
-                  display: !presentationIsOpen ? 'none' : 'block',
+                  textAlign: "center",
+                  display: !presentationIsOpen ? "none" : "block",
                   zIndex: 1,
                 }}
                 id="presentationInnerWrapper"
@@ -811,43 +849,61 @@ class Presentation extends PureComponent {
                 <Styled.VisuallyHidden id="currentSlideText">
                   {slideContent}
                 </Styled.VisuallyHidden>
-                {((userIsPresenter || hasWBAccess) && (!tldrawIsMounting && presentationWidth > 0 && currentSlide)) && <Styled.ExtraTools {...{isToolbarVisible}}>
-                  <TooltipContainer title={intl?.messages["app.shortcut-help.undo"]}>
-                    <Styled.Button
-                      aria-label={intl?.messages["app.shortcut-help.undo"]}
-                      onClick={() => tldrawAPI?.undo()}
-                      className="tlui-undo"
-                    >
-                      <Styled.IconWithMask mask={`${window.meetingClientSettings.public.app.basename}/svgs/tldraw/undo.svg`} />
-                    </Styled.Button>
-                  </TooltipContainer>
-                  <TooltipContainer title={intl?.messages["app.shortcut-help.redo"]}>
-                    <Styled.Button
-                      aria-label={intl?.messages["app.shortcut-help.redo"]}
-                      onClick={() => tldrawAPI?.redo()}
-                      className="tlui-redo"
-                    >
-                      <Styled.IconWithMask mask={`${window.meetingClientSettings.public.app.basename}/svgs/tldraw/redo.svg`} />
-                    </Styled.Button>
-                  </TooltipContainer>
-                </Styled.ExtraTools>}
-                {!tldrawIsMounting
-                  && presentationWidth > 0
-                  && currentSlide
-                  && this.renderPresentationMenu()}
-                <LocatedErrorBoundary Fallback={FallbackView} logMetadata={APP_CRASH_METADATA}>
+                {(userIsPresenter || hasWBAccess) &&
+                  !tldrawIsMounting &&
+                  presentationWidth > 0 &&
+                  currentSlide && (
+                    <Styled.ExtraTools {...{ isToolbarVisible }}>
+                      <TooltipContainer
+                        title={intl?.messages["app.shortcut-help.undo"]}
+                      >
+                        <Styled.Button
+                          aria-label={intl?.messages["app.shortcut-help.undo"]}
+                          onClick={() => tldrawAPI?.undo()}
+                          className="tlui-undo"
+                        >
+                          <Styled.IconWithMask
+                            mask={`${window.meetingClientSettings.public.app.basename}/svgs/tldraw/undo.svg`}
+                          />
+                        </Styled.Button>
+                      </TooltipContainer>
+                      <TooltipContainer
+                        title={intl?.messages["app.shortcut-help.redo"]}
+                      >
+                        <Styled.Button
+                          aria-label={intl?.messages["app.shortcut-help.redo"]}
+                          onClick={() => tldrawAPI?.redo()}
+                          className="tlui-redo"
+                        >
+                          <Styled.IconWithMask
+                            mask={`${window.meetingClientSettings.public.app.basename}/svgs/tldraw/redo.svg`}
+                          />
+                        </Styled.Button>
+                      </TooltipContainer>
+                    </Styled.ExtraTools>
+                  )}
+                {!tldrawIsMounting &&
+                  presentationWidth > 0 &&
+                  currentSlide &&
+                  this.renderPresentationMenu()}
+                <LocatedErrorBoundary
+                  Fallback={FallbackView}
+                  logMetadata={APP_CRASH_METADATA}
+                >
                   <WhiteboardContainer
                     whiteboardId={currentSlide?.id}
                     slidePosition={slidePosition}
                     getSvgRef={this.getSvgRef}
                     tldrawAPI={tldrawAPI}
                     setTldrawAPI={this.setTldrawAPI}
-                    curPageId={currentSlide?.num.toString() || '0'}
+                    curPageId={currentSlide?.num.toString() || "0"}
                     svgUri={currentSlide?.svgUri}
                     intl={intl}
                     presentationWidth={svgWidth}
                     presentationHeight={svgHeight}
-                    presentationAreaHeight={presentationBounds.height - toolbarHeight}
+                    presentationAreaHeight={
+                      presentationBounds.height - toolbarHeight
+                    }
                     presentationAreaWidth={presentationBounds.width}
                     isPanning={isPanning}
                     zoomChanger={this.zoomChanger}
@@ -866,7 +922,9 @@ class Presentation extends PureComponent {
                     isViewersAnnotationsLocked={isViewersAnnotationsLocked}
                     annotationStreamData={annotationStreamData}
                     initialPageAnnotations={initialPageAnnotations}
-                    refetchInitialPageAnnotations={refetchInitialPageAnnotations}
+                    refetchInitialPageAnnotations={
+                      refetchInitialPageAnnotations
+                    }
                     restoreOnUpdate={restoreOnUpdate}
                   />
                 </LocatedErrorBoundary>
@@ -960,6 +1018,6 @@ Presentation.defaultProps = {
   downloadPresentationUri: undefined,
   userIsPresenter: false,
   presentationIsDownloadable: false,
-  currentPresentationId: '',
+  currentPresentationId: "",
   presentationIsOpen: true,
 };

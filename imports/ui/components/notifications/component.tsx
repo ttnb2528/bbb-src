@@ -1,55 +1,60 @@
-import React, { useEffect } from 'react';
-import { FormattedMessage } from 'react-intl';
-import { Notification, NotificationResponse, getNotificationsStream } from './queries';
-import useCurrentUser from '../../core/hooks/useCurrentUser';
-import { notify } from '../../services/notification';
+import React, { useEffect } from "react";
+import { FormattedMessage } from "react-intl";
+import {
+  Notification,
+  NotificationResponse,
+  getNotificationsStream,
+} from "./queries";
+import useCurrentUser from "../../core/hooks/useCurrentUser";
+import { notify } from "../../services/notification";
 import {
   NotifyPublishedPoll,
   layoutUpdate,
   pendingGuestAlert,
   userJoinPushAlert,
   userLeavePushAlert,
-} from './service';
-import Styled from './styles';
-import useDeduplicatedSubscription from '../../core/hooks/useDeduplicatedSubscription';
+} from "./service";
+import Styled from "./styles";
+import useDeduplicatedSubscription from "../../core/hooks/useDeduplicatedSubscription";
 
 const Notifications: React.FC = () => {
-  const [registeredAt, setRegisteredAt] = React.useState<string>(new Date().toISOString());
+  const [registeredAt, setRegisteredAt] = React.useState<string>(
+    new Date().toISOString(),
+  );
   const [greaterThanLastOne, setGreaterThanLastOne] = React.useState<number>(0);
 
   const messageIndexRef = React.useRef<{
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    [key: string]:(...arg: any[]) => void
-      }>({
-        'app.whiteboard.annotations.poll': NotifyPublishedPoll,
-        'app.userList.guest.pendingGuestAlert': pendingGuestAlert,
-        'app.notification.userJoinPushAlert': userJoinPushAlert,
-        'app.notification.userLeavePushAlert': userLeavePushAlert,
-        'app.layoutUpdate.label': layoutUpdate,
-      });
+    [key: string]: (...arg: any[]) => void;
+  }>({
+    "app.whiteboard.annotations.poll": NotifyPublishedPoll,
+    "app.userList.guest.pendingGuestAlert": pendingGuestAlert,
+    "app.notification.userJoinPushAlert": userJoinPushAlert,
+    "app.notification.userLeavePushAlert": userLeavePushAlert,
+    "app.layoutUpdate.label": layoutUpdate,
+  });
 
-  const {
-    data: currentUser,
-  } = useCurrentUser((u) => ({
+  const { data: currentUser } = useCurrentUser((u) => ({
     registeredAt: u.registeredAt,
     presenter: u.presenter,
     isModerator: u.isModerator,
   }));
 
-  const {
-    data: notificationsStream,
-  } = useDeduplicatedSubscription<NotificationResponse>(getNotificationsStream, {
-    variables: { initialCursor: '2000-01-01' },
-  });
+  const { data: notificationsStream } =
+    useDeduplicatedSubscription<NotificationResponse>(getNotificationsStream, {
+      variables: { initialCursor: "2000-01-01" },
+    });
 
   const notifier = (notification: Notification) => {
     // special guest alert notification, with user name as title
-    if (notification.messageId === 'app.userList.guest.pendingGuestAlert') {
+    if (notification.messageId === "app.userList.guest.pendingGuestAlert") {
       notify(
-        <Styled.TitleMessage>{notification.messageValues['0']}</Styled.TitleMessage>,
+        <Styled.TitleMessage>
+          {notification.messageValues["0"]}
+        </Styled.TitleMessage>,
         notification.notificationType,
         notification.icon,
-        null,
+        { toastId: notification.messageId },
         <Styled.ContentMessage>
           <FormattedMessage
             id={notification.messageId}
@@ -70,6 +75,7 @@ const Notifications: React.FC = () => {
         />,
         notification.notificationType,
         notification.icon,
+        { toastId: notification.messageId },
       );
     }
   };
@@ -83,24 +89,29 @@ const Notifications: React.FC = () => {
   }, [currentUser]);
 
   useEffect(() => {
-    if (notificationsStream && notificationsStream.notification_stream.length > 0) {
-      notificationsStream.notification_stream.forEach((notification: Notification) => {
-        const createdAt = new Date(notification.createdAt).getTime();
-        if (createdAt > greaterThanLastOne) {
-          setGreaterThanLastOne(createdAt);
-          // Do something with the notification
-          if (messageIndexRef.current[notification.messageId]) {
-            messageIndexRef.current[notification.messageId](
-              notification,
-              notifier,
-              currentUser?.isModerator,
-              currentUser?.presenter,
-            );
-          } else {
-            notifier(notification);
+    if (
+      notificationsStream &&
+      notificationsStream.notification_stream.length > 0
+    ) {
+      notificationsStream.notification_stream.forEach(
+        (notification: Notification) => {
+          const createdAt = new Date(notification.createdAt).getTime();
+          if (createdAt > greaterThanLastOne) {
+            setGreaterThanLastOne(createdAt);
+            // Do something with the notification
+            if (messageIndexRef.current[notification.messageId]) {
+              messageIndexRef.current[notification.messageId](
+                notification,
+                notifier,
+                currentUser?.isModerator,
+                currentUser?.presenter,
+              );
+            } else {
+              notifier(notification);
+            }
           }
-        }
-      });
+        },
+      );
     }
   }, [notificationsStream]);
   return null;

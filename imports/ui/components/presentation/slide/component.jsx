@@ -1,33 +1,27 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
 
 const Slide = ({ imageUri, svgWidth, svgHeight }) => (
   <g>
-    {imageUri
+    {imageUri ? (
       // some pdfs lose a white background color during the conversion to svg
       // their background color is transparent
       // that's why we have a white rectangle covering the whole slide area by default
-      ? (
-        <g>
-          <rect
-            x="0"
-            y="0"
-            width={svgWidth}
-            height={svgHeight}
-            fill="white"
-          />
-          <image
-            x="0"
-            y="0"
-            width={svgWidth}
-            height={svgHeight}
-            xlinkHref={imageUri}
-            strokeWidth="0.8"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-          />
-        </g>
-      )
-      : null}
+      <g>
+        <rect x="0" y="0" width={svgWidth} height={svgHeight} fill="white" />
+        <image
+          x="0"
+          y="0"
+          width={svgWidth}
+          height={svgHeight}
+          xlinkHref={imageUri}
+          strokeWidth="0.8"
+          style={{
+            WebkitTapHighlightColor: "transparent",
+          }}
+        />
+      </g>
+    ) : null}
   </g>
 );
 
