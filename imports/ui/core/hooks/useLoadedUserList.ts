@@ -1,14 +1,13 @@
-import { makeVar, useReactiveVar } from '@apollo/client';
-import { isEqual } from 'radash';
-import { User } from '../../Types/user';
-import { useCreateUseSubscription } from './createUseSubscription';
-import { USER_LIST_SUBSCRIPTION } from '../graphql/queries/users';
+import { makeVar, useReactiveVar } from "@apollo/client";
+import { isEqual } from "radash";
+import { User } from "../../Types/user";
+import { useCreateUseSubscription } from "./createUseSubscription";
+import { USER_LIST_SUBSCRIPTION } from "../graphql/queries/users";
 
 const createLocalUserListDataGathering = (): [
-  (fn: (c: Partial<User>) => Partial<User>) => [
-    Partial<User>[],
-    (result: Partial<User>[]) => void,
-  ],
+  (
+    fn: (c: Partial<User>) => Partial<User>,
+  ) => [Partial<User>[], (result: Partial<User>[]) => void],
   (result: Partial<User>[]) => void,
 ] => {
   const loadedUserList = makeVar<Partial<User>[]>([]);
@@ -26,12 +25,13 @@ const createLocalUserListDataGathering = (): [
     }
   };
 
-  const useLocalUserList = (fn: ((c: Partial<User>) => Partial<User>)): [
-    Partial<User>[],
-    (result: Partial<User>[]) => void,
-  ] => {
+  const useLocalUserList = (
+    fn: (c: Partial<User>) => Partial<User>,
+  ): [Partial<User>[], (result: Partial<User>[]) => void] => {
     const gatheredLoadedUserList = useReactiveVar(loadedUserList);
-    const loadedUserListData = Object.values(gatheredLoadedUserList).filter((i) => Array.isArray(i)).flat();
+    const loadedUserListData = Object.values(gatheredLoadedUserList)
+      .filter((i) => Array.isArray(i))
+      .flat();
     return [loadedUserListData.map(fn), setLocalUserList];
   };
 
@@ -39,7 +39,7 @@ const createLocalUserListDataGathering = (): [
 };
 
 const useLoadedUserList = (
-  variables: { offset: number, limit: number },
+  variables: { offset: number; limit: number; nameSearch?: string },
   fn: (c: Partial<User>) => Partial<User>,
 ) => {
   const useLoadedUserListSubscription = useCreateUseSubscription<User>(
@@ -53,11 +53,7 @@ const useLoadedUserList = (
 
 const [useLocalUserList, setLocalUserList] = createLocalUserListDataGathering();
 
-export {
-  useLoadedUserList,
-  useLocalUserList,
-  setLocalUserList,
-};
+export { useLoadedUserList, useLocalUserList, setLocalUserList };
 
 export default {
   useLoadedUserList,

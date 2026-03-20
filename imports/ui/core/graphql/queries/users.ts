@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export interface UsersCountSubscriptionResponse {
   user_aggregate: {
@@ -9,63 +9,72 @@ export interface UsersCountSubscriptionResponse {
 }
 
 export const USER_LIST_SUBSCRIPTION = gql`
-subscription UserListSubscription($offset: Int!, $limit: Int!) {
-  user(limit:$limit, offset: $offset,
-                order_by: [
-                  {presenter: desc},
-                  {role: asc},
-                  {raiseHandTime: asc_nulls_last},
-                  {isDialIn: desc},
-                  {whiteboardWriteAccess: desc},
-                  {nameSortable: asc},
-                  {registeredAt: asc},
-                  {userId: asc}
-                ]) {
-    isDialIn
-    userId
-    meetingId
-    extId
-    name
-    isModerator
-    role
-    color
-    avatar
-    away
-    raiseHand
-    reactionEmoji
-    avatar
-    presenter
-    pinned
-    locked
-    authed
-    mobile
-    bot
-    guest
-    clientType
-    disconnected
-    loggedOut
-    voice {
-      joined
-      deafened
-      listenOnly
-      voiceUserId
-      listenOnlyInputDevice
-    }
-    cameras {
-      streamId
-    }
-    whiteboardWriteAccess
-    lastBreakoutRoom {
-      isDefaultName
-      sequence
-      shortName
-      currentlyInRoom
-    }
-    userLockSettings {
-      disablePublicChat
+  subscription UserListSubscription(
+    $offset: Int!
+    $limit: Int!
+    $nameSearch: String = "%"
+  ) {
+    user(
+      limit: $limit
+      offset: $offset
+      where: { name: { _ilike: $nameSearch } }
+      order_by: [
+        { presenter: desc }
+        { role: asc }
+        { raiseHandTime: asc_nulls_last }
+        { isDialIn: desc }
+        { whiteboardWriteAccess: desc }
+        { nameSortable: asc }
+        { registeredAt: asc }
+        { userId: asc }
+      ]
+    ) {
+      isDialIn
+      userId
+      meetingId
+      extId
+      name
+      isModerator
+      role
+      color
+      avatar
+      away
+      raiseHand
+      reactionEmoji
+      avatar
+      presenter
+      pinned
+      locked
+      authed
+      mobile
+      bot
+      guest
+      clientType
+      disconnected
+      loggedOut
+      voice {
+        joined
+        deafened
+        listenOnly
+        voiceUserId
+        listenOnlyInputDevice
+      }
+      cameras {
+        streamId
+      }
+      whiteboardWriteAccess
+      lastBreakoutRoom {
+        isDefaultName
+        sequence
+        shortName
+        currentlyInRoom
+      }
+      userLockSettings {
+        disablePublicChat
+      }
     }
   }
-}`;
+`;
 
 export const USER_AGGREGATE_COUNT_SUBSCRIPTION = gql`
   subscription UsersCount {
@@ -77,9 +86,19 @@ export const USER_AGGREGATE_COUNT_SUBSCRIPTION = gql`
   }
 `;
 
+export const USER_SEARCH_AGGREGATE_COUNT_SUBSCRIPTION = gql`
+  subscription UsersSearchCount($nameSearch: String!) {
+    user_aggregate(where: { name: { _ilike: $nameSearch } }) {
+      aggregate {
+        count
+      }
+    }
+  }
+`;
+
 export const GET_USER_IDS = gql`
   query Users {
-    user(where: { bot: { _eq: false } } ) {
+    user(where: { bot: { _eq: false } }) {
       userId
     }
   }
@@ -87,7 +106,7 @@ export const GET_USER_IDS = gql`
 
 export const GET_USER_NAMES = gql`
   query Users {
-    user(where: { bot: { _eq: false } } ) {
+    user(where: { bot: { _eq: false } }) {
       name
       nameSortable
       firstNameSortable

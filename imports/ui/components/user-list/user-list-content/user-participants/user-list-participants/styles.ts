@@ -298,10 +298,48 @@ const UserListItem = styled.li`
   margin-left: 0.5rem;
 `;
 
+const SearchWrapper = styled.div`
+  padding: 8px 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  i {
+    position: absolute;
+    left: 26px;
+    color: ${colorWhite};
+    opacity: 0.6;
+    font-size: 14px;
+  }
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  padding: 8px 12px 8px 32px;
+  color: ${colorWhite};
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  outline: none;
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  &:focus {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+`;
+
 export default {
   Avatar,
   Skeleton,
   UserListColumn,
   VirtualizedList,
   UserListItem,
+  SearchWrapper,
+  SearchInput,
 };
