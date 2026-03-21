@@ -1,35 +1,48 @@
-import styled, { css } from 'styled-components';
+import styled, { css } from "styled-components";
 
 const Draggable = styled.div<{
   $isDraggable: boolean;
   $isDragging: boolean;
 }>`
-  ${({ $isDraggable }) => $isDraggable && css`
-    & > video {
-      cursor: grabbing;
-    }
-  `}
+  pointer-events: none !important;
+  ${({ $isDraggable }) =>
+    $isDraggable &&
+    css`
+      & > video {
+        cursor: grabbing;
+      }
+    `}
 
-  ${({ $isDragging }) => $isDragging && css`
-    background-color: rgba(200, 200, 200, 0.5);
-  `}
+  ${({ $isDragging }) =>
+    $isDragging &&
+    css`
+      background-color: rgba(200, 200, 200, 0.5);
+    `}
 `;
 
 const ResizableWrapper = styled.div<{
   $horizontal: boolean;
   $vertical: boolean;
 }>`
-  ${({ $horizontal }) => $horizontal && css`
-    & > div div[style*="user-select: none"]:hover {
-      background-color: rgba(255, 255, 255, 0.3);
-    }
-  `}
+  pointer-events: none !important;
+  & > div {
+    pointer-events: none !important;
+  }
+  ${({ $horizontal }) =>
+    $horizontal &&
+    css`
+      & > div div[style*="user-select: none"]:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+      }
+    `}
 
-  ${({ $vertical }) => $vertical && css`
-    & > div div[style*="user-select: none"]:hover {
-      background-color: rgba(255, 255, 255, 0.3);
-    }
-  `}
+  ${({ $vertical }) =>
+    $vertical &&
+    css`
+      & > div div[style*="user-select: none"]:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+      }
+    `}
 `;
 
 // PIP cố định cho cam nhỏ khi share

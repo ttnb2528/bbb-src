@@ -1,44 +1,55 @@
-import React, { useState, useEffect } from 'react';
-import { defineMessages, useIntl } from 'react-intl';
-import { Resizable } from 're-resizable';
-import Draggable, { DraggableEvent } from 'react-draggable';
-import { useVideoStreams } from '/imports/ui/components/video-provider/hooks';
+import React, { useState, useEffect } from "react";
+import { defineMessages, useIntl } from "react-intl";
+import { Resizable } from "re-resizable";
+import Draggable, { DraggableEvent } from "react-draggable";
+import { useVideoStreams } from "/imports/ui/components/video-provider/hooks";
 import {
   layoutSelect,
   layoutSelectInput,
   layoutSelectOutput,
   layoutDispatch,
-} from '/imports/ui/components/layout/context';
-import { LAYOUT_TYPE, ACTIONS, CAMERADOCK_POSITION } from '/imports/ui/components/layout/enums';
-import { CURRENT_PRESENTATION_PAGE_SUBSCRIPTION, CurrentPresentationPagesSubscriptionResponse } from '/imports/ui/components/whiteboard/queries';
-import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
-import VideoProviderContainer from '/imports/ui/components/video-provider/container';
-import Storage from '/imports/ui/services/storage/session';
-import Styled from './styles';
-import { Input, Layout, Output } from '/imports/ui/components/layout/layoutTypes';
-import { VideoItem } from '/imports/ui/components/video-provider/types';
-import useDeduplicatedSubscription from '/imports/ui/core/hooks/useDeduplicatedSubscription';
-import { useStorageKey } from '/imports/ui/services/storage/hooks';
-import useSettings from '../../services/settings/hooks/useSettings';
-import { SETTINGS } from '../../services/settings/enums';
-import { INITIAL_INPUT_STATE } from '../layout/initState';
+} from "/imports/ui/components/layout/context";
+import {
+  LAYOUT_TYPE,
+  ACTIONS,
+  CAMERADOCK_POSITION,
+} from "/imports/ui/components/layout/enums";
+import {
+  CURRENT_PRESENTATION_PAGE_SUBSCRIPTION,
+  CurrentPresentationPagesSubscriptionResponse,
+} from "/imports/ui/components/whiteboard/queries";
+import useCurrentUser from "/imports/ui/core/hooks/useCurrentUser";
+import VideoProviderContainer from "/imports/ui/components/video-provider/container";
+import Storage from "/imports/ui/services/storage/session";
+import Styled from "./styles";
+import {
+  Input,
+  Layout,
+  Output,
+} from "/imports/ui/components/layout/layoutTypes";
+import { VideoItem } from "/imports/ui/components/video-provider/types";
+import useDeduplicatedSubscription from "/imports/ui/core/hooks/useDeduplicatedSubscription";
+import { useStorageKey } from "/imports/ui/services/storage/hooks";
+import useSettings from "../../services/settings/hooks/useSettings";
+import { SETTINGS } from "../../services/settings/enums";
+import { INITIAL_INPUT_STATE } from "../layout/initState";
 
 const intlMessages = defineMessages({
   camerasAriaLabel: {
-    id: 'app.video.cameraAriaLabel',
-    description: 'Aria Label for cameras component',
+    id: "app.video.cameraAriaLabel",
+    description: "Aria Label for cameras component",
   },
 });
 
 interface WebcamComponentProps {
-  cameraDock: Output['cameraDock'];
+  cameraDock: Output["cameraDock"];
   swapLayout: boolean;
   focusedId: string;
   layoutContextDispatch: (...args: unknown[]) => void;
-  fullscreen: Layout['fullscreen'];
+  fullscreen: Layout["fullscreen"];
   isPresenter: boolean;
   displayPresentation: boolean;
-  cameraOptimalGridSize: Input['cameraDock']['cameraOptimalGridSize'];
+  cameraOptimalGridSize: Input["cameraDock"]["cameraOptimalGridSize"];
   isRTL: boolean;
 }
 
@@ -66,57 +77,67 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
   const [draggedAtLeastOneTime, setDraggedAtLeastOneTime] = useState(false);
   const intl = useIntl();
 
-  const lastSize = Storage.getItem('webcamSize') || { width: 0, height: 0 };
-  const { height: lastHeight } = lastSize as { width: number, height: number };
+  const lastSize = Storage.getItem("webcamSize") || { width: 0, height: 0 };
+  const { height: lastHeight } = lastSize as { width: number; height: number };
 
-  const isCameraTopOrBottom = cameraDock.position === CAMERADOCK_POSITION.CONTENT_TOP
-    || cameraDock.position === CAMERADOCK_POSITION.CONTENT_BOTTOM;
-  const isCameraLeftOrRight = cameraDock.position === CAMERADOCK_POSITION.CONTENT_LEFT
-    || cameraDock.position === CAMERADOCK_POSITION.CONTENT_RIGHT;
-  const isCameraSidebar = cameraDock.position === CAMERADOCK_POSITION.SIDEBAR_CONTENT_BOTTOM;
+  const isCameraTopOrBottom =
+    cameraDock.position === CAMERADOCK_POSITION.CONTENT_TOP ||
+    cameraDock.position === CAMERADOCK_POSITION.CONTENT_BOTTOM;
+  const isCameraLeftOrRight =
+    cameraDock.position === CAMERADOCK_POSITION.CONTENT_LEFT ||
+    cameraDock.position === CAMERADOCK_POSITION.CONTENT_RIGHT;
+  const isCameraSidebar =
+    cameraDock.position === CAMERADOCK_POSITION.SIDEBAR_CONTENT_BOTTOM;
 
   useEffect(() => {
     const handleVisibility = () => {
       if (document.hidden) {
-        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibility);
+    document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibility);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []);
 
   useEffect(() => {
-    setIsFullScreen(fullscreen.group === 'webcams');
+    setIsFullScreen(fullscreen.group === "webcams");
   }, [fullscreen]);
 
   useEffect(() => {
-    const newCameraMaxWidth = (isPresenter && cameraDock.presenterMaxWidth)
-      ? cameraDock.presenterMaxWidth
-      : cameraDock.maxWidth;
+    const newCameraMaxWidth =
+      isPresenter && cameraDock.presenterMaxWidth
+        ? cameraDock.presenterMaxWidth
+        : cameraDock.maxWidth;
     setCameraMaxWidth(newCameraMaxWidth);
 
     if (isCameraLeftOrRight && cameraDock.width > newCameraMaxWidth) {
-      layoutContextDispatch(
-        {
-          type: ACTIONS.SET_CAMERA_DOCK_SIZE,
-          value: {
-            width: newCameraMaxWidth,
-            height: cameraDock.height,
-            browserWidth: window.innerWidth,
-            browserHeight: window.innerHeight,
-          },
+      layoutContextDispatch({
+        type: ACTIONS.SET_CAMERA_DOCK_SIZE,
+        value: {
+          width: newCameraMaxWidth,
+          height: cameraDock.height,
+          browserWidth: window.innerWidth,
+          browserHeight: window.innerHeight,
         },
-      );
-      Storage.setItem('webcamSize', { width: newCameraMaxWidth, height: lastHeight });
+      });
+      Storage.setItem("webcamSize", {
+        width: newCameraMaxWidth,
+        height: lastHeight,
+      });
     }
 
-    const cams = document.getElementById('cameraDock');
-    cams?.setAttribute('data-position', cameraDock.position);
-  }, [cameraDock.position, cameraDock.maxWidth, isPresenter, displayPresentation]);
+    const cams = document.getElementById("cameraDock");
+    cams?.setAttribute("data-position", cameraDock.position);
+  }, [
+    cameraDock.position,
+    cameraDock.maxWidth,
+    isPresenter,
+    displayPresentation,
+  ]);
 
   const handleVideoFocus = (id: string) => {
     layoutContextDispatch({
@@ -127,36 +148,32 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
 
   const onResizeHandle = (deltaWidth: number, deltaHeight: number) => {
     if (cameraDock.resizableEdge?.top || cameraDock.resizableEdge?.bottom) {
-      layoutContextDispatch(
-        {
-          type: ACTIONS.SET_CAMERA_DOCK_SIZE,
-          value: {
-            width: cameraDock.width,
-            height: resizeStart.height + deltaHeight,
-            browserWidth: window.innerWidth,
-            browserHeight: window.innerHeight,
-          },
+      layoutContextDispatch({
+        type: ACTIONS.SET_CAMERA_DOCK_SIZE,
+        value: {
+          width: cameraDock.width,
+          height: resizeStart.height + deltaHeight,
+          browserWidth: window.innerWidth,
+          browserHeight: window.innerHeight,
         },
-      );
+      });
     }
     if (cameraDock.resizableEdge?.left || cameraDock.resizableEdge?.right) {
-      layoutContextDispatch(
-        {
-          type: ACTIONS.SET_CAMERA_DOCK_SIZE,
-          value: {
-            width: resizeStart.width + deltaWidth,
-            height: cameraDock.height,
-            browserWidth: window.innerWidth,
-            browserHeight: window.innerHeight,
-          },
+      layoutContextDispatch({
+        type: ACTIONS.SET_CAMERA_DOCK_SIZE,
+        value: {
+          width: resizeStart.width + deltaWidth,
+          height: cameraDock.height,
+          browserWidth: window.innerWidth,
+          browserHeight: window.innerHeight,
         },
-      );
+      });
     }
   };
 
   const handleWebcamDragStart = () => {
     setIsDragging(true);
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     layoutContextDispatch({
       type: ACTIONS.SET_CAMERA_DOCK_IS_DRAGGING,
       value: true,
@@ -166,12 +183,15 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
   const handleWebcamDragStop = (e: DraggableEvent) => {
     setIsDragging(false);
     setDraggedAtLeastOneTime(false);
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = "auto";
     const dropAreaId = (e.target as HTMLDivElement).id;
 
-    if (Object.values(CAMERADOCK_POSITION).includes(dropAreaId) && draggedAtLeastOneTime) {
-      const layout = document.getElementById('layout');
-      layout?.setAttribute('data-cam-position', dropAreaId);
+    if (
+      Object.values(CAMERADOCK_POSITION).includes(dropAreaId) &&
+      draggedAtLeastOneTime
+    ) {
+      const layout = document.getElementById("layout");
+      layout?.setAttribute("data-cam-position", dropAreaId);
 
       layoutContextDispatch({
         type: ACTIONS.SET_CAMERA_DOCK_POSITION,
@@ -186,19 +206,21 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
   };
 
   const draggableOffset = {
-    left: isDragging && (isCameraTopOrBottom || isCameraSidebar)
-      ? ((cameraDock.width - (cameraSize?.width ?? 0)) / 2)
-      : 0,
-    top: isDragging && isCameraLeftOrRight
-      ? ((cameraDock.height - (cameraSize?.height ?? 0)) / 2)
-      : 0,
+    left:
+      isDragging && (isCameraTopOrBottom || isCameraSidebar)
+        ? (cameraDock.width - (cameraSize?.width ?? 0)) / 2
+        : 0,
+    top:
+      isDragging && isCameraLeftOrRight
+        ? (cameraDock.height - (cameraSize?.height ?? 0)) / 2
+        : 0,
   };
 
   if (isRTL) {
     draggableOffset.left *= -1;
   }
 
-  const isIphone = !!(navigator.userAgent.match(/iPhone/i));
+  const isIphone = !!navigator.userAgent.match(/iPhone/i);
   const mobileWidth = `${isDragging ? cameraSize?.width : cameraDock.width}px`;
   const mobileHeight = `${isDragging ? cameraSize?.height : cameraDock.height}px`;
   const isDesktopWidth = isDragging ? cameraSize?.width : cameraDock.width;
@@ -207,19 +229,24 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
   const disableDrag = hasSharedContent; // khi share thì tắt drag để tránh transform đẩy strip xuống
 
   // Khi share: ép camera dock sát top (loại bỏ offset nav/toolbar của BBB)
-  const dockTop = (hasSharedContent && cameraDock.position === CAMERADOCK_POSITION.CONTENT_TOP)
-    ? 10
-    : cameraDock.top;
+  const dockTop =
+    hasSharedContent && cameraDock.position === CAMERADOCK_POSITION.CONTENT_TOP
+      ? 10
+      : cameraDock.top;
 
   return (
     <>
       {/* Tắt overlay drop-zone của hệ thống để không bị ép layout cam nhỏ */}
       {/* {isDragging ? <DropAreaContainer /> : null} */}
       <Styled.ResizableWrapper
-        $horizontal={cameraDock.position === CAMERADOCK_POSITION.CONTENT_TOP
-          || cameraDock.position === CAMERADOCK_POSITION.CONTENT_BOTTOM}
-        $vertical={cameraDock.position === CAMERADOCK_POSITION.CONTENT_LEFT
-          || cameraDock.position === CAMERADOCK_POSITION.CONTENT_RIGHT}
+        $horizontal={
+          cameraDock.position === CAMERADOCK_POSITION.CONTENT_TOP ||
+          cameraDock.position === CAMERADOCK_POSITION.CONTENT_BOTTOM
+        }
+        $vertical={
+          cameraDock.position === CAMERADOCK_POSITION.CONTENT_LEFT ||
+          cameraDock.position === CAMERADOCK_POSITION.CONTENT_RIGHT
+        }
         data-camera-position={cameraDock.position}
       >
         {disableDrag ? (
@@ -234,7 +261,10 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
             }}
             onResizeStart={() => {
               setIsResizing(true);
-              setResizeStart({ width: cameraDock.width, height: cameraDock.height });
+              setResizeStart({
+                width: cameraDock.width,
+                height: cameraDock.height,
+              });
               onResizeHandle(cameraDock.width, cameraDock.height);
               layoutContextDispatch({
                 type: ACTIONS.SET_CAMERA_DOCK_IS_RESIZING,
@@ -253,17 +283,17 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
               });
             }}
             enable={{
-              top: !isFullScreen && !swapLayout && cameraDock?.resizableEdge?.top,
-              bottom: !isFullScreen && !swapLayout && cameraDock?.resizableEdge?.bottom,
-              left: !isFullScreen && !swapLayout && cameraDock?.resizableEdge?.left,
-              right: !isFullScreen && !swapLayout && cameraDock?.resizableEdge?.right,
+              top: false,
+              bottom: false,
+              left: false,
+              right: false,
               topLeft: false,
               topRight: false,
               bottomLeft: false,
               bottomRight: false,
             }}
             style={{
-              position: 'absolute',
+              position: "absolute",
               zIndex: isCameraSidebar ? 0 : cameraDock?.zIndex,
               top: dockTop + draggableOffset.top,
               left: cameraDock.left - cameraDock.right + draggableOffset.left,
@@ -279,12 +309,14 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
                 width: isIphone ? mobileWidth : isDesktopWidth,
                 height: isIphone ? mobileHeight : isDesktopHeight,
                 opacity: camOpacity,
-                background: 'none',
-                cursor: 'default',
+                background: "none",
+                cursor: "default",
               }}
             >
               <>
-                <h2 className="sr-only">{intl.formatMessage(intlMessages.camerasAriaLabel)}</h2>
+                <h2 className="sr-only">
+                  {intl.formatMessage(intlMessages.camerasAriaLabel)}
+                </h2>
                 <VideoProviderContainer
                   {...{
                     swapLayout,
@@ -311,12 +343,10 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
               cameraDock.isDraggable ? (e) => e.preventDefault() : undefined
             }
             disabled={!cameraDock.isDraggable || isResizing || isFullScreen}
-            position={
-              {
-                x: cameraDock.left - cameraDock.right + draggableOffset.left,
-                y: dockTop + draggableOffset.top,
-              }
-            }
+            position={{
+              x: cameraDock.left - cameraDock.right + draggableOffset.left,
+              y: dockTop + draggableOffset.top,
+            }}
           >
             <Resizable
               minWidth={isDragging ? cameraSize?.width : cameraDock.minWidth}
@@ -329,7 +359,10 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
               }}
               onResizeStart={() => {
                 setIsResizing(true);
-                setResizeStart({ width: cameraDock.width, height: cameraDock.height });
+                setResizeStart({
+                  width: cameraDock.width,
+                  height: cameraDock.height,
+                });
                 onResizeHandle(cameraDock.width, cameraDock.height);
                 layoutContextDispatch({
                   type: ACTIONS.SET_CAMERA_DOCK_IS_RESIZING,
@@ -348,36 +381,41 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
                 });
               }}
               enable={{
-                top: !isFullScreen && !isDragging && !swapLayout && cameraDock?.resizableEdge?.top,
-                bottom: !isFullScreen && !isDragging && !swapLayout
-                && cameraDock?.resizableEdge?.bottom,
-                left: !isFullScreen && !isDragging && !swapLayout && cameraDock?.resizableEdge?.left,
-                right: !isFullScreen && !isDragging && !swapLayout && cameraDock?.resizableEdge?.right,
+                top: false,
+                bottom: false,
+                left: false,
+                right: false,
                 topLeft: false,
                 topRight: false,
                 bottomLeft: false,
                 bottomRight: false,
               }}
               style={{
-                position: 'absolute',
+                position: "absolute",
                 zIndex: isCameraSidebar && !isDragging ? 0 : cameraDock?.zIndex,
               }}
             >
               <Styled.Draggable
-                $isDraggable={!!cameraDock.isDraggable && !isFullScreen && !isDragging}
+                $isDraggable={
+                  !!cameraDock.isDraggable && !isFullScreen && !isDragging
+                }
                 $isDragging={isDragging}
                 id="cameraDock"
                 role="region"
-                draggable={cameraDock.isDraggable && !isFullScreen ? 'true' : undefined}
+                draggable={
+                  cameraDock.isDraggable && !isFullScreen ? "true" : undefined
+                }
                 style={{
                   width: isIphone ? mobileWidth : isDesktopWidth,
                   height: isIphone ? mobileHeight : isDesktopHeight,
                   opacity: camOpacity,
-                  background: 'none',
+                  background: "none",
                 }}
               >
                 <>
-                  <h2 className="sr-only">{intl.formatMessage(intlMessages.camerasAriaLabel)}</h2>
+                  <h2 className="sr-only">
+                    {intl.formatMessage(intlMessages.camerasAriaLabel)}
+                  </h2>
                   <VideoProviderContainer
                     {...{
                       swapLayout,
@@ -404,9 +442,10 @@ const WebcamContainer: React.FC = () => {
   const presentation = layoutSelectOutput((i: Output) => i.presentation);
   const cameraDock = layoutSelectOutput((i: Output) => i.cameraDock);
   const layoutContextDispatch = layoutDispatch();
-  const { data: presentationPageData } = useDeduplicatedSubscription<CurrentPresentationPagesSubscriptionResponse>(
-    CURRENT_PRESENTATION_PAGE_SUBSCRIPTION,
-  );
+  const { data: presentationPageData } =
+    useDeduplicatedSubscription<CurrentPresentationPagesSubscriptionResponse>(
+      CURRENT_PRESENTATION_PAGE_SUBSCRIPTION,
+    );
   const presentationPage = presentationPageData?.pres_page_curr[0];
   const hasPresentation = !!presentationPage?.presentationId;
   const { isOpen: presentationIsOpen } = presentationInput;
@@ -428,7 +467,9 @@ const WebcamContainer: React.FC = () => {
   const { data: currentUserData } = useCurrentUser((user) => ({
     presenter: user.presenter,
   }));
-  const { selectedLayout } = useSettings(SETTINGS.APPLICATION) as { selectedLayout: string };
+  const { selectedLayout } = useSettings(SETTINGS.APPLICATION) as {
+    selectedLayout: string;
+  };
 
   const isGridEnabled = selectedLayout === LAYOUT_TYPE.VIDEO_FOCUS;
 
@@ -436,36 +477,33 @@ const WebcamContainer: React.FC = () => {
 
   let usersVideo: VideoItem[];
   if (gridUsers.length > 0) {
-    usersVideo = [
-      ...videoUsers,
-      ...gridUsers,
-    ];
+    usersVideo = [...videoUsers, ...gridUsers];
   } else {
     usersVideo = videoUsers;
   }
 
-  const audioModalIsOpen = useStorageKey('audioModalIsOpen');
+  const audioModalIsOpen = useStorageKey("audioModalIsOpen");
 
-  return cameraDock?.display && !audioModalIsOpen && (usersVideo.length > 0 || isGridEnabled)
-    ? (
-      <WebcamComponent
-        {...{
-          swapLayout,
-          usersVideo,
-          focusedId: cameraDock.focusedId,
-          cameraDock,
-          cameraOptimalGridSize,
-          layoutContextDispatch,
-          fullscreen,
-          isPresenter: currentUserData?.presenter ?? false,
-          displayPresentation,
-          isRTL,
-          floatingOverlay,
-          hideOverlay,
-        }}
-      />
-    )
-    : null;
+  return cameraDock?.display &&
+    !audioModalIsOpen &&
+    (usersVideo.length > 0 || isGridEnabled) ? (
+    <WebcamComponent
+      {...{
+        swapLayout,
+        usersVideo,
+        focusedId: cameraDock.focusedId,
+        cameraDock,
+        cameraOptimalGridSize,
+        layoutContextDispatch,
+        fullscreen,
+        isPresenter: currentUserData?.presenter ?? false,
+        displayPresentation,
+        isRTL,
+        floatingOverlay,
+        hideOverlay,
+      }}
+    />
+  ) : null;
 };
 
 export default WebcamContainer;

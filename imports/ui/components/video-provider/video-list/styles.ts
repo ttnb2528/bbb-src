@@ -1,8 +1,12 @@
-import styled from 'styled-components';
-import { colorWhite } from '/imports/ui/stylesheets/styled-components/palette';
-import { mediumUp, smallOnly, hasPhoneWidth } from '/imports/ui/stylesheets/styled-components/breakpoints';
-import { mdPaddingX } from '/imports/ui/stylesheets/styled-components/general';
-import Button from '/imports/ui/components/common/button/component';
+import styled from "styled-components";
+import { colorWhite } from "/imports/ui/stylesheets/styled-components/palette";
+import {
+  mediumUp,
+  smallOnly,
+  hasPhoneWidth,
+} from "/imports/ui/stylesheets/styled-components/breakpoints";
+import { mdPaddingX } from "/imports/ui/stylesheets/styled-components/general";
+import Button from "/imports/ui/components/common/button/component";
 
 // @ts-expect-error -> Untyped component.
 const NextPageButton = styled(Button)`
@@ -25,7 +29,9 @@ const NextPageButton = styled(Button)`
     margin-left: 2px;
   }
 
-  ${({ position }) => (position === 'contentRight' || position === 'contentLeft') && `
+  ${({ position }) =>
+    (position === "contentRight" || position === "contentLeft") &&
+    `
     order: 3;
     margin-right: 2px;
   `}
@@ -52,7 +58,9 @@ const PreviousPageButton = styled(Button)`
     margin-right: 2px;
   }
 
-  ${({ position }) => (position === 'contentRight' || position === 'contentLeft') && `
+  ${({ position }) =>
+    (position === "contentRight" || position === "contentLeft") &&
+    `
     order: 2;
     margin-left: 2px;
   `}
@@ -67,13 +75,17 @@ const VideoListItem = styled.div<{
   width: 100%;
   max-height: 100%;
 
-  ${({ $focused }) => $focused && `
+  ${({ $focused }) =>
+    $focused &&
+    `
     grid-column: 1 / span 2;
     grid-row: 1 / span 2;
   `}
 
   /* PRESENTER CAM - TO HON VÀ N?I B?T HON */
-  ${({ $isPresenter }) => $isPresenter && `
+  ${({ $isPresenter }) =>
+    $isPresenter &&
+    `
     grid-column: 1 / span 2;
     grid-row: 1 / span 2;
     order: -1;
@@ -103,11 +115,14 @@ const VideoCanvas = styled.div<{
   overflow: hidden; /* Prevent overflow at high zoom */
 
   /* Smooth transition khi sidebar mở/đóng - giống Google Meet */
-  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-  ${({ $position }) => ($position === 'contentRight' || $position === 'contentLeft') && `
+  ${({ $position }) =>
+    ($position === "contentRight" || $position === "contentLeft") &&
+    `
     flex-wrap: wrap;
     align-content: center;
     order: 0;
@@ -144,12 +159,14 @@ const CustomLayoutContainer = styled.div<{
   height: 100%;
   /* Chừa không gian phía trên cho dải cam nhỏ + tạo khoảng cách với cam lớn */
   /* Khi share content thì không cần padding vì MainStage đã bị ẩn */
-  padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '0' : 'clamp(120px, 10vh, 150px) 0 0 0')};
+  padding: ${({ $hasSharedContent }) =>
+    $hasSharedContent ? "0" : "clamp(120px, 10vh, 150px) 0 0 0"};
   overflow: hidden; /* Prevent overflow */
   min-width: 0; /* Allow flex shrinking */
   min-height: 0; /* Allow flex shrinking */
   /* Ensure container scales properly with zoom */
   box-sizing: border-box;
+  pointer-events: none; /* Cho phép click xuyên qua để vẽ bảng */
 `;
 
 // Dải cam nhỏ ở trên (tất cả người tham gia) - OVERLAY trên MainStage
@@ -163,10 +180,14 @@ const VideoStrip = styled.div<{
   flex: 1; /* Chiếm phần còn lại của wrapper */
   min-width: 0; /* Cho phép shrink */
   /* QUAN TRỌNG: Trên mobile, khi sidebar mở, giảm z-index để sidebar hiển thị trên video strip */
-  z-index: ${({ $hasSidebarOpen }) => ($hasSidebarOpen ? 5 : 10)} !important; /* Above MainStage, below sidebar when open */
+  z-index: ${({ $hasSidebarOpen }) =>
+    $hasSidebarOpen
+      ? 5
+      : 10} !important; /* Above MainStage, below sidebar when open */
   display: flex !important;
   gap: clamp(6px, 0.65vw, 10px); /* Tăng gap giữa các cam nhỏ */
-  // padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '6px 10px 10px 10px' : '8px 10px 10px 10px')};
+  // padding: ${({ $hasSharedContent }) =>
+    $hasSharedContent ? "6px 10px 10px 10px" : "8px 10px 10px 10px"};
   backdrop-filter: blur(8px); /* Blur effect like Google Meet */
   border-radius: 8px;
   overflow-x: auto;
@@ -183,7 +204,11 @@ const VideoStrip = styled.div<{
   box-shadow: none;
   /* Ensure VideoStrip scales properly with zoom */
   box-sizing: border-box;
-  pointer-events: auto; /* Cho phép scroll và tương tác */
+  pointer-events: none; /* Xuyên qua phần bù rỗng full-width */
+
+  & > * {
+    pointer-events: auto; /* Trả lại tương tác cho video box */
+  }
 
   &:active {
     cursor: grabbing;
@@ -193,17 +218,22 @@ const VideoStrip = styled.div<{
   &::-webkit-scrollbar {
     display: none;
   }
-  
+
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
 
   /* Mobile responsive - đẩy lên cao hơn bằng cách giảm padding-top */
   @media ${smallOnly} {
     /* Use clamp for better responsive behavior - improved for zoom */
-    height: clamp(80px, 12vh, 120px) !important; /* Responsive: min 80px, preferred 12vh, max 120px */
+    height: clamp(
+      80px,
+      12vh,
+      120px
+    ) !important; /* Responsive: min 80px, preferred 12vh, max 120px */
     min-height: 80px !important; /* Reduced for better zoom handling */
     max-height: 120px !important;
-    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 8px 10px 8px' : '6px 8px 10px 8px')};
+    padding: ${({ $hasSharedContent }) =>
+      $hasSharedContent ? "4px 8px 10px 8px" : "6px 8px 10px 8px"};
     gap: clamp(8px, 1.5vw, 12px); /* Tăng gap để các cam không dính nhau */
     /* Bỏ box-shadow trên mobile để gọn hơn */
     box-shadow: none;
@@ -217,10 +247,15 @@ const VideoStrip = styled.div<{
 
   @media ${hasPhoneWidth} {
     /* Use clamp for better responsive behavior on phones - improved for zoom */
-    height: clamp(60px, 12vh, 100px) !important; /* Responsive: min 60px, preferred 10vh, max 100px */
+    height: clamp(
+      60px,
+      12vh,
+      100px
+    ) !important; /* Responsive: min 60px, preferred 10vh, max 100px */
     min-height: 60px !important; /* Reduced for better zoom handling */
     max-height: 100px !important;
-    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 6px 8px 6px' : '6px 6px 8px 6px')};
+    padding: ${({ $hasSharedContent }) =>
+      $hasSharedContent ? "4px 6px 8px 6px" : "6px 6px 8px 6px"};
     gap: clamp(6px, 1.2vw, 10px); /* Tăng gap để các cam không dính nhau */
     /* Bỏ box-shadow trên mobile để gọn hơn */
     box-shadow: none;
@@ -248,7 +283,7 @@ const VideoStripItem = styled.div<{
   border: 1px solid rgba(255, 255, 255, 0.35); /* Border để dễ nhìn trạng thái cam nhỏ */
   /* Ensure aspect ratio is maintained cho cam nhỏ */
   aspect-ratio: 4 / 3;
-  
+
   /* Đảm bảo video trong VideoStripItem giữ aspect-ratio 16:9 */
   video {
     aspect-ratio: 4 / 3 !important;
@@ -258,7 +293,9 @@ const VideoStripItem = styled.div<{
   /* Ensure proper scaling with zoom */
   box-sizing: border-box;
 
-  ${({ $isPresenter }) => $isPresenter && `
+  ${({ $isPresenter }) =>
+    $isPresenter &&
+    `
     /* Border nổi bật cho presenter/host */
     border: 3px solid #6366F1 !important; /* Indigo */
     width: clamp(110px, min(12vw, 14%), 160px); /* Giảm kích thước presenter để gọn hơn */
@@ -282,7 +319,9 @@ const VideoStripItem = styled.div<{
     min-width: 75px;
     max-width: 110px;
 
-    ${({ $isPresenter }) => $isPresenter && `
+    ${({ $isPresenter }) =>
+      $isPresenter &&
+      `
       width: clamp(90px, min(18vw, 20%), 130px); /* Giảm kích thước presenter */
       min-width: 90px;
       max-width: 130px;
@@ -303,7 +342,9 @@ const VideoStripItem = styled.div<{
     min-width: 80px;
     max-width: 100px;
 
-    ${({ $isPresenter }) => $isPresenter && `
+    ${({ $isPresenter }) =>
+      $isPresenter &&
+      `
       width: clamp(90px, min(24vw, 28%), 120px); /* Giảm kích thước presenter */
       min-width: 90px;
       max-width: 120px;
@@ -331,8 +372,9 @@ const MainStage = styled.div`
   max-height: 88vh; /* Giới hạn chiều cao để video không phóng quá to */
 
   /* Smooth transition khi sidebar mở/đóng - giống Google Meet */
-  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-              height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    width 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Container video tự động fit với khung */
   > div {
@@ -363,7 +405,7 @@ const PresenterStageVideo = styled.div<{
   height: 100%; /* Tràn đủ dọc MainStage */
   max-width: 100%;
   max-height: 100%;
-  
+
   /* Đảm bảo video item bên trong cũng fill toàn bộ container */
   > div {
     width: 100%;
@@ -385,16 +427,17 @@ const PresenterStageVideo = styled.div<{
       box-shadow: none !important;
     }
   }
-  
+
   video {
     width: 100%;
     height: 100%;
     max-width: 100%;
     max-height: 100%;
-     /* Điều chỉnh object-fit dựa trên sidebar:
+    /* Điều chỉnh object-fit dựa trên sidebar:
        - Khi sidebar mở: dùng cover để fill đầy, không có viền đen
        - Khi sidebar đóng: dùng contain để hiển thị đủ, có thể có viền đen */
-    /* object-fit: ${({ $hasSidebarOpen }) => ($hasSidebarOpen ? 'cover' : 'contain')}; */
+    /* object-fit: ${({ $hasSidebarOpen }) =>
+      $hasSidebarOpen ? "cover" : "contain"}; */
     object-fit: contain;
     object-position: center center;
     border-radius: 0;
@@ -443,7 +486,7 @@ const VideoStripWrapper = styled.div`
 
 // Mũi tên scroll (trái/phải) - nằm 2 bên của dải camera
 const ScrollArrow = styled.button<{
-  $position: 'left' | 'right';
+  $position: "left" | "right";
 }>`
   position: relative;
   z-index: 12; /* Above VideoStrip */
@@ -488,7 +531,7 @@ const ScrollArrow = styled.button<{
   @media ${smallOnly} {
     width: 28px;
     height: 28px;
-    
+
     i {
       font-size: 14px;
     }
@@ -497,7 +540,7 @@ const ScrollArrow = styled.button<{
   @media ${hasPhoneWidth} {
     width: 24px;
     height: 24px;
-    
+
     i {
       font-size: 12px;
     }
