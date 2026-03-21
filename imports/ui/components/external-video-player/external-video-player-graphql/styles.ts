@@ -1,11 +1,11 @@
-import styled from 'styled-components';
-import ReactPlayer from 'react-player';
-import React from 'react';
-import Button from '/imports/ui/components/common/button/component';
+import styled from "styled-components";
+import ReactPlayer from "react-player";
+import React from "react";
+import Button from "/imports/ui/components/common/button/component";
 
 type VideoPlayerWrapperProps = {
   fullscreen: boolean;
-  ref : React.MutableRefObject<HTMLDivElement | null>;
+  ref: React.MutableRefObject<HTMLDivElement | null>;
 };
 
 type ContainerProps = {
@@ -25,29 +25,45 @@ export const Container = styled.span<ContainerProps>`
   background: var(--color-black);
   overflow: hidden;
 
-  ${({ height }) => height && `
-    height: ${typeof height === 'number' ? `${height}px` : height} !important;
+  ${({ height }) =>
+    height &&
+    `
+    height: ${typeof height === "number" ? `${height}px` : height} !important;
   `}
-  ${({ width }) => width && `
-    width: ${typeof width === 'number' ? `${width}px` : width} !important;
+  ${({ width }) =>
+    width &&
+    `
+    width: ${typeof width === "number" ? `${width}px` : width} !important;
   `}
-  ${({ top }) => top !== undefined && `
-    top: ${typeof top === 'number' ? `${top}px` : top} !important;
+  ${({ top }) =>
+    top !== undefined &&
+    `
+    top: ${typeof top === "number" ? `${top}px` : top} !important;
   `}
-  ${({ left }) => left !== undefined && `
-    left: ${typeof left === 'number' ? `${left}px` : left} !important;
+  ${({ left }) =>
+    left !== undefined &&
+    `
+    left: ${typeof left === "number" ? `${left}px` : left} !important;
   `}
-  ${({ right }) => right !== undefined && `
-    right: ${typeof right === 'number' ? `${right}px` : right} !important;
+  ${({ right }) =>
+    right !== undefined &&
+    `
+    right: ${typeof right === "number" ? `${right}px` : right} !important;
   `}
-  ${({ zIndex }) => zIndex !== undefined && `
+  ${({ zIndex }) =>
+    zIndex !== undefined &&
+    `
     z-index: ${zIndex} !important;
   `}
 
-  ${({ isResizing }) => isResizing && `
+  ${({ isResizing }) =>
+    isResizing &&
+    `
     pointer-events: none;
   `}
-  ${({ isMinimized }) => isMinimized && `
+  ${({ isMinimized }) =>
+    isMinimized &&
+    `
     display: none;
   `}
 `;
@@ -57,7 +73,9 @@ export const VideoPlayerWrapper = styled.div<VideoPlayerWrapperProps>`
   width: 100%;
   height: 100%;
 
-  ${({ fullscreen }) => fullscreen && `
+  ${({ fullscreen }) =>
+    fullscreen &&
+    `
     position: fixed;
     top: 0;
     left: 0;
@@ -73,7 +91,7 @@ export const AutoPlayWarning = styled.p`
   font-size: x-large;
   color: white;
   width: 100%;
-  background-color: rgba(6,23,42,0.5);
+  background-color: rgba(6, 23, 42, 0.5);
   bottom: 20%;
   vertical-align: middle;
   text-align: center;
@@ -83,6 +101,10 @@ export const VideoPlayer = styled(ReactPlayer)`
   width: 100%;
   height: 100%;
   z-index: 0;
+
+  & > video {
+    object-fit: contain !important;
+  }
 
   & > iframe {
     display: flex;
@@ -107,7 +129,7 @@ export const ExternalVideoCloseButton = styled(Button)`
   cursor: pointer;
   [dir="rtl"] & {
     right: auto;
-    left :0;
+    left: 0;
   }
 `;
 

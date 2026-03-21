@@ -930,52 +930,8 @@ const ExternalVideoPlayerContainer: React.FC = () => {
   const getServerCurrentTime = () =>
     calculateCurrentTime(timeSync, currentMeeting.externalVideo);
 
-  // Điều chỉnh top cho cả mobile và desktop: tính dựa trên chiều cao của dãy cam nhỏ (CONTENT_TOP) + vài px
-  // Điều này đảm bảo external video luôn nằm dưới VideoStrip, không nhảy lên trên khi exit fullscreen
-  // QUAN TRỌNG: Áp dụng cho cả viewer và presenter để đảm bảo hành vi nhất quán
-  // Logic này đảm bảo external video luôn có top đúng, ngay cả khi layout chưa được tính lại sau exit fullscreen
+  // Bypass override to allow immersive full-screen projection behind the floating webcams as standard in customLayout.
   let adjustedExternalVideo = externalVideo;
-
-  // Khi exit fullscreen, đảm bảo external video không nhảy lên trên VideoStrip
-  // Điều chỉnh top dựa trên camera dock position (CONTENT_TOP)
-  if (
-    !fullscreenContext &&
-    typeof externalVideo.top === "number" &&
-    cameraDockOutput &&
-    cameraDockOutput.position
-  ) {
-    const {
-      position,
-      height: cameraHeight,
-      display: cameraDisplay,
-    } = cameraDockOutput;
-    // Nếu camera ở CONTENT_TOP và đang hiển thị, đảm bảo external video nằm dưới nó
-    if (
-      position === CAMERADOCK_POSITION.CONTENT_TOP &&
-      cameraDisplay &&
-      cameraHeight
-    ) {
-      // Desktop: top từ layout đã tính đúng (bannerHeight + videoStripReserve + gap)
-      // Mobile: cameraHeight + 35px
-      // Tính minTop dựa trên camera height để đảm bảo video không nhảy lên trên
-      const videoStripReserve = 120; // Chiều cao dự phòng cho strip cam nhỏ
-      const gap = 12; // Gap giữa strip và content
-      const minTop = deviceInfo.isMobile
-        ? cameraHeight + 35
-        : externalVideo.top < cameraHeight + gap
-          ? cameraHeight + gap
-          : externalVideo.top;
-
-      // Chỉ điều chỉnh nếu top hiện tại nhỏ hơn minTop (video đang nhảy lên trên)
-      // Điều này đảm bảo external video luôn nằm dưới VideoStrip
-      if (externalVideo.top < minTop) {
-        adjustedExternalVideo = {
-          ...externalVideo,
-          top: minTop,
-        };
-      }
-    }
-  }
 
   return (
     <ExternalVideoPlayer
