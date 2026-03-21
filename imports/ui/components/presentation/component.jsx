@@ -106,14 +106,27 @@ class Presentation extends PureComponent {
     this.onFullscreenChange = this.onFullscreenChange.bind(this);
     this.getPresentationSizesAvailable =
       this.getPresentationSizesAvailable.bind(this);
-    this.handleResize = debounce(this.handleResize.bind(this), 200);
+    /* Đổi lại thành debounce 50ms để tối ưu hiệu năng render của React + Tldraw, tránh render quá nhiều làm đứng hình */
+    this.handleResize = debounce(this.handleResize.bind(this), 50);
     this.setTldrawAPI = this.setTldrawAPI.bind(this);
     this.setIsPanning = this.setIsPanning.bind(this);
     this.setIsToolbarVisible = this.setIsToolbarVisible.bind(this);
     this.handlePanShortcut = this.handlePanShortcut.bind(this);
     this.renderPresentationMenu = this.renderPresentationMenu.bind(this);
 
-    this.onResize = () => setTimeout(this.handleResize.bind(this), 0);
+    this.onResize = () => {
+      // Dự phòng: Trình duyệt thường 'nuốt' phím ESC và không kích hoạt sự kiện fullscreenchange
+      // Nhưng thoát Fullscreen CHẮC CHẮN sẽ kích hoạt window resize.
+      if (this.state.isFullscreen) {
+        const isActuallyFullscreen = FullscreenService.isFullScreen(
+          this.refPresentationContainer,
+        );
+        if (!isActuallyFullscreen) {
+          this.onFullscreenChange();
+        }
+      }
+      setTimeout(this.handleResize.bind(this), 0);
+    };
     this.setPresentationRef = this.setPresentationRef.bind(this);
     this.setTldrawIsMounting = this.setTldrawIsMounting.bind(this);
     Session.setItem("componentPresentationWillUnmount", false);
@@ -162,11 +175,16 @@ class Presentation extends PureComponent {
         "keyup",
         this.handlePanShortcut,
       );
-      this.refPresentationContainer.addEventListener(
-        FULLSCREEN_CHANGE_EVENT,
-        this.onFullscreenChange,
-      );
     }
+    // Lắng nghe sự kiện Fullscreen ở cấp độ document thay vì element, vì khi người dùng bấm ESC,
+    // trình duyệt có thể không fire sự kiện trên thẻ con mà fire trực tiếp trên document!
+    document.addEventListener("fullscreenchange", this.onFullscreenChange);
+    document.addEventListener(
+      "webkitfullscreenchange",
+      this.onFullscreenChange,
+    );
+    document.addEventListener("mozfullscreenchange", this.onFullscreenChange);
+    document.addEventListener("MSFullscreenChange", this.onFullscreenChange);
     window.addEventListener("resize", this.onResize, false);
 
     const {
@@ -348,8 +366,18 @@ class Presentation extends PureComponent {
 
     window.removeEventListener("resize", this.onResize, false);
     if (this.refPresentationContainer) {
-      this.refPresentationContainer.removeEventListener(
-        FULLSCREEN_CHANGE_EVENT,
+      // Remove global document listener
+      document.removeEventListener("fullscreenchange", this.onFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        this.onFullscreenChange,
+      );
+      document.removeEventListener(
+        "mozfullscreenchange",
+        this.onFullscreenChange,
+      );
+      document.removeEventListener(
+        "MSFullscreenChange",
         this.onFullscreenChange,
       );
       this.refPresentationContainer.removeEventListener(
@@ -402,12 +430,22 @@ class Presentation extends PureComponent {
   }
 
   onFullscreenChange() {
-    const { isFullscreen } = this.state;
+    const { layoutContextDispatch } = this.props;
     const newIsFullscreen = FullscreenService.isFullScreen(
       this.refPresentationContainer,
     );
-    if (isFullscreen !== newIsFullscreen) {
-      this.setState({ isFullscreen: newIsFullscreen });
+
+    this.setState({ isFullscreen: newIsFullscreen });
+
+    /* Đảm bảo luồn luôn cập nhật cho Redux mỗi khi có event, bỏ qua việc check state phòng hờ state bị lag */
+    if (!newIsFullscreen && layoutContextDispatch) {
+      layoutContextDispatch({
+        type: ACTIONS.SET_FULLSCREEN_ELEMENT,
+        value: {
+          element: "",
+          group: "",
+        },
+      });
     }
   }
 
@@ -448,10 +486,21 @@ class Presentation extends PureComponent {
       presentationBounds,
       presentationAreaSize: newPresentationAreaSize,
     } = this.props;
+    const { isFullscreen } = this.state;
     const presentationSizes = {
       presentationWidth: 0,
       presentationHeight: 0,
     };
+
+    /* Khi Native Fullscreen đang bật, LayoutManager của BBB bị miss-sync tạm thời vì độ trễ animation của HĐH.
+       Do đó ta ưu tiên lấy kích thước thực tế của DOM thay vì kích thước tính toán từ Redux. */
+    if (isFullscreen && this.refPresentationContainer) {
+      presentationSizes.presentationWidth =
+        this.refPresentationContainer.clientWidth;
+      presentationSizes.presentationHeight =
+        this.refPresentationContainer.clientHeight;
+      return presentationSizes;
+    }
 
     if (newPresentationAreaSize) {
       presentationSizes.presentationWidth =
@@ -500,6 +549,8 @@ class Presentation extends PureComponent {
     this.setState(
       {
         zoom: HUNDRED_PERCENT,
+        localPosition:
+          undefined /* RESET vị trí canvas để tránh lỗi lệch Whiteboard vĩnh viễn */,
       },
       () => {
         setPresentationFitToWidth(!fitToWidth);

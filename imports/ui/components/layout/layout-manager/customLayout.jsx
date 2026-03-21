@@ -915,6 +915,7 @@ const CustomLayout = (props) => {
       : tempActionBarHeight.height;
     const bannerHeight = isMobile ? 0 : bannerAreaHeight();
     const panelButtonsHeight = isMobile ? 80 : 0;
+    const videoStripReserveSpace = isMobile ? 0 : 120; // 120px bù cho phần webcams bên trên
 
     const mediaAreaBounds = {
       width: mediaAreaWidth,
@@ -923,10 +924,11 @@ const CustomLayout = (props) => {
           tempActionBarFinalHeight -
           sidebarPanelHeight -
           bannerHeight -
-          panelButtonsHeight,
+          panelButtonsHeight -
+          videoStripReserveSpace, // Trừ phần webcam ra khỏi chiều cao media
         minMediaAreaHeight,
       ),
-      top: isMobile ? 0 : bannerHeight, // Trên mobile: top = 0 để sát trên cùng
+      top: isMobile ? 0 : bannerHeight + videoStripReserveSpace, // Đẩy khu vực media (presentation) xuống né webcams
       left: 0, // Video luôn bắt đầu từ mép trái
     };
     const navbarBounds = calculatesNavbarBounds(mediaAreaBounds);
