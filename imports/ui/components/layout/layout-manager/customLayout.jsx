@@ -915,7 +915,40 @@ const CustomLayout = (props) => {
       : tempActionBarHeight.height;
     const bannerHeight = isMobile ? 0 : bannerAreaHeight();
     const panelButtonsHeight = isMobile ? 80 : 0;
-    const videoStripReserveSpace = isMobile ? 0 : 120; // 120px bù cho phần webcams bên trên
+
+    const sharedContentOpen =
+      (isPresentationEnabled && presentationInput.slidesLength !== 0) ||
+      presentationInput.isOpen ||
+      externalVideoInput.hasExternalVideo ||
+      screenShareInput.hasScreenShare ||
+      genericMainContentInput.genericContentId ||
+      sharedNotesInput.isPinned;
+
+    let videoStripReserveSpace = 0;
+    if (
+      sharedContentOpen &&
+      cameraPosition === CAMERADOCK_POSITION.CONTENT_TOP &&
+      cameraDockInput.numCameras > 0 &&
+      !isMobile
+    ) {
+      const lastSize = Storage.getItem("webcamSize") || { height: 0 };
+      if (cameraDockInput.isDragging && cameraDockInput.height) {
+        videoStripReserveSpace = cameraDockInput.height;
+      } else if (lastSize.height > 0) {
+        videoStripReserveSpace = lastSize.height;
+      } else {
+        videoStripReserveSpace = Math.max(
+          DEFAULT_VALUES.cameraDockMinHeight,
+          windowHeight() * 0.2,
+        );
+      }
+      const maxAllowedHeight = windowHeight() * 0.4;
+      videoStripReserveSpace = clamp(
+        videoStripReserveSpace,
+        DEFAULT_VALUES.cameraDockMinHeight,
+        maxAllowedHeight,
+      );
+    }
 
     const mediaAreaBounds = {
       width: mediaAreaWidth,
@@ -1058,7 +1091,7 @@ const CustomLayout = (props) => {
         right: sidebarContentRight,
         tabOrder: DEFAULT_VALUES.sidebarNavTabOrder,
         isResizable: false, // Tắt tính năng resize sidebar
-        zIndex: 10,
+        zIndex: 20,
       },
     });
 
@@ -1076,11 +1109,10 @@ const CustomLayout = (props) => {
     // Sidebar bắt đầu từ top (sau banner nếu có) và kéo xuống đến trên action bar
     // Dùng lại bannerHeight đã được khai báo ở trên (dòng 749)
     // Trên mobile: sidebar bắt đầu từ top = 0 (full screen), không cần reserve cho video strip
-    // Trên desktop: đặt sidebar xuống sát footer, chừa khoảng cho dải cam nhỏ ở trên
-    const videoStripReserve = isMobile ? 0 : 120; // Mobile: không reserve, desktop: chiều cao dự phòng cho strip cam nhỏ
+    // Trên desktop: đặt sidebar xuống sát dưới videoStrip Reserve Space chính xác
     const sidebarContentTop = isMobile
       ? 0
-      : bannerHeight + videoStripReserve + 24; // Mobile: top = 0, desktop: Floating effect top gap
+      : bannerHeight + videoStripReserveSpace + 24; // Mobile: top = 0, desktop: Floating effect top gap
     const sidebarContentNewHeight = isMobile
       ? windowHeight() - actionBarHeight // Mobile: full height trừ action bar
       : windowHeight() - sidebarContentTop - actionBarHeight - 24; // Desktop: Floating effect bottom gap
@@ -1122,8 +1154,8 @@ const CustomLayout = (props) => {
         currentPanelType,
         tabOrder: DEFAULT_VALUES.sidebarContentTabOrder,
         isResizable: false, // Tắt tính năng resize sidebar
-        // QUAN TRỌNG: Trên mobile, tăng z-index cao hơn VideoStrip (5) để sidebar hiển thị trên video strip
-        zIndex: isMobile ? 15 : 10,
+        // QUAN TRỌNG: Nâng Z-Index lên 20 (cao hơn CameraDock zIndex: 10) để thả nổi gọn gàng trên mọi loại webcam layout
+        zIndex: 20,
       },
     });
 
