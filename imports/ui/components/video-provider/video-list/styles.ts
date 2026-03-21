@@ -360,7 +360,7 @@ const MainStage = styled.div`
   display: flex;
   align-items: center; /* Canh giữa, tránh kéo video full chiều cao */
   justify-content: center;
-  background: rgba(15, 23, 42, 0.95);
+  background: #000; /* Đồng bộ nền đen tuyệt đối với object-fit contain */
   border-radius: 12px;
   overflow: hidden; /* Ẩn phần video bị crop để không thấy viền đen */
   position: relative;
@@ -369,7 +369,7 @@ const MainStage = styled.div`
   box-sizing: border-box;
   width: 100%;
   height: 100%;
-  max-height: 88vh; /* Giới hạn chiều cao để video không phóng quá to */
+  max-height: 100%; /* Cho phép bung full chiều cao theo Layout Manager */
 
   /* Smooth transition khi sidebar mở/đóng - giống Google Meet */
   transition:
@@ -433,11 +433,7 @@ const PresenterStageVideo = styled.div<{
     height: 100%;
     max-width: 100%;
     max-height: 100%;
-    /* Điều chỉnh object-fit dựa trên sidebar:
-       - Khi sidebar mở: dùng cover để fill đầy, không có viền đen
-       - Khi sidebar đóng: dùng contain để hiển thị đủ, có thể có viền đen */
-    /* object-fit: ${({ $hasSidebarOpen }) =>
-      $hasSidebarOpen ? "cover" : "contain"}; */
+    /* Giữ nguyên contain để không bị crop xén mảng lớn khung hình webcam */
     object-fit: contain;
     object-position: center center;
     border-radius: 0;

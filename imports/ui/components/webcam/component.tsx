@@ -229,10 +229,13 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
   const disableDrag = hasSharedContent; // khi share thì tắt drag để tránh transform đẩy strip xuống
 
   // Khi share: ép camera dock sát top (loại bỏ offset nav/toolbar của BBB)
+  // Khi không share: ép top 0 để camera height 100vh không bị tràn bottom offset xuống cạnh viền dưới màn hình
   const dockTop =
     hasSharedContent && cameraDock.position === CAMERADOCK_POSITION.CONTENT_TOP
       ? 10
-      : cameraDock.top;
+      : !hasSharedContent
+        ? 0
+        : cameraDock.top;
 
   return (
     <>

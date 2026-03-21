@@ -496,6 +496,16 @@ const CustomLayout = (props) => {
       lastHeight = updatedLastSize.height;
     }
 
+    // Determine if there is any shared content taking up the media area
+    const sharedContentOpen =
+      (presentationInput.isPresentationEnabled &&
+        presentationInput.slidesLength !== 0 &&
+        presentationInput.isOpen) ||
+      externalVideoInput.hasExternalVideo ||
+      screenShareInput.hasScreenShare ||
+      genericMainContentInput.genericContentId ||
+      sharedNotesInput.isPinned;
+
     if (isCameraTop || isCameraBottom) {
       if ((lastHeight === 0 && !isResizing) || (isCameraTop && isMobile)) {
         // Trên mobile: sử dụng height cố định khớp với CSS (120px tablet, 100px phone)
@@ -535,11 +545,18 @@ const CustomLayout = (props) => {
           cameraDockMinHeight,
           mediaAreaBounds.height * 0.1,
         );
-        const maxAllowedHeight = Math.min(
-          mediaAreaBounds.height * 0.4,
-          mediaAreaBounds.height - cameraDockMinHeight,
-        );
+        const maxAllowedHeight = sharedContentOpen
+          ? Math.min(
+              mediaAreaBounds.height * 0.4,
+              mediaAreaBounds.height - cameraDockMinHeight,
+            )
+          : mediaAreaBounds.height;
         cameraDockHeight = clamp(height, minAllowedHeight, maxAllowedHeight);
+      }
+
+      // KHI KHÔNG CÓ TÀI LIỆU/SHARE SCREEN -> Camera sẽ bung toàn màn hình (Full MediaArea)
+      if (!sharedContentOpen && !cameraDockInput.isDragging) {
+        cameraDockHeight = mediaAreaBounds.height;
       }
 
       // Khi camera ở trên: đặt sát lên trên cùng (top = 0) để giảm khoảng trống phía trên
@@ -573,10 +590,15 @@ const CustomLayout = (props) => {
         mediaAreaBounds.height * 0.1,
       );
       cameraDockBounds.height = cameraDockHeight;
-      cameraDockBounds.maxHeight = Math.min(
-        mediaAreaBounds.height * 0.8,
-        mediaAreaBounds.height - 100,
-      ); // Max 80% or leave 100px for other content
+
+      if (!sharedContentOpen) {
+        cameraDockBounds.maxHeight = mediaAreaBounds.height;
+      } else {
+        cameraDockBounds.maxHeight = Math.min(
+          mediaAreaBounds.height * 0.8,
+          mediaAreaBounds.height - 100,
+        ); // Max 80% or leave 100px for other content
+      }
 
       if (isCameraBottom) {
         // Trên mobile: đẩy camera bottom lên cao hơn một chút
@@ -953,16 +975,17 @@ const CustomLayout = (props) => {
     const mediaAreaBounds = {
       width: mediaAreaWidth,
       height: Math.max(
-        viewportHeight -
-          tempActionBarFinalHeight -
-          sidebarPanelHeight -
-          bannerHeight -
-          panelButtonsHeight -
-          videoStripReserveSpace, // Trừ phần webcam ra khỏi chiều cao media
+        sharedContentOpen
+          ? viewportHeight -
+              tempActionBarFinalHeight -
+              sidebarPanelHeight -
+              bannerHeight -
+              panelButtonsHeight
+          : viewportHeight - bannerHeight,
         minMediaAreaHeight,
       ),
-      top: isMobile ? 0 : bannerHeight + videoStripReserveSpace, // Đẩy khu vực media (presentation) xuống né webcams
-      left: 0, // Video luôn bắt đầu từ mép trái
+      top: isMobile ? 0 : bannerHeight,
+      left: 0,
     };
     const navbarBounds = calculatesNavbarBounds(mediaAreaBounds);
     const actionbarBounds = calculatesActionbarBounds(mediaAreaBounds);
@@ -1178,12 +1201,15 @@ const CustomLayout = (props) => {
     const finalActionBarHeight = isMobile
       ? actionBarFinalHeight
       : actionBarHeight;
-    const mediaAreaNewHeight =
-      windowHeight() -
-      finalActionBarHeight -
-      sidebarPanelHeight -
-      bannerHeight -
-      panelButtonsHeight;
+
+    // Cho phép Video tràn xuống dưới đáy màn hình (underlap action bar) khi không mở tài liệu
+    const mediaAreaNewHeight = sharedContentOpen
+      ? windowHeight() -
+        finalActionBarHeight -
+        sidebarPanelHeight -
+        bannerHeight -
+        panelButtonsHeight
+      : windowHeight() - bannerHeight;
 
     // QUAN TRỌNG: Dùng mediaAreaWidth (đã trừ sidebar) thay vì windowWidth() để cam lớn thụt vào khi sidebar mở
     // mediaAreaWidth đã được tính ở trên (dòng 782-788) với logic trừ sidebar width và gutter
