@@ -12,6 +12,7 @@ import AudioCaptionsButtonContainer from "/imports/ui/components/audio/audio-gra
 import ScreenshareButtonContainer from "/imports/ui/components/actions-bar/screenshare/container";
 import AudioControlsContainer from "../audio/audio-graphql/audio-controls/component";
 import JoinVideoOptionsContainer from "../video-provider/video-button/container";
+import TimerIndicatorContainer from "/imports/ui/components/timer/indicator/component";
 import PresentationOptionsContainer from "./presentation-options/component";
 import SwapPresentationButton from "./swap-presentation/component";
 import Button from "/imports/ui/components/common/button/component";
@@ -770,6 +771,7 @@ class ActionsBar extends PureComponent {
               <Styled.RoomInfo>
                 {/* Time */}
                 <Styled.Time>{currentTime}</Styled.Time>
+                <TimerIndicatorContainer />
 
                 {/* Room name với dropdown */}
                 <Styled.Separator aria-hidden="true">|</Styled.Separator>
