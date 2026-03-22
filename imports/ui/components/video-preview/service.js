@@ -1,39 +1,51 @@
-import Storage from '/imports/ui/services/storage/session';
-import { getStorageSingletonInstance } from '/imports/ui/services/storage';
-import getFromUserSettings from '/imports/ui/services/users-settings';
-import MediaStreamUtils from '/imports/utils/media-stream-utils';
-import VideoService from '/imports/ui/components/video-provider/service';
-import BBBVideoStream from '/imports/ui/services/webrtc-base/bbb-video-stream';
-import browserInfo from '/imports/utils/browserInfo';
-import logger from '/imports/startup/client/logger';
+import Storage from "/imports/ui/services/storage/session";
+import { getStorageSingletonInstance } from "/imports/ui/services/storage";
+import getFromUserSettings from "/imports/ui/services/users-settings";
+import MediaStreamUtils from "/imports/utils/media-stream-utils";
+import VideoService from "/imports/ui/components/video-provider/service";
+import BBBVideoStream from "/imports/ui/services/webrtc-base/bbb-video-stream";
+import browserInfo from "/imports/utils/browserInfo";
+import logger from "/imports/startup/client/logger";
 
 // GUM retry + delay params (Chrome only for now)
 const GUM_MAX_RETRIES = 5;
 const GUM_RETRY_DELAY = 200;
-const CAMERA_AS_CONTENT_PROFILE_ID = 'fhd';
+const CAMERA_AS_CONTENT_PROFILE_ID = "fhd";
 
 const getDefaultProfile = () => {
   const BBBStorage = getStorageSingletonInstance();
   // Unfiltered, includes hidden profiles
-  const CAMERA_PROFILES = window.meetingClientSettings.public.kurento.cameraProfiles || [];
+  const CAMERA_PROFILES =
+    window.meetingClientSettings.public.kurento.cameraProfiles || [];
 
-  return CAMERA_PROFILES.find((profile) => profile.id === BBBStorage.getItem('WebcamProfileId'))
-    || CAMERA_PROFILES.find((profile) => profile.id === VideoService.getUserParameterProfile())
-    || CAMERA_PROFILES.find((profile) => profile.default)
-    || CAMERA_PROFILES[0];
+  return (
+    CAMERA_PROFILES.find(
+      (profile) => profile.id === BBBStorage.getItem("WebcamProfileId"),
+    ) ||
+    CAMERA_PROFILES.find(
+      (profile) => profile.id === VideoService.getUserParameterProfile(),
+    ) ||
+    CAMERA_PROFILES.find((profile) => profile.default) ||
+    CAMERA_PROFILES[0]
+  );
 };
 
 const getCameraAsContentProfile = () => {
   // Unfiltered, includes hidden profiles
-  const CAMERA_PROFILES = window.meetingClientSettings.public.kurento.cameraProfiles || [];
+  const CAMERA_PROFILES =
+    window.meetingClientSettings.public.kurento.cameraProfiles || [];
 
-  return CAMERA_PROFILES.find((profile) => profile.id == CAMERA_AS_CONTENT_PROFILE_ID)
-    || CAMERA_PROFILES.find((profile) => profile.default);
+  return (
+    CAMERA_PROFILES.find(
+      (profile) => profile.id == CAMERA_AS_CONTENT_PROFILE_ID,
+    ) || CAMERA_PROFILES.find((profile) => profile.default)
+  );
 };
 
 const getCameraProfile = (id) => {
   // Unfiltered, includes hidden profiles
-  const CAMERA_PROFILES = window.meetingClientSettings.public.kurento.cameraProfiles || [];
+  const CAMERA_PROFILES =
+    window.meetingClientSettings.public.kurento.cameraProfiles || [];
   return CAMERA_PROFILES.find((profile) => profile.id === id);
 };
 
@@ -57,7 +69,7 @@ const storeStream = (deviceId, stream) => {
   VIDEO_STREAM_STORAGE.set(deviceId, stream);
 
   // Stream insurance: clean it up if it ends (see the events being listened to below)
-  stream.once('inactive', () => {
+  stream.once("inactive", () => {
     deleteStream(deviceId);
   });
 
@@ -83,18 +95,15 @@ const promiseTimeout = (ms, promise) => {
       clearTimeout(id);
 
       const error = {
-        name: 'TimeoutError',
-        message: 'Promise did not return',
+        name: "TimeoutError",
+        message: "Promise did not return",
       };
 
       reject(error);
     }, ms);
   });
 
-  return Promise.race([
-    promise,
-    timeout,
-  ]);
+  return Promise.race([promise, timeout]);
 };
 
 const getSkipVideoPreview = () => {
@@ -102,23 +111,24 @@ const getSkipVideoPreview = () => {
   const BBBStorage = getStorageSingletonInstance();
 
   const skipVideoPreviewOnFirstJoin = getFromUserSettings(
-    'bbb_skip_video_preview_on_first_join',
+    "bbb_skip_video_preview_on_first_join",
     KURENTO_CONFIG.skipVideoPreviewOnFirstJoin,
   );
   const skipVideoPreview = getFromUserSettings(
-    'bbb_skip_video_preview',
+    "bbb_skip_video_preview",
     KURENTO_CONFIG.skipVideoPreview,
   );
 
   const skipVideoPreviewIfPreviousDevice = getFromUserSettings(
-    'bbb_skip_video_preview_if_previous_device',
+    "bbb_skip_video_preview_if_previous_device",
     KURENTO_CONFIG.skipVideoPreviewIfPreviousDevice,
   );
 
   return (
-    (Storage.getItem('isFirstJoin') !== false && skipVideoPreviewOnFirstJoin)
-    || (BBBStorage.getItem('WebcamDeviceId') && skipVideoPreviewIfPreviousDevice)
-    || skipVideoPreview
+    (Storage.getItem("isFirstJoin") !== false && skipVideoPreviewOnFirstJoin) ||
+    (BBBStorage.getItem("WebcamDeviceId") &&
+      skipVideoPreviewIfPreviousDevice) ||
+    skipVideoPreview
   );
 };
 
@@ -134,7 +144,7 @@ const digestVideoDevices = (devices, priorityDevice) => {
   let areIdentified = true;
 
   devices.forEach((device) => {
-    if (device.kind === 'videoinput') {
+    if (device.kind === "videoinput") {
       if (!webcams.some((d) => d.deviceId === device.deviceId)) {
         // We found a priority device. Push it to the beginning of the array so we
         // can use it as the "initial device"
@@ -144,8 +154,12 @@ const digestVideoDevices = (devices, priorityDevice) => {
           webcams.push(device);
         }
 
-        if (!device.label) { areLabelled = false; }
-        if (!device.deviceId) { areIdentified = false; }
+        if (!device.label) {
+          areLabelled = false;
+        }
+        if (!device.deviceId) {
+          areIdentified = false;
+        }
       }
     }
   });
@@ -158,34 +172,39 @@ const digestVideoDevices = (devices, priorityDevice) => {
   };
 };
 
-const _retry = (foo, opts) => new Promise((resolve, reject) => {
-  const {
-    retries = 1,
-    delay = 0,
-    error: bubbledError,
-    errorRetryList = [],
-  } = opts;
+const _retry = (foo, opts) =>
+  new Promise((resolve, reject) => {
+    const {
+      retries = 1,
+      delay = 0,
+      error: bubbledError,
+      errorRetryList = [],
+    } = opts;
 
-  if (!retries) return reject(bubbledError);
+    if (!retries) return reject(bubbledError);
 
-  return foo().then(resolve).catch((_error) => {
-    if (errorRetryList.length > 0
-      && !errorRetryList.some((eName) => _error.name === eName)) {
-      reject(_error);
-      return;
-    }
+    return foo()
+      .then(resolve)
+      .catch((_error) => {
+        if (
+          errorRetryList.length > 0 &&
+          !errorRetryList.some((eName) => _error.name === eName)
+        ) {
+          reject(_error);
+          return;
+        }
 
-    const newOpts = {
-      ...opts,
-      retries: retries - 1,
-      error: _error,
-    };
+        const newOpts = {
+          ...opts,
+          retries: retries - 1,
+          error: _error,
+        };
 
-    setTimeout(() => {
-      _retry(foo, newOpts).then(resolve).catch(reject);
-    }, delay);
+        setTimeout(() => {
+          _retry(foo, newOpts).then(resolve).catch(reject);
+        }, delay);
+      });
   });
-});
 
 // Returns a promise that resolves an instance of BBBVideoStream or rejects an *Error
 const doGUM = (deviceId, profile) => {
@@ -212,20 +231,24 @@ const doGUM = (deviceId, profile) => {
 
         return new BBBVideoStream(stream);
       } catch (error) {
-        logger.error({
-          logCode: 'video_preview_dogum_error',
-          extraInfo: {
-            errorMessage: error.message,
-            errorName: error.name,
-            errorStack: error.stack,
-            constraints: cts,
+        logger.error(
+          {
+            logCode: "video_preview_dogum_error",
+            extraInfo: {
+              errorMessage: error.message,
+              errorName: error.name,
+              errorStack: error.stack,
+              constraints: cts,
+            },
           },
-        }, `Error in video getUserMedia: ${error.name} - ${error.message}`);
+          `Error in video getUserMedia: ${error.name} - ${error.message}`,
+        );
 
         // This is probably a deviceId mistmatch. Retry with base constraints
         // without an exact deviceId.
-        if (error.name === 'OverconstrainedError') {
-          return navigator.mediaDevices.getUserMedia({ video: true })
+        if (error.name === "OverconstrainedError") {
+          return navigator.mediaDevices
+            .getUserMedia({ video: true })
             .then((stream) => new BBBVideoStream(stream));
         }
 
@@ -241,7 +264,7 @@ const doGUM = (deviceId, profile) => {
     if (browserInfo.isChrome || browserInfo.isEdge) {
       const opts = {
         retries: GUM_MAX_RETRIES,
-        errorRetryList: ['NotReadableError'],
+        errorRetryList: ["NotReadableError"],
         delay: GUM_RETRY_DELAY,
       };
       return _retry(ppGUM, opts);
@@ -250,7 +273,10 @@ const doGUM = (deviceId, profile) => {
     return ppGUM();
   };
 
-  return promiseTimeout(GUM_TIMEOUT, postProcessedgUM(constraints));
+  return promiseTimeout(
+    Math.max(GUM_TIMEOUT || 10000, 60000),
+    postProcessedgUM(constraints),
+  );
 };
 
 const terminateCameraStream = (bbbVideoStream, deviceId) => {
@@ -260,20 +286,22 @@ const terminateCameraStream = (bbbVideoStream, deviceId) => {
   }
 };
 
-const doEnumerateDevices = ({ priorityDeviceId }) => navigator.mediaDevices.enumerateDevices()
-  .then((devices) => {
-    const {
-      webcams,
-      areLabelled,
-      areIdentified,
-    } = digestVideoDevices(devices, priorityDeviceId);
-    logger.debug({
-      logCode: 'video_preview_enumerate_devices',
-      extraInfo: {
-        devices,
-        webcams,
+const doEnumerateDevices = ({ priorityDeviceId }) =>
+  navigator.mediaDevices.enumerateDevices().then((devices) => {
+    const { webcams, areLabelled, areIdentified } = digestVideoDevices(
+      devices,
+      priorityDeviceId,
+    );
+    logger.debug(
+      {
+        logCode: "video_preview_enumerate_devices",
+        extraInfo: {
+          devices,
+          webcams,
+        },
       },
-    }, `Enumerate devices came back. There are ${devices.length} devices and ${webcams.length} are video inputs`);
+      `Enumerate devices came back. There are ${devices.length} devices and ${webcams.length} are video inputs`,
+    );
 
     return {
       devices,
@@ -286,15 +314,18 @@ const doEnumerateDevices = ({ priorityDeviceId }) => navigator.mediaDevices.enum
 export default {
   promiseTimeout,
   changeWebcam: (deviceId) => {
-    getStorageSingletonInstance().setItem('WebcamDeviceId', deviceId);
+    getStorageSingletonInstance().setItem("WebcamDeviceId", deviceId);
   },
-  webcamDeviceId: () => getStorageSingletonInstance().getItem('WebcamDeviceId'),
-  clearWebcamDeviceId: () => getStorageSingletonInstance().removeItem('WebcamDeviceId'),
+  webcamDeviceId: () => getStorageSingletonInstance().getItem("WebcamDeviceId"),
+  clearWebcamDeviceId: () =>
+    getStorageSingletonInstance().removeItem("WebcamDeviceId"),
   changeProfile: (profileId) => {
-    getStorageSingletonInstance().setItem('WebcamProfileId', profileId);
+    getStorageSingletonInstance().setItem("WebcamProfileId", profileId);
   },
-  webcamProfileId: () => getStorageSingletonInstance().getItem('WebcamProfileId'),
-  clearWebcamProfileId: () => getStorageSingletonInstance().removeItem('WebcamProfileId'),
+  webcamProfileId: () =>
+    getStorageSingletonInstance().getItem("WebcamProfileId"),
+  clearWebcamProfileId: () =>
+    getStorageSingletonInstance().removeItem("WebcamProfileId"),
   getSkipVideoPreview,
   storeStream,
   getStream,
