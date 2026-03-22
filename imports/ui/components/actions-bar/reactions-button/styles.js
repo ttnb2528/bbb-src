@@ -1,5 +1,5 @@
-import styled from 'styled-components';
-import Button from '/imports/ui/components/common/button/component';
+import styled from "styled-components";
+import Button from "/imports/ui/components/common/button/component";
 
 import {
   colorWhite,
@@ -7,10 +7,12 @@ import {
   colorGrayLightest,
   btnPrimaryColor,
   btnPrimaryActiveBg,
-} from '/imports/ui/stylesheets/styled-components/palette';
+} from "/imports/ui/stylesheets/styled-components/palette";
 
 const ReactionsButton = styled(Button)`
-${({ ghost }) => ghost && `
+  ${({ ghost }) =>
+    ghost &&
+    `
   & > span {
     box-shadow: none;
     background-color: transparent !important;
@@ -27,16 +29,18 @@ const ButtonWrapper = styled.div`
   border: 1px solid transparent;
   cursor: pointer;
   height: 2.5rem;
+  width: 2.5rem;
   display: flex;
+  justify-content: center;
   align-items: center;
   border-radius: 50%;
-  margin: 0 .5rem;
+  margin: 0 0.5rem;
 
   /* Mobile: giảm margin responsive dựa trên screen width */
   @media (max-width: 768px) {
     margin: 0 clamp(0.15rem, 1vw, 0.35rem);
   }
-  
+
   /* Màn hình rất nhỏ: margin tối thiểu */
   @media (max-width: 375px) {
     margin: 0 0.15rem;
@@ -61,7 +65,9 @@ const ButtonWrapper = styled.div`
     width: 1.3rem;
   }
 
-  ${({ active }) => active && `
+  ${({ active }) =>
+    active &&
+    `
     color: ${btnPrimaryColor};
     background-color: ${btnPrimaryActiveBg};
 
@@ -77,14 +83,17 @@ const ReactionsButtonWrapper = styled(ButtonWrapper)`
   width: 2.5rem;
   border-radius: 1.7rem;
 
-
-  ${({ isMobile }) => !isMobile && `
+  ${({ isMobile }) =>
+    !isMobile &&
+    `
     border: 1px solid ${colorGrayLightest};
     padding: 1rem 0.5rem;
     width: auto;
   `}
 
-  ${({ active }) => active && `
+  ${({ active }) =>
+    active &&
+    `
     color: ${btnPrimaryColor};
     background-color: ${btnPrimaryActiveBg};
 
