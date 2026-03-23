@@ -273,7 +273,15 @@ const VideoFocusLayout = (props) => {
       isMobile
     ) {
       mediaBounds.width = windowWidth();
-      mediaBounds.height = windowHeight();
+      if (
+        isMobile &&
+        externalVideoInput.hasExternalVideo &&
+        !fullscreenElement
+      ) {
+        mediaBounds.height = mediaAreaBounds.top + mediaAreaBounds.height;
+      } else {
+        mediaBounds.height = windowHeight();
+      }
       mediaBounds.top = 0;
       mediaBounds.left = 0;
       mediaBounds.right = 0;

@@ -296,7 +296,15 @@ const PresentationFocusLayout = (props) => {
       isMobile
     ) {
       mediaBounds.width = windowWidth();
-      mediaBounds.height = windowHeight();
+      if (
+        isMobile &&
+        externalVideoInput.hasExternalVideo &&
+        !fullscreenElement
+      ) {
+        mediaBounds.height = mediaAreaBounds.top + mediaAreaBounds.height;
+      } else {
+        mediaBounds.height = windowHeight();
+      }fffff
       mediaBounds.top = 0;
       mediaBounds.left = !isRTL ? 0 : null;
       mediaBounds.right = isRTL ? 0 : null;

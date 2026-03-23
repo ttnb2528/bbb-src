@@ -750,7 +750,15 @@ const CustomLayout = (props) => {
       isMobile
     ) {
       mediaBounds.width = windowWidth();
-      mediaBounds.height = windowHeight();
+      if (
+        isMobile &&
+        externalVideoInput.hasExternalVideo &&
+        !fullscreenElement
+      ) {
+        mediaBounds.height = mediaAreaTop + mediaAreaHeight;
+      } else {
+        mediaBounds.height = windowHeight();
+      }
       mediaBounds.top = 0;
       mediaBounds.left = !isRTL ? 0 : null;
       mediaBounds.right = isRTL ? 0 : null;
