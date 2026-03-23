@@ -39,20 +39,13 @@ const FloatingChatContainer: React.FC = () => {
   const sidebarContentWidth = layoutSelectInput(
     (i: any) => i.sidebarContent?.width,
   );
-  const isSidebarNavOpen = layoutSelectInput(
-    (i: any) => i.sidebarNavigation?.isOpen,
-  );
-  const sidebarNavWidth = layoutSelectInput(
-    (i: any) => i.sidebarNavigation?.width,
-  );
 
   const hasSharedContent = hasPresentation || hasScreenshare;
-  const isSidebarOpen = isSidebarContentOpen || isSidebarNavOpen;
+  // Ignore sidebarNavigation to prevent the chat from getting stuck artificially on desktop
+  const isSidebarOpen = isSidebarContentOpen;
   let sidebarWidth = 0;
   if (isSidebarContentOpen)
-    sidebarWidth = Math.min(Math.max(sidebarContentWidth || 300, 250), 340);
-  else if (isSidebarNavOpen)
-    sidebarWidth = Math.min(Math.max(sidebarNavWidth || 300, 250), 340);
+    sidebarWidth = Math.min(Math.max(sidebarContentWidth || 320, 250), 340);
 
   useEffect(() => {
     if (!chatMessagesHistory?.chat_message_public) return;

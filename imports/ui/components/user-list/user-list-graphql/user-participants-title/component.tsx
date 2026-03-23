@@ -1,17 +1,23 @@
-import React from 'react';
-import { defineMessages, useIntl } from 'react-intl';
-import { USER_AGGREGATE_COUNT_SUBSCRIPTION, UsersCountSubscriptionResponse } from '/imports/ui/core/graphql/queries/users';
-import UserTitleOptionsContainer from './user-options-dropdown/component';
-import Styled from './styles';
-import useDeduplicatedSubscription from '/imports/ui/core/hooks/useDeduplicatedSubscription';
-import { USER_WITH_AUDIO_AGGREGATE_COUNT_SUBSCRIPTION, UsersWithAudioCountSubscriptionResponse } from './queries';
-import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
-import useMeeting from '/imports/ui/core/hooks/useMeeting';
-import { User } from '/imports/ui/Types/user';
-import deviceInfo from '/imports/utils/deviceInfo';
-import { layoutDispatch } from '/imports/ui/components/layout/context';
-import { ACTIONS, PANELS } from '/imports/ui/components/layout/enums';
-import Header from '/imports/ui/components/common/control-header/component';
+import React from "react";
+import { defineMessages, useIntl } from "react-intl";
+import {
+  USER_AGGREGATE_COUNT_SUBSCRIPTION,
+  UsersCountSubscriptionResponse,
+} from "/imports/ui/core/graphql/queries/users";
+import UserTitleOptionsContainer from "./user-options-dropdown/component";
+import Styled from "./styles";
+import useDeduplicatedSubscription from "/imports/ui/core/hooks/useDeduplicatedSubscription";
+import {
+  USER_WITH_AUDIO_AGGREGATE_COUNT_SUBSCRIPTION,
+  UsersWithAudioCountSubscriptionResponse,
+} from "./queries";
+import useCurrentUser from "/imports/ui/core/hooks/useCurrentUser";
+import useMeeting from "/imports/ui/core/hooks/useMeeting";
+import { User } from "/imports/ui/Types/user";
+import deviceInfo from "/imports/utils/deviceInfo";
+import { layoutDispatch } from "/imports/ui/components/layout/context";
+import { ACTIONS, PANELS } from "/imports/ui/components/layout/enums";
+import Header from "/imports/ui/components/common/control-header/component";
 
 interface UserTitleProps {
   count: number;
@@ -21,17 +27,17 @@ interface UserTitleProps {
 
 const messages = defineMessages({
   usersTitle: {
-    id: 'app.userList.usersTitle',
-    description: 'Title for the Header',
+    id: "app.userList.usersTitle",
+    description: "Title for the Header",
   },
   lockedUsersTitle: {
-    id: 'app.userList.lockedUsersTitle',
-    description: 'Title for the locked users',
+    id: "app.userList.lockedUsersTitle",
+    description: "Title for the locked users",
   },
   closeUserListLabel: {
-    id: 'app.userList.closeUserListLabel',
-    description: 'Close user list button label',
-    defaultMessage: 'Close',
+    id: "app.userList.closeUserListLabel",
+    description: "Close user list button label",
+    defaultMessage: "Close",
   },
 });
 
@@ -43,25 +49,28 @@ const UserTitle: React.FC<UserTitleProps> = ({
   const intl = useIntl();
   const layoutContextDispatch = layoutDispatch();
   const isMobile = deviceInfo.isMobile || deviceInfo.isPhone;
-  const userListLabel = hideUserList ? messages.lockedUsersTitle : messages.usersTitle;
+  const userListLabel = hideUserList
+    ? messages.lockedUsersTitle
+    : messages.usersTitle;
 
   // Trên mobile, hiển thị header với nút X và text "USERS (số lượng)"
   if (isMobile) {
-    const userListTitle = intl.formatMessage(
-      userListLabel,
-      {
-        userCount: count.toLocaleString('en-US', { notation: 'standard' }),
-      },
-    );
+    const userListTitle = intl.formatMessage(userListLabel, {
+      userCount: count.toLocaleString("en-US", { notation: "standard" }),
+    });
     return (
       <Styled.MobileHeaderWrapper isMobile={isMobile}>
         <Header
           bottomless
           data-test="userListTitle"
           leftButtonProps={{
-            'aria-label': intl.formatMessage(messages.closeUserListLabel),
-            'data-test': 'closeUserListSidebar',
-            icon: 'close',
+            "aria-label": intl.formatMessage(messages.closeUserListLabel),
+            "data-test": "closeUserListSidebar",
+            icon: "close",
+            circle: true,
+            ghost: true,
+            color: "light",
+            size: "md",
             hideLabel: true,
             onClick: () => {
               // Đóng sidebar khi click X
@@ -97,12 +106,9 @@ const UserTitle: React.FC<UserTitleProps> = ({
           data-test-users-count={count}
           data-test-users-with-audio-count={countWithAudio}
         >
-          {intl.formatMessage(
-            userListLabel,
-            {
-              userCount: count.toLocaleString('en-US', { notation: 'standard' }),
-            },
-          )}
+          {intl.formatMessage(userListLabel, {
+            userCount: count.toLocaleString("en-US", { notation: "standard" }),
+          })}
         </span>
       </Styled.SmallTitle>
       <UserTitleOptionsContainer />
@@ -112,20 +118,21 @@ const UserTitle: React.FC<UserTitleProps> = ({
 
 const UserTitleContainer: React.FC = () => {
   const getCountData = () => {
-    const { data: countData } = useDeduplicatedSubscription<UsersCountSubscriptionResponse>(
-      USER_AGGREGATE_COUNT_SUBSCRIPTION,
-    );
+    const { data: countData } =
+      useDeduplicatedSubscription<UsersCountSubscriptionResponse>(
+        USER_AGGREGATE_COUNT_SUBSCRIPTION,
+      );
     const count = countData?.user_aggregate?.aggregate?.count || 0;
     return count;
   };
 
-  const {
-    data: audioUsersCountData,
-  } = useDeduplicatedSubscription<UsersWithAudioCountSubscriptionResponse>(
-    USER_WITH_AUDIO_AGGREGATE_COUNT_SUBSCRIPTION,
-  );
+  const { data: audioUsersCountData } =
+    useDeduplicatedSubscription<UsersWithAudioCountSubscriptionResponse>(
+      USER_WITH_AUDIO_AGGREGATE_COUNT_SUBSCRIPTION,
+    );
 
-  const countWithAudio = audioUsersCountData?.user_aggregate?.aggregate?.count || 0;
+  const countWithAudio =
+    audioUsersCountData?.user_aggregate?.aggregate?.count || 0;
 
   const { data: currentUser } = useCurrentUser((u: Partial<User>) => ({
     locked: u?.locked ?? false,
@@ -135,7 +142,8 @@ const UserTitleContainer: React.FC = () => {
     lockSettings: m.lockSettings,
   }));
 
-  const hideUserList = currentUser?.locked && currentMeeting?.lockSettings?.hideUserList;
+  const hideUserList =
+    currentUser?.locked && currentMeeting?.lockSettings?.hideUserList;
 
   return (
     <UserTitle
