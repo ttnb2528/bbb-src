@@ -870,7 +870,7 @@ class ActionsBar extends PureComponent {
                 ) : (
                   <>
                     {/* Desktop: Hiển thị tất cả các nút */}
-                    {/* Info button - dùng icon warning (dấu chấm than) để thể hiện thông tin chi tiết phòng */}
+                    {/* ĐÃ ẨN: Nút Info (!) dư thừa, tính năng đã gộp vào click tên Room
                     <Button
                       label={intl.formatMessage({
                         id: "app.navBar.openDetailsTooltip",
@@ -884,6 +884,7 @@ class ActionsBar extends PureComponent {
                       circle
                       data-test="infoButton"
                     />
+                    */}
 
                     {/* Toggle User List Sidebar */}
                     <div style={{ position: "relative" }}>
