@@ -174,6 +174,64 @@ class App extends Component {
     }
 
     AppService.initializeEmojiData();
+
+    // TIKTOK SWIPE TO HIDE FEATURE
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let ignoreSwipe = false;
+
+    window.addEventListener(
+      "touchstart",
+      (e) => {
+        // Bỏ qua swipe nếu đang thao tác trên các thành phần UI (input, nút bấm, khung chat...)
+        const target = e.target;
+        if (
+          target &&
+          target.closest(
+            'input, textarea, button, [role="button"], .floating-chat, [aria-label]',
+          )
+        ) {
+          ignoreSwipe = true;
+          return;
+        }
+        ignoreSwipe = false;
+        if (e.changedTouches && e.changedTouches.length > 0) {
+          touchStartX = e.changedTouches[0].screenX;
+          touchStartY = e.changedTouches[0].screenY;
+        }
+      },
+      { passive: true },
+    );
+
+    window.addEventListener(
+      "touchend",
+      (e) => {
+        if (ignoreSwipe) return;
+        if (e.changedTouches && e.changedTouches.length > 0) {
+          const touchEndX = e.changedTouches[0].screenX;
+          const touchEndY = e.changedTouches[0].screenY;
+
+          const dx = touchEndX - touchStartX;
+          const dy = touchEndY - touchStartY;
+
+          // Vuốt ngang và đủ dài (> 50px)
+          if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+            if (dx > 0) {
+              // Vuốt PHẢI -> Ẩn UI
+              window.dispatchEvent(
+                new CustomEvent("swipe-ui", { detail: { hide: true } }),
+              );
+            } else {
+              // Vuốt TRÁI -> Hiện UI
+              window.dispatchEvent(
+                new CustomEvent("swipe-ui", { detail: { hide: false } }),
+              );
+            }
+          }
+        }
+      },
+      { passive: true },
+    );
   }
 
   componentDidUpdate(prevProps) {

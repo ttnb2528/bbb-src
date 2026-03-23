@@ -23,6 +23,7 @@ interface Props {
   chatId: string;
   isSidebarOpen?: boolean;
   sidebarWidth?: number;
+  isUIHidden?: boolean;
 }
 
 const FloatingChat = ({
@@ -31,6 +32,7 @@ const FloatingChat = ({
   chatId,
   isSidebarOpen,
   sidebarWidth,
+  isUIHidden,
 }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -113,6 +115,7 @@ const FloatingChat = ({
       $hasSharedContent={hasSharedContent}
       $isSidebarOpen={isSidebarOpen}
       $sidebarWidth={sidebarWidth}
+      $isUIHidden={isUIHidden}
     >
       <Styled.ChatHeader
         onClick={() => setIsExpanded(!isExpanded)}

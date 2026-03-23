@@ -9,6 +9,15 @@ const MAX_MESSAGES = 50;
 
 const FloatingChatContainer: React.FC = () => {
   const [visibleMessages, setVisibleMessages] = useState<any[]>([]);
+  const [isUIHidden, setIsUIHidden] = useState(false);
+
+  useEffect(() => {
+    const handleSwipe = (e: any) => {
+      setIsUIHidden(e.detail.hide);
+    };
+    window.addEventListener("swipe-ui", handleSwipe);
+    return () => window.removeEventListener("swipe-ui", handleSwipe);
+  }, []);
 
   const { data: chatMessagesHistory } = useDeduplicatedSubscription<any>(
     CHAT_MESSAGE_FLOATING_SUBSCRIPTION,
@@ -81,6 +90,7 @@ const FloatingChatContainer: React.FC = () => {
       chatId={CURRENT_CHAT_CONFIG.public_group_id || "MAIN-PUBLIC-GROUP-CHAT"}
       isSidebarOpen={isSidebarOpen}
       sidebarWidth={sidebarWidth}
+      isUIHidden={isUIHidden}
     />
   );
 };

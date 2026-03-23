@@ -51,6 +51,17 @@ const ActionsBarWrapper = styled.section`
   width: 100%; /* Full width by default */
   max-width: 100vw; /* Don't exceed viewport width */
 
+  transition:
+    transform 0.35s cubic-bezier(0.25, 1, 0.5, 1),
+    opacity 0.35s ease;
+  ${(props) =>
+    props.$isUIHidden &&
+    `
+      transform: translateX(120vw) !important;
+      opacity: 0;
+      pointer-events: none;
+    `}
+
   /* Mobile: tăng padding và min-height để buttons có không gian và không bị thụt */
   @media ${smallOnly} {
     top: auto !important;

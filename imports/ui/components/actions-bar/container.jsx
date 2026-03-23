@@ -41,6 +41,15 @@ const isLayeredView = window.matchMedia(
 );
 
 const ActionsBarContainer = (props) => {
+  const [isUIHidden, setIsUIHidden] = React.useState(false);
+  React.useEffect(() => {
+    const handleSwipe = (e) => {
+      setIsUIHidden(e.detail.hide);
+    };
+    window.addEventListener("swipe-ui", handleSwipe);
+    return () => window.removeEventListener("swipe-ui", handleSwipe);
+  }, []);
+
   const LAYOUT_CONFIG = window.meetingClientSettings.public.layout;
   const { showPushLayoutButton } = LAYOUT_CONFIG;
   const actionsBarStyle = layoutSelectOutput((i) => i.actionBar);
@@ -208,6 +217,7 @@ const ActionsBarContainer = (props) => {
         publicChatUnreadCount, // Đảm bảo prop này được truyền sau cùng để không bị override
         chats,
         meetingId: currentMeeting?.meetingId,
+        isUIHidden,
       }}
     />
   );

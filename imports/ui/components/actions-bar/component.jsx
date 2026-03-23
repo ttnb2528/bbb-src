@@ -732,6 +732,7 @@ class ActionsBar extends PureComponent {
       privateUnreadCount,
       publicChatUnreadCount,
       meetingId,
+      isUIHidden,
     } = this.props;
 
     const { isPrivateChatModalOpen, currentTime } = this.state;
@@ -756,6 +757,7 @@ class ActionsBar extends PureComponent {
       shouldRenderActionBar && (
         <Styled.ActionsBarWrapper
           id="ActionsBar"
+          $isUIHidden={isUIHidden}
           role="region"
           aria-label={intl.formatMessage(intlMessages.actionsBarLabel)}
           aria-hidden={ariaHidden}

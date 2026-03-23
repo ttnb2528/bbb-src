@@ -10,6 +10,7 @@ export const FloatingChatContainer = styled.div<{
   $hasSharedContent?: boolean;
   $isSidebarOpen?: boolean;
   $sidebarWidth?: number;
+  $isUIHidden?: boolean;
 }>`
   position: absolute;
   /* Giảm z-index xuống để các popup menu (như Options) đè lên trên khung Chat */
@@ -25,8 +26,18 @@ export const FloatingChatContainer = styled.div<{
   flex-direction: column;
   justify-content: flex-end;
   align-items: stretch; /* Stretch children to fill width */
-  transition: right 0.3s ease-in-out;
+  transition:
+    right 0.3s ease-in-out,
+    transform 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+    opacity 0.3s ease;
   pointer-events: none;
+
+  ${(props: any) =>
+    props.$isUIHidden &&
+    `
+      transform: translateX(120vw) !important;
+      opacity: 0;
+    `}
 
   @media ${smallOnly} {
     right: auto !important;
