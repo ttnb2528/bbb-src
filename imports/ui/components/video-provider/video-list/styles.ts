@@ -280,7 +280,7 @@ const VideoStripItem = styled.div<{
   flex-shrink: 0;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.35); /* Border để dễ nhìn trạng thái cam nhỏ */
+  border: none; /* Dùng border của Content::after để không bị viền kép khi đang nói */
   /* Ensure aspect ratio is maintained cho cam nhỏ */
   aspect-ratio: 4 / 3;
 

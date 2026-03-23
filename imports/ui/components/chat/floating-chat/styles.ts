@@ -1,4 +1,5 @@
 import styled, { keyframes, css } from "styled-components";
+import { smallOnly } from "/imports/ui/stylesheets/styled-components/breakpoints";
 
 const fadeIn = keyframes`
   0% { opacity: 0; transform: translateY(10px); }
@@ -26,6 +27,18 @@ export const FloatingChatContainer = styled.div<{
   align-items: stretch; /* Stretch children to fill width */
   transition: right 0.3s ease-in-out;
   pointer-events: none;
+
+  @media ${smallOnly} {
+    right: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 95vw !important;
+    max-width: 400px !important;
+  }
+
+  @media (max-height: 500px) {
+    bottom: 20px !important; /* Hạ thấp khi bật bàn phím để không bị che khuất / lơ lửng */
+  }
 
   ${(props: any) =>
     props.$hasSharedContent &&

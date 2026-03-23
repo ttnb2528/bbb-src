@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import styled, { css, keyframes } from 'styled-components';
-import ButtonEmoji from '/imports/ui/components/common/button/button-emoji/ButtonEmoji';
-import Button from '/imports/ui/components/common/button/component';
+import styled, { css, keyframes } from "styled-components";
+import ButtonEmoji from "/imports/ui/components/common/button/button-emoji/ButtonEmoji";
+import Button from "/imports/ui/components/common/button/component";
 import {
   colorPrimary,
   colorDanger,
@@ -9,9 +9,12 @@ import {
   colorOffWhite,
   colorWhite,
   colorSuccess,
-} from '/imports/ui/stylesheets/styled-components/palette';
-import { smPaddingY, smPadding } from '/imports/ui/stylesheets/styled-components/general';
-import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
+} from "/imports/ui/stylesheets/styled-components/palette";
+import {
+  smPaddingY,
+  smPadding,
+} from "/imports/ui/stylesheets/styled-components/general";
+import { smallOnly } from "/imports/ui/stylesheets/styled-components/breakpoints";
 
 const pulse = keyframes`
   0% {
@@ -27,7 +30,9 @@ const pulse = keyframes`
 
 // @ts-ignore - as button comes from JS, we can't provide its props
 export const MuteToggleButton = styled(Button)`
-  ${({ ghost }) => ghost && `
+  ${({ ghost }) =>
+    ghost &&
+    `
     span {
       box-shadow: none;
       background-color: transparent !important;
@@ -35,17 +40,25 @@ export const MuteToggleButton = styled(Button)`
     }
   `}
 
-  ${({ $talking }) => $talking && `
+  ${({ $talking }) =>
+    $talking &&
+    `
     border-radius: 50%;
   `}
 
-  ${({ $talking, animations }) => $talking && animations && css`
+  ${({ $talking, animations }) =>
+    $talking &&
+    animations &&
+    css`
       animation: ${pulse} 1s infinite ease-in;
     `}
 
-  ${({ $talking, animations }) => $talking && !animations && css`
+  ${({ $talking, animations }) =>
+    $talking &&
+    !animations &&
+    css`
       & span {
-        content: '';
+        content: "";
         outline: none !important;
         background-clip: padding-box;
         box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
@@ -53,25 +66,24 @@ export const MuteToggleButton = styled(Button)`
     `}
   
       @media ${smallOnly} {
-        margin-right: ${smPaddingY};
-      }
-  
-      [dir='rtl'] & {
-        margin-right: 0;
-        margin-left: -${smPadding};
-  
-        @media ${smallOnly} {
-          margin-left: ${smPaddingY};
-        }
-      }
+    margin-right: 0 !important; /* Xoá margin để nhường chỗ cho absolute arrow */
+  }
+
+  [dir="rtl"] & {
+    margin-right: 0;
+    margin-left: 0;
+
+    @media ${smallOnly} {
+      margin-left: 0 !important;
     }
+  }
 `;
 
 export const DisabledLabel = {
   color: colorGrayDark,
-  fontWeight: 'bold',
+  fontWeight: "bold",
   opacity: 1,
-  fontSize: '1rem',
+  fontSize: "1rem",
 };
 
 export const AudioSettingsOption = {
@@ -81,17 +93,17 @@ export const AudioSettingsOption = {
 export const SelectedLabel = {
   color: colorPrimary,
   backgroundColor: colorOffWhite,
-  fontWeight: 'bold',
-  paddingLeft: '2.6rem',
+  fontWeight: "bold",
+  paddingLeft: "2.6rem",
 };
 
 export const DeviceLabel = {
-  paddingLeft: '2.6rem',
+  paddingLeft: "2.6rem",
 };
 
 export const SelectedLabelIcon = {
   color: colorSuccess,
-  fontSize: '1.2rem',
+  fontSize: "1.2rem",
 };
 
 export const DangerColor = {
@@ -101,19 +113,39 @@ export const DangerColor = {
 
 // @ts-ignore - as button comes from JS, we can't provide its props
 export const AudioDropdown = styled(ButtonEmoji)`
+  /* Gắn mũi tên trực tiếp vào góc phải dưới của mic button */
+  @media ${smallOnly} {
+    position: absolute !important;
+    bottom: -8px !important;
+    right: -10px !important;
+    min-width: 18px !important;
+    min-height: 18px !important;
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 50% !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+    z-index: 10 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
   span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     i {
-      /* Desktop: giữ nguyên vị trí icon như mặc định, chỉ chỉnh width nhẹ */
+      /* Desktop */
       width: 10px !important;
       bottom: 1px;
 
-      /* Mobile: giảm size + tinh chỉnh vị trí icon cho đẹp */
+      /* Mobile */
       @media ${smallOnly} {
-        width: 8px !important;
-        font-size: 0.75rem !important;
-        top: 1px !important;
-        left: 5px !important;
-        bottom: auto !important;
+        width: auto !important;
+        font-size: 0.65rem !important;
+        position: static !important;
+        transform: translateY(1px) !important;
       }
     }
   }

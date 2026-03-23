@@ -64,19 +64,14 @@ const Content = styled.div<{
     bottom: 0;
     left: 0;
     pointer-events: none;
-    border: 2px solid ${colorBlack};
+    box-sizing: border-box; /* Chắc chắn border được vẽ vào trong, không bị crop */
+    border: 1px solid rgba(255, 255, 255, 0.35); /* Viền xám bọc quanh màn hình */
     border-radius: 8px;
-
-    ${({ isStream }) =>
-      !isStream &&
-      `
-      border: 2px solid ${webcamPlaceholderBorder};
-    `}
 
     ${({ talking }) =>
       talking &&
       `
-      border: 2px solid ${colorPrimary};
+      border: 2px solid ${colorPrimary} !important;
     `}
 
     ${({ talking, customHighlight }) =>

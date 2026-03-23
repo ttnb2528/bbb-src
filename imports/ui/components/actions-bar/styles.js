@@ -1,15 +1,38 @@
-import styled from 'styled-components';
-import { smallOnly, hasPhoneWidth } from '/imports/ui/stylesheets/styled-components/breakpoints';
-import { smPaddingX, smPaddingY, barsPadding, xsPadding, borderSize } from '/imports/ui/stylesheets/styled-components/general';
-import { colorWhite, colorBackground, colorDanger, colorGrayLight, colorGrayDark } from '/imports/ui/stylesheets/styled-components/palette';
-import { fontSizeBase, fontSizeSmall } from '/imports/ui/stylesheets/styled-components/typography';
-import Button from '/imports/ui/components/common/button/component';
+import styled from "styled-components";
+import {
+  smallOnly,
+  hasPhoneWidth,
+} from "/imports/ui/stylesheets/styled-components/breakpoints";
+import {
+  smPaddingX,
+  smPaddingY,
+  barsPadding,
+  xsPadding,
+  borderSize,
+} from "/imports/ui/stylesheets/styled-components/general";
+import {
+  colorWhite,
+  colorBackground,
+  colorDanger,
+  colorGrayLight,
+  colorGrayDark,
+} from "/imports/ui/stylesheets/styled-components/palette";
+import {
+  fontSizeBase,
+  fontSizeSmall,
+} from "/imports/ui/stylesheets/styled-components/typography";
+import Button from "/imports/ui/components/common/button/component";
 
 const ActionsBar = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
   min-height: 100%; /* Đảm bảo ActionsBar chiếm hết chiều cao của wrapper */
+
+  @media ${smallOnly} {
+    justify-content: center; /* Gom chung tất cả các group (Center, Right) vào giữa màn hình */
+    gap: 8px; /* Tầm ảnh hưởng giữa Center list và Right list */
+  }
 `;
 
 const ActionsBarWrapper = styled.section`
@@ -22,7 +45,7 @@ const ActionsBarWrapper = styled.section`
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2); /* Thêm shadow để tách biệt */
   overflow: visible; /* Đảm bảo không bị clip */
   padding-bottom: ${barsPadding}; /* Đảm bảo padding bottom đủ để không bị thụt */
-  
+
   /* Protect controls when zooming: ensure minimum usable width */
   min-width: 320px; /* Minimum width to prevent controls from overflowing at 25% zoom */
   width: 100%; /* Full width by default */
@@ -90,15 +113,9 @@ const Center = styled.div`
   /* Mobile: gap vừa phải, không quá rộng - giống Google Meet */
   @media ${smallOnly} {
     gap: 8px; /* Giảm gap để gọn gàng hơn */
-    flex: 1;
+    flex: 0 0 auto; /* KHÔNG TRẢI RỘNG trên mobile để không làm vỡ khoảng cách với Right Group */
     justify-content: center;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    overflow: visible; /* Bỏ auto để không bị cắt xén (clip) nút bé do margin hoạc border box-shadow */
 
     /* Buttons trên mobile - kích thước hợp lý */
     button {
@@ -108,7 +125,7 @@ const Center = styled.div`
       height: 40px !important;
       flex-shrink: 0 !important;
     }
-    
+
     /* Tách riêng nút arrow dropdown (AudioDropdown) - nhỏ hơn các nút khác */
     button[data-test="audioDropdownMenu"],
     button[aria-label*="Change audio device"],
@@ -122,26 +139,15 @@ const Center = styled.div`
   }
 
   @media ${hasPhoneWidth} {
-    gap: 12px; /* Giảm gap trên phone để gọn gàng hơn */
+    gap: 8px; /* Tối ưu khoang cách trên iPhone SE */
     height: 62px !important;
 
     /* Buttons trên phone */
     button {
-      min-width: 48px !important;
-      min-height: 48px !important;
-      width: 48px !important;
-      height: 48px !important;
-      flex-shrink: 0 !important;
-    }
-    
-    /* Tách riêng nút arrow dropdown (AudioDropdown) - nhỏ hơn các nút khác */
-    button[data-test="audioDropdownMenu"],
-    button[aria-label*="Change audio device"],
-    button[aria-label*="audio device"] {
-      min-width: 20px !important;
-      min-height: 20px !important;
-      width: 20px !important;
-      height: 20px !important;
+      min-width: 44px !important;
+      min-height: 44px !important;
+      width: 44px !important;
+      height: 44px !important;
       flex-shrink: 0 !important;
     }
   }
@@ -182,7 +188,7 @@ const Right = styled.div`
       height: 40px !important;
       flex-shrink: 0 !important;
     }
-    
+
     /* Tách riêng nút arrow dropdown (AudioDropdown) - nhỏ hơn các nút khác */
     button[data-test="audioDropdownMenu"],
     button[aria-label*="Change audio device"],
@@ -196,32 +202,23 @@ const Right = styled.div`
   }
 
   @media ${hasPhoneWidth} {
-    gap: 8px; /* Tăng gap cho 2 nút ngoài cùng bên phải */
+    gap: 8px;
 
     /* Buttons trên phone */
     button {
-      min-width: 48px !important;
-      min-height: 48px !important;
-      width: 48px !important;
-      height: 48px !important;
-      flex-shrink: 0 !important;
-    }
-    
-    /* Tách riêng nút arrow dropdown (AudioDropdown) - nhỏ hơn các nút khác */
-    button[data-test="audioDropdownMenu"],
-    button[aria-label*="Change audio device"],
-    button[aria-label*="audio device"] {
-      min-width: 20px !important;
-      min-height: 20px !important;
-      width: 20px !important;
-      height: 20px !important;
+      min-width: 44px !important;
+      min-height: 44px !important;
+      width: 44px !important;
+      height: 44px !important;
       flex-shrink: 0 !important;
     }
   }
 `;
 
 const RaiseHandButton = styled(Button)`
-  ${({ ghost }) => ghost && `
+  ${({ ghost }) =>
+    ghost &&
+    `
     & > span {
       box-shadow: none;
       background-color: transparent !important;
@@ -259,7 +256,7 @@ const Separator = styled.div`
   width: 0;
   border: 1px solid ${colorWhite};
   align-self: center;
-  opacity: .75;
+  opacity: 0.75;
   margin: 0 ${smPaddingX};
 
   /* Mobile: ẩn separator trên phone */
@@ -391,9 +388,9 @@ const RoomName = styled.h1`
   }
 
   & span i {
-    margin-left: .5rem;
-    margin-right: .5rem;
-    font-size: .75rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    font-size: 0.75rem;
   }
 
   &:hover {
@@ -409,7 +406,7 @@ const RoomName = styled.h1`
   @media ${hasPhoneWidth} {
     font-size: 11px;
     max-width: 80px;
-    
+
     /* Ẩn icon dropdown trên phone */
     > [class^="icon-bbb-"] {
       display: none;

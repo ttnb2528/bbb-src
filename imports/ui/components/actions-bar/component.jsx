@@ -67,8 +67,10 @@ class ActionsBar extends PureComponent {
       this.handleCloseNotificationPanel.bind(this);
     this.handleSelectChatFromPanel = this.handleSelectChatFromPanel.bind(this);
     this.getCurrentTime = this.getCurrentTime.bind(this);
+    this.handleResize = this.handleResize.bind(this);
 
     this.state = {
+      isMobileDevice: deviceInfo.isMobile,
       isModalOpen: false,
       // Quản lý nhiều popup chat: { [chatId]: { isOpen, isMinimized, position, savedPosition } }
       openPrivateChats: {},
@@ -85,6 +87,7 @@ class ActionsBar extends PureComponent {
   }
 
   componentDidMount() {
+    window.addEventListener("resize", this.handleResize);
     // Setup event listeners ngay lập tức, không dùng setTimeout
     window.addEventListener(
       "openPrivateChatModal",
@@ -101,6 +104,7 @@ class ActionsBar extends PureComponent {
   }
 
   componentWillUnmount() {
+    window.removeEventListener("resize", this.handleResize);
     window.removeEventListener(
       "openPrivateChatModal",
       this.handleExternalOpenPrivateChat,
@@ -154,6 +158,12 @@ class ActionsBar extends PureComponent {
       if (hasNewPopups) {
         this.setState({ openPrivateChats: stateUpdates });
       }
+    }
+  }
+
+  handleResize() {
+    if (this.state.isMobileDevice !== deviceInfo.isMobile) {
+      this.setState({ isMobileDevice: deviceInfo.isMobile });
     }
   }
 
@@ -799,7 +809,7 @@ class ActionsBar extends PureComponent {
                 )}
 
                 {/* ActionsDropdown (nút dấu cộng) - chỉ hiển thị nếu là presenter */}
-                {amIPresenter && !deviceInfo.isMobile && (
+                {amIPresenter && !this.state.isMobileDevice && (
                   <>
                     <Styled.Separator aria-hidden="true">|</Styled.Separator>
                     <ActionsDropdown
@@ -844,7 +854,7 @@ class ActionsBar extends PureComponent {
             <Styled.Right>
               <Styled.Gap>
                 {/* Mobile: Chỉ hiển thị More menu và Leave button */}
-                {deviceInfo.isMobile ? (
+                {this.state.isMobileDevice ? (
                   <>
                     <MoreMenu
                       onOpenSettings={() => this.setModalIsOpen(true)}
@@ -1094,7 +1104,7 @@ class ActionsBar extends PureComponent {
           })()}
 
           {/* Activities Drawer cho mobile presenter */}
-          {deviceInfo.isMobile && amIPresenter && (
+          {this.state.isMobileDevice && amIPresenter && (
             <MobileDrawer
               isOpen={this.state.isActivitiesModalOpen}
               onClose={() => this.setActivitiesModalOpen(false)}
@@ -1133,7 +1143,7 @@ class ActionsBar extends PureComponent {
 
           {/* Modals render ở level cao hơn (ngoài drawer) để không bị unmount */}
           {/* External Video Modal */}
-          {deviceInfo.isMobile &&
+          {this.state.isMobileDevice &&
             amIPresenter &&
             this.state.isExternalVideoModalOpen && (
               <ExternalVideoModal
@@ -1145,7 +1155,7 @@ class ActionsBar extends PureComponent {
             )}
 
           {/* Camera as Content Modal */}
-          {deviceInfo.isMobile &&
+          {this.state.isMobileDevice &&
             amIPresenter &&
             this.state.isCameraAsContentModalOpen && (
               <VideoPreviewContainer
