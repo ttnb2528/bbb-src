@@ -1,6 +1,6 @@
 // @ts-nocheck
 /* eslint-disable */
-import styled, { keyframes, css } from 'styled-components';
+import styled, { keyframes, css } from "styled-components";
 import {
   colorPrimary,
   colorBlack,
@@ -8,8 +8,8 @@ import {
   webcamBackgroundColor,
   colorDanger,
   webcamPlaceholderBorder,
-} from '/imports/ui/stylesheets/styled-components/palette';
-import { TextElipsis } from '/imports/ui/stylesheets/styled-components/placeholders';
+} from "/imports/ui/stylesheets/styled-components/palette";
+import { TextElipsis } from "/imports/ui/stylesheets/styled-components/placeholders";
 
 const rotate360 = keyframes`
   from {
@@ -50,7 +50,9 @@ const Content = styled.div<{
   padding: 0;
 
   /* PRESENTER CAM - NỔI BẬT HƠN (không scale để video hiển thị đủ) */
-  ${({ isPresenter }) => isPresenter && `
+  ${({ isPresenter }) =>
+    isPresenter &&
+    `
     z-index: 10;
   `}
 
@@ -65,37 +67,54 @@ const Content = styled.div<{
     border: 2px solid ${colorBlack};
     border-radius: 8px;
 
-    ${({ isStream }) => !isStream && `
+    ${({ isStream }) =>
+      !isStream &&
+      `
       border: 2px solid ${webcamPlaceholderBorder};
     `}
 
-    ${({ talking }) => talking && `
+    ${({ talking }) =>
+      talking &&
+      `
       border: 2px solid ${colorPrimary};
     `}
 
-    ${({ talking, customHighlight }) => talking && customHighlight && customHighlight.length > 0 && `
+    ${({ talking, customHighlight }) =>
+      talking &&
+      customHighlight &&
+      customHighlight.length > 0 &&
+      `
       border: 2px solid rgb(${customHighlight[0]}, ${customHighlight[1]}, ${customHighlight[2]});
     `}
 
     /* PRESENTER - BỎ BORDER Ở ĐÂY (đã có border từ VideoStripItem) */
-    ${({ isPresenter }) => isPresenter && `
+    ${({ isPresenter }) =>
+      isPresenter &&
+      `
       /* Bỏ border ở Content::after vì đã có border từ VideoStripItem */
       border: none !important;
     `}
 
-    ${({ animations }) => animations && `
+    ${({ animations }) =>
+      animations &&
+      `
       transition: opacity .1s;
     `}
   }
 
-  ${({ dragging, animations }) => dragging && animations && css`
-    &::after {
-      animation: ${fade} .5s linear infinite;
-      animation-direction: alternate;
-    }
-  `}
+  ${({ dragging, animations }) =>
+    dragging &&
+    animations &&
+    css`
+      &::after {
+        animation: ${fade} 0.5s linear infinite;
+        animation-direction: alternate;
+      }
+    `}
 
-  ${({ dragging, draggingOver }) => (dragging || draggingOver) && `
+  ${({ dragging, draggingOver }) =>
+    (dragging || draggingOver) &&
+    `
     &::after {
       opacity: 0.7;
       border-style: dashed;
@@ -104,7 +123,9 @@ const Content = styled.div<{
     }
   `}
 
-  ${({ fullscreen }) => fullscreen && `
+  ${({ fullscreen }) =>
+    fullscreen &&
+    `
     position: fixed;
     top: 0;
     left: 0;
@@ -137,7 +158,9 @@ const WebcamConnecting = styled.div<{
     opacity: 0;
     pointer-events: none;
 
-    ${({ animations }) => animations && `
+    ${({ animations }) =>
+      animations &&
+      `
       transition: opacity .1s;
     `}
   }
@@ -158,7 +181,7 @@ const VideoContainer = styled.div<{
   height: 100%;
   position: relative;
 
-  ${({ $selfViewDisabled }) => $selfViewDisabled && 'display: none'}
+  ${({ $selfViewDisabled }) => $selfViewDisabled && "display: none"}
 `;
 
 const Video = styled.video<{
@@ -171,7 +194,7 @@ const Video = styled.video<{
   width: 100%;
   /* Viewer: dùng contain để hiển thị đủ nội dung, không bị crop */
   /* Presenter: có thể dùng cover để fill đầy (tùy chọn) */
-  object-fit: ${({ $isPresenter }) => ($isPresenter ? 'cover' : 'contain')};
+  object-fit: ${({ $isPresenter }) => ($isPresenter ? "cover" : "contain")};
   object-position: center center;
   /* Bỏ aspect-ratio constraint để video có thể fill container tự do */
   /* Chỉ giữ aspect-ratio cho VideoStrip (sẽ override trong VideoStripItem) */
@@ -184,11 +207,15 @@ const Video = styled.video<{
   max-width: 100%;
   max-height: 100%;
 
-  ${({ mirrored }) => mirrored && `
+  ${({ mirrored }) =>
+    mirrored &&
+    `
     transform: scale(-1, 1);
   `}
 
-  ${({ unhealthyStream }) => unhealthyStream && `
+  ${({ unhealthyStream }) =>
+    unhealthyStream &&
+    `
     filter: grayscale(50%) opacity(50%);
   `}
 
@@ -216,7 +243,7 @@ const VideoDisabled = styled.div`
   top: 50%;
   left: 50%;
   padding: 20px;
-  backdrop-filter: blur(10px); 
+  backdrop-filter: blur(10px);
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 `;
 
@@ -241,10 +268,11 @@ const BottomBar = styled.div<{
   padding: 1px 7px;
   justify-content: space-between;
 
-  /* Điều chỉnh cho presenter - đảm bảo tag dropdown không bị thụt xuống */
-  ${({ $isPresenter }) => $isPresenter && `
-    align-items: flex-end;
-    padding-bottom: 4px;
+  /* Điều chỉnh cho presenter - Ẩn hoàn toàn thẻ tên và mic cho gọn */
+  ${({ $isPresenter }) =>
+    $isPresenter &&
+    `
+    display: none !important;
   `}
 `;
 
@@ -258,18 +286,26 @@ const UserCameraButtonsContainterWrapper = styled.div<UserCameraButtonsContainte
   display: flex;
   width: 50%;
 
-  ${({ positionXAxis }) => positionXAxis === 'right' && `
+  ${({ positionXAxis }) =>
+    positionXAxis === "right" &&
+    `
     right: 0;
     flex-direction: row-reverse;
   `}
-  ${({ positionXAxis }) => positionXAxis === 'left' && `
+  ${({ positionXAxis }) =>
+    positionXAxis === "left" &&
+    `
     left: 0;
   `}
 
-  ${({ positionYAxis }) => positionYAxis === 'top' && `
+  ${({ positionYAxis }) =>
+    positionYAxis === "top" &&
+    `
     top: 0;
   `}
-  ${({ positionYAxis }) => positionYAxis === 'bottom' && `
+  ${({ positionYAxis }) =>
+    positionYAxis === "bottom" &&
+    `
     bottom: 0;
   `}
 `;
