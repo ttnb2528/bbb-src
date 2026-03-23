@@ -121,10 +121,8 @@ const AudioContainer = (props) => {
   const APP_CONFIG = window.meetingClientSettings.public.app;
   const KURENTO_CONFIG = window.meetingClientSettings.public.kurento;
 
-  const autoJoin = getFromUserSettings(
-    "bbb_auto_join_audio",
-    APP_CONFIG.autoJoin,
-  );
+  // Ép buộc autoJoin luôn bằng true (rất tiện cho Dev Hot-reload)
+  const autoJoin = true;
   const enableVideo = getFromUserSettings(
     "bbb_enable_video",
     KURENTO_CONFIG.enableVideo,
@@ -255,12 +253,14 @@ const AudioContainer = (props) => {
           }, 1500);
         })
         .catch(() => {
-          // Nếu join microphone fail, thử join listen-only
-          joinListenOnly().catch(() => {
-            // Nếu cả hai đều fail, mở modal để user chọn
-            Session.setItem("audioModalIsOpen", true);
-            openAudioModal();
-          });
+          // Khi hot-reload, thỉnh thoảng socket chưa kịp mount nên xin quyền mic bị từ chối/lỗi.
+          // Thay vì ném user về Listen Only (loa), ta sẽ đợi 1.5s và thử xin vô Mic lại lần nữa.
+          setTimeout(() => {
+            joinMicrophone({ skipEchoTest: true, muted: true }).catch(() => {
+              Session.setItem("audioModalIsOpen", true);
+              openAudioModal();
+            });
+          }, 1500);
         });
       didMountAutoJoin = true;
 
