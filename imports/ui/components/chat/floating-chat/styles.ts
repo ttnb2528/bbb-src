@@ -36,10 +36,6 @@ export const FloatingChatContainer = styled.div<{
     max-width: 400px !important;
   }
 
-  @media (max-height: 500px) {
-    bottom: 20px !important; /* Hạ thấp khi bật bàn phím để không bị che khuất / lơ lửng */
-  }
-
   ${(props: any) =>
     props.$hasSharedContent &&
     css`
@@ -104,7 +100,7 @@ export const ChatContentWrapper = styled.div<{ $isExpanded?: boolean }>`
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   pointer-events: ${(props: any) => (props.$isExpanded ? "auto" : "none")};
   max-height: ${(props: any) => (props.$isExpanded ? "60vh" : "0px")};
-  overflow: hidden;
+  overflow: ${(props: any) => (props.$isExpanded ? "visible" : "hidden")};
 `;
 
 export const MessageScrollArea = styled.div`
@@ -196,12 +192,24 @@ export const ChatInput = styled.textarea`
 
 export const EmojiPickerWrapper = styled.div`
   position: absolute;
-  bottom: 110%;
+  bottom: calc(100% + 10px);
   left: 0;
-  z-index: 10;
+  z-index: 1000;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   border-radius: 8px;
   overflow: hidden;
+
+  @media ${smallOnly} {
+    max-height: 220px;
+    overflow-y: hidden;
+  }
+
+  /* Cố gắng giới hạn các thành phần con của EmojiPicker (như emoji-mart) để không bị bung ra */
+  & > * {
+    @media ${smallOnly} {
+      max-height: 220px !important;
+    }
+  }
 `;
 
 export const EmojiButton = styled.button`

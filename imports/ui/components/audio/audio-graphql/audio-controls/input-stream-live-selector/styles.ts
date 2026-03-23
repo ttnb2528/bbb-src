@@ -116,8 +116,9 @@ export const AudioDropdown = styled(ButtonEmoji)`
   /* Gắn mũi tên trực tiếp vào góc phải dưới của mic button */
   @media ${smallOnly} {
     position: absolute !important;
-    bottom: -8px !important;
-    right: -10px !important;
+    bottom: 0px !important;
+    right: 0px !important;
+    transform: translate(30%, 30%) !important;
     min-width: 18px !important;
     min-height: 18px !important;
     width: 18px !important;

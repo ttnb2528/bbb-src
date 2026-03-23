@@ -53,6 +53,10 @@ const ActionsBarWrapper = styled.section`
 
   /* Mobile: tăng padding và min-height để buttons có không gian và không bị thụt */
   @media ${smallOnly} {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
     padding: 10px 16px 16px 16px; /* Tăng padding bottom thêm để không bị thụt */
     min-height: 75px !important; /* Tăng chiều cao tối thiểu lên 75px */
     min-width: 280px; /* Slightly smaller min-width on mobile */
