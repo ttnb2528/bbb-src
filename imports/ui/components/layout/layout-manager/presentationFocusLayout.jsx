@@ -242,8 +242,8 @@ const PresentationFocusLayout = (props) => {
     let cameraDockHeight = 0;
 
     if (isMobile) {
-      cameraDockBounds.top = mediaAreaBounds.top + mediaBounds.height;
-      cameraDockBounds.left = 0;
+      cameraDockBounds.top = mediaAreaBounds.top + 60;
+      cameraDockBounds.left = mediaAreaBounds.left + 10;
       cameraDockBounds.right = 0;
       cameraDockBounds.minWidth = mediaAreaBounds.width;
       cameraDockBounds.width = mediaAreaBounds.width;
@@ -288,23 +288,25 @@ const PresentationFocusLayout = (props) => {
     const mediaBounds = {};
     const { element: fullscreenElement } = fullscreen;
 
+    if (isMobile && !fullscreenElement) {
+      const gap = 60 + (cameraDockInput?.numCameras > 0 ? 100 : 0);
+      mediaBounds.width = mediaAreaBounds.width;
+      mediaBounds.height = mediaAreaBounds.height - gap * 2;
+      mediaBounds.top = mediaAreaBounds.top + gap;
+      mediaBounds.left = !isRTL ? mediaAreaBounds.left : null;
+      mediaBounds.right = isRTL ? mediaAreaBounds.right : null;
+      mediaBounds.zIndex = 1;
+      return mediaBounds;
+    }
+
     if (
       fullscreenElement === "Presentation" ||
       fullscreenElement === "Screenshare" ||
       fullscreenElement === "ExternalVideo" ||
-      fullscreenElement === "GenericContent" ||
-      isMobile
+      fullscreenElement === "GenericContent"
     ) {
       mediaBounds.width = windowWidth();
-      if (
-        isMobile &&
-        externalVideoInput.hasExternalVideo &&
-        !fullscreenElement
-      ) {
-        mediaBounds.height = mediaAreaBounds.top + mediaAreaBounds.height;
-      } else {
-        mediaBounds.height = windowHeight();
-      }fffff
+      mediaBounds.height = windowHeight();
       mediaBounds.top = 0;
       mediaBounds.left = !isRTL ? 0 : null;
       mediaBounds.right = isRTL ? 0 : null;
