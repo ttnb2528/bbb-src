@@ -1,24 +1,27 @@
-import { useEffect, useRef } from 'react';
-import { throttle } from '/imports/utils/throttle';
+import { useEffect, useRef } from "react";
+import { throttle } from "/imports/utils/throttle";
 import {
   layoutDispatch,
   layoutSelect,
   layoutSelectInput,
   layoutSelectOutput,
-} from '/imports/ui/components/layout/context';
-import DEFAULT_VALUES from '/imports/ui/components/layout/defaultValues';
-import { INITIAL_INPUT_STATE } from '/imports/ui/components/layout/initState';
-import { ACTIONS, PANELS, LAYOUT_TYPE } from '/imports/ui/components/layout/enums';
-import { defaultsDeep } from '/imports/utils/array-utils';
-import Session from '/imports/ui/services/storage/in-memory';
+} from "/imports/ui/components/layout/context";
+import DEFAULT_VALUES from "/imports/ui/components/layout/defaultValues";
+import { INITIAL_INPUT_STATE } from "/imports/ui/components/layout/initState";
+import {
+  ACTIONS,
+  PANELS,
+  LAYOUT_TYPE,
+} from "/imports/ui/components/layout/enums";
+import { defaultsDeep } from "/imports/utils/array-utils";
+import Session from "/imports/ui/services/storage/in-memory";
 
 const windowWidth = () => window.document.documentElement.clientWidth;
 const windowHeight = () => window.document.documentElement.clientHeight;
 
 const VideoFocusLayout = (props) => {
-  const {
-    prevLayout, bannerAreaHeight, isMobile, calculatesNavbarHeight,
-  } = props;
+  const { prevLayout, bannerAreaHeight, isMobile, calculatesNavbarHeight } =
+    props;
 
   function usePrevious(value) {
     const ref = useRef();
@@ -37,7 +40,9 @@ const VideoFocusLayout = (props) => {
 
   const presentationInput = layoutSelectInput((i) => i.presentation);
   const externalVideoInput = layoutSelectInput((i) => i.externalVideo);
-  const genericMainContentInput = layoutSelectInput((i) => i.genericMainContent);
+  const genericMainContentInput = layoutSelectInput(
+    (i) => i.genericMainContent,
+  );
   const screenShareInput = layoutSelectInput((i) => i.screenShare);
   const sharedNotesInput = layoutSelectInput((i) => i.sharedNotes);
 
@@ -58,7 +63,7 @@ const VideoFocusLayout = (props) => {
   });
 
   useEffect(() => {
-    window.addEventListener('resize', () => {
+    window.addEventListener("resize", () => {
       layoutContextDispatch({
         type: ACTIONS.SET_BROWSER_SIZE,
         value: {
@@ -82,22 +87,32 @@ const VideoFocusLayout = (props) => {
   }, [input, deviceType, isRTL, fontSize, fullscreen, isPresentationEnabled]);
 
   const init = () => {
-    const hasLayoutEngineLoadedOnce = Session.getItem('hasLayoutEngineLoadedOnce');
+    const hasLayoutEngineLoadedOnce = Session.getItem(
+      "hasLayoutEngineLoadedOnce",
+    );
     layoutContextDispatch({
       type: ACTIONS.SET_LAYOUT_INPUT,
       value: (prevInput) => {
         const {
-          sidebarNavigation, sidebarContent, presentation, cameraDock,
-          externalVideo, genericMainContent, screenShare,
+          sidebarNavigation,
+          sidebarContent,
+          presentation,
+          cameraDock,
+          externalVideo,
+          genericMainContent,
+          screenShare,
         } = prevInput;
         const { sidebarContentPanel } = sidebarContent;
         let sidebarContentPanelOverride = sidebarContentPanel;
         let overrideOpenSidebarPanel = sidebarContentPanel !== PANELS.NONE;
-        let overrideOpenSidebarNavigation = sidebarNavigation.isOpen
-          || sidebarContentPanel !== PANELS.NONE || false;
-        if (prevLayout === LAYOUT_TYPE.CAMERAS_ONLY
-          || prevLayout === LAYOUT_TYPE.PRESENTATION_ONLY
-          || prevLayout === LAYOUT_TYPE.MEDIA_ONLY
+        let overrideOpenSidebarNavigation =
+          sidebarNavigation.isOpen ||
+          sidebarContentPanel !== PANELS.NONE ||
+          false;
+        if (
+          prevLayout === LAYOUT_TYPE.CAMERAS_ONLY ||
+          prevLayout === LAYOUT_TYPE.PRESENTATION_ONLY ||
+          prevLayout === LAYOUT_TYPE.MEDIA_ONLY
         ) {
           overrideOpenSidebarNavigation = true;
           overrideOpenSidebarPanel = true;
@@ -138,7 +153,7 @@ const VideoFocusLayout = (props) => {
         );
       },
     });
-    Session.setItem('layoutReady', true);
+    Session.setItem("layoutReady", true);
     throttledCalculatesLayout();
   };
 
@@ -151,8 +166,12 @@ const VideoFocusLayout = (props) => {
 
     const navBarHeight = calculatesNavbarHeight();
     const hasPresentation = isPresentationEnabled && slidesLength !== 0;
-    const isGeneralMediaOff = !hasPresentation && !hasExternalVideo
-      && !hasScreenShare && !isSharedNotesPinned && !genericContentId;
+    const isGeneralMediaOff =
+      !hasPresentation &&
+      !hasExternalVideo &&
+      !hasScreenShare &&
+      !isSharedNotesPinned &&
+      !genericContentId;
 
     let minHeight = 0;
     let height = 0;
@@ -163,14 +182,18 @@ const VideoFocusLayout = (props) => {
         minHeight = height;
         maxHeight = height;
       } else if (isOpen && !isGeneralMediaOff) {
-        if (sidebarContentInput.height > 0 && sidebarContentInput.height < windowHeight()) {
+        if (
+          sidebarContentInput.height > 0 &&
+          sidebarContentInput.height < windowHeight()
+        ) {
           height = sidebarContentInput.height - bannerAreaHeight();
         } else {
           const { size: slideSize } = presentationInput.currentSlide;
           let calculatedHeight = (windowHeight() - bannerAreaHeight()) * 0.3;
 
           if (slideSize.height > 0 && slideSize.width > 0) {
-            calculatedHeight = (slideSize.height * sidebarContentOutput.width) / slideSize.width;
+            calculatedHeight =
+              (slideSize.height * sidebarContentOutput.width) / slideSize.width;
           }
           height = windowHeight() - calculatedHeight - bannerAreaHeight();
         }
@@ -207,7 +230,8 @@ const VideoFocusLayout = (props) => {
 
     const cameraDockBounds = {};
 
-    const mobileCameraHeight = mediaAreaBounds.height * 0.7 - bannerAreaHeight();
+    const mobileCameraHeight =
+      mediaAreaBounds.height * 0.7 - bannerAreaHeight();
     const cameraHeight = mediaAreaBounds.height - bannerAreaHeight();
 
     if (isMobile) {
@@ -242,10 +266,11 @@ const VideoFocusLayout = (props) => {
     const { element: fullscreenElement } = fullscreen;
 
     if (
-      fullscreenElement === 'Presentation'
-      || fullscreenElement === 'Screenshare'
-      || fullscreenElement === 'ExternalVideo'
-      || fullscreenElement === 'GenericContent'
+      fullscreenElement === "Presentation" ||
+      fullscreenElement === "Screenshare" ||
+      fullscreenElement === "ExternalVideo" ||
+      fullscreenElement === "GenericContent" ||
+      isMobile
     ) {
       mediaBounds.width = windowWidth();
       mediaBounds.height = windowHeight();
@@ -262,7 +287,8 @@ const VideoFocusLayout = (props) => {
       mediaBounds.top = mediaAreaBounds.top + cameraDockBounds.height;
       mediaBounds.width = mediaAreaBounds.width;
     } else if (presentationInput.isOpen) {
-      mediaBounds.height = windowHeight() - sidebarContentHeight - bannerAreaHeight();
+      mediaBounds.height =
+        windowHeight() - sidebarContentHeight - bannerAreaHeight();
       mediaBounds.left = !isRTL ? sidebarNavWidth : 0;
       mediaBounds.right = isRTL ? sidebarNavWidth : 0;
       mediaBounds.top = sidebarContentHeight + bannerAreaHeight();
@@ -296,7 +322,9 @@ const VideoFocusLayout = (props) => {
     const sidebarNavHeight = calculatesSidebarNavHeight();
     const sidebarContentWidth = calculatesSidebarContentWidth();
     const sidebarNavBounds = calculatesSidebarNavBounds();
-    const sidebarContentBounds = calculatesSidebarContentBounds(sidebarNavWidth.width);
+    const sidebarContentBounds = calculatesSidebarContentBounds(
+      sidebarNavWidth.width,
+    );
     const mediaAreaBounds = calculatesMediaAreaBounds(
       sidebarNavWidth.width,
       sidebarContentWidth.width,
@@ -304,7 +332,10 @@ const VideoFocusLayout = (props) => {
     const navbarBounds = calculatesNavbarBounds(mediaAreaBounds);
     const actionbarBounds = calculatesActionbarBounds(mediaAreaBounds);
     const sidebarSize = sidebarContentWidth.width + sidebarNavWidth.width;
-    const cameraDockBounds = calculatesCameraDockBounds(mediaAreaBounds, sidebarSize);
+    const cameraDockBounds = calculatesCameraDockBounds(
+      mediaAreaBounds,
+      sidebarSize,
+    );
     const sidebarContentHeight = calculatesSidebarContentHeight();
     const mediaBounds = calculatesMediaBounds(
       mediaAreaBounds,

@@ -1,29 +1,33 @@
-import UserAvatar from '/imports/ui/components/user-avatar/component';
+import UserAvatar from "/imports/ui/components/user-avatar/component";
 import {
   userIndicatorsOffset,
   mdPaddingY,
-} from '/imports/ui/stylesheets/styled-components/general';
-import {
-  colorPrimary,
-} from '/imports/ui/stylesheets/styled-components/palette';
-import styled from 'styled-components';
+} from "/imports/ui/stylesheets/styled-components/general";
+import { colorPrimary } from "/imports/ui/stylesheets/styled-components/palette";
+import styled from "styled-components";
 
 const UserAvatarStyled = styled(UserAvatar)<{
   unhealthyStream: boolean;
   dialIn: boolean;
   presenter: boolean;
 }>`
+  aspect-ratio: 1 / 1;
+  width: auto;
   height: 60%;
-  width: 45%;
   max-width: 66px;
   max-height: 66px;
   scale: 1.5;
+  border-radius: 50% !important;
 
-  ${({ unhealthyStream }) => unhealthyStream && `
+  ${({ unhealthyStream }) =>
+    unhealthyStream &&
+    `
     filter: grayscale(50%) opacity(50%);
   `}
 
-  ${({ dialIn }) => dialIn && `
+  ${({ dialIn }) =>
+    dialIn &&
+    `
     &:before {
       content: "\\00a0\\e91a\\00a0";
       padding: ${mdPaddingY};
@@ -44,7 +48,9 @@ const UserAvatarStyled = styled(UserAvatar)<{
     }
   `}
 
-    ${({ presenter }) => presenter && `
+    ${({ presenter }) =>
+    presenter &&
+    `
     &:before {
       padding: 0.7rem !important;
     }

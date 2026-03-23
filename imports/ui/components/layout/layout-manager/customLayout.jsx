@@ -746,7 +746,8 @@ const CustomLayout = (props) => {
       fullscreenElement === "Presentation" ||
       fullscreenElement === "Screenshare" ||
       fullscreenElement === "ExternalVideo" ||
-      fullscreenElement === "GenericContent"
+      fullscreenElement === "GenericContent" ||
+      isMobile
     ) {
       mediaBounds.width = windowWidth();
       mediaBounds.height = windowHeight();

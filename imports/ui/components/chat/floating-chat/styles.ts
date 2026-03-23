@@ -93,7 +93,7 @@ export const ChatHeader = styled.div<{ $isExpanded?: boolean }>`
     font-size: ${(props: any) => (props.$isExpanded ? "1.1rem" : "1.3rem")};
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     transform: ${(props: any) =>
-      props.$isExpanded ? "rotate(90deg)" : "rotate(0deg)"};
+      props.$isExpanded ? "rotate(180deg)" : "rotate(0deg)"};
   }
 `;
 

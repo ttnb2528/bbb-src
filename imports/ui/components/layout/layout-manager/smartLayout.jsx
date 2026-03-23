@@ -1,17 +1,27 @@
-import { useEffect, useRef } from 'react';
-import { throttle } from '/imports/utils/throttle';
-import { layoutDispatch, layoutSelect, layoutSelectInput } from '/imports/ui/components/layout/context';
-import DEFAULT_VALUES from '/imports/ui/components/layout/defaultValues';
-import { INITIAL_INPUT_STATE } from '/imports/ui/components/layout/initState';
-import { ACTIONS, PANELS, LAYOUT_TYPE, CAMERADOCK_POSITION } from '/imports/ui/components/layout/enums';
-import { defaultsDeep } from '/imports/utils/array-utils';
-import Session from '/imports/ui/services/storage/in-memory';
+import { useEffect, useRef } from "react";
+import { throttle } from "/imports/utils/throttle";
+import {
+  layoutDispatch,
+  layoutSelect,
+  layoutSelectInput,
+} from "/imports/ui/components/layout/context";
+import DEFAULT_VALUES from "/imports/ui/components/layout/defaultValues";
+import { INITIAL_INPUT_STATE } from "/imports/ui/components/layout/initState";
+import {
+  ACTIONS,
+  PANELS,
+  LAYOUT_TYPE,
+  CAMERADOCK_POSITION,
+} from "/imports/ui/components/layout/enums";
+import { defaultsDeep } from "/imports/utils/array-utils";
+import Session from "/imports/ui/services/storage/in-memory";
 
 const windowWidth = () => window.document.documentElement.clientWidth;
 const windowHeight = () => window.document.documentElement.clientHeight;
 
 const SmartLayout = (props) => {
-  const { prevLayout, bannerAreaHeight, isMobile, calculatesNavbarHeight } = props;
+  const { prevLayout, bannerAreaHeight, isMobile, calculatesNavbarHeight } =
+    props;
 
   function usePrevious(value) {
     const ref = useRef();
@@ -35,7 +45,9 @@ const SmartLayout = (props) => {
   const actionbarInput = layoutSelectInput((i) => i.actionBar);
   const navbarInput = layoutSelectInput((i) => i.navBar);
   const externalVideoInput = layoutSelectInput((i) => i.externalVideo);
-  const genericMainContentInput = layoutSelectInput((i) => i.genericMainContent);
+  const genericMainContentInput = layoutSelectInput(
+    (i) => i.genericMainContent,
+  );
   const screenShareInput = layoutSelectInput((i) => i.screenShare);
   const sharedNotesInput = layoutSelectInput((i) => i.sharedNotes);
   const layoutContextDispatch = layoutDispatch();
@@ -49,7 +61,7 @@ const SmartLayout = (props) => {
   });
 
   useEffect(() => {
-    window.addEventListener('resize', () => {
+    window.addEventListener("resize", () => {
       layoutContextDispatch({
         type: ACTIONS.SET_BROWSER_SIZE,
         value: {
@@ -73,22 +85,34 @@ const SmartLayout = (props) => {
   }, [input, deviceType, isRTL, fontSize, fullscreen, isPresentationEnabled]);
 
   const init = () => {
-    const hasLayoutEngineLoadedOnce = Session.getItem('hasLayoutEngineLoadedOnce');
+    const hasLayoutEngineLoadedOnce = Session.getItem(
+      "hasLayoutEngineLoadedOnce",
+    );
     layoutContextDispatch({
       type: ACTIONS.SET_LAYOUT_INPUT,
       value: (prevInput) => {
         const {
-          sidebarNavigation, sidebarContent, presentation, cameraDock,
-          externalVideo, genericMainContent, screenShare, sharedNotes,
+          sidebarNavigation,
+          sidebarContent,
+          presentation,
+          cameraDock,
+          externalVideo,
+          genericMainContent,
+          screenShare,
+          sharedNotes,
         } = prevInput;
         const { sidebarContentPanel } = sidebarContent;
         let sidebarContentPanelOverride = sidebarContentPanel;
         let overrideOpenSidebarPanel = sidebarContentPanel !== PANELS.NONE;
-        let overrideOpenSidebarNavigation = sidebarNavigation.isOpen
-          || sidebarContentPanel !== PANELS.NONE || false;
-        if (prevLayout === LAYOUT_TYPE.CAMERAS_ONLY
-          || prevLayout === LAYOUT_TYPE.PRESENTATION_ONLY
-          || prevLayout === LAYOUT_TYPE.MEDIA_ONLY) {
+        let overrideOpenSidebarNavigation =
+          sidebarNavigation.isOpen ||
+          sidebarContentPanel !== PANELS.NONE ||
+          false;
+        if (
+          prevLayout === LAYOUT_TYPE.CAMERAS_ONLY ||
+          prevLayout === LAYOUT_TYPE.PRESENTATION_ONLY ||
+          prevLayout === LAYOUT_TYPE.MEDIA_ONLY
+        ) {
           overrideOpenSidebarNavigation = true;
           overrideOpenSidebarPanel = true;
           sidebarContentPanelOverride = PANELS.CHAT;
@@ -132,7 +156,7 @@ const SmartLayout = (props) => {
         );
       },
     });
-    Session.setItem('layoutReady', true);
+    Session.setItem("layoutReady", true);
     throttledCalculatesLayout();
   };
 
@@ -149,7 +173,11 @@ const SmartLayout = (props) => {
     return sidebarContentHeight;
   };
 
-  const calculatesCameraDockBounds = (mediaAreaBounds, mediaBounds, sidebarSize) => {
+  const calculatesCameraDockBounds = (
+    mediaAreaBounds,
+    mediaBounds,
+    sidebarSize,
+  ) => {
     const { baseCameraDockBounds } = props;
 
     const baseBounds = baseCameraDockBounds(mediaAreaBounds, sidebarSize);
@@ -219,12 +247,16 @@ const SmartLayout = (props) => {
     let slideWidth;
     let slideHeight;
 
-    slideWidth = (currentSlide.size.width * mediaAreaBounds.height) / currentSlide.size.height;
+    slideWidth =
+      (currentSlide.size.width * mediaAreaBounds.height) /
+      currentSlide.size.height;
     slideHeight = mediaAreaBounds.height;
 
     if (slideWidth > mediaAreaBounds.width) {
       slideWidth = mediaAreaBounds.width;
-      slideHeight = (currentSlide.size.height * mediaAreaBounds.width) / currentSlide.size.width;
+      slideHeight =
+        (currentSlide.size.height * mediaAreaBounds.width) /
+        currentSlide.size.width;
     }
 
     return {
@@ -255,7 +287,12 @@ const SmartLayout = (props) => {
     };
   };
 
-  const calculatesMediaBounds = (mediaAreaBounds, slideSize, sidebarSize, screenShareSize) => {
+  const calculatesMediaBounds = (
+    mediaAreaBounds,
+    slideSize,
+    sidebarSize,
+    screenShareSize,
+  ) => {
     const { isOpen, slidesLength } = presentationInput;
     const { hasExternalVideo } = externalVideoInput;
     const { genericContentId } = genericMainContentInput;
@@ -263,8 +300,12 @@ const SmartLayout = (props) => {
     const { isPinned: isSharedNotesPinned } = sharedNotesInput;
 
     const hasPresentation = isPresentationEnabled && slidesLength !== 0;
-    const isGeneralMediaOff = !hasPresentation && !hasExternalVideo
-      && !hasScreenShare && !isSharedNotesPinned && !genericContentId;
+    const isGeneralMediaOff =
+      !hasPresentation &&
+      !hasExternalVideo &&
+      !hasScreenShare &&
+      !isSharedNotesPinned &&
+      !genericContentId;
 
     const mediaBounds = {};
     const { element: fullscreenElement } = fullscreen;
@@ -280,10 +321,11 @@ const SmartLayout = (props) => {
     }
 
     if (
-      fullscreenElement === 'Presentation' ||
-      fullscreenElement === 'Screenshare' ||
-      fullscreenElement === 'ExternalVideo' ||
-      fullscreenElement === 'GenericContent'
+      fullscreenElement === "Presentation" ||
+      fullscreenElement === "Screenshare" ||
+      fullscreenElement === "ExternalVideo" ||
+      fullscreenElement === "GenericContent" ||
+      isMobile
     ) {
       mediaBounds.width = windowWidth();
       mediaBounds.height = windowHeight();
@@ -297,8 +339,12 @@ const SmartLayout = (props) => {
     const mediaContentSize = hasScreenShare ? screenShareSize : slideSize;
 
     if (cameraDockInput.numCameras > 0 && !cameraDockInput.isDragging) {
-      if (mediaContentSize.width !== 0 && mediaContentSize.height !== 0 
-        && !hasExternalVideo && !genericContentId) {
+      if (
+        mediaContentSize.width !== 0 &&
+        mediaContentSize.height !== 0 &&
+        !hasExternalVideo &&
+        !genericContentId
+      ) {
         if (mediaContentSize.width < mediaAreaBounds.width && !isMobile) {
           if (mediaContentSize.width < mediaAreaBounds.width * 0.8) {
             mediaBounds.width = mediaContentSize.width;
@@ -307,7 +353,8 @@ const SmartLayout = (props) => {
           }
           mediaBounds.height = mediaAreaBounds.height;
           mediaBounds.top = mediaAreaBounds.top;
-          const sizeValue = mediaAreaBounds.left + (mediaAreaBounds.width - mediaBounds.width);
+          const sizeValue =
+            mediaAreaBounds.left + (mediaAreaBounds.width - mediaBounds.width);
           mediaBounds.left = !isRTL ? sizeValue : null;
           mediaBounds.right = isRTL ? sidebarSize : null;
         } else {
@@ -317,7 +364,8 @@ const SmartLayout = (props) => {
             mediaBounds.height = mediaAreaBounds.height * 0.8;
           }
           mediaBounds.width = mediaAreaBounds.width;
-          mediaBounds.top = mediaAreaBounds.top + (mediaAreaBounds.height - mediaBounds.height);
+          mediaBounds.top =
+            mediaAreaBounds.top + (mediaAreaBounds.height - mediaBounds.height);
           const sizeValue = mediaAreaBounds.left;
           mediaBounds.left = !isRTL ? sizeValue : null;
           mediaBounds.right = isRTL ? sidebarSize : null;
@@ -325,7 +373,8 @@ const SmartLayout = (props) => {
       } else {
         mediaBounds.width = mediaAreaBounds.width;
         mediaBounds.height = mediaAreaBounds.height * 0.8;
-        mediaBounds.top = mediaAreaBounds.top + (mediaAreaBounds.height - mediaBounds.height);
+        mediaBounds.top =
+          mediaAreaBounds.top + (mediaAreaBounds.height - mediaBounds.height);
         const sizeValue = mediaAreaBounds.left;
         mediaBounds.left = !isRTL ? sizeValue : null;
         mediaBounds.right = isRTL ? sidebarSize : null;
@@ -362,10 +411,12 @@ const SmartLayout = (props) => {
     const sidebarContentWidth = calculatesSidebarContentWidth();
     const sidebarContentHeight = calculatesSidebarContentHeight();
     const sidebarNavBounds = calculatesSidebarNavBounds();
-    const sidebarContentBounds = calculatesSidebarContentBounds(sidebarNavWidth.width);
+    const sidebarContentBounds = calculatesSidebarContentBounds(
+      sidebarNavWidth.width,
+    );
     const mediaAreaBounds = calculatesMediaAreaBounds(
       sidebarNavWidth.width,
-      sidebarContentWidth.width
+      sidebarContentWidth.width,
     );
     const navbarBounds = calculatesNavbarBounds(mediaAreaBounds);
     const actionbarBounds = calculatesActionbarBounds(mediaAreaBounds);
@@ -376,9 +427,13 @@ const SmartLayout = (props) => {
       mediaAreaBounds,
       slideSize,
       sidebarSize,
-      screenShareSize
+      screenShareSize,
     );
-    const cameraDockBounds = calculatesCameraDockBounds(mediaAreaBounds, mediaBounds, sidebarSize);
+    const cameraDockBounds = calculatesCameraDockBounds(
+      mediaAreaBounds,
+      mediaBounds,
+      sidebarSize,
+    );
     const horizontalCameraDiff = cameraDockBounds.isCameraHorizontal
       ? cameraDockBounds.width + camerasMargin * 2
       : 0;
@@ -548,7 +603,7 @@ const SmartLayout = (props) => {
         right: isRTL ? mediaBounds.right + horizontalCameraDiff : null,
       },
     });
-    
+
     layoutContextDispatch({
       type: ACTIONS.SET_GENERIC_CONTENT_OUTPUT,
       value: {
