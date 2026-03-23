@@ -42,7 +42,14 @@ export const FloatingChatContainer = styled.div<{
   @media ${smallOnly} {
     right: auto !important;
     left: 50% !important;
-    transform: translateX(-50%) !important;
+    /* Đẩy khung chat trượt khuất ra ngoài màn hình trên mobile khi có Sidebar (User List) đang mở, hoặc khi quẹt ẩn UI */
+    transform: ${(props: any) => {
+      if (props.$isUIHidden) return "translateX(120vw) !important";
+      if (props.$isSidebarOpen) return "translateX(-150vw) !important";
+      return "translateX(-50%) !important";
+    }};
+    opacity: ${(props: any) =>
+      props.$isUIHidden || props.$isSidebarOpen ? "0 !important" : "1"};
     width: 95vw !important;
     max-width: 400px !important;
   }
