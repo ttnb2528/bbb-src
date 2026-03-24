@@ -1,22 +1,22 @@
-import React, { useEffect, useRef } from 'react';
-import { defineMessages, useIntl } from 'react-intl';
-import Styled from './styles';
-import useChat from '/imports/ui/core/hooks/useChat';
-import { Chat } from '/imports/ui/Types/chat';
-import { GraphqlDataHookSubscriptionResponse } from '/imports/ui/Types/hook';
-import deviceInfo from '/imports/utils/deviceInfo';
-import { colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
+import React, { useEffect, useRef, useState } from "react";
+import { defineMessages, useIntl } from "react-intl";
+import Styled from "./styles";
+import useChat from "/imports/ui/core/hooks/useChat";
+import { Chat } from "/imports/ui/Types/chat";
+import { GraphqlDataHookSubscriptionResponse } from "/imports/ui/Types/hook";
+import deviceInfo from "/imports/utils/deviceInfo";
+import { colorPrimary } from "/imports/ui/stylesheets/styled-components/palette";
 
 const intlMessages = defineMessages({
   noNewMessages: {
-    id: 'app.chat.noNewMessages',
-    description: 'No new messages',
-    defaultMessage: 'No new messages',
+    id: "app.chat.noNewMessages",
+    description: "No new messages",
+    defaultMessage: "No new messages",
   },
   newMessages: {
-    id: 'app.chat.newMessages',
-    description: 'New messages',
-    defaultMessage: 'New messages',
+    id: "app.chat.newMessages",
+    description: "New messages",
+    defaultMessage: "New messages",
   },
 });
 
@@ -27,14 +27,12 @@ interface PrivateChatNotificationPanelProps {
   anchorElement: HTMLElement | null;
 }
 
-const PrivateChatNotificationPanel: React.FC<PrivateChatNotificationPanelProps> = ({
-  isOpen,
-  onClose,
-  onSelectChat,
-  anchorElement,
-}) => {
+const PrivateChatNotificationPanel: React.FC<
+  PrivateChatNotificationPanelProps
+> = ({ isOpen, onClose, onSelectChat, anchorElement }) => {
   const intl = useIntl();
   const panelRef = useRef<HTMLDivElement>(null);
+  const [hiddenChats, setHiddenChats] = useState<string[]>([]);
 
   const { data: chats } = useChat((chat) => ({
     chatId: chat.chatId,
@@ -45,9 +43,28 @@ const PrivateChatNotificationPanel: React.FC<PrivateChatNotificationPanelProps> 
   // Lọc tất cả private chats (không chỉ những chat có unread)
   const CHAT_CONFIG = window.meetingClientSettings.public.chat;
   const PUBLIC_GROUP_CHAT_ID = CHAT_CONFIG.public_group_id;
-  const allPrivateChats = chats?.filter(
-    (c) => c.chatId && c.chatId !== PUBLIC_GROUP_CHAT_ID
-  ) || [];
+  const allPrivateChats =
+    chats?.filter((c) => c.chatId && c.chatId !== PUBLIC_GROUP_CHAT_ID) || [];
+
+  useEffect(() => {
+    if (isOpen) {
+      try {
+        setHiddenChats(
+          JSON.parse(sessionStorage.getItem("hiddenPrivateChats") || "[]"),
+        );
+      } catch (e) {}
+    }
+  }, [isOpen]);
+
+  const handleHideChat = (chatId: string) => {
+    const newHidden = [...hiddenChats, chatId];
+    setHiddenChats(newHidden);
+    sessionStorage.setItem("hiddenPrivateChats", JSON.stringify(newHidden));
+  };
+
+  const visibleChats = allPrivateChats.filter(
+    (c) => !hiddenChats.includes(c.chatId!),
+  );
 
   // Đóng panel khi click bên ngoài
   useEffect(() => {
@@ -55,27 +72,27 @@ const PrivateChatNotificationPanel: React.FC<PrivateChatNotificationPanelProps> 
 
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
-      
+
       // Không đóng nếu click vào panel hoặc vào button đã mở panel
       if (panelRef.current && panelRef.current.contains(target)) {
         return;
       }
-      
+
       if (anchorElement && anchorElement.contains(target)) {
         return;
       }
-      
+
       onClose();
     };
 
     // Sử dụng setTimeout để tránh đóng ngay khi click vào button
     const timeoutId = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }, 100);
 
     return () => {
       clearTimeout(timeoutId);
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onClose, anchorElement]);
 
@@ -85,8 +102,8 @@ const PrivateChatNotificationPanel: React.FC<PrivateChatNotificationPanelProps> 
 
     // Trên mobile: để CSS định vị (full width bar phía trên actions bar)
     if (deviceInfo.isMobile || deviceInfo.isPhone) {
-      panelRef.current.style.top = '';
-      panelRef.current.style.left = '';
+      panelRef.current.style.top = "";
+      panelRef.current.style.left = "";
       return;
     }
 
@@ -113,18 +130,20 @@ const PrivateChatNotificationPanel: React.FC<PrivateChatNotificationPanelProps> 
   return (
     <Styled.Panel ref={panelRef} $isMobile={isMobile}>
       <Styled.Content>
-        {allPrivateChats.length === 0 ? (
+        {visibleChats.length === 0 ? (
           <Styled.EmptyState>
             {intl.formatMessage(intlMessages.noNewMessages)}
           </Styled.EmptyState>
         ) : (
           <Styled.ChatList $isMobile={isMobile}>
-            {allPrivateChats.map((chat) => {
+            {visibleChats.map((chat) => {
               const participantColor = chat.participant?.color;
-              const avatarColor = participantColor 
-                ? (participantColor.startsWith('#') ? participantColor : `#${participantColor}`)
+              const avatarColor = participantColor
+                ? participantColor.startsWith("#")
+                  ? participantColor
+                  : `#${participantColor}`
                 : colorPrimary;
-              
+
               return (
                 <Styled.ChatItem
                   key={chat.chatId}
@@ -137,19 +156,38 @@ const PrivateChatNotificationPanel: React.FC<PrivateChatNotificationPanelProps> 
                 >
                   <Styled.AvatarWrapper>
                     <Styled.Avatar
-                      moderator={chat.participant?.role === window.meetingClientSettings.public.user.role_moderator}
-                      avatar={chat.participant?.avatar || ''}
+                      moderator={
+                        chat.participant?.role ===
+                        window.meetingClientSettings.public.user.role_moderator
+                      }
+                      avatar={chat.participant?.avatar || ""}
                       style={{ backgroundColor: avatarColor }}
                     >
                       {chat.participant?.avatar?.length === 0
-                        ? chat.participant?.name?.toLowerCase().slice(0, 2) || ''
-                        : ''}
+                        ? chat.participant?.name?.toLowerCase().slice(0, 2) ||
+                          ""
+                        : ""}
                     </Styled.Avatar>
-                    {((chat.totalUnread ?? 0) > 0) && (
+                    {(chat.totalUnread ?? 0) > 0 && (
                       <Styled.UnreadBadge>
-                        {(chat.totalUnread ?? 0) > 99 ? '99+' : (chat.totalUnread ?? 0)}
+                        {(chat.totalUnread ?? 0) > 99
+                          ? "99+"
+                          : (chat.totalUnread ?? 0)}
                       </Styled.UnreadBadge>
                     )}
+                    <Styled.CloseBadge
+                      onClick={(e: React.MouseEvent) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleHideChat(chat.chatId!);
+                      }}
+                      title={intl.formatMessage({
+                        id: "app.chat.hideChat",
+                        defaultMessage: "Hide",
+                      })}
+                    >
+                      ×
+                    </Styled.CloseBadge>
                   </Styled.AvatarWrapper>
                 </Styled.ChatItem>
               );

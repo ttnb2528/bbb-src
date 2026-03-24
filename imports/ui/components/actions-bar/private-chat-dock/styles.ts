@@ -1,32 +1,54 @@
-import styled from 'styled-components';
-import { colorWhite } from '/imports/ui/stylesheets/styled-components/palette';
+import styled from "styled-components";
+import { colorWhite } from "/imports/ui/stylesheets/styled-components/palette";
 
-export const Dock = styled.div<{ $isOpen: boolean; $direction?: 'left' | 'right' }>`
+export const Dock = styled.div<{
+  $isOpen: boolean;
+  $direction?: "left" | "right";
+}>`
   position: fixed;
   display: flex;
   flex-direction: row;
   gap: 8px;
   z-index: 10001;
+  max-width: calc(100vw - 32px);
+  overflow-x: auto;
+  padding: 6px 0;
+  margin-top: -6px;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+  }
+
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
-  transform: ${({ $isOpen, $direction = 'left' }) => {
+  transform: ${({ $isOpen, $direction = "left" }) => {
     if (!$isOpen) {
       // Khi đóng: scale nhỏ và slide về phía icon
-      return $direction === 'left' 
-        ? 'scale(0.8) translateX(30px) translateY(-10px)' 
-        : 'scale(0.8) translateX(-30px) translateY(-10px)';
+      return $direction === "left"
+        ? "scale(0.8) translateX(30px) translateY(-10px)"
+        : "scale(0.8) translateX(-30px) translateY(-10px)";
     }
     // Khi mở: scale bình thường và ở vị trí
-    return 'scale(1) translateX(0) translateY(0)';
+    return "scale(1) translateX(0) translateY(0)";
   }};
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
-              transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: ${({ $isOpen }) => ($isOpen ? 'auto' : 'none')};
-  transform-origin: ${({ $direction = 'left' }) => ($direction === 'left' ? 'right center' : 'left center')};
+  transition:
+    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: ${({ $isOpen }) => ($isOpen ? "auto" : "none")};
+  transform-origin: ${({ $direction = "left" }) =>
+    $direction === "left" ? "right center" : "left center"};
   will-change: opacity, transform;
-  visibility: ${({ $isOpen }) => ($isOpen ? 'visible' : 'hidden')};
+  visibility: ${({ $isOpen }) => ($isOpen ? "visible" : "hidden")};
 `;
 
-export const DockItem = styled.button<{ $index?: number; $isOpen?: boolean; $direction?: 'left' | 'right' }>`
+export const DockItem = styled.button<{
+  $index?: number;
+  $isOpen?: boolean;
+  $direction?: "left" | "right";
+}>`
   position: relative;
   width: 48px;
   height: 48px;
@@ -38,20 +60,22 @@ export const DockItem = styled.button<{ $index?: number; $isOpen?: boolean; $dir
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 0.3s ease;
+  transition:
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.3s ease;
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
-  transform: ${({ $isOpen, $index = 0, $direction = 'left' }) => {
+  transform: ${({ $isOpen, $index = 0, $direction = "left" }) => {
     if (!$isOpen) {
       const offset = ($index + 1) * 20;
-      return $direction === 'left' 
-        ? `scale(0.6) translateX(${offset}px)` 
+      return $direction === "left"
+        ? `scale(0.6) translateX(${offset}px)`
         : `scale(0.6) translateX(-${offset}px)`;
     }
-    return 'scale(1) translateX(0)';
+    return "scale(1) translateX(0)";
   }};
-  transition-delay: ${({ $index = 0, $isOpen }) => $isOpen ? `${$index * 0.08}s` : '0s'};
+  transition-delay: ${({ $index = 0, $isOpen }) =>
+    $isOpen ? `${$index * 0.08}s` : "0s"};
   will-change: opacity, transform;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
 
@@ -81,10 +105,13 @@ export const Avatar = styled.div<{ bgColor: string }>`
   font-size: 18px;
   font-weight: 600;
   border: 2px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25),
-              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   overflow: hidden;
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
 `;
 
 export const AvatarImage = styled.img`
@@ -92,6 +119,25 @@ export const AvatarImage = styled.img`
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+`;
+
+export const CloseBadge = styled.span`
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  background-color: #f44336;
+  color: ${colorWhite};
+  border-radius: 12px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid ${colorWhite};
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 `;
 
 export const UnreadBadge = styled.span`

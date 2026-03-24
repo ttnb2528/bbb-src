@@ -1,14 +1,22 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 import {
   colorWhite,
   colorGrayLight,
   colorGrayDark,
   colorDanger,
   colorPrimary,
-} from '/imports/ui/stylesheets/styled-components/palette';
-import { smPaddingX, smPaddingY, borderSize, borderRadius } from '/imports/ui/stylesheets/styled-components/general';
-import { fontSizeBase, fontSizeSmall } from '/imports/ui/stylesheets/styled-components/typography';
-import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
+} from "/imports/ui/stylesheets/styled-components/palette";
+import {
+  smPaddingX,
+  smPaddingY,
+  borderSize,
+  borderRadius,
+} from "/imports/ui/stylesheets/styled-components/general";
+import {
+  fontSizeBase,
+  fontSizeSmall,
+} from "/imports/ui/stylesheets/styled-components/typography";
+import { smallOnly } from "/imports/ui/stylesheets/styled-components/breakpoints";
 
 const Panel = styled.div<{ $isMobile?: boolean }>`
   position: fixed;
@@ -21,13 +29,15 @@ const Panel = styled.div<{ $isMobile?: boolean }>`
   display: flex;
   align-items: center;
   min-width: 200px;
-  
+
   /* Desktop: giới hạn width để chỉ hiển thị tối đa 4 icon 
      * Tính toán: 4 icon (4 * 44px = 176px) + 3 gap (3 * 10px = 30px) + padding (16px) = 222px
      * Thêm một chút để scrollbar có thể hiển thị = 234px
      * Dùng fit-content để panel tự co lại nếu ít icon hơn, nhưng không vượt quá 234px
      */
-  ${({ $isMobile }) => !$isMobile && `
+  ${({ $isMobile }) =>
+    !$isMobile &&
+    `
     width: fit-content;
     max-width: 234px;
   `}
@@ -75,26 +85,28 @@ const ChatList = styled.div<{ $isMobile?: boolean }>`
   height: 100%;
   align-items: center;
   width: 100%;
-  
+
   /* Desktop: chỉ hiển thị scrollbar khi có nhiều hơn 4 icon */
-  ${({ $isMobile }) => !$isMobile && `
+  ${({ $isMobile }) =>
+    !$isMobile &&
+    `
     /* Smooth scroll */
     scroll-behavior: smooth;
   `}
-  
+
   &::-webkit-scrollbar {
     height: 4px;
   }
-  
+
   &::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   &::-webkit-scrollbar-thumb {
     background-color: ${colorGrayLight};
     border-radius: 2px;
   }
-  
+
   &::-webkit-scrollbar-thumb:hover {
     background-color: ${colorGrayDark};
   }
@@ -114,7 +126,15 @@ const ChatItem = styled.div`
   }
 
   &:active {
-    transform: scale(1.0);
+    transform: scale(1);
+  }
+
+  &:first-child {
+    margin-left: 4px;
+  }
+
+  &:last-child {
+    margin-right: 4px;
   }
 `;
 
@@ -137,10 +157,15 @@ const Avatar = styled.div<{ moderator?: boolean; avatar?: string }>`
   font-weight: 600;
   font-size: 15px;
   flex-shrink: 0;
-  ${({ moderator }) => moderator && `
+  ${({ moderator }) =>
+    moderator &&
+    `
     border: 2px solid ${colorPrimary};
   `}
-  ${({ avatar }) => avatar && avatar.length > 0 && `
+  ${({ avatar }) =>
+    avatar &&
+    avatar.length > 0 &&
+    `
     background-image: url(${avatar});
     background-size: cover;
     background-position: center;
@@ -168,6 +193,32 @@ const UnreadBadge = styled.div`
   z-index: 10;
 `;
 
+const CloseBadge = styled.span`
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  transition: background-color 0.2s;
+
+  &:hover,
+  &:active {
+    background-color: ${colorDanger};
+  }
+`;
+
 export default {
   Panel,
   Content,
@@ -177,4 +228,5 @@ export default {
   AvatarWrapper,
   Avatar,
   UnreadBadge,
+  CloseBadge,
 };

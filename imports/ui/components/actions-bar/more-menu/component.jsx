@@ -135,6 +135,7 @@ class MoreMenu extends PureComponent {
       handleToggleFullscreen,
       showConnectionStatus,
       privateUnreadCount,
+      onTogglePrivateChat,
     } = this.props;
 
     const { isFullscreen } = this.state;
@@ -157,6 +158,24 @@ class MoreMenu extends PureComponent {
           sidebarContent?.sidebarContentPanel === PANELS.USERLIST,
       },
     ];
+
+    if (onTogglePrivateChat) {
+      menuItems.push({
+        key: "list-item-private-chats",
+        icon: "chat",
+        label:
+          privateUnreadCount > 0
+            ? `${intl.formatMessage({ id: "app.chat.privateChatLabel", defaultMessage: "Private Chats" })} (${privateUnreadCount > 99 ? "99+" : privateUnreadCount})`
+            : intl.formatMessage({
+                id: "app.chat.privateChatLabel",
+                defaultMessage: "Private Chats",
+              }),
+        onClick: () => {
+          onTogglePrivateChat();
+          this.setState({ isDropdownOpen: false });
+        },
+      });
+    }
 
     // Thêm menu item "Activities" cho presenter (nếu cần thiết ở trong menu này)
     if (amIPresenter && onOpenActivities) {

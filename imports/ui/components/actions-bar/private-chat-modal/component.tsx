@@ -80,18 +80,10 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
 
       // Trên desktop: đóng khi click bất kỳ đâu ngoài modal
       // Trên mobile: chỉ đóng khi click vào overlay (vì modal fullscreen)
-      if (isMobileViewport()) {
-        // Mobile: chỉ đóng khi click vào overlay
-        const isOverlay =
-          target.classList.contains("PrivateChatModal__overlay") ||
-          target.classList.contains("ReactModal__Overlay") ||
-          (target.parentElement &&
-            target.parentElement.classList.contains("ReactModal__Overlay"));
-        if (isOverlay) {
-          onRequestClose();
-        }
-      } else {
-        // Desktop: đóng khi click bất kỳ đâu ngoài modal
+      // Click outside logic now applies identically to mobile and desktop:
+      // Instead of closing abruptly, clicking outside shrinks the chat back into the floating avatar icon.
+      {
+        // Desktop & Mobile: đóng khi click bất kỳ đâu ngoài modal
         // Bỏ qua nếu click vào các modal khác hoặc actions bar
         const isOtherModal =
           (target.closest('[class*="modal" i]') ||
@@ -139,8 +131,14 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
 
     if (isOpen && position === null) {
       if (isMobileViewport()) {
-        // Mobile: fullscreen, top-left corner
-        const newPosition = { left: 0, top: 0 };
+        // Mobile: near bottom right, above actions bar
+        const iconSize = 48;
+        const paddingRight = 16;
+        const paddingBottom = 100;
+        const newPosition = {
+          left: Math.max(0, window.innerWidth - iconSize - paddingRight),
+          top: Math.max(0, window.innerHeight - iconSize - paddingBottom),
+        };
         setPosition(newPosition);
         onPositionUpdate?.(newPosition);
       } else {
@@ -188,18 +186,25 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
     }
   }, [initialPosition, isDragging]);
 
-  // Không cho minimized trên mobile để tránh UX rối
-  useEffect(() => {
-    if (isOpen && isMobileViewport() && isMinimized) setIsMinimized(false);
-  }, [isOpen, isMinimized]);
+  // Không còn chặn minimized trên mobile nữa, cho phép thu nhỏ thành Chat Head (Floating avatar)
 
-  const handleDragStart = (e: React.MouseEvent) => {
-    if (e.button !== 0 || !position) return;
-    e.preventDefault();
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const isTouch = "touches" in e;
+    if (!isTouch && (e as React.MouseEvent).button !== 0) return;
+    if (!position) return;
+    if (e.cancelable) e.preventDefault();
     hasDragged.current = false;
+
+    const clientX = isTouch
+      ? (e as React.TouchEvent).touches[0].clientX
+      : (e as React.MouseEvent).clientX;
+    const clientY = isTouch
+      ? (e as React.TouchEvent).touches[0].clientY
+      : (e as React.MouseEvent).clientY;
+
     dragState.current = {
-      startX: e.clientX,
-      startY: e.clientY,
+      startX: clientX,
+      startY: clientY,
       originLeft: position.left,
       originTop: position.top,
     };
@@ -209,11 +214,20 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
   useEffect(() => {
     if (!isDragging || !position) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMouseMove = (e: MouseEvent | TouchEvent) => {
       if (!dragState.current) return;
-      e.preventDefault();
-      const dx = e.clientX - dragState.current.startX;
-      const dy = e.clientY - dragState.current.startY;
+      if (e.cancelable) e.preventDefault();
+
+      const isTouch = "touches" in e;
+      const clientX = isTouch
+        ? (e as TouchEvent).touches[0].clientX
+        : (e as MouseEvent).clientX;
+      const clientY = isTouch
+        ? (e as TouchEvent).touches[0].clientY
+        : (e as MouseEvent).clientY;
+
+      const dx = clientX - dragState.current.startX;
+      const dy = clientY - dragState.current.startY;
 
       if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
         hasDragged.current = true;
@@ -236,12 +250,16 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       dragState.current = null;
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove, { passive: false });
+    window.addEventListener("touchmove", handleMouseMove, { passive: false });
     window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchend", handleMouseUp);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchend", handleMouseUp);
     };
   }, [isDragging, position]);
 
@@ -251,7 +269,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       e.stopPropagation();
     }
 
-    if (isMobileViewport()) return; // mobile: bỏ qua minimize
+    // Cho phép mobile minimize
     // Nếu vừa kéo thì bỏ qua click để không mở popup
     if (hasDragged.current) {
       hasDragged.current = false;
@@ -262,14 +280,24 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
     let currentPosition = position;
     if (!currentPosition) {
       // Nếu chưa có vị trí (mở popup lần đầu), tính vị trí mặc định
-      const modalWidth = 360;
-      const modalHeight = 460;
-      const paddingRight = 16;
-      const paddingBottom = 120;
-      currentPosition = {
-        left: window.innerWidth - modalWidth - paddingRight,
-        top: window.innerHeight - modalHeight - paddingBottom,
-      };
+      if (isMobileViewport()) {
+        const iconSize = 48;
+        const paddingRight = 16;
+        const paddingBottom = 100;
+        currentPosition = {
+          left: Math.max(0, window.innerWidth - iconSize - paddingRight),
+          top: Math.max(0, window.innerHeight - iconSize - paddingBottom),
+        };
+      } else {
+        const modalWidth = 360;
+        const modalHeight = 460;
+        const paddingRight = 16;
+        const paddingBottom = 120;
+        currentPosition = {
+          left: window.innerWidth - modalWidth - paddingRight,
+          top: window.innerHeight - modalHeight - paddingBottom,
+        };
+      }
       setPosition(currentPosition);
       onPositionUpdate?.(currentPosition);
     }
@@ -420,23 +448,23 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
       shouldCloseOnEsc={!isMinimized}
       style={{
         content: {
-          top: isMobileViewport() ? "0" : `${position.top}px`,
-          left: isMobileViewport() ? "0" : `${position.left}px`,
-          right: isMobileViewport() ? "0" : "auto",
-          bottom: isMobileViewport() ? "0" : "auto",
+          top: isMobileViewport() && !isMinimized ? "0" : `${position.top}px`,
+          left: isMobileViewport() && !isMinimized ? "0" : `${position.left}px`,
+          right: "auto",
+          bottom: "auto",
           margin: 0,
           padding: 0,
           border: "none",
-          borderRadius: isMobileViewport() ? "0" : "8px",
+          borderRadius: isMobileViewport() && !isMinimized ? "0" : "8px",
           overflow: "visible",
           position: "fixed",
-          width: isMobileViewport() ? "100vw" : "auto",
-          height: isMobileViewport() ? "100vh" : "auto",
+          width: "auto",
+          height: "auto",
           ...style, // Merge với style từ props
         },
         overlay: {
           backgroundColor: isMinimized ? "transparent" : "rgba(0, 0, 0, 0.1)",
-          zIndex: 995,
+          zIndex: 1005,
           position: "fixed",
           top: 0,
           left: 0,
@@ -450,6 +478,7 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
           // Khi minimized: hiển thị avatar của người đang chat, có thể kéo và đóng
           <Styled.MinimizedIcon
             onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
             onClick={() => {
               // Nếu vừa kéo thì bỏ qua click để không mở popup
               if (hasDragged.current) {
@@ -511,7 +540,10 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
           </Styled.MinimizedIcon>
         ) : (
           <>
-            <Styled.Header onMouseDown={handleDragStart}>
+            <Styled.Header
+              onMouseDown={handleDragStart}
+              onTouchStart={handleDragStart}
+            >
               <Styled.Title>
                 <Icon iconName="chat" />
                 <span>{activeChatName}</span>
@@ -522,17 +554,15 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
                   e.stopPropagation();
                 }}
               >
-                {!isMobileViewport() && (
-                  <Button
-                    icon="minus"
-                    onClick={handleToggleMinimize}
-                    label="Minimize"
-                    hideLabel
-                    size="md"
-                    color="default"
-                    data-test="togglePrivateChatSize"
-                  />
-                )}
+                <Button
+                  icon="minus"
+                  onClick={handleToggleMinimize}
+                  label="Minimize"
+                  hideLabel
+                  size="md"
+                  color="default"
+                  data-test="togglePrivateChatSize"
+                />
                 <Button
                   icon="close"
                   onClick={onRequestClose}

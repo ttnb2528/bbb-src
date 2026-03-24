@@ -1,27 +1,51 @@
-import styled from 'styled-components';
-import { colorWhite, colorGrayLight, colorGrayDark, colorDanger, colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
-import { fontSizeBase, fontSizeLarge } from '/imports/ui/stylesheets/styled-components/typography';
-import { smPaddingX, smPaddingY, borderSize } from '/imports/ui/stylesheets/styled-components/general';
-import { smallOnly, hasPhoneWidth } from '/imports/ui/stylesheets/styled-components/breakpoints';
+import styled from "styled-components";
+import {
+  colorWhite,
+  colorGrayLight,
+  colorGrayDark,
+  colorDanger,
+  colorPrimary,
+} from "/imports/ui/stylesheets/styled-components/palette";
+import {
+  fontSizeBase,
+  fontSizeLarge,
+} from "/imports/ui/stylesheets/styled-components/typography";
+import {
+  smPaddingX,
+  smPaddingY,
+  borderSize,
+} from "/imports/ui/stylesheets/styled-components/general";
+import {
+  smallOnly,
+  hasPhoneWidth,
+} from "/imports/ui/stylesheets/styled-components/breakpoints";
 
 const Modal = styled.div<{ $minimized: boolean }>`
   display: flex;
   flex-direction: column;
   /* Popup nhỏ kiểu chat (desktop) */
-  width: ${({ $minimized }) => ($minimized ? '56px' : '360px')};
+  width: ${({ $minimized }) => ($minimized ? "56px" : "360px")};
   max-width: 95vw;
-  height: ${({ $minimized }) => ($minimized ? '56px' : '460px')};
-  max-height: ${({ $minimized }) => ($minimized ? '56px' : '70vh')};
-  min-height: ${({ $minimized }) => ($minimized ? '56px' : '320px')};
-  background-color: ${({ $minimized }) => ($minimized ? 'transparent' : colorWhite)};
-  border-radius: ${({ $minimized }) => ($minimized ? '50%' : '8px')};
-  box-shadow: ${({ $minimized }) => ($minimized ? 'none' : '0 4px 20px rgba(0, 0, 0, 0.3)')};
-  overflow: ${({ $minimized }) => ($minimized ? 'visible' : 'hidden')};
-  transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease, background-color 0.3s ease;
+  height: ${({ $minimized }) => ($minimized ? "56px" : "460px")};
+  max-height: ${({ $minimized }) => ($minimized ? "56px" : "70vh")};
+  min-height: ${({ $minimized }) => ($minimized ? "56px" : "320px")};
+  background-color: ${({ $minimized }) =>
+    $minimized ? "transparent" : colorWhite};
+  border-radius: ${({ $minimized }) => ($minimized ? "50%" : "8px")};
+  box-shadow: ${({ $minimized }) =>
+    $minimized ? "none" : "0 4px 20px rgba(0, 0, 0, 0.3)"};
+  overflow: ${({ $minimized }) => ($minimized ? "visible" : "hidden")};
+  transition:
+    width 0.3s ease,
+    height 0.3s ease,
+    border-radius 0.3s ease,
+    background-color 0.3s ease;
   border: none !important;
   outline: none !important;
   position: relative;
-  ${({ $minimized }) => $minimized && `
+  ${({ $minimized }) =>
+    $minimized &&
+    `
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -30,21 +54,21 @@ const Modal = styled.div<{ $minimized: boolean }>`
 
   /* Mobile responsive */
   @media ${smallOnly} {
-    width: ${({ $minimized }) => ($minimized ? '48px' : '100vw')};
-    height: ${({ $minimized }) => ($minimized ? '48px' : '85vh')};
-    max-width: ${({ $minimized }) => ($minimized ? '48px' : '100vw')};
-    max-height: ${({ $minimized }) => ($minimized ? '48px' : '85vh')};
-    min-height: ${({ $minimized }) => ($minimized ? '48px' : '60vh')};
-    border-radius: ${({ $minimized }) => ($minimized ? '50%' : '8px 8px 0 0')};
+    width: ${({ $minimized }) => ($minimized ? "48px" : "100vw")};
+    height: ${({ $minimized }) => ($minimized ? "48px" : "100dvh")};
+    max-width: ${({ $minimized }) => ($minimized ? "48px" : "100vw")};
+    max-height: ${({ $minimized }) => ($minimized ? "48px" : "100dvh")};
+    min-height: ${({ $minimized }) => ($minimized ? "48px" : "100dvh")};
+    border-radius: ${({ $minimized }) => ($minimized ? "50%" : "0")};
   }
 
   @media ${hasPhoneWidth} {
-    width: ${({ $minimized }) => ($minimized ? '44px' : '100vw')};
-    height: ${({ $minimized }) => ($minimized ? '44px' : '85vh')};
-    max-width: ${({ $minimized }) => ($minimized ? '44px' : '100vw')};
-    max-height: ${({ $minimized }) => ($minimized ? '44px' : '85vh')};
-    min-height: ${({ $minimized }) => ($minimized ? '44px' : '60vh')};
-    border-radius: ${({ $minimized }) => ($minimized ? '50%' : '8px 8px 0 0')};
+    width: ${({ $minimized }) => ($minimized ? "44px" : "100vw")};
+    height: ${({ $minimized }) => ($minimized ? "44px" : "100dvh")};
+    max-width: ${({ $minimized }) => ($minimized ? "44px" : "100vw")};
+    max-height: ${({ $minimized }) => ($minimized ? "44px" : "100dvh")};
+    min-height: ${({ $minimized }) => ($minimized ? "44px" : "100dvh")};
+    border-radius: ${({ $minimized }) => ($minimized ? "50%" : "0")};
   }
 `;
 
@@ -68,18 +92,19 @@ const TabBar = styled.div`
   flex-shrink: 0;
 `;
 
-const TabButton = styled.button<{ 'data-active'?: boolean }>`
+const TabButton = styled.button<{ "data-active"?: boolean }>`
   border: none;
   background: transparent;
   padding: 6px 10px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
-  color: ${({ 'data-active': active }) => (active ? colorGrayDark : '#777')};
-  background-color: ${({ 'data-active': active }) => (active ? 'rgba(0,0,0,0.05)' : 'transparent')};
+  color: ${({ "data-active": active }) => (active ? colorGrayDark : "#777")};
+  background-color: ${({ "data-active": active }) =>
+    active ? "rgba(0,0,0,0.05)" : "transparent"};
 
   &:hover {
-    background-color: rgba(0,0,0,0.06);
+    background-color: rgba(0, 0, 0, 0.06);
   }
 `;
 
@@ -138,7 +163,7 @@ const RightPane = styled.div`
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  
+
   /* Fix input chat không b? to ra */
   > * {
     min-width: 0;
@@ -172,7 +197,10 @@ const MinimizedClose = styled.button`
   padding: 0;
   cursor: pointer;
   z-index: 10;
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0.2s ease;
   opacity: 0;
   visibility: hidden;
 
@@ -217,7 +245,11 @@ const MinimizedIcon = styled.div`
   }
 `;
 
-const MinimizedAvatar = styled.div<{ moderator?: boolean; avatar?: string; $backgroundColor?: string }>`
+const MinimizedAvatar = styled.div<{
+  moderator?: boolean;
+  avatar?: string;
+  $backgroundColor?: string;
+}>`
   width: 100%;
   height: 100%;
   border-radius: 50%;
@@ -228,11 +260,17 @@ const MinimizedAvatar = styled.div<{ moderator?: boolean; avatar?: string; $back
   font-weight: 600;
   font-size: 18px;
   flex-shrink: 0;
-  background-color: ${({ $backgroundColor }) => $backgroundColor || colorPrimary};
-  ${({ moderator }) => moderator && `
+  background-color: ${({ $backgroundColor }) =>
+    $backgroundColor || colorPrimary};
+  ${({ moderator }) =>
+    moderator &&
+    `
     border: 2px solid ${colorPrimary};
   `}
-  ${({ avatar }) => avatar && avatar.length > 0 && `
+  ${({ avatar }) =>
+    avatar &&
+    avatar.length > 0 &&
+    `
     background-image: url(${avatar});
     background-size: cover;
     background-position: center;
@@ -285,4 +323,3 @@ export default {
   UnreadBadge,
   EmptyState,
 };
-

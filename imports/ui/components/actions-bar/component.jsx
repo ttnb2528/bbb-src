@@ -135,6 +135,24 @@ class ActionsBar extends PureComponent {
         const prevUnread = prevChat?.totalUnread || 0;
 
         if (currentUnread > prevUnread) {
+          // Hồi sinh chat nếu đã bị ẩn
+          const hiddenChatsStr = sessionStorage.getItem("hiddenPrivateChats");
+          if (hiddenChatsStr) {
+            try {
+              const hiddenChats = JSON.parse(hiddenChatsStr);
+              if (
+                Array.isArray(hiddenChats) &&
+                hiddenChats.includes(chat.chatId)
+              ) {
+                sessionStorage.setItem(
+                  "hiddenPrivateChats",
+                  JSON.stringify(
+                    hiddenChats.filter((id) => id !== chat.chatId),
+                  ),
+                );
+              }
+            } catch (e) {}
+          }
           // Tiết lộ Chat Head
           const existingChat = stateUpdates[chat.chatId];
           if (!existingChat) {
@@ -861,6 +879,7 @@ class ActionsBar extends PureComponent {
                     <MoreMenu
                       onOpenSettings={() => this.setModalIsOpen(true)}
                       onToggleUserList={this.handleToggleUserList}
+                      onTogglePrivateChat={this.handleTogglePrivateChat}
                       sidebarContent={sidebarContent}
                       amIPresenter={amIPresenter}
                       onOpenActivities={() => this.setActivitiesModalOpen(true)}
@@ -917,6 +936,23 @@ class ActionsBar extends PureComponent {
                           sidebarContent?.sidebarContentPanel ===
                             PANELS.USERLIST
                         }
+                      />
+                    </div>
+
+                    {/* Private Chats Button */}
+                    <div style={{ position: "relative" }}>
+                      <Button
+                        label={intl.formatMessage({
+                          id: "app.chat.privateChatLabel",
+                          defaultMessage: "Private Chats",
+                        })}
+                        icon="chat"
+                        color="default"
+                        size="md"
+                        onClick={this.handleTogglePrivateChat}
+                        hideLabel
+                        circle
+                        data-test="togglePrivateChats"
                       />
                       {privateUnreadCount > 0 && (
                         <div
@@ -1076,12 +1112,8 @@ class ActionsBar extends PureComponent {
 
             if (minimizedChats.length <= 1) return null; // Chỉ hiển thị dock khi có nhiều hơn 1 chat
 
-            // Chỉ hiển thị tối đa 3 icon trong dock bar
-            const MAX_DOCK_ICONS = 3;
-            const dockChats =
-              minimizedChats.length > MAX_DOCK_ICONS
-                ? minimizedChats.slice(-MAX_DOCK_ICONS)
-                : minimizedChats;
+            // Loại bỏ giới hạn 3 icon, hiển thị tất cả và dùng scroll trong dock
+            const dockChats = minimizedChats;
 
             // Lấy vị trí của icon minimized cuối cùng (icon mới nhất, đang hiển thị trên cùng)
             const lastMinimizedChatId =
@@ -1100,6 +1132,7 @@ class ActionsBar extends PureComponent {
                 onSelectChat={(chatId, iconPosition) =>
                   this.handleExpandPrivateChat(chatId, iconPosition)
                 }
+                onCloseChat={(chatId) => this.handleClosePrivateChat(chatId)}
                 anchorPosition={anchorPosition || undefined}
               />
             );
