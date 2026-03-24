@@ -260,7 +260,10 @@ class ActionsDropdown extends PureComponent {
       actions.push({
         icon: "upload",
         dataTest: "managePresentations",
-        label: "Quick Upload Document",
+        label: intl.formatMessage({
+          id: "app.actionsBar.actionsDropdown.quickUpload",
+          defaultMessage: "Quick Upload Document",
+        }),
         key: this.presentationItemId,
         onClick: () => {
           if (this.fileInputRef && this.fileInputRef.current) {
