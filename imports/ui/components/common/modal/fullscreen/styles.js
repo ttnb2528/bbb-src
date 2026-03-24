@@ -1,20 +1,20 @@
-import styled from 'styled-components';
-import Styled from '../base/component';
-import { smallOnly } from '/imports/ui/stylesheets/styled-components/breakpoints';
-import Button from '/imports/ui/components/common/button/component';
+import styled from "styled-components";
+import Styled from "../base/component";
+import { smallOnly } from "/imports/ui/stylesheets/styled-components/breakpoints";
+import Button from "/imports/ui/components/common/button/component";
 import {
   borderSize,
   smPaddingX,
-} from '/imports/ui/stylesheets/styled-components/general';
+} from "/imports/ui/stylesheets/styled-components/general";
 import {
   lineHeightComputed,
   headingsFontWeight,
   fontSizeLarger,
-} from '/imports/ui/stylesheets/styled-components/typography';
+} from "/imports/ui/stylesheets/styled-components/typography";
 import {
   colorGrayLightest,
   colorText,
-} from '/imports/ui/stylesheets/styled-components/palette';
+} from "/imports/ui/stylesheets/styled-components/palette";
 
 const FullscreenModal = styled(Styled.BaseModal)`
   outline: transparent;
@@ -28,6 +28,7 @@ const FullscreenModal = styled(Styled.BaseModal)`
 
   @media ${smallOnly} {
     width: 100%;
+    padding-bottom: 85px; /* Prevent being cut off by the bottom ActionsBar */
   }
 `;
 
@@ -69,7 +70,9 @@ const DismissButton = styled(Button)`
 const ConfirmButton = styled(Button)`
   flex: 0 1 48%;
 
-  ${({ popout }) => popout === 'popout' && `
+  ${({ popout }) =>
+    popout === "popout" &&
+    `
     & > i {
       bottom: ${borderSize};
       left: ${smPaddingX};

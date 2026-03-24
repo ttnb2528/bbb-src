@@ -1,22 +1,22 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { defineMessages, injectIntl } from 'react-intl';
-import { Divider } from '@mui/material';
-import Icon from '/imports/ui/components/common/icon/component';
-import { SMALL_VIEWPORT_BREAKPOINT } from '/imports/ui/components/layout/enums';
-import KEY_CODES from '/imports/utils/keyCodes';
-import MenuSkeleton from './skeleton';
-import GenericContentItem from '/imports/ui/components/generic-content/generic-content-item/component';
-import Styled from './styles';
+import React from "react";
+import PropTypes from "prop-types";
+import { defineMessages, injectIntl } from "react-intl";
+import { Divider } from "@mui/material";
+import Icon from "/imports/ui/components/common/icon/component";
+import { SMALL_VIEWPORT_BREAKPOINT } from "/imports/ui/components/layout/enums";
+import KEY_CODES from "/imports/utils/keyCodes";
+import MenuSkeleton from "./skeleton";
+import GenericContentItem from "/imports/ui/components/generic-content/generic-content-item/component";
+import Styled from "./styles";
 
 const intlMessages = defineMessages({
   close: {
-    id: 'app.dropdown.close',
-    description: 'Close button label',
+    id: "app.dropdown.close",
+    description: "Close button label",
   },
   active: {
-    id: 'app.dropdown.list.item.activeLabel',
-    description: 'active item label',
+    id: "app.dropdown.list.item.activeLabel",
+    description: "active item label",
   },
 });
 
@@ -50,7 +50,9 @@ class BBBMenu extends React.Component {
     const { isHorizontal } = this.props;
     const isMenuOpen = Boolean(anchorEl);
 
-    const previousKey = isHorizontal ? KEY_CODES.ARROW_LEFT : KEY_CODES.ARROW_UP;
+    const previousKey = isHorizontal
+      ? KEY_CODES.ARROW_LEFT
+      : KEY_CODES.ARROW_UP;
     const nextKey = isHorizontal ? KEY_CODES.ARROW_RIGHT : KEY_CODES.ARROW_DOWN;
 
     if ([KEY_CODES.ESCAPE, KEY_CODES.TAB].includes(event.which)) {
@@ -61,11 +63,16 @@ class BBBMenu extends React.Component {
     if (isMenuOpen && [previousKey, nextKey].includes(event.which)) {
       event.preventDefault();
       event.stopPropagation();
-      const menuItems = Array.from(document.querySelectorAll('[data-key^="menuItem-"]'));
+      const menuItems = Array.from(
+        document.querySelectorAll('[data-key^="menuItem-"]'),
+      );
       if (menuItems.length === 0) return;
 
-      const focusedIndex = menuItems.findIndex((item) => item === document.activeElement);
-      const nextIndex = event.which === previousKey ? focusedIndex - 1 : focusedIndex + 1;
+      const focusedIndex = menuItems.findIndex(
+        (item) => item === document.activeElement,
+      );
+      const nextIndex =
+        event.which === previousKey ? focusedIndex - 1 : focusedIndex + 1;
       let indexToFocus = 0;
       if (nextIndex < 0) {
         indexToFocus = menuItems.length - 1;
@@ -95,24 +102,27 @@ class BBBMenu extends React.Component {
 
   handleClose(event) {
     const { onCloseCallback, isMobile } = this.props;
-    
+
     // Cleanup menu state
     this.setState({ anchorEl: null }, () => {
       onCloseCallback();
-      
+
       // Trên mobile: cleanup thêm để tránh bug click outside
       if (isMobile) {
         setTimeout(() => {
           // Xóa backdrop nếu còn sót lại
-          const backdrops = document.querySelectorAll('.MuiBackdrop-root');
+          const backdrops = document.querySelectorAll(".MuiBackdrop-root");
           backdrops.forEach((backdrop) => {
-            if (!backdrop.classList.contains('MuiBackdrop-invisible')) {
+            if (!backdrop.classList.contains("MuiBackdrop-invisible")) {
               backdrop.remove();
             }
           });
-          
+
           // Đảm bảo không có element nào còn focus
-          if (document.activeElement && document.activeElement !== document.body) {
+          if (
+            document.activeElement &&
+            document.activeElement !== document.body
+          ) {
             document.activeElement.blur();
           }
         }, 100);
@@ -122,7 +132,7 @@ class BBBMenu extends React.Component {
     if (event) {
       event.persist();
 
-      if (event.type === 'click') {
+      if (event.type === "click") {
         setTimeout(() => {
           document.activeElement.blur();
         }, 0);
@@ -132,119 +142,175 @@ class BBBMenu extends React.Component {
 
   makeMenuItems() {
     const {
-      actions, selectedEmoji, intl, isHorizontal, isEmoji, isMobile, roundButtons, keepOpen,
+      actions,
+      selectedEmoji,
+      intl,
+      isHorizontal,
+      isEmoji,
+      isMobile,
+      roundButtons,
+      keepOpen,
     } = this.props;
 
-    return actions?.map((a) => {
-      const {
-        dataTest, label, onClick, key, disabled,
-        description, selected, textColor, isToggle, loading,
-        isTitle, titleActions, contentFunction,
-      } = a;
-      const emojiSelected = key?.toLowerCase()?.includes(selectedEmoji?.toLowerCase());
+    return (
+      actions?.map((a) => {
+        const {
+          dataTest,
+          label,
+          onClick,
+          key,
+          disabled,
+          description,
+          selected,
+          textColor,
+          isToggle,
+          loading,
+          isTitle,
+          titleActions,
+          contentFunction,
+        } = a;
+        const emojiSelected = key
+          ?.toLowerCase()
+          ?.includes(selectedEmoji?.toLowerCase());
 
-      let customStyles = {
-        paddingLeft: '16px',
-        paddingRight: '16px',
-        paddingTop: '12px',
-        paddingBottom: '12px',
-        marginLeft: '0px',
-        marginRight: '0px',
-      };
+        let customStyles = {
+          paddingLeft: "16px",
+          paddingRight: "16px",
+          paddingTop: "12px",
+          paddingBottom: "12px",
+          marginLeft: "0px",
+          marginRight: "0px",
+        };
 
-      let iconStyles = {};
+        let iconStyles = {};
 
-      if (a.customStyles) {
-        customStyles = { ...customStyles, ...a.customStyles };
-      }
+        if (a.customStyles) {
+          customStyles = { ...customStyles, ...a.customStyles };
+        }
 
-      if (a.iconStyles) {
-        iconStyles = { ...iconStyles, ...a.iconStyles };
-      }
+        if (a.iconStyles) {
+          iconStyles = { ...iconStyles, ...a.iconStyles };
+        }
 
-      if (loading) {
-        return (
-          <MenuSkeleton key={label} />
-        );
-      }
+        if (loading) {
+          return <MenuSkeleton key={label} />;
+        }
 
-      return [
-        (!a.isSeparator && onClick) && (
-          <Styled.BBBMenuItem
-            emoji={emojiSelected ? 'yes' : 'no'}
-            key={label}
-            id={dataTest}
-            data-test={dataTest}
-            data-key={`menuItem-${dataTest}`}
-            {...(a['data-no-hover'] ? { 'data-no-hover': a['data-no-hover'] } : {})}
-            className={a['data-no-hover'] ? 'no-hover-effect' : undefined}
-            disableRipple
-            disableGutters
-            disabled={disabled || isTitle}
-            style={customStyles}
-            $roundButtons={roundButtons}
-            $isToggle={isToggle}
-            onClick={(event) => {
-              onClick(event);
-              const close = !keepOpen && !key?.includes('setstatus') && !key?.includes('back');
-              // prevent menu close for sub menu actions
-              if (close) this.handleClose(event);
-              event.stopPropagation();
-            }}
-          >
-            <Styled.MenuItemWrapper
-              isMobile={isMobile}
-              isEmoji={isEmoji}
+        return [
+          !a.isSeparator && onClick && (
+            <Styled.BBBMenuItem
+              emoji={emojiSelected ? "yes" : "no"}
+              key={label}
+              id={dataTest}
+              data-test={dataTest}
+              data-key={`menuItem-${dataTest}`}
+              {...(a["data-no-hover"]
+                ? { "data-no-hover": a["data-no-hover"] }
+                : {})}
+              className={a["data-no-hover"] ? "no-hover-effect" : undefined}
+              disableRipple
+              disableGutters
+              disabled={disabled || isTitle}
+              style={customStyles}
+              $roundButtons={roundButtons}
+              $isToggle={isToggle}
+              onClick={(event) => {
+                onClick(event);
+                const close =
+                  !keepOpen &&
+                  !key?.includes("setstatus") &&
+                  !key?.includes("back");
+                // prevent menu close for sub menu actions
+                if (close) this.handleClose(event);
+                event.stopPropagation();
+              }}
             >
-              {a.icon ? <Icon iconName={a.icon} key="icon" /> : null}
-              <Styled.Option hasIcon={!!(a.icon)} isHorizontal={isHorizontal} isMobile={isMobile} aria-describedby={`${key}-option-desc`} $isToggle={isToggle}>{label}</Styled.Option>
-              {description && <div className="sr-only" id={`${key}-option-desc`}>{`${description}${selected ? ` - ${intl.formatMessage(intlMessages.active)}` : ''}`}</div>}
-              {a.iconRight ? <Styled.IconRight iconName={a.iconRight} key="iconRight" style={iconStyles} /> : null}
-            </Styled.MenuItemWrapper>
-          </Styled.BBBMenuItem>
-        ),
-        (!onClick && !a.isSeparator) && (
-          <Styled.BBBMenuInformation
-            key={a.key}
-            isTitle={isTitle}
-            isGenericContent={!!contentFunction}
-            disabled={disabled || isTitle}
-          >
-            <Styled.MenuItemWrapper
-              hasSpaceBetween={isTitle && titleActions}
+              <Styled.MenuItemWrapper isMobile={isMobile} isEmoji={isEmoji}>
+                {a.icon ? <Icon iconName={a.icon} key="icon" /> : null}
+                <Styled.Option
+                  hasIcon={!!a.icon}
+                  isHorizontal={isHorizontal}
+                  isMobile={isMobile}
+                  aria-describedby={`${key}-option-desc`}
+                  $isToggle={isToggle}
+                >
+                  {label}
+                </Styled.Option>
+                {description && (
+                  <div
+                    className="sr-only"
+                    id={`${key}-option-desc`}
+                  >{`${description}${selected ? ` - ${intl.formatMessage(intlMessages.active)}` : ""}`}</div>
+                )}
+                {a.iconRight ? (
+                  <Styled.IconRight
+                    iconName={a.iconRight}
+                    key="iconRight"
+                    style={iconStyles}
+                  />
+                ) : null}
+              </Styled.MenuItemWrapper>
+            </Styled.BBBMenuItem>
+          ),
+          !onClick && !a.isSeparator && (
+            <Styled.BBBMenuInformation
+              key={a.key}
+              isTitle={isTitle}
+              isGenericContent={!!contentFunction}
+              disabled={disabled || isTitle}
             >
-              {!contentFunction ? (
-                <>
-                  {a.icon ? <Icon color={textColor} iconName={a.icon} key="icon" /> : null}
-                  <Styled.Option hasIcon={!!(a.icon)} isTitle={isTitle} textColor={textColor} isHorizontal={isHorizontal} isMobile={isMobile} aria-describedby={`${key}-option-desc`} $isToggle={isToggle}>{label}</Styled.Option>
-                  {a.iconRight ? <Styled.IconRight color={textColor} iconName={a.iconRight} key="iconRight" /> : null}
-                  {(isTitle && titleActions?.length > 0) ? (
-                    titleActions.map((item, index) => (
-                      <Styled.TitleAction
-                        key={item.id || index}
-                        tooltipplacement="right"
-                        size="md"
-                        onClick={item.onClick}
-                        circle
-                        tooltipLabel={item.tooltip}
-                        hideLabel
-                        icon={item.icon}
+              <Styled.MenuItemWrapper hasSpaceBetween={isTitle && titleActions}>
+                {!contentFunction ? (
+                  <>
+                    {a.icon ? (
+                      <Icon color={textColor} iconName={a.icon} key="icon" />
+                    ) : null}
+                    <Styled.Option
+                      hasIcon={!!a.icon}
+                      isTitle={isTitle}
+                      textColor={textColor}
+                      isHorizontal={isHorizontal}
+                      isMobile={isMobile}
+                      aria-describedby={`${key}-option-desc`}
+                      $isToggle={isToggle}
+                    >
+                      {label}
+                    </Styled.Option>
+                    {a.iconRight ? (
+                      <Styled.IconRight
+                        color={textColor}
+                        iconName={a.iconRight}
+                        key="iconRight"
                       />
-                    ))
-                  ) : null}
-                </>
-              ) : (
-                <GenericContentItem
-                  width="100%"
-                  renderFunction={contentFunction}
-                />
-              )}
-            </Styled.MenuItemWrapper>
-          </Styled.BBBMenuInformation>
-        ),
-        a.isSeparator && <Divider data-test={dataTest} disabled />,
-      ];
-    }) ?? [];
+                    ) : null}
+                    {isTitle && titleActions?.length > 0
+                      ? titleActions.map((item, index) => (
+                          <Styled.TitleAction
+                            key={item.id || index}
+                            tooltipplacement="right"
+                            size="md"
+                            onClick={item.onClick}
+                            circle
+                            tooltipLabel={item.tooltip}
+                            hideLabel
+                            icon={item.icon}
+                          />
+                        ))
+                      : null}
+                  </>
+                ) : (
+                  <GenericContentItem
+                    width="100%"
+                    renderFunction={contentFunction}
+                  />
+                )}
+              </Styled.MenuItemWrapper>
+            </Styled.BBBMenuInformation>
+          ),
+          a.isSeparator && <Divider data-test={dataTest} disabled />,
+        ];
+      }) ?? []
+    );
   }
 
   render() {
@@ -262,10 +328,11 @@ class BBBMenu extends React.Component {
       overrideMobileStyles,
       isHorizontal,
       minContent,
+      modernActionSheet,
     } = this.props;
     const actionsItems = this.makeMenuItems();
 
-    const roundedCornersStyles = { borderRadius: '3rem' };
+    const roundedCornersStyles = { borderRadius: "3rem" };
     // Tăng z-index cao hơn footer (1000) để menu không bị che
     let menuStyles = { zIndex: 1100 };
 
@@ -274,13 +341,13 @@ class BBBMenu extends React.Component {
     }
 
     if (isHorizontal) {
-      const horizontalStyles = { display: 'flex' };
+      const horizontalStyles = { display: "flex" };
       menuStyles = { ...menuStyles, ...horizontalStyles };
     }
 
     const paperStyle = {
       ...(hasRoundedCorners ? roundedCornersStyles : {}),
-      ...(minContent ? { 'max-width': 'min-content' } : {}),
+      ...(minContent ? { "max-width": "min-content" } : {}),
     };
 
     return (
@@ -288,10 +355,15 @@ class BBBMenu extends React.Component {
         <div
           onClick={(e) => {
             e.persist();
-            const firefoxInputSource = !([1, 5].includes(e.nativeEvent.mozInputSource)); // 1 = mouse, 5 = touch (firefox only)
-            const chromeInputSource = !(['mouse', 'touch'].includes(e.nativeEvent.pointerType));
+            const firefoxInputSource = ![1, 5].includes(
+              e.nativeEvent.mozInputSource,
+            ); // 1 = mouse, 5 = touch (firefox only)
+            const chromeInputSource = !["mouse", "touch"].includes(
+              e.nativeEvent.pointerType,
+            );
 
-            this.optsToMerge.autoFocus = firefoxInputSource && chromeInputSource;
+            this.optsToMerge.autoFocus =
+              firefoxInputSource && chromeInputSource;
             this.handleClick(e);
           }}
           onKeyPress={(e) => {
@@ -300,7 +372,7 @@ class BBBMenu extends React.Component {
             this.handleClick(e);
           }}
           accessKey={accessKey}
-          ref={(ref) => this.anchorElRef = ref}
+          ref={(ref) => (this.anchorElRef = ref)}
           tabIndex={-1}
         >
           {trigger}
@@ -318,13 +390,17 @@ class BBBMenu extends React.Component {
           $isHorizontal={isHorizontal}
           PaperProps={{
             style: paperStyle,
-            className: overrideMobileStyles ? 'override-mobile-styles' : 'MuiPaper-root-mobile',
+            className: overrideMobileStyles
+              ? "override-mobile-styles"
+              : `MuiPaper-root-mobile ${modernActionSheet ? "modern-action-sheet" : ""}`.trim(),
           }}
         >
           {actionsItems}
           {renderOtherComponents}
-          {!overrideMobileStyles && anchorEl && window.innerWidth < SMALL_VIEWPORT_BREAKPOINT
-            && (
+          {!overrideMobileStyles &&
+            !modernActionSheet &&
+            anchorEl &&
+            window.innerWidth < SMALL_VIEWPORT_BREAKPOINT && (
               <Styled.CloseButton
                 label={intl.formatMessage(intlMessages.close)}
                 size="lg"
@@ -340,18 +416,18 @@ class BBBMenu extends React.Component {
 
 BBBMenu.defaultProps = {
   opts: {
-    id: 'default-dropdown-menu',
+    id: "default-dropdown-menu",
     autoFocus: false,
     keepMounted: true,
     transitionDuration: 0,
     elevation: 3,
     getcontentanchorel: null,
-    fullwidth: 'true',
-    anchorOrigin: { vertical: 'top', horizontal: 'right' },
-    transformorigin: { vertical: 'top', horizontal: 'right' },
+    fullwidth: "true",
+    anchorOrigin: { vertical: "top", horizontal: "right" },
+    transformorigin: { vertical: "top", horizontal: "right" },
   },
-  onCloseCallback: () => { },
-  dataTest: '',
+  onCloseCallback: () => {},
+  dataTest: "",
   minContent: false,
 };
 

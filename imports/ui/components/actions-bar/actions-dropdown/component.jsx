@@ -493,6 +493,7 @@ class ActionsDropdown extends PureComponent {
           accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.rtf,.txt,.odt,.sxw,.wpd,.jpg,.jpeg,.png,.svg"
         />
         <BBBMenu
+          modernActionSheet
           customStyles={!isMobile ? customStyles : null}
           accessKey={OPEN_ACTIONS_AK}
           trigger={

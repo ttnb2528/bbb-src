@@ -145,21 +145,6 @@ class MoreMenu extends PureComponent {
 
     const menuItems = [
       {
-        key: "list-item-settings",
-        icon: "settings",
-        label: intl.formatMessage(intlMessages.settingsLabel),
-        onClick: () => {
-          this.setState({
-            isOptionsMenuModalOpen: true,
-            isDropdownOpen: false,
-          });
-        },
-      },
-      {
-        key: "separator-01",
-        isSeparator: true,
-      },
-      {
         key: "list-item-user-list",
         icon: "user",
         label: intl.formatMessage(intlMessages.userListLabel),
@@ -173,33 +158,36 @@ class MoreMenu extends PureComponent {
       },
     ];
 
-    // Thêm menu item "Activities" cho presenter
+    // Thêm menu item "Activities" cho presenter (nếu cần thiết ở trong menu này)
     if (amIPresenter && onOpenActivities) {
-      menuItems.push(
-        {
-          key: "separator-activities",
-          isSeparator: true,
+      menuItems.push({
+        key: "list-item-activities",
+        icon: "plus",
+        label: intl.formatMessage({
+          id: "app.actionsBar.actionsDropdown.actionsLabel",
+          defaultMessage: "Activities",
+        }),
+        onClick: () => {
+          onOpenActivities();
+          this.setState({ isDropdownOpen: false });
         },
-        {
-          key: "list-item-activities",
-          icon: "plus",
-          label: intl.formatMessage({
-            id: "app.actionsBar.actionsDropdown.actionsLabel",
-            defaultMessage: "Activities",
-          }),
-          onClick: () => {
-            onOpenActivities();
-            this.setState({ isDropdownOpen: false });
-          },
-        },
-      );
+      });
     }
 
-    // Thêm separator trước các options từ desktop
+    // Group Setting
     menuItems.push({
-      key: "separator-options",
-      isSeparator: true,
+      key: "list-item-settings",
+      icon: "settings",
+      label: intl.formatMessage(intlMessages.settingsLabel),
+      onClick: () => {
+        this.setState({
+          isOptionsMenuModalOpen: true,
+          isDropdownOpen: false,
+        });
+      },
     });
+
+    // Xóa separator thừa
 
     // Fullscreen option
     if (!noIOSFullscreen && ALLOW_FULLSCREEN && handleToggleFullscreen) {
@@ -260,10 +248,6 @@ class MoreMenu extends PureComponent {
     // Connection Status
     if (showConnectionStatus) {
       menuItems.push({
-        key: "separator-connection",
-        isSeparator: true,
-      });
-      menuItems.push({
         key: "list-item-connection-status",
         icon: "network",
         label: intl.formatMessage(intlMessages.connectionStatusLabel),
@@ -316,6 +300,7 @@ class MoreMenu extends PureComponent {
     return (
       <>
         <BBBMenu
+          modernActionSheet
           customStyles={customStyles}
           trigger={
             <Styled.BadgeWrapper>

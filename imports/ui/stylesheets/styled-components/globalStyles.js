@@ -65,6 +65,65 @@ const GlobalStyle = createGlobalStyle`
       top: auto !important;
       bottom: 0 !important;
     }
+
+    /* MODERN ACTION SHEET UI: Aesthetic Upgrade cho các menu chính */
+    .MuiPaper-root-mobile.modern-action-sheet {
+      bottom: 15px !important; /* Float at the very bottom */
+      left: 12px !important;
+      right: 12px !important;
+      width: calc(100% - 24px) !important;
+      border-radius: 24px !important;
+      background: #ffffff !important;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .MuiPaper-root-mobile.modern-action-sheet::before {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 5px;
+      background-color: #E2E8F0;
+      border-radius: 10px;
+      margin: 12px auto 4px auto;
+    }
+
+    .MuiPaper-root-mobile.modern-action-sheet .MuiList-root {
+      padding: 10px 16px 24px 16px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 8px !important;
+      max-height: calc(90vh) !important;
+    }
+
+    /* Ẩn các vạch chia cắt truyền thống */
+    .MuiPaper-root-mobile.modern-action-sheet .MuiDivider-root {
+      display: none !important;
+    }
+
+    /* Style hiện đại cho từng Menu Item */
+    .MuiPaper-root-mobile.modern-action-sheet .MuiMenuItem-root {
+      background-color: #F8FAFC !important;
+      border-radius: 14px !important;
+      min-height: 52px !important;
+      padding: 0 16px !important;
+      color: #334155 !important;
+      font-weight: 500 !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+    .MuiPaper-root-mobile.modern-action-sheet .MuiMenuItem-root:active {
+      transform: scale(0.96);
+      background-color: #E2E8F0 !important;
+    }
+
+    .MuiPaper-root-mobile.modern-action-sheet .MuiMenuItem-root i {
+      color: #64748B !important;
+      font-size: 1.25rem !important;
+    }
+
+    .MuiPaper-root-mobile.modern-action-sheet button[class*="CloseButton"] {
+      display: none !important; /* Xóa nút Đóng thô kệch vì đã có float tap to close */
+    }
     
     /* Khi Popover đóng - ẩn xuống dưới (chỉ khi có aria-hidden="true") */
     .MuiPopover-root[aria-hidden="true"] .MuiPaper-root-mobile {

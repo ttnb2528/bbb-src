@@ -1,7 +1,5 @@
-import styled, { css } from 'styled-components';
-import { colorWhite, colorGrayLight, colorGrayDark } from '/imports/ui/stylesheets/styled-components/palette';
-import { fontSizeLarge } from '/imports/ui/stylesheets/styled-components/typography';
-import { smPaddingX, smPaddingY, borderSize } from '/imports/ui/stylesheets/styled-components/general';
+import styled, { css } from "styled-components";
+import { colorWhite } from "/imports/ui/stylesheets/styled-components/palette";
 
 const Overlay = styled.div`
   position: fixed;
@@ -12,7 +10,7 @@ const Overlay = styled.div`
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1000;
   animation: fadeIn 0.2s ease;
-  
+
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -23,7 +21,7 @@ const Overlay = styled.div`
   }
 `;
 
-const Drawer = styled.div<{ $position: 'left' | 'right' | 'bottom' }>`
+const Drawer = styled.div<{ $position: "left" | "right" | "bottom" }>`
   position: fixed;
   background-color: ${colorWhite};
   z-index: 1001;
@@ -31,36 +29,51 @@ const Drawer = styled.div<{ $position: 'left' | 'right' | 'bottom' }>`
   flex-direction: column;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
 
-  ${({ $position }) => $position === 'left' && css`
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 85vw;
-    max-width: 400px;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-    animation: slideInFromLeft 0.3s ease;
-  `}
+  ${({ $position }) =>
+    $position === "left" &&
+    css`
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 85vw;
+      max-width: 400px;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+      animation: slideInFromLeft 0.3s ease;
+    `}
 
-  ${({ $position }) => $position === 'right' && css`
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: 85vw;
-    max-width: 400px;
-    animation: slideInFromRight 0.3s ease;
-  `}
+  ${({ $position }) =>
+    $position === "right" &&
+    css`
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 85vw;
+      max-width: 400px;
+      animation: slideInFromRight 0.3s ease;
+    `}
 
-  ${({ $position }) => $position === 'bottom' && css`
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-width: 100%;
-    max-height: 80vh;
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-    animation: slideInFromBottom 0.3s ease;
-  `}
+  ${({ $position }) =>
+    $position === "bottom" &&
+    css`
+      bottom: 15px;
+      left: 12px;
+      right: 12px;
+      width: calc(100% - 24px);
+      max-height: 90vh;
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      animation: slideInFromBottom 0.3s ease;
+
+      &::before {
+        content: "";
+        display: block;
+        width: 40px;
+        height: 5px;
+        background-color: #e2e8f0;
+        border-radius: 10px;
+        margin: 12px auto 4px auto;
+      }
+    `}
 
   @keyframes slideInFromLeft {
     from {
@@ -94,15 +107,14 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: ${smPaddingY} ${smPaddingX};
-  border-bottom: ${borderSize} solid ${colorGrayLight};
+  padding: 8px 16px 4px 16px;
   flex-shrink: 0;
 `;
 
 const Title = styled.h2`
-  font-size: ${fontSizeLarge};
-  font-weight: 600;
-  color: ${colorGrayDark};
+  font-size: 18px;
+  font-weight: 700;
+  color: #334155;
   margin: 0;
   padding: 0;
 `;
@@ -111,7 +123,7 @@ const CloseButton = styled.button`
   background: none;
   border: none;
   font-size: 24px;
-  color: ${colorGrayDark};
+  color: #64748b;
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -123,11 +135,11 @@ const CloseButton = styled.button`
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: ${colorGrayLight};
+    background-color: #f1f5f9;
   }
 
   &:active {
-    background-color: ${colorGrayLight};
+    background-color: #e2e8f0;
   }
 `;
 
@@ -146,4 +158,3 @@ export default {
   CloseButton,
   Content,
 };
-
