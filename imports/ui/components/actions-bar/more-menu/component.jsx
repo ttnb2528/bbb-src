@@ -245,7 +245,8 @@ class MoreMenu extends PureComponent {
       });
     }
 
-    // Keyboard shortcuts
+    // ĐÃ ẨN: Phím tắt bàn phím không có tác dụng trên giao diện điện thoại
+    /*
     menuItems.push({
       key: "list-item-shortcuts",
       icon: "shortcuts",
@@ -254,6 +255,7 @@ class MoreMenu extends PureComponent {
         this.setState({ isShortcutHelpModalOpen: true, isDropdownOpen: false });
       },
     });
+    */
 
     // Connection Status
     if (showConnectionStatus) {

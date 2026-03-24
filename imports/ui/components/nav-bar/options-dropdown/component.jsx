@@ -481,6 +481,11 @@ class OptionsDropdown extends PureComponent {
     }
 
     optionsDropdownItems.forEach((item) => {
+      // Bỏ qua mục trợ giúp Phím tắt bàn phím nếu đang dùng điện thoại
+      if (isMobile && item.icon === "shortcuts") {
+        return;
+      }
+
       switch (item.type) {
         case OptionsDropdownItemType.OPTION:
           this.menuItems.push({
