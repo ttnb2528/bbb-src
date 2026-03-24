@@ -6,6 +6,26 @@ import EmojiPickerComponent from "/imports/ui/components/emoji-picker/component"
 import Icon from "/imports/ui/components/common/icon/component";
 import ReactMarkdown from "react-markdown";
 import { messageToMarkdown } from "/imports/ui/components/chat/chat-graphql/service";
+import { defineMessages, useIntl } from "react-intl";
+
+const intlMessages = defineMessages({
+  publicChatPlaceholder: {
+    id: "app.chat.inputPlaceholder",
+    defaultMessage: "Message {chatName}...",
+  },
+  publicChatName: {
+    id: "app.chat.titlePublic",
+    defaultMessage: "Public Chat",
+  },
+  collapseChat: {
+    id: "app.chat.collapse",
+    defaultMessage: "Collapse chat",
+  },
+  expandChat: {
+    id: "app.chat.expand",
+    defaultMessage: "Expand chat",
+  },
+});
 
 interface Message {
   messageSequence: number;
@@ -34,6 +54,7 @@ const FloatingChat = ({
   sidebarWidth,
   isUIHidden,
 }: Props) => {
+  const intl = useIntl();
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [inputValue, setInputValue] = useState("");
@@ -120,7 +141,11 @@ const FloatingChat = ({
       <Styled.ChatHeader
         onClick={() => setIsExpanded(!isExpanded)}
         $isExpanded={isExpanded}
-        title={isExpanded ? "Thu gọn chat" : "Hiển thị chat"}
+        title={
+          isExpanded
+            ? intl.formatMessage(intlMessages.collapseChat)
+            : intl.formatMessage(intlMessages.expandChat)
+        }
       >
         <Icon iconName={isExpanded ? "up_arrow" : "group_chat"} />
         {!isExpanded && unreadCount > 0 && (
@@ -171,7 +196,10 @@ const FloatingChat = ({
             onChange={handleInput}
             onKeyDown={handleKeyDown}
             rows={1}
-            placeholder="Gửi lên Chat công khai..."
+            placeholder={intl.formatMessage(
+              intlMessages.publicChatPlaceholder,
+              { chatName: intl.formatMessage(intlMessages.publicChatName) },
+            )}
           />
           <Styled.SendButton type="submit" disabled={!inputValue.trim()}>
             <Icon iconName="send" />

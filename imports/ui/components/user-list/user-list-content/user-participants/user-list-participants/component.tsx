@@ -6,6 +6,14 @@ import * as PluginSdk from "bigbluebutton-html-plugin-sdk";
 import { User } from "/imports/ui/Types/user";
 import Styled from "./styles";
 import Icon from "/imports/ui/components/common/icon/icon-ts/component";
+import { defineMessages, useIntl } from "react-intl";
+
+const intlMessages = defineMessages({
+  searchUsersPlaceholder: {
+    id: "app.userList.search",
+    defaultMessage: "Search users...",
+  },
+});
 import {
   USER_AGGREGATE_COUNT_SUBSCRIPTION,
   USER_SEARCH_AGGREGATE_COUNT_SUBSCRIPTION,
@@ -131,6 +139,7 @@ const UserListParticipants: React.FC<UserListParticipantsProps> = ({
 };
 
 const UserListParticipantsContainer: React.FC = () => {
+  const intl = useIntl();
   const [inputValue, setInputValue] = React.useState("");
   const [searchTerm, setSearchTerm] = React.useState("");
 
@@ -165,7 +174,7 @@ const UserListParticipantsContainer: React.FC = () => {
         <Icon iconName="search" />
         <Styled.SearchInput
           type="text"
-          placeholder="Tìm kiếm người dùng..."
+          placeholder={intl.formatMessage(intlMessages.searchUsersPlaceholder)}
           value={inputValue}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
             setInputValue(e.target.value)
