@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useContext, useRef } from "react";
+import throttle from "lodash/throttle";
 import PropTypes from "prop-types";
 import { notify } from "/imports/ui/services/notification";
 import Presentation from "/imports/ui/components/presentation/component";
@@ -162,19 +163,32 @@ const PresentationContainer = (props) => {
     });
   };
 
+  const throttledZoomMutationRef = useRef(
+    throttle(
+      (mutationFn, variables) => {
+        mutationFn({ variables });
+      },
+      50,
+      { leading: true, trailing: true },
+    ),
+  );
+
+  // Dọn dẹp throttle on unmount
+  useEffect(() => {
+    return () => throttledZoomMutationRef.current.cancel();
+  }, []);
+
   const zoomSlide = (widthRatio, heightRatio, xOffset, yOffset) => {
     const { presentationId, pageId, num } = currentPresentationPage;
 
-    presentationSetZoom({
-      variables: {
-        presentationId,
-        pageId,
-        pageNum: num,
-        xOffset,
-        yOffset,
-        widthRatio,
-        heightRatio,
-      },
+    throttledZoomMutationRef.current(presentationSetZoom, {
+      presentationId,
+      pageId,
+      pageNum: num,
+      xOffset,
+      yOffset,
+      widthRatio,
+      heightRatio,
     });
   };
 
