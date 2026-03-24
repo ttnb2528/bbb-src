@@ -1,27 +1,32 @@
-import React, { useContext } from 'react';
-import { useMutation } from '@apollo/client';
-import { useIntl } from 'react-intl';
-import ActionsList from './component';
-import { layoutSelectInput, layoutDispatch, layoutSelect } from '../../layout/context';
-import { SMALL_VIEWPORT_BREAKPOINT, ACTIONS, PANELS } from '../../layout/enums';
+import React, { useContext } from "react";
+import { useMutation } from "@apollo/client";
+import { useIntl } from "react-intl";
+import ActionsList from "./component";
+import {
+  layoutSelectInput,
+  layoutDispatch,
+  layoutSelect,
+} from "../../layout/context";
+import { SMALL_VIEWPORT_BREAKPOINT, ACTIONS, PANELS } from "../../layout/enums";
 import {
   useIsCameraAsContentEnabled,
   useIsPresentationEnabled,
   useIsTimerFeatureEnabled,
-} from '/imports/ui/services/features';
-import { PluginsContext } from '/imports/ui/components/components-data/plugin-context/context';
+} from "/imports/ui/services/features";
+import { PluginsContext } from "/imports/ui/components/components-data/plugin-context/context";
+import { PRESENTATIONS_SUBSCRIPTION } from "/imports/ui/components/whiteboard/queries";
+import useDeduplicatedSubscription from "/imports/ui/core/hooks/useDeduplicatedSubscription";
+import { SET_PRESENTER } from "/imports/ui/core/graphql/mutations/userMutations";
+import { TIMER_ACTIVATE, TIMER_DEACTIVATE } from "../../timer/mutations";
+import Auth from "/imports/ui/services/auth";
 import {
-  PRESENTATIONS_SUBSCRIPTION,
-} from '/imports/ui/components/whiteboard/queries';
-import useDeduplicatedSubscription from '/imports/ui/core/hooks/useDeduplicatedSubscription';
-import { SET_PRESENTER } from '/imports/ui/core/graphql/mutations/userMutations';
-import { TIMER_ACTIVATE, TIMER_DEACTIVATE } from '../../timer/mutations';
-import Auth from '/imports/ui/services/auth';
-import { PRESENTATION_SET_CURRENT } from '../../presentation/mutations';
-import { useStorageKey } from '/imports/ui/services/storage/hooks';
-import { useMeetingIsBreakout } from '/imports/ui/components/app/service';
-import useMeeting from '/imports/ui/core/hooks/useMeeting';
-import PropTypes from 'prop-types';
+  PRESENTATION_SET_CURRENT,
+  PRESENTATION_REMOVE,
+} from "../../presentation/mutations";
+import { useStorageKey } from "/imports/ui/services/storage/hooks";
+import { useMeetingIsBreakout } from "/imports/ui/components/app/service";
+import useMeeting from "/imports/ui/core/hooks/useMeeting";
+import PropTypes from "prop-types";
 
 const ActionsListContainer = (props) => {
   const sidebarContent = layoutSelectInput((i) => i.sidebarContent);
@@ -45,17 +50,17 @@ const ActionsListContainer = (props) => {
   );
   const presentations = presentationData?.pres_presentation || [];
 
-  const {
-    allowPresentationManagementInBreakouts,
-  } = window.meetingClientSettings.public.app.breakouts;
+  const { allowPresentationManagementInBreakouts } =
+    window.meetingClientSettings.public.app.breakouts;
 
-  const isPresentationManagementDisabled = meetingIsBreakout
-    && !allowPresentationManagementInBreakouts;
+  const isPresentationManagementDisabled =
+    meetingIsBreakout && !allowPresentationManagementInBreakouts;
 
   const [setPresenter] = useMutation(SET_PRESENTER);
   const [timerActivate] = useMutation(TIMER_ACTIVATE);
   const [timerDeactivate] = useMutation(TIMER_DEACTIVATE);
   const [presentationSetCurrent] = useMutation(PRESENTATION_SET_CURRENT);
+  const [presentationRemove] = useMutation(PRESENTATION_REMOVE);
 
   const handleTakePresenter = () => {
     setPresenter({ variables: { userId: Auth.userID } });
@@ -63,6 +68,10 @@ const ActionsListContainer = (props) => {
 
   const setPresentation = (presentationId) => {
     presentationSetCurrent({ variables: { presentationId } });
+  };
+
+  const removePresentation = (presentationId) => {
+    presentationRemove({ variables: { presentationId } });
   };
 
   const activateTimer = () => {
@@ -107,12 +116,15 @@ const ActionsListContainer = (props) => {
         isMobile,
         isRTL,
         actionButtonDropdownItems,
-        presentations: presentations.filter((p) => p).filter((p) => p.uploadCompleted),
+        presentations: presentations
+          .filter((p) => p)
+          .filter((p) => p.uploadCompleted),
         isTimerFeatureEnabled,
         isTimerActive,
         isTimerEnabled: isTimerFeatureEnabled, // isTimerEnabled = isTimerFeatureEnabled
         isCameraAsContentEnabled,
         setPresentation,
+        removePresentation,
         isPresentationEnabled,
         isPresentationManagementDisabled,
         handleTakePresenter,
@@ -126,7 +138,7 @@ const ActionsListContainer = (props) => {
   );
 };
 
-  ActionsListContainer.propTypes = {
+ActionsListContainer.propTypes = {
   onOpenExternalVideoModal: PropTypes.func,
   onOpenCameraAsContentModal: PropTypes.func,
 };

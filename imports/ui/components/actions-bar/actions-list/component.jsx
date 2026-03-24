@@ -1,63 +1,66 @@
-import React, { PureComponent } from 'react';
-import PropTypes from 'prop-types';
-import { defineMessages, injectIntl } from 'react-intl';
-import Icon from '/imports/ui/components/common/icon/icon-ts/component';
-import Styled from './styles';
-import { colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
-import { PANELS, ACTIONS } from '../../layout/enums';
-import { layoutDispatch } from '../../layout/context';
-import { uniqueId } from '/imports/utils/string-utils';
-import { screenshareHasEnded } from '/imports/ui/components/screenshare/service';
-import Session from '/imports/ui/services/storage/in-memory';
-import ExternalVideoModal from '/imports/ui/components/external-video-player/external-video-player-graphql/modal/component';
-import LayoutModalContainer from '/imports/ui/components/layout/modal/container';
-import VideoPreviewContainer from '/imports/ui/components/video-preview/container';
-import { ActionButtonDropdownItemType } from 'bigbluebutton-html-plugin-sdk/dist/cjs/extensible-areas/action-button-dropdown-item/enums';
+import React, { PureComponent } from "react";
+import PropTypes from "prop-types";
+import { defineMessages, injectIntl } from "react-intl";
+import Icon from "/imports/ui/components/common/icon/icon-ts/component";
+import Styled from "./styles";
+import { colorPrimary } from "/imports/ui/stylesheets/styled-components/palette";
+import { PANELS, ACTIONS } from "../../layout/enums";
+import { layoutDispatch } from "../../layout/context";
+import { uniqueId } from "/imports/utils/string-utils";
+import { screenshareHasEnded } from "/imports/ui/components/screenshare/service";
+import Session from "/imports/ui/services/storage/in-memory";
+import PresentationUploaderService from "/imports/ui/components/presentation/presentation-uploader/service";
+import ExternalVideoModal from "/imports/ui/components/external-video-player/external-video-player-graphql/modal/component";
+import LayoutModalContainer from "/imports/ui/components/layout/modal/container";
+import VideoPreviewContainer from "/imports/ui/components/video-preview/container";
+import { ActionButtonDropdownItemType } from "bigbluebutton-html-plugin-sdk/dist/cjs/extensible-areas/action-button-dropdown-item/enums";
 
 const intlMessages = defineMessages({
   presentationLabel: {
-    id: 'app.actionsBar.actionsDropdown.presentationLabel',
-    description: 'Upload a presentation option label',
+    id: "app.actionsBar.actionsDropdown.presentationLabel",
+    description: "Upload a presentation option label",
   },
   activateTimerStopwatchLabel: {
-    id: 'app.actionsBar.actionsDropdown.activateTimerStopwatchLabel',
-    description: 'Activate timer/stopwatch label',
+    id: "app.actionsBar.actionsDropdown.activateTimerStopwatchLabel",
+    description: "Activate timer/stopwatch label",
   },
   deactivateTimerStopwatchLabel: {
-    id: 'app.actionsBar.actionsDropdown.deactivateTimerStopwatchLabel',
-    description: 'Deactivate timer/stopwatch label',
+    id: "app.actionsBar.actionsDropdown.deactivateTimerStopwatchLabel",
+    description: "Deactivate timer/stopwatch label",
   },
   takePresenter: {
-    id: 'app.actionsBar.actionsDropdown.takePresenter',
-    description: 'Label for take presenter role option',
+    id: "app.actionsBar.actionsDropdown.takePresenter",
+    description: "Label for take presenter role option",
   },
   startExternalVideoLabel: {
-    id: 'app.actionsBar.actionsDropdown.shareExternalVideo',
-    description: 'Start sharing external video button',
+    id: "app.actionsBar.actionsDropdown.shareExternalVideo",
+    description: "Start sharing external video button",
   },
   stopExternalVideoLabel: {
-    id: 'app.actionsBar.actionsDropdown.stopShareExternalVideo',
-    description: 'Stop sharing external video button',
+    id: "app.actionsBar.actionsDropdown.stopShareExternalVideo",
+    description: "Stop sharing external video button",
   },
   shareCameraAsContent: {
-    id: 'app.actionsBar.actionsDropdown.shareCameraAsContent',
-    description: 'Label for share camera as content',
+    id: "app.actionsBar.actionsDropdown.shareCameraAsContent",
+    description: "Label for share camera as content",
   },
   unshareCameraAsContent: {
-    id: 'app.actionsBar.actionsDropdown.unshareCameraAsContent',
-    description: 'Label for unshare camera as content',
+    id: "app.actionsBar.actionsDropdown.unshareCameraAsContent",
+    description: "Label for unshare camera as content",
   },
 });
 
-const handlePresentationClick = () => Session.setItem('showUploadPresentationView', true);
+const handlePresentationClick = () =>
+  Session.setItem("showUploadPresentationView", true);
 
 class ActionsList extends PureComponent {
   constructor(props) {
     super(props);
-    this.presentationItemId = uniqueId('action-item-');
-    this.pollId = uniqueId('action-item-');
-    this.takePresenterId = uniqueId('action-item-');
-    this.timerId = uniqueId('action-item-');
+    this.fileInputRef = React.createRef();
+    this.presentationItemId = uniqueId("action-item-");
+    this.pollId = uniqueId("action-item-");
+    this.takePresenterId = uniqueId("action-item-");
+    this.timerId = uniqueId("action-item-");
     this.state = {
       isExternalVideoModalOpen: false,
       isLayoutModalOpen: false,
@@ -65,11 +68,57 @@ class ActionsList extends PureComponent {
       propsToPassModal: {},
     };
     this.handleExternalVideoClick = this.handleExternalVideoClick.bind(this);
-    this.setExternalVideoModalIsOpen = this.setExternalVideoModalIsOpen.bind(this);
+    this.setExternalVideoModalIsOpen =
+      this.setExternalVideoModalIsOpen.bind(this);
     this.setLayoutModalIsOpen = this.setLayoutModalIsOpen.bind(this);
-    this.setCameraAsContentModalIsOpen = this.setCameraAsContentModalIsOpen.bind(this);
+    this.setCameraAsContentModalIsOpen =
+      this.setCameraAsContentModalIsOpen.bind(this);
     this.setPropsToPassModal = this.setPropsToPassModal.bind(this);
     this.handleTimerClick = this.handleTimerClick.bind(this);
+    this.handleQuickUpload = this.handleQuickUpload.bind(this);
+  }
+
+  handleQuickUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const { isPresentationEnabled, setPresentation, presentations, onClose } =
+      this.props;
+
+    const id = uniqueId("upload-pres-");
+    const newPres = {
+      file,
+      downloadable: false,
+      isRemovable: true,
+      presentationId: id,
+      name: file.name,
+      current: true,
+      conversion: { done: false, error: false },
+      upload: { done: false, error: false, progress: 0 },
+      exportation: { isRunning: false, error: false },
+      onConversion: () => {},
+      onUpload: () => {},
+      onProgress: () => {},
+      onDone: () => {},
+    };
+
+    PresentationUploaderService.handleSavePresentation(
+      [],
+      false,
+      newPres,
+      presentations,
+      setPresentation,
+      () => {},
+      isPresentationEnabled,
+    );
+
+    if (this.fileInputRef && this.fileInputRef.current) {
+      this.fileInputRef.current.value = "";
+    }
+
+    if (onClose) {
+      onClose();
+    }
   }
 
   handleExternalVideoClick() {
@@ -138,31 +187,21 @@ class ActionsList extends PureComponent {
     const actions = [];
 
     // Presentation items
-    if (amIPresenter && !isPresentationManagementDisabled && isPresentationEnabled) {
-      if (presentations && presentations.length > 1) {
-        actions.push({
-          key: 'separator-presentations',
-          isSeparator: true,
-        });
-      }
-      actions.push({
-        icon: 'upload',
-        dataTest: 'managePresentations',
-        label: formatMessage(presentationLabel),
-        key: this.presentationItemId,
-        onClick: handlePresentationClick,
-      });
-
-      // Add presentation list if multiple presentations
-      if (presentations && presentations.length > 1) {
+    if (
+      amIPresenter &&
+      !isPresentationManagementDisabled &&
+      isPresentationEnabled
+    ) {
+      // Add presentation list if multiple or one presentation exists
+      if (presentations && presentations.length > 0) {
         presentations
           .sort((a, b) => a.name.localeCompare(b.name))
           .forEach((p) => {
             actions.push({
-              icon: 'file',
-              iconRight: p.current ? 'check' : null,
+              icon: "file",
+              iconRight: p.current ? "check" : null,
               label: p.name,
-              description: 'uploaded presentation file',
+              description: "uploaded presentation file",
               key: `uploaded-presentation-${p.presentationId}`,
               onClick: () => {
                 setPresentationFitToWidth(false);
@@ -172,12 +211,48 @@ class ActionsList extends PureComponent {
             });
           });
       }
+
+      if (presentations && presentations.length > 0) {
+        actions.push({
+          key: "separator-presentations",
+          isSeparator: true,
+        });
+      }
+      actions.push({
+        icon: "upload",
+        dataTest: "managePresentations",
+        label: "Quick Upload Document",
+        key: this.presentationItemId,
+        onClick: () => {
+          if (this.fileInputRef && this.fileInputRef.current) {
+            this.fileInputRef.current.click();
+          } else {
+            handlePresentationClick();
+          }
+        },
+      });
+
+      const currentPres = presentations && presentations.find((p) => p.current);
+      if (currentPres) {
+        actions.push({
+          icon: "delete",
+          dataTest: "closePresentation",
+          label: intl.formatMessage({
+            id: "app.actionsBar.actionsDropdown.closeDocument",
+            defaultMessage: "Close Document",
+          }),
+          key: `action-item-close-pres-${currentPres.presentationId}`,
+          onClick: () => {
+            this.props.removePresentation(currentPres.presentationId);
+          },
+        });
+      }
     }
 
     // Take Presenter
     if (!amIPresenter && amIModerator) {
       actions.push({
-        icon: 'presentation',
+        icon: "presentation",
         label: formatMessage(takePresenter),
         key: this.takePresenterId,
         onClick: () => handleTakePresenter(),
@@ -188,37 +263,37 @@ class ActionsList extends PureComponent {
     if (amIPresenter && allowExternalVideo) {
       const { onOpenExternalVideoModal } = this.props;
       actions.push({
-        icon: !isSharingVideo ? 'external-video' : 'external-video_off',
+        icon: !isSharingVideo ? "external-video" : "external-video_off",
         label: !isSharingVideo
           ? formatMessage(startExternalVideoLabel)
           : formatMessage(stopExternalVideoLabel),
-        key: 'external-video',
-        onClick: isSharingVideo 
+        key: "external-video",
+        onClick: isSharingVideo
           ? () => {
-            if (stopExternalVideoShare) stopExternalVideoShare();
-          }
-          : () => {
-            // Nếu có callback từ parent, dùng nó; nếu không dùng local state
-            if (onOpenExternalVideoModal) {
-              onOpenExternalVideoModal();
-            } else {
-              this.handleExternalVideoClick();
+              if (stopExternalVideoShare) stopExternalVideoShare();
             }
-          },
-        dataTest: 'shareExternalVideo',
+          : () => {
+              // Nếu có callback từ parent, dùng nó; nếu không dùng local state
+              if (onOpenExternalVideoModal) {
+                onOpenExternalVideoModal();
+              } else {
+                this.handleExternalVideoClick();
+              }
+            },
+        dataTest: "shareExternalVideo",
       });
     }
 
     // Timer
     if (amIModerator && isTimerEnabled && isTimerFeatureEnabled) {
       actions.push({
-        icon: 'time',
+        icon: "time",
         label: isTimerActive
           ? formatMessage(deactivateTimerStopwatchLabel)
           : formatMessage(activateTimerStopwatchLabel),
         key: this.timerId,
         onClick: () => this.handleTimerClick(),
-        dataTest: 'timerStopWatchFeature',
+        dataTest: "timerStopWatchFeature",
       });
     }
 
@@ -226,26 +301,26 @@ class ActionsList extends PureComponent {
     if (isCameraAsContentEnabled && amIPresenter) {
       const { onOpenCameraAsContentModal } = this.props;
       actions.push({
-        icon: hasCameraAsContent ? 'video_off' : 'video',
+        icon: hasCameraAsContent ? "video_off" : "video",
         label: hasCameraAsContent
           ? formatMessage(unshareCameraAsContent)
           : formatMessage(shareCameraAsContent),
-        key: 'camera as content',
+        key: "camera as content",
         onClick: hasCameraAsContent
           ? () => {
-            // Unshare: dừng camera as content
-            screenshareHasEnded();
-          }
-          : () => {
-            // Share: mở modal để chọn camera
-            // Nếu có callback từ parent, dùng nó; nếu không dùng local state
-            if (onOpenCameraAsContentModal) {
-              onOpenCameraAsContentModal();
-            } else {
-              this.setCameraAsContentModalIsOpen(true);
+              // Unshare: dừng camera as content
+              screenshareHasEnded();
             }
-          },
-        dataTest: 'shareCameraAsContent',
+          : () => {
+              // Share: mở modal để chọn camera
+              // Nếu có callback từ parent, dùng nó; nếu không dùng local state
+              if (onOpenCameraAsContentModal) {
+                onOpenCameraAsContentModal();
+              } else {
+                this.setCameraAsContentModalIsOpen(true);
+              }
+            },
+        dataTest: "shareCameraAsContent",
       });
     }
 
@@ -315,9 +390,7 @@ class ActionsList extends PureComponent {
   }
 
   render() {
-    const {
-      onClose,
-    } = this.props;
+    const { onClose } = this.props;
 
     const availableActions = this.getAvailableActions();
     const {
@@ -328,15 +401,18 @@ class ActionsList extends PureComponent {
     } = this.state;
 
     if (availableActions.length === 0) {
-      return (
-        <Styled.EmptyState>
-          No actions available
-        </Styled.EmptyState>
-      );
+      return <Styled.EmptyState>No actions available</Styled.EmptyState>;
     }
 
     return (
       <>
+        <input
+          type="file"
+          ref={this.fileInputRef}
+          style={{ display: "none" }}
+          onChange={this.handleQuickUpload}
+          accept=".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.rtf,.txt,.odt,.sxw,.wpd,.jpg,.jpeg,.png,.svg"
+        />
         <Styled.ActionsList>
           {availableActions.map((action) => {
             if (action.isSeparator) {
@@ -348,12 +424,18 @@ class ActionsList extends PureComponent {
             }
 
             // Xác định xem action này có mở modal không
-            const isModalAction = action.key === 'external-video' || action.key === 'camera as content';
-            const { onOpenExternalVideoModal, onOpenCameraAsContentModal } = this.props;
+            const isModalAction =
+              action.key === "external-video" ||
+              action.key === "camera as content" ||
+              action.key === this.presentationItemId;
+            const { onOpenExternalVideoModal, onOpenCameraAsContentModal } =
+              this.props;
             // Nếu có callback từ parent, modal được render ở level cao hơn, đóng drawer ngay
-            const useParentModal = (action.key === 'external-video' && onOpenExternalVideoModal) 
-              || (action.key === 'camera as content' && onOpenCameraAsContentModal);
-            
+            const useParentModal =
+              (action.key === "external-video" && onOpenExternalVideoModal) ||
+              (action.key === "camera as content" &&
+                onOpenCameraAsContentModal);
+
             return (
               <Styled.ActionItem
                 key={action.key}
@@ -382,7 +464,9 @@ class ActionsList extends PureComponent {
                 <Styled.ActionContent>
                   <Styled.ActionLabel>{action.label}</Styled.ActionLabel>
                   {action.description && (
-                    <Styled.ActionDescription>{action.description}</Styled.ActionDescription>
+                    <Styled.ActionDescription>
+                      {action.description}
+                    </Styled.ActionDescription>
                   )}
                 </Styled.ActionContent>
               </Styled.ActionItem>
@@ -393,19 +477,19 @@ class ActionsList extends PureComponent {
         {this.renderModal(
           isExternalVideoModalOpen,
           this.setExternalVideoModalIsOpen,
-          'low',
+          "low",
           ExternalVideoModal,
         )}
         {this.renderModal(
           isLayoutModalOpen,
           this.setLayoutModalIsOpen,
-          'low',
+          "low",
           LayoutModalContainer,
         )}
         {this.renderModal(
           isCameraAsContentModalOpen,
           this.setCameraAsContentModalIsOpen,
-          'low',
+          "low",
           () => (
             <VideoPreviewContainer
               cameraAsContent
@@ -414,7 +498,7 @@ class ActionsList extends PureComponent {
                 callbackToClose: () => {
                   this.setPropsToPassModal({});
                 },
-                priority: 'low',
+                priority: "low",
                 setIsOpen: this.setCameraAsContentModalIsOpen,
                 isOpen: isCameraAsContentModalOpen,
               }}

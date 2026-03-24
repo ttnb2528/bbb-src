@@ -775,6 +775,7 @@ class Presentation extends PureComponent {
       restoreOnUpdate,
       removePresentation,
       isDefaultPresentation,
+      currentUser,
     } = this.props;
 
     const {

@@ -188,7 +188,7 @@ class App extends Component {
         if (
           target &&
           target.closest(
-            'input, textarea, button, [role="button"], .floating-chat, [aria-label]',
+            'input, textarea, button, [role="button"], .floating-chat, [aria-label], svg, canvas, .tl-container',
           )
         ) {
           ignoreSwipe = true;

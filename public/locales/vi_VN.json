@@ -211,7 +211,7 @@
     "app.presentationUploder.tableHeading.filename": "Tên file",
     "app.presentationUploder.tableHeading.options": "Tùy chọn",
     "app.presentationUploder.tableHeading.status": "Trạng thái",
-    "app.presentationUploder.uploading": "Đang tải lên {0} {1}",
+    "app.presentationUploder.uploading": "Đang tải lên",
     "app.presentationUploder.uploadStatus": "{completeUploads} trên {totalUploads} quá trình tải lên đã hoàn tất",
     "app.presentationUploder.completed": "{numberOfCompleteUploads} tải lên hoàn tất",
     "app.presentationUploder.clearErrors": "Xóa các lỗi",

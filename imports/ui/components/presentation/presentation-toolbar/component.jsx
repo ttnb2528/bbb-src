@@ -524,6 +524,32 @@ class PresentationToolbar extends PureComponent {
               />
             </TooltipContainer>
           ) : null}
+          {this.props.userIsPresenter && (
+            <Styled.FitToWidthButton
+              role="button"
+              data-test="quickClosePresentationButton"
+              aria-label={intl.formatMessage({
+                id: "app.actionsBar.actionsDropdown.closeDocument",
+                defaultMessage: "Close Document",
+              })}
+              color="light"
+              disabled={!isMeteorConnected}
+              icon="delete"
+              size="md"
+              circle
+              onClick={() =>
+                this.props.removePresentation(this.props.currentPresentationId)
+              }
+              label={intl.formatMessage({
+                id: "app.actionsBar.actionsDropdown.closeDocument",
+                defaultMessage: "Close Document",
+              })}
+              hideLabel
+              style={{
+                marginRight: "8px",
+              }}
+            />
+          )}
           <Styled.FitToWidthButton
             role="button"
             data-test="fitToWidthButton"
@@ -551,32 +577,6 @@ class PresentationToolbar extends PureComponent {
             hideLabel
             $fitToWidth={fitToWidth}
           />
-          {this.props.userIsPresenter && !this.props.isDefaultPresentation && (
-            <Styled.FitToWidthButton
-              role="button"
-              data-test="quickClosePresentationButton"
-              aria-label={intl.formatMessage({
-                id: "app.actionsBar.actionsDropdown.closeDocument",
-                defaultMessage: "Close Document",
-              })}
-              color="light"
-              disabled={!isMeteorConnected}
-              icon="delete"
-              size="md"
-              circle
-              onClick={() =>
-                this.props.removePresentation(this.props.currentPresentationId)
-              }
-              label={intl.formatMessage({
-                id: "app.actionsBar.actionsDropdown.closeDocument",
-                defaultMessage: "Close Document",
-              })}
-              hideLabel
-              style={{
-                marginLeft: "8px",
-              }}
-            />
-          )}
         </Styled.PresentationZoomControls>
       </Styled.PresentationToolbarWrapper>
     );
