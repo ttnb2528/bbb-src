@@ -655,10 +655,10 @@ class Presentation extends PureComponent {
 
     const { presentationToolbarMinWidth } = DEFAULT_VALUES;
 
-    const toolbarWidth =
-      (this.refWhiteboardArea && svgWidth > presentationToolbarMinWidth) ||
-      isMobile ||
-      (layoutType === LAYOUT_TYPE.VIDEO_FOCUS && numCameras > 0)
+    const toolbarWidth = isMobile
+      ? "100%"
+      : (this.refWhiteboardArea && svgWidth > presentationToolbarMinWidth) ||
+          (layoutType === LAYOUT_TYPE.VIDEO_FOCUS && numCameras > 0)
         ? svgWidth
         : presentationToolbarMinWidth;
     return (
@@ -824,9 +824,11 @@ class Presentation extends PureComponent {
         !fullscreenContext
       );
 
-    const containerWidth = isLargePresentation
-      ? svgWidth
-      : presentationToolbarMinWidth;
+    const containerWidth = isMobile
+      ? "100%"
+      : isLargePresentation
+        ? svgWidth
+        : presentationToolbarMinWidth;
 
     const slideContent = currentSlide?.content
       ? `${intl.formatMessage(intlMessages.slideContentStart)}

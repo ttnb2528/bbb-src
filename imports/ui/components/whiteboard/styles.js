@@ -59,6 +59,15 @@ const TldrawV2GlobalStyle = createGlobalStyle`
     outline: none !important;
   }
 
+  .tl-container {
+    overflow: visible !important;
+  }
+
+  .tl-canvas {
+    overflow: hidden !important;
+    clip-path: inset(0);
+  }
+
   .tlui-style-panel__wrapper {
     right: 0px;
     top: -0.35rem;
@@ -242,8 +251,11 @@ const TldrawV2GlobalStyle = createGlobalStyle`
 
         .tlui-layout__bottom {
           grid-row: auto / auto !important;
-          position: relative !important;
-          top: 2px !important;
+          position: absolute !important;
+          bottom: 2px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          width: max-content !important;
         }
 
         .tlui-toolbar__tools.tlui-toolbar__tools__mobile {
@@ -256,7 +268,9 @@ const TldrawV2GlobalStyle = createGlobalStyle`
       `;
     }
 
-    return `.tlui-layout__bottom { top: ${topValue} !important; }${additionalStyles}`;
+    // Keeping original horizontal layout, relying on overflow: visible to prevent clipping
+
+    return additionalStyles;
   }}
   [data-darkreader-scheme="dark"] button[data-testid="mobile.styles"] {
     & > div.tlui-icon {
