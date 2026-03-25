@@ -212,8 +212,22 @@ const MediaOnlyLayout = (props) => {
     if (isMobile && !fullscreenElement) {
       const gap = 60 + (cameraDockInput?.numCameras > 0 ? 100 : 0);
       mediaBounds.width = mediaAreaBounds.width;
-      mediaBounds.height = mediaAreaBounds.height - gap * 2;
-      mediaBounds.top = mediaAreaBounds.top + gap;
+      let targetHeight = mediaAreaBounds.height - gap * 2;
+      let targetTop = mediaAreaBounds.top + gap;
+
+      if (hasExternalVideo) {
+        const videoHeight = (mediaAreaBounds.width * 9) / 16;
+        if (videoHeight < targetHeight) {
+          targetHeight = videoHeight;
+          targetTop =
+            mediaAreaBounds.top +
+            gap +
+            (mediaAreaBounds.height - gap * 2 - videoHeight) / 2;
+        }
+      }
+
+      mediaBounds.height = targetHeight;
+      mediaBounds.top = targetTop;
       mediaBounds.left = !isRTL ? mediaAreaBounds.left : null;
       mediaBounds.right = isRTL ? mediaAreaBounds.right : null;
       mediaBounds.zIndex = 1;

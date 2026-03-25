@@ -1,5 +1,5 @@
-import styled from 'styled-components';
-import QuickPollDropdownContainer from '/imports/ui/components/actions-bar/quick-poll-dropdown/container';
+import styled from "styled-components";
+import QuickPollDropdownContainer from "/imports/ui/components/actions-bar/quick-poll-dropdown/container";
 import {
   colorOffWhite,
   colorBlueLightest,
@@ -8,7 +8,7 @@ import {
   colorWhite,
   colorGrayDark,
   toolbarButtonColorDisabled,
-} from '/imports/ui/stylesheets/styled-components/palette';
+} from "/imports/ui/stylesheets/styled-components/palette";
 import {
   whiteboardToolbarMargin,
   whiteboardToolbarPaddingSm,
@@ -17,21 +17,29 @@ import {
   smPaddingY,
   borderSizeLarge,
   smPaddingX,
-} from '/imports/ui/stylesheets/styled-components/general';
-import Button from '/imports/ui/components/common/button/component';
+} from "/imports/ui/stylesheets/styled-components/general";
+import Button from "/imports/ui/components/common/button/component";
 
 const PresentationToolbarWrapper = styled.div`
   position: absolute;
-  align-self: center;
+  left: 0;
+  right: 0;
   z-index: 1;
   background-color: ${colorOffWhite};
   border-top: 1px solid ${colorBlueLightest};
-  min-width: fit-content;
   width: 100%;
+  max-width: 100%;
   bottom: 0px;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  padding: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0px;
+  box-sizing: border-box;
+  overflow-x: auto;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   select {
     &:-moz-focusring {
@@ -81,18 +89,27 @@ const QuickPollButton = styled(QuickPollDropdownContainer)`
 const QuickPollButtonWrapper = styled.div`
   display: flex;
   align-items: center;
+  flex: 1;
 `;
 
 const PresentationSlideControls = styled.div`
   justify-content: center;
   padding-left: ${whiteboardToolbarPadding};
   padding-right: ${whiteboardToolbarPadding};
+  @media (max-width: 500px) {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
   display: flex;
   flex-direction: row;
   align-items: center;
+  flex: 0 0 auto;
 
   & > button {
     padding: ${whiteboardToolbarPadding};
+    @media (max-width: 500px) {
+      padding: 4px;
+    }
   }
 `;
 
@@ -115,7 +132,7 @@ const NextSlideButton = styled(Button)`
   i {
     font-size: 1rem;
     padding-left: 60%;
-    
+
     [dir="rtl"] & {
       -webkit-transform: scale(-1, 1);
       -moz-transform: scale(-1, 1);
@@ -145,7 +162,7 @@ const SkipSlideSelect = styled.select`
     outline: transparent;
     outline-style: dotted;
     outline-width: ${borderSize};
-    background-color: #DCE4EC;
+    background-color: #dce4ec;
     border-radius: 4px;
   }
 
@@ -163,12 +180,23 @@ const PresentationZoomControls = styled.div`
     padding: 0 0 0 ${whiteboardToolbarPadding};
   }
 
+  @media (max-width: 500px) {
+    padding: 0 2px 0 0;
+    [dir="rtl"] & {
+      padding: 0 0 0 2px;
+    }
+  }
+
   display: flex;
   flex-direction: row;
   align-items: center;
+  flex: 1;
 
   button {
     padding: ${whiteboardToolbarPadding};
+    @media (max-width: 500px) {
+      padding: 4px;
+    }
   }
 
   i {
@@ -194,6 +222,11 @@ const FitToWidthButton = styled(Button)`
   margin-left: ${whiteboardToolbarMargin};
   margin-right: ${whiteboardToolbarMargin};
 
+  @media (max-width: 400px) {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
   position: relative;
   color: ${toolbarButtonColor};
   background-color: ${colorOffWhite};
@@ -201,7 +234,9 @@ const FitToWidthButton = styled(Button)`
   box-shadow: none !important;
   border: 0;
 
-  ${({ $fitToWidth }) => $fitToWidth && `
+  ${({ $fitToWidth }) =>
+    $fitToWidth &&
+    `
     & > span {
       border: solid ${borderSizeLarge} ${colorGrayDark};
     }

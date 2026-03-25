@@ -2449,6 +2449,7 @@ const Whiteboard = React.memo((props) => {
           isToolbarVisible,
           presentationHeight,
           cursorType,
+          isPhone,
         }}
       />
     </div>

@@ -198,6 +198,8 @@ const TldrawV2GlobalStyle = createGlobalStyle`
     grid-row: auto / auto !important;
     position: absolute !important;
     right: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
   }
 
   .tlui-kbd > span {
@@ -217,7 +219,7 @@ const TldrawV2GlobalStyle = createGlobalStyle`
     display: flex;
   }
 
-  ${({ presentationHeight }) => {
+  ${({ presentationHeight, isPhone }) => {
     const minRange = { height: 345, top: 14 };
     const maxRange = { height: 1200, top: 384 };
 
@@ -234,7 +236,7 @@ const TldrawV2GlobalStyle = createGlobalStyle`
     const topValue = interpolateTop(presentationHeight);
 
     let additionalStyles = "";
-    if (presentationHeight <= 405) {
+    if (presentationHeight <= 405 || isPhone) {
       additionalStyles += `
         .tlui-layout__mobile .tlui-button__tool > .tlui-icon {
           height: 10px !important;
@@ -253,6 +255,7 @@ const TldrawV2GlobalStyle = createGlobalStyle`
           grid-row: auto / auto !important;
           position: absolute !important;
           bottom: 2px !important;
+          top: auto !important;
           left: 50% !important;
           transform: translateX(-50%) !important;
           width: max-content !important;

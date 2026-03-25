@@ -755,11 +755,20 @@ const CustomLayout = (props) => {
         externalVideoInput.hasExternalVideo &&
         !fullscreenElement
       ) {
-        mediaBounds.height = mediaAreaTop + mediaAreaHeight;
+        let targetHeight = mediaAreaTop + mediaAreaHeight;
+        let targetTop = 0;
+        const videoHeight = (mediaBounds.width * 9) / 16;
+        if (videoHeight < targetHeight) {
+          targetHeight = videoHeight;
+          // Center it vertically in the available space
+          targetTop = mediaAreaTop + (mediaAreaHeight - videoHeight) / 2;
+        }
+        mediaBounds.height = targetHeight;
+        mediaBounds.top = targetTop;
       } else {
         mediaBounds.height = windowHeight();
+        mediaBounds.top = 0;
       }
-      mediaBounds.top = 0;
       mediaBounds.left = !isRTL ? 0 : null;
       mediaBounds.right = isRTL ? 0 : null;
       mediaBounds.zIndex = 99;
