@@ -1,9 +1,9 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 import {
   colorGrayLightest,
   colorOffWhite,
   colorText,
-} from '/imports/ui/stylesheets/styled-components/palette';
+} from "/imports/ui/stylesheets/styled-components/palette";
 
 interface ChatMessageProps {
   systemMsg?: boolean;
@@ -17,6 +17,11 @@ export const ChatMessage = styled.div<ChatMessageProps>`
   color: #1f2937;
   word-break: break-word;
   font-size: 0.9375rem;
+
+  @media (max-width: 500px) {
+    font-size: 0.875rem;
+  }
+
   line-height: 1.5;
   letter-spacing: -0.01em;
 
@@ -40,10 +45,10 @@ export const ChatMessage = styled.div<ChatMessageProps>`
     border-radius: 4px;
     padding: 0.125rem 0.375rem;
     font-size: 0.875rem;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
     color: #e11d48;
   }
-  
+
   & h1 {
     font-size: 1.5em;
     margin: 0.5rem 0;
@@ -71,7 +76,7 @@ export const ChatMessage = styled.div<ChatMessageProps>`
     margin: 0.5rem 0;
     font-weight: 600;
   }
-  
+
   & a {
     color: #2563eb;
     text-decoration: none;

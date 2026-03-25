@@ -1,4 +1,4 @@
-import styled, { css } from 'styled-components';
+import styled, { css } from "styled-components";
 
 import {
   userIndicatorsOffset,
@@ -8,11 +8,11 @@ import {
   $3xlPadding,
   xlPadding,
   mdPadding,
-} from '/imports/ui/stylesheets/styled-components/general';
+} from "/imports/ui/stylesheets/styled-components/general";
 import {
   fontSizeBase,
   fontSizeSmaller,
-} from '/imports/ui/stylesheets/styled-components/typography';
+} from "/imports/ui/stylesheets/styled-components/typography";
 
 import {
   colorWhite,
@@ -24,10 +24,10 @@ import {
   colorGrayDark,
   emphasizedMessageBackgroundColor,
   highlightedMessageBorderColor,
-} from '/imports/ui/stylesheets/styled-components/palette';
+} from "/imports/ui/stylesheets/styled-components/palette";
 
-import Header from '/imports/ui/components/common/control-header/component';
-import { ChatTime as ChatTimeBase } from './message-header/styles';
+import Header from "/imports/ui/components/common/control-header/component";
+import { ChatTime as ChatTimeBase } from "./message-header/styles";
 
 interface ChatWrapperProps {
   sameSender: boolean;
@@ -69,24 +69,30 @@ export const ChatWrapper = styled.div<ChatWrapperProps>`
   font-size: ${fontSizeBase};
   position: relative;
 
-  [dir='rtl'] & {
+  [dir="rtl"] & {
     direction: rtl;
   }
 
-  ${({ isPresentationUpload }) => isPresentationUpload && `
+  ${({ isPresentationUpload }) =>
+    isPresentationUpload &&
+    `
       border-left: 2px solid #6366F1; /* Indigo */
       margin-top: 1rem;
       padding: 0.5rem;
       word-break: break-word;
       background-color: #F3F6F9;
     `}
-  ${({ isSystemSender }) => isSystemSender && `
+  ${({ isSystemSender }) =>
+    isSystemSender &&
+    `
     background-color: #fef9f1;
     border-left: 2px solid #f5c67f;
     border-radius: 0px 3px 3px 0px;
     padding: 8px 2px;
   `}
-  ${({ isCustomPluginMessage }) => isCustomPluginMessage && `
+  ${({ isCustomPluginMessage }) =>
+    isCustomPluginMessage &&
+    `
     margin: 0;
     padding: 0;
   `}
@@ -105,11 +111,20 @@ export const ChatContent = styled.div<ChatContentProps>`
   background-color: #f0f2f5;
   margin-left: 0;
 
-  ${({ $isSystemSender }) => !$isSystemSender && `
+  @media (max-width: 500px) {
+    padding: 0.375rem 0.625rem;
+    border-radius: 8px;
+  }
+
+  ${({ $isSystemSender }) =>
+    !$isSystemSender &&
+    `
     background-color: #f0f2f5;
   `}
-  
-  ${({ $isSystemSender }) => $isSystemSender && `
+
+  ${({ $isSystemSender }) =>
+    $isSystemSender &&
+    `
     background-color: transparent;
     padding: 0.375rem 0.75rem;
   `}
@@ -118,17 +133,18 @@ export const ChatContent = styled.div<ChatContentProps>`
     background-color: rgba(0, 0, 0, 0.03);
   }
 
-  ${({ $highlight }) => $highlight && `
+  ${({ $highlight }) =>
+    $highlight &&
+    `
     &:hover {
       background-color: rgba(0, 123, 255, 0.08);
       box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
     }
   `}
 
-  ${({
-    $editing, $reactionPopoverIsOpen, $keyboardFocused,
-  }) => ($reactionPopoverIsOpen || $editing || $keyboardFocused)
-    && `
+  ${({ $editing, $reactionPopoverIsOpen, $keyboardFocused }) =>
+    ($reactionPopoverIsOpen || $editing || $keyboardFocused) &&
+    `
     background-color: ${colorBlueLightest} !important;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
   `}
@@ -137,7 +153,9 @@ export const ChatContent = styled.div<ChatContentProps>`
     background-color: ${colorBlueLightest} !important;
   }
 
-  ${({ $emphasizedMessage }) => $emphasizedMessage && `
+  ${({ $emphasizedMessage }) =>
+    $emphasizedMessage &&
+    `
     background-color: ${emphasizedMessageBackgroundColor};
     box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
   `}
@@ -164,11 +182,15 @@ export const ChatContentFooter = styled.div`
 `;
 
 export const ChatHeader = styled(Header)`
-  ${({ isRTL }) => isRTL && `
+  ${({ isRTL }) =>
+    isRTL &&
+    `
     padding-left: ${smPaddingX};
   `}
 
-  ${({ isRTL }) => !isRTL && `
+  ${({ isRTL }) =>
+    !isRTL &&
+    `
     padding-right: ${smPaddingX};
   `}
 `;
@@ -186,16 +208,30 @@ export const ChatAvatar = styled.div<ChatAvatarProps>`
   font-weight: 600;
   border: 2.5px solid ${colorWhite};
   user-select: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  transition:
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s ease;
   overflow: hidden;
+
+  @media (max-width: 500px) {
+    flex: 0 0 2rem;
+    height: 2rem;
+    width: 2rem;
+    font-size: 0.8rem;
+    border-width: 1.5px;
+  }
   ${({ color }) => css`
     background-color: ${color};
     background: linear-gradient(135deg, ${color} 0%, ${color}dd 100%);
   `}
-  
+
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.08);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      0 0 0 1px rgba(0, 0, 0, 0.08);
   }
 
   &:after,
@@ -204,7 +240,7 @@ export const ChatAvatar = styled.div<ChatAvatarProps>`
     position: absolute;
     width: 0;
     height: 0;
-    padding-top: .5rem;
+    padding-top: 0.5rem;
     padding-right: 0;
     padding-left: 0;
     padding-bottom: 0;
@@ -218,24 +254,27 @@ export const ChatAvatar = styled.div<ChatAvatarProps>`
     background-color: ${colorSuccess};
     color: ${colorWhite};
     opacity: 0;
-    font-family: 'bbb-icons';
-    font-size: .65rem;
+    font-family: "bbb-icons";
+    font-size: 0.65rem;
     line-height: 0;
     text-align: center;
     vertical-align: middle;
-    letter-spacing: -.65rem;
+    letter-spacing: -0.65rem;
     z-index: 1;
 
     [dir="rtl"] & {
       left: ${userIndicatorsOffset};
       right: auto;
-      padding-right: .65rem;
+      padding-right: 0.65rem;
       padding-left: 0;
     }
   }
-  
+
   // ================ image ================
-  ${({ avatar, emoji, color }) => avatar?.length !== 0 && !emoji && css`
+  ${({ avatar, emoji, color }) =>
+    avatar?.length !== 0 &&
+    !emoji &&
+    css`
       background-image: url(${avatar});
       background-repeat: no-repeat;
       background-size: cover;
@@ -257,6 +296,11 @@ export const ChatAvatar = styled.div<ChatAvatarProps>`
     height: 2.75rem;
     width: 2.75rem;
     border-radius: 50%;
+
+    @media (max-width: 500px) {
+      height: 2rem;
+      width: 2rem;
+    }
   }
 `;
 
@@ -282,9 +326,14 @@ export const MessageItemWrapper = styled.div`
   flex-direction: row;
   padding: 0;
   gap: 0.625rem;
+
+  @media (max-width: 500px) {
+    gap: 0.375rem;
+  }
+
   align-items: flex-start;
   position: relative;
-  
+
   &:hover {
     .chat-message-avatar {
       transform: scale(1.05);

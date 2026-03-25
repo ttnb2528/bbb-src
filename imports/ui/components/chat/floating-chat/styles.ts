@@ -68,23 +68,19 @@ export const ChatHeader = styled.div<{ $isExpanded?: boolean }>`
   align-items: center;
   justify-content: center;
   background-color: ${(props: any) =>
-    props.$isExpanded ? "transparent" : "rgba(0, 0, 0, 0.5)"};
-  backdrop-filter: ${(props: any) =>
-    props.$isExpanded ? "none" : "blur(10px)"};
-  -webkit-backdrop-filter: ${(props: any) =>
-    props.$isExpanded ? "none" : "blur(10px)"};
-  padding: ${(props: any) => (props.$isExpanded ? "4px" : "12px")};
+    props.$isExpanded ? "rgba(0, 0, 0, 0.4)" : "rgba(0, 0, 0, 0.6)"};
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-sizing: border-box;
+  padding: ${(props: any) => (props.$isExpanded ? "0px" : "12px")};
   border-radius: 50%;
   margin-bottom: ${(props: any) => (props.$isExpanded ? "4px" : "0")};
   color: ${(props: any) =>
-    props.$isExpanded ? "rgba(255,255,255,0.7)" : "white"};
+    props.$isExpanded ? "rgba(255,255,255,0.9)" : "white"};
   cursor: pointer;
   pointer-events: auto;
-  border: 1px solid
-    ${(props: any) =>
-      props.$isExpanded ? "transparent" : "rgba(255, 255, 255, 0.15)"};
-  box-shadow: ${(props: any) =>
-    props.$isExpanded ? "none" : "0 4px 12px rgba(0, 0, 0, 0.25)"};
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   width: ${(props: any) => (props.$isExpanded ? "32px" : "48px")};
   height: ${(props: any) => (props.$isExpanded ? "32px" : "48px")};
@@ -101,6 +97,12 @@ export const ChatHeader = styled.div<{ $isExpanded?: boolean }>`
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     transform: ${(props: any) =>
       props.$isExpanded ? "rotate(180deg)" : "rotate(0deg)"};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    margin: 0;
+    right: 1px;
   }
 `;
 

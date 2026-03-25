@@ -1,11 +1,14 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 
 import {
   colorHeading,
   colorGrayLight,
   colorGrayDark,
-} from '/imports/ui/stylesheets/styled-components/palette';
-import { fontSizeSmaller, lineHeightComputed } from '/imports/ui/stylesheets/styled-components/typography';
+} from "/imports/ui/stylesheets/styled-components/palette";
+import {
+  fontSizeSmaller,
+  lineHeightComputed,
+} from "/imports/ui/stylesheets/styled-components/typography";
 
 interface ChatUserNameProps {
   currentlyInMeeting: boolean;
@@ -24,6 +27,11 @@ export const ChatUserName = styled.div<ChatUserNameProps>`
   font-weight: 600;
   position: relative;
   font-size: 0.9375rem;
+
+  @media (max-width: 500px) {
+    font-size: 0.875rem;
+  }
+
   line-height: 1.4;
 
   margin-right: 0.5rem;
@@ -35,11 +43,15 @@ export const ChatUserName = styled.div<ChatUserNameProps>`
   text-overflow: ellipsis;
   flex-shrink: 1;
 
-  ${({ currentlyInMeeting }) => currentlyInMeeting && `
+  ${({ currentlyInMeeting }) =>
+    currentlyInMeeting &&
+    `
     color: #1a1a1a;
   `}
 
-  ${({ currentlyInMeeting }) => !currentlyInMeeting && `
+  ${({ currentlyInMeeting }) =>
+    !currentlyInMeeting &&
+    `
     color: #6b7280;
     text-transform: capitalize;
     font-style: italic;
@@ -78,7 +90,7 @@ export const ChatTime = styled.time`
   font-weight: 400;
   margin-left: 0.375rem;
   opacity: 0.7;
-  [dir='rtl'] & {
+  [dir="rtl"] & {
     margin: 0 0.375rem 0 0;
   }
 
@@ -102,11 +114,11 @@ export const EditLabel = styled.span`
   align-items: center;
   gap: calc(${lineHeightComputed} / 4);
 
-  [dir='ltr'] & {
+  [dir="ltr"] & {
     margin-right: calc(${lineHeightComputed} / 2);
   }
 
-  [dir='rtl'] & {
+  [dir="rtl"] & {
     margin-left: calc(${lineHeightComputed} / 2);
   }
 `;
