@@ -112,12 +112,13 @@ const FloatingChat = ({
       .catch(console.error);
   };
 
-  const [isExpanded, setIsExpanded] = useState(true);
+  type ChatMode = "expanded" | "preview" | "collapsed";
+  const [chatState, setChatState] = useState<ChatMode>("expanded");
   const [unreadCount, setUnreadCount] = useState(0);
   const prevMessagesLength = useRef(messages.length);
 
   useEffect(() => {
-    if (isExpanded) {
+    if (chatState === "expanded") {
       setUnreadCount(0);
     } else {
       if (messages.length > prevMessagesLength.current) {
@@ -129,8 +130,26 @@ const FloatingChat = ({
       }
     }
     prevMessagesLength.current = messages.length;
-  }, [messages.length, isExpanded]);
+  }, [messages.length, chatState]);
 
+  const toggleChatState = () => {
+    if (chatState === "expanded") setChatState("preview");
+    else if (chatState === "preview") setChatState("collapsed");
+    else setChatState("expanded");
+  };
+
+  const getHeaderIcon = () => {
+    if (chatState === "expanded") return "up_arrow";
+    if (chatState === "preview") return "minus"; // Chuyển sang thu gọn hẳn
+    return "group_chat";
+  };
+
+  const getHeaderTitle = () => {
+    if (chatState === "expanded")
+      return intl.formatMessage(intlMessages.collapseChat);
+    if (chatState === "preview") return "Collapse chat fully";
+    return intl.formatMessage(intlMessages.expandChat);
+  };
   return (
     <Styled.FloatingChatContainer
       $hasSharedContent={hasSharedContent}
@@ -139,26 +158,25 @@ const FloatingChat = ({
       $isUIHidden={isUIHidden}
     >
       <Styled.ChatHeader
-        onClick={() => setIsExpanded(!isExpanded)}
-        $isExpanded={isExpanded}
-        title={
-          isExpanded
-            ? intl.formatMessage(intlMessages.collapseChat)
-            : intl.formatMessage(intlMessages.expandChat)
-        }
+        onClick={toggleChatState}
+        $chatState={chatState}
+        title={getHeaderTitle()}
       >
-        <Icon iconName={isExpanded ? "up_arrow" : "group_chat"} />
-        {!isExpanded && unreadCount > 0 && (
+        <Icon iconName={getHeaderIcon()} />
+        {chatState === "collapsed" && unreadCount > 0 && (
           <Styled.UnreadBadge>
             {unreadCount > 99 ? "99+" : unreadCount}
           </Styled.UnreadBadge>
         )}
       </Styled.ChatHeader>
 
-      <Styled.ChatContentWrapper $isExpanded={isExpanded}>
-        <Styled.MessageScrollArea ref={scrollRef}>
+      <Styled.ChatContentWrapper $chatState={chatState}>
+        <Styled.MessageScrollArea ref={scrollRef} $chatState={chatState}>
           {messages.map((msg) => (
-            <Styled.FloatingMessageItem key={msg.messageId}>
+            <Styled.FloatingMessageItem
+              key={msg.messageId}
+              $chatState={chatState}
+            >
               <Styled.SenderName color={msg.user?.color}>
                 {msg.senderName || "User"}
               </Styled.SenderName>
@@ -178,7 +196,7 @@ const FloatingChat = ({
           ))}
         </Styled.MessageScrollArea>
 
-        <Styled.ChatInputForm onSubmit={handleSend}>
+        <Styled.ChatInputForm onSubmit={handleSend} $chatState={chatState}>
           {showEmojiPicker && (
             <Styled.EmojiPickerWrapper>
               <EmojiPickerComponent onEmojiSelect={handleEmojiSelect} />

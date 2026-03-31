@@ -62,41 +62,50 @@ export const FloatingChatContainer = styled.div<{
     `}
 `;
 
-export const ChatHeader = styled.div<{ $isExpanded?: boolean }>`
+export const ChatHeader = styled.div<{ $chatState?: string }>`
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: ${(props: any) =>
-    props.$isExpanded ? "rgba(0, 0, 0, 0.4)" : "rgba(0, 0, 0, 0.6)"};
+    props.$chatState !== "collapsed"
+      ? "rgba(0, 0, 0, 0.4)"
+      : "rgba(0, 0, 0, 0.6)"};
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-sizing: border-box;
-  padding: ${(props: any) => (props.$isExpanded ? "0px" : "12px")};
+  padding: ${(props: any) =>
+    props.$chatState !== "collapsed" ? "0px" : "12px"};
   border-radius: 50%;
-  margin-bottom: ${(props: any) => (props.$isExpanded ? "4px" : "0")};
+  margin-bottom: ${(props: any) =>
+    props.$chatState !== "collapsed" ? "4px" : "0"};
   color: ${(props: any) =>
-    props.$isExpanded ? "rgba(255,255,255,0.9)" : "white"};
+    props.$chatState !== "collapsed" ? "rgba(255,255,255,0.9)" : "white"};
   cursor: pointer;
   pointer-events: auto;
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  width: ${(props: any) => (props.$isExpanded ? "32px" : "48px")};
-  height: ${(props: any) => (props.$isExpanded ? "32px" : "48px")};
+  width: ${(props: any) =>
+    props.$chatState !== "collapsed" ? "32px" : "48px"};
+  height: ${(props: any) =>
+    props.$chatState !== "collapsed" ? "32px" : "48px"};
   align-self: flex-end;
 
   &:hover {
     background-color: ${(props: any) =>
-      props.$isExpanded ? "rgba(255,255,255,0.1)" : "rgba(255, 255, 255, 0.2)"};
+      props.$chatState !== "collapsed"
+        ? "rgba(255,255,255,0.1)"
+        : "rgba(255, 255, 255, 0.2)"};
     color: white;
   }
 
   i {
-    font-size: ${(props: any) => (props.$isExpanded ? "1.1rem" : "1.3rem")};
+    font-size: ${(props: any) =>
+      props.$chatState !== "collapsed" ? "1.1rem" : "1.3rem"};
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     transform: ${(props: any) =>
-      props.$isExpanded ? "rotate(180deg)" : "rotate(0deg)"};
+      props.$chatState === "expanded" ? "rotate(180deg)" : "rotate(0deg)"};
     display: flex;
     align-items: center;
     justify-content: center;
@@ -106,37 +115,46 @@ export const ChatHeader = styled.div<{ $isExpanded?: boolean }>`
   }
 `;
 
-export const ChatContentWrapper = styled.div<{ $isExpanded?: boolean }>`
+export const ChatContentWrapper = styled.div<{ $chatState?: string }>`
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  opacity: ${(props: any) => (props.$isExpanded ? 1 : 0)};
+  opacity: ${(props: any) => (props.$chatState !== "collapsed" ? 1 : 0)};
   transform: ${(props: any) =>
-    props.$isExpanded
+    props.$chatState !== "collapsed"
       ? "translateY(0) scale(1)"
       : "translateY(10px) scale(0.95)"};
   transform-origin: bottom right;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  pointer-events: ${(props: any) => (props.$isExpanded ? "auto" : "none")};
-  max-height: ${(props: any) => (props.$isExpanded ? "60vh" : "0px")};
-  overflow: ${(props: any) => (props.$isExpanded ? "visible" : "hidden")};
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  pointer-events: ${(props: any) =>
+    props.$chatState !== "collapsed" ? "auto" : "none"};
+  max-height: ${(props: any) => {
+    if (props.$chatState === "expanded") return "60vh";
+    if (props.$chatState === "preview") return "120px";
+    return "0px";
+  }};
+  overflow: ${(props: any) =>
+    props.$chatState !== "collapsed" ? "visible" : "hidden"};
 `;
 
-export const MessageScrollArea = styled.div`
+export const MessageScrollArea = styled.div<{ $chatState?: string }>`
   max-height: 40vh;
-  overflow-y: auto;
+  overflow-y: ${(props: any) =>
+    props.$chatState === "preview" ? "hidden" : "auto"};
   display: flex;
   flex-direction: column;
-  padding-bottom: 0.5rem;
-  /* Tạo hiệu ứng mờ dần (fade out) ở sát phía trên */
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent,
-    black 15%,
-    black 100%
-  );
-  mask-image: linear-gradient(to bottom, transparent, black 15%, black 100%);
+  padding-bottom: ${(props: any) =>
+    props.$chatState === "preview" ? "0" : "0.5rem"};
+  /* Tạo hiệu ứng mờ dần (fade out) ở sát phía trên khi expanded */
+  -webkit-mask-image: ${(props: any) =>
+    props.$chatState === "preview"
+      ? "none"
+      : "linear-gradient(to bottom, transparent, black 15%, black 100%)"};
+  mask-image: ${(props: any) =>
+    props.$chatState === "preview"
+      ? "none"
+      : "linear-gradient(to bottom, transparent, black 15%, black 100%)"};
 
   /* Ẩn scrollbar để giao diện thoáng gọn chuẩn TikTok */
   scrollbar-width: none;
@@ -145,7 +163,7 @@ export const MessageScrollArea = styled.div`
   }
 `;
 
-export const FloatingMessageItem = styled.div`
+export const FloatingMessageItem = styled.div<{ $chatState?: string }>`
   margin-top: 0.5rem;
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
@@ -157,8 +175,28 @@ export const FloatingMessageItem = styled.div`
   will-change: transform, opacity;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0; /* Quan trọng: Ngăn không cho Flexbox tự động bóp nhỏ các khung tin nhắn lại khi bị tràn chiều cao (overflow) */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   pointer-events: none; /* Scroll và Click có thể thọc xuyên qua phần tin nhắn */
+
+  /* Cài đặt gốc cho CSS transition accordion */
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  max-height: 500px;
+  overflow: hidden;
+
+  /* Khi chế độ không phải expanded (tức là preview hoặc collapsed), thu gọn TẤT CẢ các tin nhắn cũ */
+  ${(props: any) =>
+    props.$chatState !== "expanded" &&
+    css`
+      &:not(:last-child) {
+        opacity: 0;
+        max-height: 0;
+        margin-top: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border: none;
+      }
+    `}
 `;
 
 export const SenderName = styled.span`
@@ -177,7 +215,7 @@ export const MessageContent = styled.div`
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 `;
 
-export const ChatInputForm = styled.form`
+export const ChatInputForm = styled.form<{ $chatState?: string }>`
   display: flex;
   position: relative;
   margin-top: 0.5rem;
@@ -188,6 +226,22 @@ export const ChatInputForm = styled.form`
   align-items: center;
   border: 1px solid rgba(255, 255, 255, 0.2);
   pointer-events: auto; /* Cho phép tương tác vào input */
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  max-height: 120px;
+  overflow: hidden;
+
+  /* Rút siêu mượt input form khi ở chế độ collapsed */
+  ${(props: any) =>
+    props.$chatState === "collapsed" &&
+    css`
+      opacity: 0;
+      max-height: 0;
+      margin-top: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border: none;
+      pointer-events: none;
+    `}
 `;
 
 export const ChatInput = styled.textarea`
