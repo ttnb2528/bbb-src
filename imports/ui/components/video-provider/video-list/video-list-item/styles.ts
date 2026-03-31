@@ -258,9 +258,9 @@ const BottomBar = styled.div<{
   position: absolute;
   display: flex;
   width: 100%;
-  z-index: 1;
-  bottom: 0;
-  padding: 1px 7px;
+  z-index: 10;
+  bottom: 8px;
+  padding: 0 10px;
   justify-content: space-between;
 
   /* Điều chỉnh cho presenter - Ẩn hoàn toàn thẻ tên và mic cho gọn */

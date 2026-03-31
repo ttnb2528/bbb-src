@@ -160,7 +160,7 @@ const CustomLayoutContainer = styled.div<{
   /* Chừa không gian phía trên cho dải cam nhỏ + tạo khoảng cách với cam lớn */
   /* Khi share content thì không cần padding vì MainStage đã bị ẩn */
   padding: ${({ $hasSharedContent }) =>
-    $hasSharedContent ? "0" : "clamp(120px, 10vh, 150px) 0 0 0"};
+    $hasSharedContent ? "0" : "clamp(120px, 10vh, 150px) 15px 25px 15px"};
   overflow: hidden; /* Prevent overflow */
   min-width: 0; /* Allow flex shrinking */
   min-height: 0; /* Allow flex shrinking */
@@ -364,6 +364,7 @@ const MainStage = styled.div`
   border-radius: 12px;
   overflow: hidden; /* Ẩn phần video bị crop để không thấy viền đen */
   position: relative;
+  pointer-events: auto; /* QUAN TRỌNG: Cho phép tương tác click vào Camera lớn */
   min-width: 0; /* Allow flex shrinking */
   min-height: 0; /* Allow flex shrinking */
   box-sizing: border-box;
