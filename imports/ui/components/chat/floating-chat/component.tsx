@@ -232,7 +232,7 @@ const FloatingChat = ({
                 <Styled.SenderName color={msg.user?.color}>
                   {msg.senderName || "User"}
                 </Styled.SenderName>
-                <Styled.MessageContent>
+                <Styled.MessageContent $chatState={chatState}>
                   <ReactMarkdown
                     linkTarget="_blank"
                     allowedElements={
@@ -274,6 +274,10 @@ const FloatingChat = ({
               intlMessages.publicChatPlaceholder,
               { chatName: intl.formatMessage(intlMessages.publicChatName) },
             )}
+            maxLength={
+              window.meetingClientSettings?.public?.chat?.maxMessageLength ??
+              1024
+            }
           />
           <Styled.SendButton
             type="submit"

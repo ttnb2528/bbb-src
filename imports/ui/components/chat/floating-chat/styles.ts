@@ -139,13 +139,19 @@ export const ChatContentWrapper = styled.div<{ $chatState?: string }>`
 `;
 
 export const MessageScrollArea = styled.div<{ $chatState?: string }>`
-  max-height: 40vh;
-  overflow-y: ${(props: any) =>
-    props.$chatState === "preview" ? "hidden" : "auto"};
+  flex: 1; /* Sử dụng flex 1 */
+  min-height: 0; /* QUAN TRỌNG: Ngăn flex child phình ra theo nội dung, bắt buộc nó cuộn */
+  overflow-y: auto;
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
+  /* Không dùng justify-content: flex-end ở đây vì gây lỗi không scroll ngươcj lên được */
   padding-bottom: ${(props: any) =>
     props.$chatState === "preview" ? "0" : "0.5rem"};
+
+  & > div {
+    margin-top: auto; /* Đẩy xuống dưới nếu ít tin nhắn, ngược lại tự tràn và Scrollable */
+  }
   /* Tạo hiệu ứng mờ dần (fade out) ở sát phía trên khi expanded */
   -webkit-mask-image: ${(props: any) =>
     props.$chatState === "preview"
@@ -170,9 +176,13 @@ export const FloatingMessageItem = styled.div<{ $chatState?: string }>`
   margin-top: 0.5rem;
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.55
+  ); /* Tăng opacity xíu thay vì dùng blur để tránh lỗi render webkit */
+  /* Loại bỏ backdrop-filter vì khi text quá dài (mask-image), Webkit iOS/Chrome sẽ drop filter làm biến mất background */
   color: white;
   animation: ${fadeIn} 0.3s ease-out forwards;
   will-change: transform, opacity;
@@ -185,7 +195,7 @@ export const FloatingMessageItem = styled.div<{ $chatState?: string }>`
 
   /* Cài đặt gốc cho CSS transition accordion */
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  max-height: 500px;
+  max-height: 5000px; /* Tăng max-height để tin nhắn cực dài không bị giới hạn bóng nền */
   overflow: hidden;
 
   /* Khi chế độ không phải expanded (tức là preview hoặc collapsed), thu gọn TẤT CẢ các tin nhắn cũ */
@@ -238,9 +248,33 @@ export const MessageContent = styled.div`
     font-size: 0.95rem;
     line-height: 1.35;
   }
+
+  /* Cắt chuỗi nếu ở chế độ preview */
+  ${(props: any) =>
+    props.$chatState === "preview" &&
+    css`
+      display: -webkit-box;
+      -webkit-line-clamp: 2; /* Chỉ hiển thị tối đa 2 dòng */
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      /* Cắt chìm cả p tag bên trong Markdown sinh ra */
+      p {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin: 0;
+        word-break: break-all; /* Bắt buộc bẻ chuỗi liên tục để tránh lỗi kẹt clamp */
+        max-height: 2.7em; /* Ép giới hạn tuyệt đối chiều cao 2 dòng */
+      }
+    `}
 `;
 
 export const ChatInputForm = styled.form<{ $chatState?: string }>`
+  flex-shrink: 0; /* Ngăn Input bị nghiền nát khi dòng chat quá dài */
   display: flex;
   position: relative;
   margin-top: 0.5rem;
