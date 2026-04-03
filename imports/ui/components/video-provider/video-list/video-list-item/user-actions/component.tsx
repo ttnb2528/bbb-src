@@ -19,6 +19,8 @@ import { VideoItem } from "/imports/ui/components/video-provider/types";
 import { ACTIONS } from "/imports/ui/components/layout/enums";
 import { useIsVideoPinEnabledForCurrentUser } from "/imports/ui/components/video-provider/hooks";
 import { VIDEO_TYPES } from "/imports/ui/components/video-provider/enums";
+import { CHAT_CREATE_WITH_USER } from "/imports/ui/components/user-list/user-list-content/user-participants/user-list-participants/user-actions/mutations";
+import { useIsPrivateChatEnabled } from "/imports/ui/services/features";
 
 const intlMessages = defineMessages({
   focusLabel: {
@@ -81,6 +83,10 @@ const intlMessages = defineMessages({
   disableWarning: {
     id: "app.videoDock.webcamDisableWarning",
   },
+  startPrivateChat: {
+    id: "app.userList.menu.chat.label",
+    defaultMessage: "Start private chat",
+  },
 });
 
 interface UserActionProps {
@@ -138,9 +144,11 @@ const UserActions: React.FC<UserActionProps> = (props) => {
   const enableVideoMenu =
     window.meetingClientSettings.public.kurento.enableVideoMenu || false;
   const { isFirefox } = browserInfo;
+  const isPrivateChatEnabled = useIsPrivateChatEnabled();
   const isIphone = !!navigator.userAgent.match(/iPhone/i);
 
   const [setCameraPinned] = useMutation(SET_CAMERA_PINNED);
+  const [chatCreateWithUser] = useMutation(CHAT_CREATE_WITH_USER);
   const pinEnabledForCurrentUser =
     useIsVideoPinEnabledForCurrentUser(amIModerator);
 
@@ -190,6 +198,29 @@ const UserActions: React.FC<UserActionProps> = (props) => {
         );
       }
     };
+
+    if (isPrivateChatEnabled && userId !== Auth.userID) {
+      menuItems.push({
+        key: `${cameraId}-private-chat`,
+        label: intl.formatMessage(intlMessages.startPrivateChat),
+        description: intl.formatMessage(intlMessages.startPrivateChat),
+        icon: "chat",
+        onClick: () => {
+          chatCreateWithUser({
+            variables: {
+              userId,
+            },
+          }).finally(() => {
+            window.dispatchEvent(
+              new CustomEvent("openPrivateChatModal", {
+                detail: { userId },
+              }),
+            );
+          });
+        },
+        dataTest: "startPrivateChatBtn",
+      });
+    }
 
     if (isVideoSqueezed) {
       menuItems.push({

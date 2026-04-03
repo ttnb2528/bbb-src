@@ -197,6 +197,11 @@ export const FloatingMessageItem = styled.div<{ $chatState?: string }>`
         border: none;
       }
     `}
+
+  @media ${smallOnly} {
+    padding: 1rem 0.75rem 0.2rem;
+    margin-top: 0.4rem;
+  }
 `;
 
 export const SenderName = styled.span`
@@ -206,13 +211,29 @@ export const SenderName = styled.span`
   /* Bỏ màu mặc định của BigBlueButton vì nó toàn màu tối (tím, xanh đậm) gây khó đọc trên nền đen mờ */
   color: rgba(255, 255, 255, 0.6);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+
+  @media ${smallOnly} {
+    font-size: 0.85rem;
+    margin-bottom: 2px;
+  }
 `;
 
 export const MessageContent = styled.div`
   font-size: 1.1rem;
   line-height: 1.3;
   word-break: break-word;
+  overflow-wrap: break-word;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+
+  p {
+    margin: 0;
+    padding: 0;
+  }
+
+  @media ${smallOnly} {
+    font-size: 0.95rem;
+    line-height: 1.35;
+  }
 `;
 
 export const ChatInputForm = styled.form<{ $chatState?: string }>`

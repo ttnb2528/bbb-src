@@ -233,13 +233,22 @@ const PrivateChatModal: React.FC<PrivateChatModalProps> = ({
         hasDragged.current = true;
       }
 
-      // Tính toán vị trí mới không giới hạn
-      const newLeft = dragState.current.originLeft + dx;
-      const newTop = dragState.current.originTop + dy;
+      // Tính toán vị trí mới và giới hạn trong màn hình
+      let newLeft = dragState.current.originLeft + dx;
+      let newTop = dragState.current.originTop + dy;
+
+      const elementWidth = isMinimized ? 48 : 360;
+      const elementHeight = isMinimized ? 48 : 460;
+
+      const maxLeft = window.innerWidth - elementWidth;
+      const maxTop = window.innerHeight - elementHeight;
+
+      const boundedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+      const boundedTop = Math.max(0, Math.min(newTop, maxTop));
 
       const newPosition = {
-        left: newLeft,
-        top: Math.max(0, newTop), // Chỉ giới hạn Y không âm
+        left: boundedLeft,
+        top: boundedTop,
       };
       setPosition(newPosition);
       onPositionUpdate?.(newPosition);

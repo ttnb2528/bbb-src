@@ -56,17 +56,41 @@ const FloatingChat = ({
 }: Props) => {
   const intl = useIntl();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const innerScrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [inputValue, setInputValue] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [sendMessage] = useMutation(CHAT_SEND_MESSAGE);
 
-  // Auto-scroll xuống dưới cùng khi có tin nhắn mới
+  // Auto-scroll xuống dưới cùng bằng ResizeObserver: bắt dính mọi biến đổi Height
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (chatState === "expanded") {
+      const el = innerScrollRef.current;
+      if (!el) return;
+
+      const observer = new ResizeObserver(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight + 1000;
+        }
+      });
+      // Observe the inner wrapper to catch the accordion max-height transitions
+      observer.observe(el);
+
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight + 1000;
+      }
+
+      return () => observer.disconnect();
     }
-  }, [messages]);
+  }, [chatState]);
+
+  // Cuộn thẳng xuống khi có tin nhắn mới nếu đang Expand
+  useEffect(() => {
+    if (chatState === "expanded" && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight + 1000;
+    }
+  }, [messages.length]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     e.target.style.height = "auto";
@@ -97,7 +121,8 @@ const FloatingChat = ({
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isSending) return;
+    setIsSending(true);
     sendMessage({
       variables: {
         chatId: chatId,
@@ -109,7 +134,8 @@ const FloatingChat = ({
         resetTextareaHeight();
         setShowEmojiPicker(false);
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setIsSending(false));
   };
 
   type ChatMode = "expanded" | "preview" | "collapsed";
@@ -132,7 +158,11 @@ const FloatingChat = ({
     prevMessagesLength.current = messages.length;
   }, [messages.length, chatState]);
 
-  const toggleChatState = () => {
+  const toggleChatState = (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (chatState === "expanded") setChatState("preview");
     else if (chatState === "preview") setChatState("collapsed");
     else setChatState("expanded");
@@ -159,6 +189,11 @@ const FloatingChat = ({
     >
       <Styled.ChatHeader
         onClick={toggleChatState}
+        onTouchEnd={(e) => {
+          // Prevent ghost clicks on iOS from interacting with elements behind this button
+          e.preventDefault();
+          toggleChatState(e);
+        }}
         $chatState={chatState}
         title={getHeaderTitle()}
       >
@@ -172,28 +207,30 @@ const FloatingChat = ({
 
       <Styled.ChatContentWrapper $chatState={chatState}>
         <Styled.MessageScrollArea ref={scrollRef} $chatState={chatState}>
-          {messages.map((msg) => (
-            <Styled.FloatingMessageItem
-              key={msg.messageId}
-              $chatState={chatState}
-            >
-              <Styled.SenderName color={msg.user?.color}>
-                {msg.senderName || "User"}
-              </Styled.SenderName>
-              <Styled.MessageContent>
-                <ReactMarkdown
-                  linkTarget="_blank"
-                  allowedElements={
-                    window.meetingClientSettings?.public?.chat
-                      ?.allowedElements || []
-                  }
-                  unwrapDisallowed
-                >
-                  {messageToMarkdown(msg.message || "")}
-                </ReactMarkdown>
-              </Styled.MessageContent>
-            </Styled.FloatingMessageItem>
-          ))}
+          <div ref={innerScrollRef}>
+            {messages.map((msg) => (
+              <Styled.FloatingMessageItem
+                key={msg.messageId}
+                $chatState={chatState}
+              >
+                <Styled.SenderName color={msg.user?.color}>
+                  {msg.senderName || "User"}
+                </Styled.SenderName>
+                <Styled.MessageContent>
+                  <ReactMarkdown
+                    linkTarget="_blank"
+                    allowedElements={
+                      window.meetingClientSettings?.public?.chat
+                        ?.allowedElements || []
+                    }
+                    unwrapDisallowed
+                  >
+                    {messageToMarkdown(msg.message || "")}
+                  </ReactMarkdown>
+                </Styled.MessageContent>
+              </Styled.FloatingMessageItem>
+            ))}
+          </div>
         </Styled.MessageScrollArea>
 
         <Styled.ChatInputForm onSubmit={handleSend} $chatState={chatState}>
@@ -219,7 +256,10 @@ const FloatingChat = ({
               { chatName: intl.formatMessage(intlMessages.publicChatName) },
             )}
           />
-          <Styled.SendButton type="submit" disabled={!inputValue.trim()}>
+          <Styled.SendButton
+            type="submit"
+            disabled={!inputValue.trim() || isSending}
+          >
             <Icon iconName="send" />
           </Styled.SendButton>
         </Styled.ChatInputForm>

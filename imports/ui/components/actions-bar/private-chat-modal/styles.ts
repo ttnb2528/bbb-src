@@ -50,6 +50,7 @@ const Modal = styled.div<{ $minimized: boolean }>`
     display: flex;
     align-items: center;
     justify-content: center;
+    touch-action: none;
   `}
 
   /* Mobile responsive */
@@ -81,6 +82,7 @@ const Header = styled.div`
   flex-shrink: 0; /* Prevent header from shrinking */
   cursor: move;
   user-select: none;
+  touch-action: none;
 `;
 
 const TabBar = styled.div`
