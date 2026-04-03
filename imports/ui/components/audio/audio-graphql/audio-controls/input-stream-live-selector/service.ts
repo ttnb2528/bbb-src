@@ -1,19 +1,19 @@
-import { ReactiveVar, makeVar, useReactiveVar } from '@apollo/client';
-import getFromUserSettings from '/imports/ui/services/users-settings';
-import Storage from '/imports/ui/services/storage/session';
-import logger from '/imports/startup/client/logger';
-import AudioManager from '/imports/ui/services/audio-manager';
-import VideoService from '/imports/ui/components/video-provider/service';
-import Auth from '/imports/ui/services/auth';
-import { debounce } from '/imports/utils/debounce';
-import { throttle } from '/imports/utils/throttle';
+import { ReactiveVar, makeVar, useReactiveVar } from "@apollo/client";
+import getFromUserSettings from "/imports/ui/services/users-settings";
+import Storage from "/imports/ui/services/storage/session";
+import logger from "/imports/startup/client/logger";
+import AudioManager from "/imports/ui/services/audio-manager";
+import VideoService from "/imports/ui/components/video-provider/service";
+import Auth from "/imports/ui/services/auth";
+import { debounce } from "/imports/utils/debounce";
+import { throttle } from "/imports/utils/throttle";
 import {
   setUserSelectedMicrophone,
   setUserSelectedListenOnly,
-} from '/imports/ui/components/audio/service';
-import meetingStaticData from '/imports/ui/core/singletons/meetingStaticData';
+} from "/imports/ui/components/audio/service";
+import meetingStaticData from "/imports/ui/core/singletons/meetingStaticData";
 
-const MUTED_KEY = 'muted';
+const MUTED_KEY = "muted";
 const DEVICE_LABEL_MAX_LENGTH = 40;
 const TOGGLE_MUTE_THROTTLE_TIME = 300;
 const TOGGLE_MUTE_DEBOUNCE_TIME = 500;
@@ -25,20 +25,20 @@ export const handleLeaveAudio = (meetingIsBreakout: boolean) => {
   }
 
   const skipOnFistJoin = getFromUserSettings(
-    'bbb_skip_check_audio_on_first_join',
+    "bbb_skip_check_audio_on_first_join",
     window.meetingClientSettings.public.app.skipCheckOnJoin,
   );
-  if (skipOnFistJoin && !Storage.getItem('getEchoTest')) {
-    Storage.setItem('getEchoTest', true);
+  if (skipOnFistJoin && !Storage.getItem("getEchoTest")) {
+    Storage.setItem("getEchoTest", true);
   }
 
   AudioManager.forceExitAudio();
   logger.info(
     {
-      logCode: 'audiocontrols_leave_audio',
-      extraInfo: { logType: 'user_action' },
+      logCode: "audiocontrols_leave_audio",
+      extraInfo: { logType: "user_action" },
     },
-    'audio connection closed by user',
+    "audio connection closed by user",
   );
 };
 
@@ -55,24 +55,27 @@ export const getLastToggleTime = () => lastToggleTime;
 const toggleMute = (
   muted: boolean,
   toggleVoice: (userId: string, muted: boolean) => void,
-  actionType = 'user_action',
+  actionType = "user_action",
 ) => {
   const meetingStaticStore = meetingStaticData.getMeetingData();
   const toggle = (storageKey: string) => {
     // Record toggle time to prevent GraphQL sync from overriding
     lastToggleTime = Date.now();
-    
+
     if (muted) {
-      if (AudioManager.inputDeviceId === 'listen-only') {
+      if (AudioManager.inputDeviceId === "listen-only") {
         // User is in duplex audio, passive-sendrecv, but has no input device set
         // Unmuting should not be allowed at all
         return;
       }
 
-      logger.info({
-        logCode: 'audiomanager_unmute_audio',
-        extraInfo: { logType: actionType },
-      }, 'microphone unmuted');
+      logger.info(
+        {
+          logCode: "audiomanager_unmute_audio",
+          extraInfo: { logType: actionType },
+        },
+        "microphone unmuted",
+      );
       Storage.setItem(storageKey, false);
       // Update AudioManager.isMuted immediately for UI to react
       // GraphQL subscription will confirm this later
@@ -80,22 +83,31 @@ const toggleMute = (
       // Actually enable the audio track immediately (don't wait for GraphQL)
       if (AudioManager.bridge) {
         AudioManager.unmute();
-        logger.info({
-          logCode: 'audiomanager_unmute_called',
-          extraInfo: { logType: actionType },
-        }, 'AudioManager.unmute() called');
+        logger.info(
+          {
+            logCode: "audiomanager_unmute_called",
+            extraInfo: { logType: actionType },
+          },
+          "AudioManager.unmute() called",
+        );
       } else {
-        logger.warn({
-          logCode: 'audiomanager_unmute_no_bridge',
-          extraInfo: { logType: actionType },
-        }, 'AudioManager.unmute() called but bridge is not available');
+        logger.warn(
+          {
+            logCode: "audiomanager_unmute_no_bridge",
+            extraInfo: { logType: actionType },
+          },
+          "AudioManager.unmute() called but bridge is not available",
+        );
       }
       toggleVoice(Auth.userID as string, false);
     } else {
-      logger.info({
-        logCode: 'audiomanager_mute_audio',
-        extraInfo: { logType: actionType },
-      }, 'microphone muted');
+      logger.info(
+        {
+          logCode: "audiomanager_mute_audio",
+          extraInfo: { logType: actionType },
+        },
+        "microphone muted",
+      );
       Storage.setItem(storageKey, true);
       // Update AudioManager.isMuted immediately for UI to react
       // GraphQL subscription will confirm this later
@@ -103,40 +115,50 @@ const toggleMute = (
       // Actually disable the audio track immediately (don't wait for GraphQL)
       if (AudioManager.bridge) {
         AudioManager.mute();
-        logger.info({
-          logCode: 'audiomanager_mute_called',
-          extraInfo: { logType: actionType },
-        }, 'AudioManager.mute() called');
+        logger.info(
+          {
+            logCode: "audiomanager_mute_called",
+            extraInfo: { logType: actionType },
+          },
+          "AudioManager.mute() called",
+        );
       } else {
-        logger.warn({
-          logCode: 'audiomanager_mute_no_bridge',
-          extraInfo: { logType: actionType },
-        }, 'AudioManager.mute() called but bridge is not available');
+        logger.warn(
+          {
+            logCode: "audiomanager_mute_no_bridge",
+            extraInfo: { logType: actionType },
+          },
+          "AudioManager.mute() called but bridge is not available",
+        );
       }
       toggleVoice(Auth.userID as string, true);
     }
   };
 
-  const parentId = meetingStaticStore?.breakoutPolicies.parentId || '';
+  const parentId = meetingStaticStore?.breakoutPolicies.parentId || "";
   const isBreakout = meetingStaticStore?.isBreakout || false;
 
-  const meetingId = isBreakout && parentId
-    ? parentId
-    : Auth.meetingID;
+  const meetingId = isBreakout && parentId ? parentId : Auth.meetingID;
   const storageKey = `${MUTED_KEY}_${meetingId}`;
 
   toggle(storageKey);
-  if (AudioManager.inputDeviceId !== 'listen-only') {
+  if (AudioManager.inputDeviceId !== "listen-only") {
     muteLoadingState(true);
     // Cứu cánh cho nút quay xoay mãi không dừng nếu server rớt kết nối
     setTimeout(() => muteLoadingState(false), 3000);
   }
 };
 
-const toggleMuteMicrophoneThrottled = throttle(toggleMute, TOGGLE_MUTE_THROTTLE_TIME);
+const toggleMuteMicrophoneThrottled = throttle(
+  toggleMute,
+  TOGGLE_MUTE_THROTTLE_TIME,
+);
 
-const toggleMuteMicrophoneDebounced = debounce(toggleMuteMicrophoneThrottled, TOGGLE_MUTE_DEBOUNCE_TIME,
-  { leading: true, trailing: false });
+const toggleMuteMicrophoneDebounced = debounce(
+  toggleMuteMicrophoneThrottled,
+  TOGGLE_MUTE_DEBOUNCE_TIME,
+  { leading: true, trailing: false },
+);
 
 export const toggleMuteMicrophone = (
   muted: boolean,
@@ -150,14 +172,18 @@ export const toggleMuteMicrophoneSystem = (
   muted: boolean,
   toggleVoice: (userId: string, muted: boolean) => void,
 ) => {
-  return toggleMute(muted, toggleVoice, 'system_action');
+  return toggleMute(muted, toggleVoice, "system_action");
 };
 
-export const startPushToTalk = (toggleVoice: (userId: string, muted: boolean) => void) => {
+export const startPushToTalk = (
+  toggleVoice: (userId: string, muted: boolean) => void,
+) => {
   toggleMute(true, toggleVoice);
 };
 
-export const stopPushToTalk = (toggleVoice: (userId: string, muted: boolean) => void) => {
+export const stopPushToTalk = (
+  toggleVoice: (userId: string, muted: boolean) => void,
+) => {
   toggleMute(false, toggleVoice);
 };
 
@@ -172,10 +198,13 @@ export const notify = (message: string, error: boolean, icon?: string) => {
   AudioManager.notify(message, error, icon);
 };
 
-export const liveChangeInputDevice = (inputDeviceId: string) => AudioManager.liveChangeInputDevice(inputDeviceId);
+export const liveChangeInputDevice = (inputDeviceId: string) =>
+  AudioManager.liveChangeInputDevice(inputDeviceId);
 
-export const liveChangeOutputDevice = (inputDeviceId: string, isLive: boolean) => AudioManager
-  .changeOutputDevice(inputDeviceId, isLive);
+export const liveChangeOutputDevice = (
+  inputDeviceId: string,
+  isLive: boolean,
+) => AudioManager.changeOutputDevice(inputDeviceId, isLive);
 
 export const getSpeakerLevel = () => {
   const MEDIA_TAG = window.meetingClientSettings.public.media.mediaTag;
@@ -198,25 +227,26 @@ export const muteAway = (
   away: boolean,
   voiceToggle: (userId: string, muted: boolean) => void,
 ) => {
-  const prevAwayMuted = Storage.getItem('prevAwayMuted') || false;
-  const prevSpeakerLevelValue = Storage.getItem('prevSpeakerLevel') || 1;
+  const prevAwayMuted = Storage.getItem("prevAwayMuted") || false;
+  const prevSpeakerLevelValue = Storage.getItem("prevSpeakerLevel") || 1;
 
   // mute/unmute microphone
   if (muted === away && muted === Boolean(prevAwayMuted)) {
     toggleMuteMicrophoneThrottled(muted, voiceToggle);
-    Storage.setItem('prevAwayMuted', !muted);
+    Storage.setItem("prevAwayMuted", !muted);
   } else if (!away && !muted && Boolean(prevAwayMuted)) {
     toggleMuteMicrophoneThrottled(muted, voiceToggle);
   }
 
   // mute/unmute speaker
-  const MUTE_SPEAKER = window.meetingClientSettings.public.media.muteAudioOutputWhenAway;
+  const MUTE_SPEAKER =
+    window.meetingClientSettings.public.media.muteAudioOutputWhenAway;
 
   if (MUTE_SPEAKER) {
     if (away) {
       setSpeakerLevel(Number(prevSpeakerLevelValue));
     } else {
-      Storage.setItem('prevSpeakerLevel', getSpeakerLevel());
+      Storage.setItem("prevSpeakerLevel", getSpeakerLevel());
       setSpeakerLevel(0);
     }
   }

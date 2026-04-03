@@ -693,7 +693,7 @@ class AudioManager {
         callOptions.inputStream = this.inputStream;
       }
 
-      // [ANTI-LEAK] Ngay sau khi có inputStream, nếu options bảo mute thì ngắt thẳng từ hardware level 
+      // [ANTI-LEAK] Ngay sau khi có inputStream, nếu options bảo mute thì ngắt thẳng từ hardware level
       // ĐIỀU NÀY CỰC KỲ QUAN TRỌNG giúp tránh lộ tiếng 0.3s khi Auto-Join.
       if (callOptions?.muted && callOptions?.inputStream) {
         callOptions.inputStream.getAudioTracks().forEach((track) => {
