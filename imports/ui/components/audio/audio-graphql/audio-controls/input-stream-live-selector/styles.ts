@@ -116,26 +116,35 @@ export const AudioDropdown = styled(ButtonEmoji)`
   /* Gắn mũi tên trực tiếp vào góc phải dưới của mic button */
   @media ${smallOnly} {
     position: absolute !important;
-    bottom: 0px !important;
+    bottom: 3px !important;
     right: 0px !important;
-    transform: translate(30%, 30%) !important;
-    min-width: 18px !important;
-    min-height: 18px !important;
-    width: 18px !important;
-    height: 18px !important;
+    transform: translate(25%, 25%) !important;
+    min-width: 22px !important;
+    min-height: 22px !important;
+    width: 22px !important;
+    height: 22px !important;
     border-radius: 50% !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
-    z-index: 10 !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4) !important;
+    z-index: 100 !important;
     padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    background-color: white !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
   }
 
   span {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    @media ${smallOnly} {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
     i {
       /* Desktop */
       width: 10px !important;
@@ -144,9 +153,10 @@ export const AudioDropdown = styled(ButtonEmoji)`
       /* Mobile */
       @media ${smallOnly} {
         width: auto !important;
-        font-size: 0.65rem !important;
+        font-size: 0.75rem !important;
         position: static !important;
         transform: translateY(1px) !important;
+        color: #333 !important;
       }
     }
   }

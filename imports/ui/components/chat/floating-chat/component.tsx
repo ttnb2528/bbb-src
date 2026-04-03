@@ -205,7 +205,23 @@ const FloatingChat = ({
         )}
       </Styled.ChatHeader>
 
-      <Styled.ChatContentWrapper $chatState={chatState}>
+      <Styled.ChatContentWrapper
+        $chatState={chatState}
+        onClick={(e) => {
+          if (chatState === "preview") {
+            e.preventDefault();
+            e.stopPropagation();
+            setChatState("expanded");
+          }
+        }}
+        onTouchEnd={(e) => {
+          if (chatState === "preview") {
+            e.preventDefault();
+            e.stopPropagation();
+            setChatState("expanded");
+          }
+        }}
+      >
         <Styled.MessageScrollArea ref={scrollRef} $chatState={chatState}>
           <div ref={innerScrollRef}>
             {messages.map((msg) => (
@@ -249,6 +265,9 @@ const FloatingChat = ({
             ref={textareaRef}
             value={inputValue}
             onChange={handleInput}
+            onFocus={() => {
+              if (chatState === "preview") setChatState("expanded");
+            }}
             onKeyDown={handleKeyDown}
             rows={1}
             placeholder={intl.formatMessage(

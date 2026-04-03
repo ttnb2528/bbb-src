@@ -161,6 +161,9 @@ export const MessageScrollArea = styled.div<{ $chatState?: string }>`
   &::-webkit-scrollbar {
     display: none;
   }
+
+  cursor: ${(props: any) =>
+    props.$chatState === "preview" ? "pointer" : "default"};
 `;
 
 export const FloatingMessageItem = styled.div<{ $chatState?: string }>`
@@ -177,7 +180,8 @@ export const FloatingMessageItem = styled.div<{ $chatState?: string }>`
   flex-direction: column;
   flex-shrink: 0; /* Quan trọng: Ngăn không cho Flexbox tự động bóp nhỏ các khung tin nhắn lại khi bị tràn chiều cao (overflow) */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  pointer-events: none; /* Scroll và Click có thể thọc xuyên qua phần tin nhắn */
+  pointer-events: ${(props: any) =>
+    props.$chatState === "preview" ? "auto" : "none"};
 
   /* Cài đặt gốc cho CSS transition accordion */
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
