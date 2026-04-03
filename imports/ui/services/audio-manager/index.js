@@ -604,17 +604,7 @@ class AudioManager {
           bypassGUM: this.shouldBypassGUM(),
           muted,
         };
-        return this.joinAudio(callOptions, this.callStateCallback).then(() => {
-          // Sau khi join xong, đảm bảo track được disable nếu muted
-          if (muted && this.isConnected) {
-            // Delay một chút để đảm bảo track đã được add vào peer connection
-            setTimeout(() => {
-              if (this.isMuted) {
-                this.setSenderTrackEnabled(false);
-              }
-            }, 300);
-          }
-        });
+        return this.joinAudio(callOptions, this.callStateCallback);
       });
   }
 
@@ -701,6 +691,14 @@ class AudioManager {
 
         // eslint-disable-next-line no-param-reassign
         callOptions.inputStream = this.inputStream;
+      }
+
+      // [ANTI-LEAK] Ngay sau khi có inputStream, nếu options bảo mute thì ngắt thẳng từ hardware level 
+      // ĐIỀU NÀY CỰC KỲ QUAN TRỌNG giúp tránh lộ tiếng 0.3s khi Auto-Join.
+      if (callOptions?.muted && callOptions?.inputStream) {
+        callOptions.inputStream.getAudioTracks().forEach((track) => {
+          track.enabled = false;
+        });
       }
 
       // Start tracking audio join time here to avoid counting time spent on
@@ -925,15 +923,7 @@ class AudioManager {
     // accordingly by calling this method again when the user is undeafened.
     if (deafened) return;
 
-    // Đảm bảo track được disable nếu isMuted = true sau khi join xong
-    if (this.isMuted && !this.isListenOnly && this.bridge) {
-      // Delay một chút để đảm bảo track đã được add vào peer connection
-      setTimeout(() => {
-        if (this.isMuted) {
-          this.setSenderTrackEnabled(false);
-        }
-      }, 200);
-    }
+    // Track disable is already safely managed before WebRTC pipeline.
 
     try {
       if (!this.isListenOnly) {

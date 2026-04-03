@@ -440,6 +440,15 @@ const InputStreamLiveSelectorContainer: React.FC<InputStreamLiveSelectorContaine
       if (isMutedFromAudioManager && !mutedFromGraphQL && isConnected && timeSinceLastToggle > TOGGLE_SYNC_DELAY && !wasAutoJoin) {
         AudioManager.isMuted = false;
       }
+      
+      // Nếu UI báo Đang bật, nhưng GraphQL nói đã TẮT (server từ chối, mạng lỗi hoặc admin mute)
+      // Ép UI tắt để không thành Ghost Mic
+      if (!isMutedFromAudioManager && mutedFromGraphQL && isConnected && timeSinceLastToggle > TOGGLE_SYNC_DELAY && !wasAutoJoin) {
+        AudioManager.isMuted = true;
+        if (AudioManager.bridge) {
+          AudioManager.mute();
+        }
+      }
     }
   }, [isMutedFromAudioManager, mutedFromGraphQL, isConnected, isMutedVar]);
 

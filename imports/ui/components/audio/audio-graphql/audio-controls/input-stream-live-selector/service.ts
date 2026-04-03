@@ -128,6 +128,8 @@ const toggleMute = (
   toggle(storageKey);
   if (AudioManager.inputDeviceId !== 'listen-only') {
     muteLoadingState(true);
+    // Cứu cánh cho nút quay xoay mãi không dừng nếu server rớt kết nối
+    setTimeout(() => muteLoadingState(false), 3000);
   }
 };
 
