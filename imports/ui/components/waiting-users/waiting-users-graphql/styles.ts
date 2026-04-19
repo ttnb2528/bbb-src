@@ -232,7 +232,6 @@ const Panel = styled.div<PanelProps>`
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
   }
 
-
   /* Fix white background on header ghost buttons (back/label button) */
   header button,
   header a {
@@ -330,6 +329,13 @@ const ScrollableArea = styled(ScrollboxVertical)`
   padding-right: 0.4rem;
   flex: 1;
   display: block;
+  /* Kill the white gradient inherited from ScrollboxVertical base */
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  background-repeat: no-repeat !important;
+  background-size: auto !important;
+  background-attachment: scroll !important;
 `;
 
 const ModeratorActions = styled.div`
