@@ -120,18 +120,18 @@ const ButtonContainer = styled.div`
 // @ts-ignore - Button is JS
 const WaitingUsersButton = styled(Button)`
   font-weight: 600;
-  color: #4CAF50;
+  color: #4caf50;
 
   &:focus,
   &:hover {
     background-color: rgba(76, 175, 80, 0.1) !important;
-    color: #4CAF50;
+    color: #4caf50;
   }
 `;
 // @ts-ignore - Button is JS
 const WaitingUsersButtonMsg = styled(Button)`
   font-weight: 600;
-  color: #2196F3;
+  color: #2196f3;
 
   &:after {
     font-family: "bbb-icons";
@@ -141,18 +141,18 @@ const WaitingUsersButtonMsg = styled(Button)`
   &:focus,
   &:hover {
     background-color: rgba(33, 150, 243, 0.1) !important;
-    color: #2196F3;
+    color: #2196f3;
   }
 `;
 // @ts-ignore - Button is JS
 const WaitingUsersButtonDeny = styled(Button)`
   font-weight: 600;
-  color: #F44336;
+  color: #f44336;
 
   &:focus,
   &:hover {
     background-color: rgba(244, 67, 54, 0.1) !important;
-    color: #F44336;
+    color: #f44336;
   }
 `;
 
@@ -233,6 +233,22 @@ const LobbyMessage = styled.div`
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 0.5rem;
 
+  textarea {
+    background-color: rgba(255, 255, 255, 0.07) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: none !important;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    &:focus {
+      border-color: rgba(255, 255, 255, 0.4) !important;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+    }
+  }
+
   & > p {
     background-color: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
@@ -247,6 +263,23 @@ const LobbyMessage = styled.div`
 const PrivateLobbyMessage = styled.div`
   display: none;
   margin-bottom: 1rem;
+
+  textarea {
+    background-color: rgba(255, 255, 255, 0.07) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: none !important;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+
+    &:focus {
+      border-color: rgba(255, 255, 255, 0.4) !important;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+    }
+  }
+
   & > p {
     background-color: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
@@ -268,11 +301,19 @@ const RememberContainer = styled.div`
     padding: 0;
     margin: 0;
     margin-left: 0.7rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
 
     [dir="rtl"] & {
       margin: 0;
       margin-right: 0.7rem;
     }
+  }
+  & > input[type="checkbox"] {
+    accent-color: #4caf50;
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
   }
 `;
 

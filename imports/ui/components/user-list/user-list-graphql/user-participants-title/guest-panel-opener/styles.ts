@@ -142,8 +142,8 @@ const ListItem = styled.div`
   padding-left: ${lgPaddingY};
   text-decoration: none;
   width: 100%;
-  color: ${colorGrayDark};
-  background-color: ${colorOffWhite};
+  color: white;
+  background-color: transparent;
 
   [dir="rtl"] & {
     padding-right: ${lgPaddingY};
@@ -163,9 +163,9 @@ const ListItem = styled.div`
   }
 
   > span {
-    font-weight: 400;
+    font-weight: 600;
     font-size: ${fontSizeSmall};
-    color: ${colorGrayDark};
+    color: white;
     position: relative;
     flex-grow: 1;
     line-height: 2;
