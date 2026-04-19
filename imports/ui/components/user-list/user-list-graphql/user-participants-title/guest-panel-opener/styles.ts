@@ -1,4 +1,4 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 
 import {
   smPaddingX,
@@ -6,7 +6,7 @@ import {
   borderSize,
   mdPaddingY,
   mdPaddingX,
-} from '/imports/ui/stylesheets/styled-components/general';
+} from "/imports/ui/stylesheets/styled-components/general";
 import {
   colorPrimary,
   userListBg,
@@ -18,9 +18,9 @@ import {
   colorGrayDark,
   colorOffWhite,
   colorGrayLight,
-} from '/imports/ui/stylesheets/styled-components/palette';
-import { ScrollboxVertical } from '/imports/ui/stylesheets/styled-components/scrollable';
-import { fontSizeSmall } from '/imports/ui/stylesheets/styled-components/typography';
+} from "/imports/ui/stylesheets/styled-components/palette";
+import { ScrollboxVertical } from "/imports/ui/stylesheets/styled-components/scrollable";
+import { fontSizeSmall } from "/imports/ui/stylesheets/styled-components/typography";
 
 const Messages = styled.div`
   flex-grow: 0;
@@ -48,14 +48,24 @@ const SmallTitle = styled.h2`
 `;
 
 const ScrollableList = styled(ScrollboxVertical)`
-  background: linear-gradient(${userListBg} 30%, rgba(255,255,255,0)),
-    linear-gradient(rgba(255,255,255,0), ${userListBg} 70%) 0 100%,
+  background:
+    linear-gradient(${userListBg} 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(rgba(255, 255, 255, 0), ${userListBg} 70%) 0 100%,
     /* Shadows */
-    radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.2), rgba(0,0,0,0)),
-    radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.2), rgba(0,0,0,0)) 0 100%;
+    radial-gradient(
+        farthest-side at 50% 0,
+        rgba(0, 0, 0, 0.2),
+        rgba(0, 0, 0, 0)
+      ),
+    radial-gradient(
+        farthest-side at 50% 100%,
+        rgba(0, 0, 0, 0.2),
+        rgba(0, 0, 0, 0)
+      )
+      0 100%;
 
   outline: none;
-  
+
   &:hover {
     /* Visible in Windows high-contrast themes */
     outline: transparent;
@@ -116,7 +126,9 @@ const ListItem = styled.div`
     outline-width: ${borderSize};
     outline-style: solid;
     background-color: ${listItemBgHover};
-    box-shadow: inset 0 0 0 ${borderSize} ${itemFocusBorder}, inset 1px 0 0 1px ${itemFocusBorder};
+    box-shadow:
+      inset 0 0 0 ${borderSize} ${itemFocusBorder},
+      inset 1px 0 0 1px ${itemFocusBorder};
   }
 
   align-items: center;
@@ -133,7 +145,7 @@ const ListItem = styled.div`
   color: ${colorGrayDark};
   background-color: ${colorOffWhite};
 
-  [dir="rtl"]  & {
+  [dir="rtl"] & {
     padding-right: ${lgPaddingY};
     padding-left: 0;
   }
@@ -144,7 +156,7 @@ const ListItem = styled.div`
     color: ${colorGrayLight};
     flex: 0 0 2.2rem;
     margin-right: ${smPaddingX};
-    [dir="rtl"]  & {
+    [dir="rtl"] & {
       margin-right: 0;
       margin-left: ${smPaddingX};
     }
@@ -177,7 +189,9 @@ const ListItem = styled.div`
 
   &:active {
     background-color: ${listItemBgHover};
-    box-shadow: inset 0 0 0 ${borderSize} ${itemFocusBorder}, inset 1px 0 0 1px ${itemFocusBorder};
+    box-shadow:
+      inset 0 0 0 ${borderSize} ${itemFocusBorder},
+      inset 1px 0 0 1px ${itemFocusBorder};
   }
 `;
 
@@ -197,13 +211,16 @@ const UnreadMessagesText = styled.div`
   flex-flow: column;
   margin: 0;
   justify-content: center;
+  align-items: center;
   color: ${colorWhite};
-  line-height: calc(1rem + 1px);
-  padding: 0 0.5rem;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
   text-align: center;
-  border-radius: 0.5rem/50%;
+  border-radius: 12px;
   font-size: 0.8rem;
+  font-weight: bold;
   background-color: ${unreadMessagesBg};
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 `;
 
 export default {
