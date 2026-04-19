@@ -1,8 +1,12 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 
-import { smPaddingX, mdPaddingX, lgPaddingY } from '/imports/ui/stylesheets/styled-components/general';
+import {
+  smPaddingX,
+  mdPaddingX,
+  lgPaddingY,
+} from "/imports/ui/stylesheets/styled-components/general";
 
-import { colorGray } from '/imports/ui/stylesheets/styled-components/palette';
+import { colorGray } from "/imports/ui/stylesheets/styled-components/palette";
 
 export const Container = styled.div`
   display: flex;
@@ -30,7 +34,9 @@ export const MobileTitle = styled.span`
 `;
 
 export const MobileHeaderWrapper = styled.div<{ isMobile?: boolean }>`
-  ${({ isMobile }) => isMobile && `
+  ${({ isMobile }) =>
+    isMobile &&
+    `
     padding: 1rem ${mdPaddingX} 0.5rem ${mdPaddingX};
   `}
 `;

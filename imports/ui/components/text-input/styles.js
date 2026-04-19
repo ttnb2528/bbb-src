@@ -41,7 +41,7 @@ const TextArea = styled(TextareaAutosize)`
   box-shadow: 0 0 0 1px var(--text-input-border, ${colorGrayLighter});
 
   &::placeholder {
-    color: var(--text-input-placeholder, rgba(0,0,0,0.4));
+    color: var(--text-input-placeholder, rgba(0, 0, 0, 0.4));
   }
 
   &:hover {

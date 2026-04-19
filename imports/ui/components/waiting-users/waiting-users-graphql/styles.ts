@@ -232,6 +232,20 @@ const Panel = styled.div<PanelProps>`
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
   }
 
+
+  /* Fix white background on header ghost buttons (back/label button) */
+  header button,
+  header a {
+    color: white !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+  header button:hover,
+  header a:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+
   ${({ isChrome }) =>
     isChrome &&
     `
@@ -243,7 +257,6 @@ const Panel = styled.div<PanelProps>`
     min-height: 100%;
   }
 `;
-
 
 const LobbyMessage = styled.div`
   margin: 0.5rem 0.25rem;
