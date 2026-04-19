@@ -48,26 +48,11 @@ const SmallTitle = styled.h2`
 `;
 
 const ScrollableList = styled(ScrollboxVertical)`
-  background:
-    linear-gradient(${userListBg} 30%, rgba(255, 255, 255, 0)),
-    linear-gradient(rgba(255, 255, 255, 0), ${userListBg} 70%) 0 100%,
-    /* Shadows */
-    radial-gradient(
-        farthest-side at 50% 0,
-        rgba(0, 0, 0, 0.2),
-        rgba(0, 0, 0, 0)
-      ),
-    radial-gradient(
-        farthest-side at 50% 100%,
-        rgba(0, 0, 0, 0.2),
-        rgba(0, 0, 0, 0)
-      )
-      0 100%;
+  background: transparent;
 
   outline: none;
 
   &:hover {
-    /* Visible in Windows high-contrast themes */
     outline: transparent;
     outline-style: dotted;
     outline-width: ${borderSize};
@@ -117,7 +102,7 @@ const ListItem = styled.div`
     outline: transparent;
     outline-style: dotted;
     outline-width: ${borderSize};
-    background-color: ${listItemBgHover};
+    background-color: rgba(255, 255, 255, 0.12);
   }
 
   &:active,
@@ -125,10 +110,8 @@ const ListItem = styled.div`
     outline: transparent;
     outline-width: ${borderSize};
     outline-style: solid;
-    background-color: ${listItemBgHover};
-    box-shadow:
-      inset 0 0 0 ${borderSize} ${itemFocusBorder},
-      inset 1px 0 0 1px ${itemFocusBorder};
+    background-color: rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 0 0 ${borderSize} rgba(255, 255, 255, 0.3);
   }
 
   align-items: center;
@@ -143,7 +126,8 @@ const ListItem = styled.div`
   text-decoration: none;
   width: 100%;
   color: white;
-  background-color: transparent;
+  background-color: rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
 
   [dir="rtl"] & {
     padding-right: ${lgPaddingY};

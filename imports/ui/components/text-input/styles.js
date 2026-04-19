@@ -25,10 +25,10 @@ const Wrapper = styled.div`
 
 const TextArea = styled(TextareaAutosize)`
   flex: 1;
-  background: #fff;
+  background: var(--text-input-bg, #fff);
   background-clip: padding-box;
   margin: 0;
-  color: ${colorText};
+  color: var(--text-input-color, ${colorText});
   -webkit-appearance: none;
   padding: calc(${smPaddingY} * 2.5) calc(${smPaddingX} * 1.25);
   resize: none;
@@ -37,8 +37,12 @@ const TextArea = styled(TextareaAutosize)`
   font-size: ${fontSizeBase};
   min-height: 2.5rem;
   max-height: 10rem;
-  border: 1px solid ${colorGrayLighter};
-  box-shadow: 0 0 0 1px ${colorGrayLighter};
+  border: 1px solid var(--text-input-border, ${colorGrayLighter});
+  box-shadow: 0 0 0 1px var(--text-input-border, ${colorGrayLighter});
+
+  &::placeholder {
+    color: var(--text-input-placeholder, rgba(0,0,0,0.4));
+  }
 
   &:hover {
     outline: transparent;

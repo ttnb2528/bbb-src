@@ -233,21 +233,10 @@ const LobbyMessage = styled.div`
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding-bottom: 0.5rem;
 
-  textarea {
-    background-color: rgba(255, 255, 255, 0.07) !important;
-    color: white !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: none !important;
-
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    &:focus {
-      border-color: rgba(255, 255, 255, 0.4) !important;
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-    }
-  }
+  --text-input-bg: rgba(255, 255, 255, 0.08);
+  --text-input-color: white;
+  --text-input-border: rgba(255, 255, 255, 0.2);
+  --text-input-placeholder: rgba(255, 255, 255, 0.4);
 
   & > p {
     background-color: rgba(255, 255, 255, 0.05);
@@ -264,21 +253,10 @@ const PrivateLobbyMessage = styled.div`
   display: none;
   margin-bottom: 1rem;
 
-  textarea {
-    background-color: rgba(255, 255, 255, 0.07) !important;
-    color: white !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: none !important;
-
-    &::placeholder {
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    &:focus {
-      border-color: rgba(255, 255, 255, 0.4) !important;
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
-    }
-  }
+  --text-input-bg: rgba(255, 255, 255, 0.08);
+  --text-input-color: white;
+  --text-input-border: rgba(255, 255, 255, 0.2);
+  --text-input-placeholder: rgba(255, 255, 255, 0.4);
 
   & > p {
     background-color: rgba(255, 255, 255, 0.05);
