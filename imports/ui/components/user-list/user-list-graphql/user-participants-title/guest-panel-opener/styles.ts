@@ -48,7 +48,12 @@ const SmallTitle = styled.h2`
 `;
 
 const ScrollableList = styled(ScrollboxVertical)`
-  background: transparent;
+  background: none !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  background-repeat: no-repeat !important;
+  background-size: auto !important;
+  background-attachment: scroll !important;
 
   outline: none;
 

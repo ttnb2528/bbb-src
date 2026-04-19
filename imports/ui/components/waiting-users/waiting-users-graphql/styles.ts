@@ -216,6 +216,22 @@ const Panel = styled.div<PanelProps>`
   height: 100%;
   min-height: 100vh;
 
+  /* Override TextInput (textarea) component to match dark theme */
+  textarea {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15) !important;
+    border-radius: 6px;
+  }
+  textarea::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
+  textarea:focus {
+    border-color: rgba(255, 255, 255, 0.45) !important;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+  }
+
   ${({ isChrome }) =>
     isChrome &&
     `
@@ -227,6 +243,7 @@ const Panel = styled.div<PanelProps>`
     min-height: 100%;
   }
 `;
+
 
 const LobbyMessage = styled.div`
   margin: 0.5rem 0.25rem;
