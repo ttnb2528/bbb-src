@@ -50,6 +50,7 @@ import { notify } from "/imports/ui/services/notification";
 import VoiceActivityAdapter from "../../core/adapters/voice-activity";
 import LayoutObserver from "../layout/observer";
 import BBBLiveKitRoomContainer from "/imports/ui/components/livekit/component";
+import EcommerceLayout from "/imports/ui/components/ecommerce-layout/component";
 
 const intlMessages = defineMessages({
   userListLabel: {
@@ -116,6 +117,7 @@ const propTypes = {
   isBreakout: PropTypes.bool.isRequired,
   meetingId: PropTypes.string.isRequired,
   meetingName: PropTypes.string.isRequired,
+  metadata: PropTypes.object,
 };
 
 class App extends Component {
@@ -126,6 +128,7 @@ class App extends Component {
       isVideoPreviewModalOpen: false,
       presentationFitToWidth: false,
       isJoinLogged: false,
+      forceEcommerce: false,
     };
 
     this.timeOffsetInterval = null;
@@ -136,6 +139,13 @@ class App extends Component {
       this.setVideoPreviewModalIsOpen.bind(this);
     this.customPollShortcutHandler = this.customPollShortcutHandler.bind(this);
     this.logJoin = this.logJoin.bind(this);
+    this.toggleEcommerce = this.toggleEcommerce.bind(this);
+  }
+
+  toggleEcommerce() {
+    this.setState((prevState) => ({
+      forceEcommerce: !prevState.forceEcommerce,
+    }));
   }
 
   componentDidMount() {
@@ -404,13 +414,32 @@ class App extends Component {
       isNotificationEnabled,
       isNonMediaLayout,
       isRaiseHandEnabled,
+      metadata,
     } = this.props;
 
     const {
       isAudioModalOpen,
       isVideoPreviewModalOpen,
       presentationFitToWidth,
+      forceEcommerce,
     } = this.state;
+
+    console.log(
+      "OVBAY METADATA CHECK: ",
+      metadata,
+      " NAME: ",
+      this.props.meetingName,
+    );
+
+    const isEcommerceMode =
+      forceEcommerce ||
+      (this.props.meetingName && this.props.meetingName.includes("[OVBAY]")) ||
+      (metadata &&
+        (metadata.meta_roomType === "ecommerce" ||
+          metadata.roomType === "ecommerce")) ||
+      (typeof window !== "undefined" &&
+        window.location.href.includes("ecommerce=true"));
+
     return (
       <>
         <ScreenReaderAlertAdapter />
@@ -424,70 +453,85 @@ class App extends Component {
         <LayoutEngine />
         <LayoutObserver />
         <GlobalStyles />
-        <Styled.Layout
-          id="layout"
-          style={{
-            width: "100%",
-            height: "100%",
-          }}
-        >
-          <ActivityCheckContainer />
-          <ScreenReaderAlertContainer />
-          <BannerBarContainer />
-          <NotificationsBarContainer />
-          {/* Sidebar-navigation đã được gộp vào sidebar-content - không render nữa */}
-          <SidebarContentContainer isSharedNotesPinned={isSharedNotesPinned} />
-          <NavBarContainer main="new" />
-          <WebcamContainer />
-          {!isNonMediaLayout && <ExternalVideoPlayerContainer />}
-          <GenericContentMainAreaContainer
-            genericMainContentId={genericMainContentId}
-          />
-          {shouldShowPresentation ? (
-            <PresentationContainer
-              setPresentationFitToWidth={this.setPresentationFitToWidth}
-              fitToWidth={presentationFitToWidth}
-              darkTheme={darkTheme}
-              presentationIsOpen={presentationIsOpen}
-            />
-          ) : null}
-          {!isNonMediaLayout && (
-            <ScreenshareContainer
-              shouldShowScreenshare={shouldShowScreenshare}
-            />
-          )}
 
-          {isSharedNotesPinned ? <NotesContainer area="media" /> : null}
-          <AudioCaptionsSpeechContainer />
-          {this.renderAudioCaptions()}
-          {!hideNotificationToasts && isNotificationEnabled && (
-            <PresentationUploaderToastContainer intl={intl} />
-          )}
-          <UploaderContainer />
-          <BreakoutJoinConfirmationContainerGraphQL />
-          <BBBLiveKitRoomContainer />
-          <FloatingChatContainer />
-          <AudioContainer
-            {...{
-              isAudioModalOpen,
-              setAudioModalIsOpen: this.setAudioModalIsOpen,
-              isVideoPreviewModalOpen,
-              setVideoPreviewModalIsOpen: this.setVideoPreviewModalIsOpen,
-            }}
+        {isEcommerceMode ? (
+          <EcommerceLayout
+            {...this.props}
+            isAudioModalOpen={isAudioModalOpen}
+            setAudioModalIsOpen={this.setAudioModalIsOpen}
+            isVideoPreviewModalOpen={isVideoPreviewModalOpen}
+            setVideoPreviewModalIsOpen={this.setVideoPreviewModalIsOpen}
+            presentationFitToWidth={presentationFitToWidth}
+            setPresentationFitToWidth={this.setPresentationFitToWidth}
           />
-          {!hideNotificationToasts && isNotificationEnabled && (
-            <ToastContainer rtl />
-          )}
-          <ChatAlertContainerGraphql />
-          {isRaiseHandEnabled && <RaiseHandNotifier />}
-          <ManyWebcamsNotifier />
-          <PollingContainer />
-          <WakeLockContainer />
-          {this.renderActionsBar()}
-          <MobilePanelButtonsContainer />
-          <EmojiRainContainer />
-          <VoiceActivityAdapter />
-        </Styled.Layout>
+        ) : (
+          <Styled.Layout
+            id="layout"
+            style={{
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <ActivityCheckContainer />
+            <ScreenReaderAlertContainer />
+            <BannerBarContainer />
+            <NotificationsBarContainer />
+            {/* Sidebar-navigation đã được gộp vào sidebar-content - không render nữa */}
+            <SidebarContentContainer
+              isSharedNotesPinned={isSharedNotesPinned}
+            />
+            <NavBarContainer main="new" />
+            <WebcamContainer />
+            {!isNonMediaLayout && <ExternalVideoPlayerContainer />}
+            <GenericContentMainAreaContainer
+              genericMainContentId={genericMainContentId}
+            />
+            {shouldShowPresentation ? (
+              <PresentationContainer
+                setPresentationFitToWidth={this.setPresentationFitToWidth}
+                fitToWidth={presentationFitToWidth}
+                darkTheme={darkTheme}
+                presentationIsOpen={presentationIsOpen}
+              />
+            ) : null}
+            {!isNonMediaLayout && (
+              <ScreenshareContainer
+                shouldShowScreenshare={shouldShowScreenshare}
+              />
+            )}
+
+            {isSharedNotesPinned ? <NotesContainer area="media" /> : null}
+            <AudioCaptionsSpeechContainer />
+            {this.renderAudioCaptions()}
+            {!hideNotificationToasts && isNotificationEnabled && (
+              <PresentationUploaderToastContainer intl={intl} />
+            )}
+            <UploaderContainer />
+            <BreakoutJoinConfirmationContainerGraphQL />
+            <BBBLiveKitRoomContainer />
+            <FloatingChatContainer />
+            <AudioContainer
+              {...{
+                isAudioModalOpen,
+                setAudioModalIsOpen: this.setAudioModalIsOpen,
+                isVideoPreviewModalOpen,
+                setVideoPreviewModalIsOpen: this.setVideoPreviewModalIsOpen,
+              }}
+            />
+            {!hideNotificationToasts && isNotificationEnabled && (
+              <ToastContainer rtl />
+            )}
+            <ChatAlertContainerGraphql />
+            {isRaiseHandEnabled && <RaiseHandNotifier />}
+            <ManyWebcamsNotifier />
+            <PollingContainer />
+            <WakeLockContainer />
+            {this.renderActionsBar()}
+            <MobilePanelButtonsContainer />
+            <EmojiRainContainer />
+            <VoiceActivityAdapter />
+          </Styled.Layout>
+        )}
       </>
     );
   }

@@ -785,7 +785,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       });
 
     return (
-      <Styled.VideoStripWrapper>
+      <Styled.VideoStripWrapper data-test="videoStripWrapper">
         {canScrollLeft && (
           <Styled.ScrollArrow
             $position="left"

@@ -52,7 +52,8 @@ const ActionsBarContainer = (props) => {
 
   const LAYOUT_CONFIG = window.meetingClientSettings.public.layout;
   const { showPushLayoutButton } = LAYOUT_CONFIG;
-  const actionsBarStyle = layoutSelectOutput((i) => i.actionBar);
+  const actionsBarStyle =
+    props.actionsBarStyleOverride || layoutSelectOutput((i) => i.actionBar);
   const layoutContextDispatch = layoutDispatch();
   const cameraDockOutput = layoutSelectOutput((i) => i.cameraDock);
   const cameraDockInput = layoutSelectInput((i) => i.cameraDock);
@@ -149,7 +150,7 @@ const ActionsBarContainer = (props) => {
     return publicChat?.totalUnread || 0;
   }, [chats]);
 
-  if (actionsBarStyle.display === false) return null;
+  if (actionsBarStyle.display === false && !props.forceShow) return null;
   if (!currentMeeting) return null;
 
   const isSharedNotesPinnedFromGraphql =
