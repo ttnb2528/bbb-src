@@ -44,12 +44,12 @@ export const FloatingChatContainer = styled.div<{
     left: 50% !important;
     /* Đẩy khung chat trượt khuất ra ngoài màn hình trên mobile khi có Sidebar (User List) đang mở, hoặc khi quẹt ẩn UI */
     transform: ${(props: any) => {
-      if (props.$isUIHidden) return "translateX(120vw) !important";
-      if (props.$isSidebarOpen) return "translateX(-150vw) !important";
-      return "translateX(-50%) !important";
-    }};
+    if (props.$isUIHidden) return "translateX(120vw) !important";
+    if (props.$isSidebarOpen) return "translateX(-150vw) !important";
+    return "translateX(-50%) !important";
+  }};
     opacity: ${(props: any) =>
-      props.$isUIHidden || props.$isSidebarOpen ? "0 !important" : "1"};
+    props.$isUIHidden || props.$isSidebarOpen ? "0 !important" : "1"};
     width: 95vw !important;
     max-width: 400px !important;
   }
@@ -94,18 +94,18 @@ export const ChatHeader = styled.div<{ $chatState?: string }>`
 
   &:hover {
     background-color: ${(props: any) =>
-      props.$chatState !== "collapsed"
-        ? "rgba(255,255,255,0.1)"
-        : "rgba(255, 255, 255, 0.2)"};
+    props.$chatState !== "collapsed"
+      ? "rgba(255,255,255,0.1)"
+      : "rgba(255, 255, 255, 0.2)"};
     color: white;
   }
 
   i {
     font-size: ${(props: any) =>
-      props.$chatState !== "collapsed" ? "1.1rem" : "1.3rem"};
+    props.$chatState !== "collapsed" ? "1.1rem" : "1.3rem"};
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     transform: ${(props: any) =>
-      props.$chatState === "expanded" ? "rotate(180deg)" : "rotate(0deg)"};
+    props.$chatState === "expanded" ? "rotate(180deg)" : "rotate(0deg)"};
     display: flex;
     align-items: center;
     justify-content: center;
@@ -287,7 +287,7 @@ export const ChatInputForm = styled.form<{ $chatState?: string }>`
   pointer-events: auto; /* Cho phép tương tác vào input */
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   max-height: 120px;
-  overflow: hidden;
+  overflow: ${(props: any) => props.$chatState === "collapsed" ? "hidden" : "visible"};
 
   /* Rút siêu mượt input form khi ở chế độ collapsed */
   ${(props: any) =>

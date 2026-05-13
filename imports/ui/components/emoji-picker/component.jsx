@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { injectIntl } from 'react-intl';
 import Picker from '@emoji-mart/react';
+import data from '@emoji-mart/data';
 
 const propTypes = {
   intl: PropTypes.shape({
@@ -54,11 +55,23 @@ const EmojiPicker = (props) => {
   //       this code fixes that, but is kinda ugly and only works if
   //       we never render more than one emoji-picker at the same time
   useEffect(() => {
-    document.getElementsByTagName('em-emoji-picker')[0].style.width = 'auto';
-  });
+    let timeoutId;
+    const applyStyle = () => {
+      const picker = document.getElementsByTagName('em-emoji-picker')[0];
+      if (picker) {
+        picker.style.width = 'auto';
+      } else {
+        timeoutId = setTimeout(applyStyle, 100);
+      }
+    };
+    applyStyle();
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   return (
     <Picker
+      data={data}
       onEmojiSelect={(emojiObject, event) => onEmojiSelect(emojiObject, event)}
       emojiSize={24}
       i18n={i18n}
