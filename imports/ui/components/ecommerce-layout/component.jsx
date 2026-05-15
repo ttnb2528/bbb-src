@@ -50,6 +50,7 @@ const EcommerceLayout = (props) => {
   const t = (viText, enText) => (isVietnamese ? viText : enText);
 
   const [showProductPanel, setShowProductPanel] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [shopInfo, setShopInfo] = useState(null);
   const [isCameraActive, setIsCameraActive] = useState(true); // Mặc định true để không chớp giật lúc load
   const [hasCameraEverStarted, setHasCameraEverStarted] = useState(false); // Theo dõi xem live đã từng bật chưa
@@ -93,9 +94,100 @@ const EcommerceLayout = (props) => {
   const [joinNotifications, setJoinNotifications] = useState([]);
   const prevUsersRef = useRef([]);
 
+  // --- NEW FEATURES STATE ---
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [floatingHearts, setFloatingHearts] = useState([]);
+  const [fomoNotifications, setFomoNotifications] = useState([]);
+
+  // Handlers cho các action
+  const handleLike = () => {
+    setLikeCount((prev) => prev + 1);
+    const newHeart = {
+      id: Date.now(),
+      left: Math.random() * 40 + 10, // Vị trí ngẫu nhiên
+      color: ["#ff3b30", "#ff2a00", "#FF6B35", "#ffb300"][
+        Math.floor(Math.random() * 4)
+      ], // Màu ngẫu nhiên
+    };
+    setFloatingHearts((prev) => [...prev, newHeart]);
+
+    // Xóa tim sau 3s animation
+    setTimeout(() => {
+      setFloatingHearts((prev) => prev.filter((h) => h.id !== newHeart.id));
+    }, 3000);
+
+    if (apiBase && currentMeetingId) {
+      fetch(`${apiBase}/api/livestream/${currentMeetingId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser?.extId }),
+      }).catch((e) => console.error(e));
+    }
+  };
+
+  const isGuest = () => {
+    return currentUser?.name?.startsWith("Khách ") || !currentUser?.extId;
+  };
+
+  const handleShare = () => {
+    if (apiBase && currentMeetingId) {
+      const shareUrl = `${apiBase}/live/${currentMeetingId}`;
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard
+          .writeText(shareUrl)
+          .then(() => alert("Đã sao chép đường dẫn chia sẻ phiên Live!"))
+          .catch((e) => {
+            prompt("Copy link sau để chia sẻ:", shareUrl);
+          });
+      } else {
+        prompt("Copy link sau để chia sẻ:", shareUrl);
+      }
+    }
+  };
+
+  const handleLoginRedirect = () => {
+    let frontendUrl = apiBase;
+    if (apiBase && apiBase.includes("api.ovbayvn.com")) {
+      frontendUrl = "https://ovbayvn.com";
+    } else if (apiBase && apiBase.includes("localhost")) {
+      frontendUrl = "http://localhost:3000";
+    } else if (apiBase && apiBase.includes("api.")) {
+      frontendUrl = apiBase.replace("api.", "");
+    }
+
+    window.open(`${frontendUrl}/main/auth/login`, "_blank");
+    setShowLoginModal(false);
+  };
+
+  const handleFollow = () => {
+    if (isGuest()) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    if (!isFollowing) {
+      setIsFollowing(true);
+      if (shopInfo?.id) {
+        localStorage.setItem(`followed_shop_${shopInfo.id}`, "true");
+      }
+      if (apiBase && currentMeetingId) {
+        fetch(`${apiBase}/api/livestream/${currentMeetingId}/follow`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUser?.extId }),
+        }).catch((e) => console.error(e));
+      }
+    }
+  };
+
+  // Removed FOMO effect as requested
+
   // Hook lấy role của user hiện tại
   const { data: currentUser } = useCurrentUser((u) => ({
     role: u.role,
+    extId: u.extId,
+    name: u.name,
   }));
   const isHost = currentUser?.role === "MODERATOR";
 
@@ -139,12 +231,12 @@ const EcommerceLayout = (props) => {
           const newNotif = { id: Date.now() + Math.random(), name: user.name };
           setJoinNotifications((prev) => [...prev, newNotif]);
 
-          // Tự động xóa thông báo sau 3 giây
+          // Tự động xóa thông báo sau 6 giây (chậm lại để người xem kịp đọc)
           setTimeout(() => {
             setJoinNotifications((prev) =>
               prev.filter((n) => n.id !== newNotif.id),
             );
-          }, 3000);
+          }, 6000);
         });
       }
       prevUsersRef.current = usersData;
@@ -197,13 +289,22 @@ const EcommerceLayout = (props) => {
           const response = await fetch(apiUrl);
           if (response.ok) {
             const data = await response.json();
-            if (data.success && data.data && data.data.products) {
-              setProducts(data.data.products);
-              if (data.data.current_pinned_product_id) {
-                const p = data.data.products.find(
-                  (p) => p.id == data.data.current_pinned_product_id,
-                );
-                if (p) setPinnedProduct(p);
+            if (data.success && data.data) {
+              if (data.data.products) {
+                setProducts(data.data.products);
+                if (data.data.current_pinned_product_id) {
+                  const p = data.data.products.find(
+                    (p) => p.id == data.data.current_pinned_product_id,
+                  );
+                  if (p) setPinnedProduct(p);
+                }
+              }
+              // Set số lượt thích hiện tại và kiểm tra follow
+              if (data.data.likes_count !== undefined) {
+                setLikeCount(data.data.likes_count);
+              }
+              if (localStorage.getItem(`followed_shop_${meetingId}`)) {
+                setIsFollowing(true);
               }
             }
           }
@@ -234,6 +335,14 @@ const EcommerceLayout = (props) => {
             // Lưu thông tin shop để hiển thị avatar + tên
             if (data.data.shop) {
               setShopInfo(data.data.shop);
+            }
+
+            // Cập nhật số lượt thích
+            if (
+              data.data.likes_count !== undefined &&
+              data.data.likes_count > likeCount
+            ) {
+              setLikeCount(data.data.likes_count);
             }
 
             // Cập nhật lại list product nếu đang mở giỏ hàng
@@ -518,7 +627,7 @@ const EcommerceLayout = (props) => {
         />
 
         {/* --- TIKTOK STYLE HOST PROFILE BADGE (Top Left) --- */}
-        {isCameraActive && (
+        {true && (
           <div
             style={{
               position: "absolute",
@@ -679,94 +788,43 @@ const EcommerceLayout = (props) => {
                 </span>
               </div>
             </div>
-            {/* Nút Follow giả lập */}
+            {/* Nút Follow */}
             {!isHost && (
               <button
+                onClick={handleFollow}
                 style={{
                   marginLeft: "6px",
-                  background: "linear-gradient(90deg, #ff1e00, #ff5722)",
+                  background: isFollowing
+                    ? "rgba(255,255,255,0.2)"
+                    : "linear-gradient(90deg, #ff1e00, #ff5722)",
                   color: "white",
-                  border: "none",
+                  border: isFollowing
+                    ? "1px solid rgba(255,255,255,0.3)"
+                    : "none",
                   borderRadius: "20px",
                   padding: "6px 14px",
                   fontSize: "11px",
                   fontWeight: "bold",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 5px rgba(255,30,0,0.4)",
-                  transition: "transform 0.2s",
+                  cursor: isFollowing ? "default" : "pointer",
+                  boxShadow: isFollowing
+                    ? "none"
+                    : "0 2px 5px rgba(255,30,0,0.4)",
+                  transition: "all 0.2s",
                 }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.transform = "scale(1.05)")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.transform = "scale(1)")
-                }
+                onMouseEnter={(e) => {
+                  if (!isFollowing)
+                    e.currentTarget.style.transform = "scale(1.05)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isFollowing)
+                    e.currentTarget.style.transform = "scale(1)";
+                }}
               >
-                + Theo dõi
+                {isFollowing ? "Đã theo dõi" : "+ Theo dõi"}
               </button>
             )}
           </div>
         )}
-
-        {/* --- DANH SÁCH THÔNG BÁO VÀO PHÒNG (Góc dưới bên trái) --- */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "140px",
-            left: "20px",
-            zIndex: 100,
-            display: "flex",
-            flexDirection: "column",
-            gap: "8px",
-            pointerEvents: "none",
-          }}
-        >
-          {joinNotifications.map((notif) => (
-            <div
-              key={notif.id}
-              style={{
-                background: "rgba(0, 0, 0, 0.4)",
-                backdropFilter: "blur(6px)",
-                color: "white",
-                padding: "6px 14px",
-                borderRadius: "20px",
-                fontSize: "13px",
-                fontWeight: "500",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                maxWidth: "220px", // Fixed width
-                animation: "slideInLeft 0.3s ease-out forwards",
-                boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-              }}
-            >
-              <style>
-                {`
-                  @keyframes slideInLeft {
-                    0% { opacity: 0; transform: translateX(-20px); }
-                    100% { opacity: 1; transform: translateX(0); }
-                  }
-                `}
-              </style>
-              <span
-                style={{
-                  color: "#ffc107",
-                  fontWeight: "bold",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  display: "inline-block",
-                }}
-              >
-                {truncateNameMiddle(notif.name)}
-              </span>
-              <span
-                style={{ color: "rgba(255,255,255,0.8)", whiteSpace: "nowrap" }}
-              >
-                {t("vừa vào live", "joined")}
-              </span>
-            </div>
-          ))}
-        </div>
 
         {/* Video Fullscreen */}
         <div
@@ -909,25 +967,27 @@ const EcommerceLayout = (props) => {
           </div>
         )}
 
-        {/* --- OVERLAY SẢN PHẨM ĐANG GHIM --- */}
+        {/* --- OVERLAY SẢN PHẨM ĐANG GHIM (Góc trên bên trái, dưới Profile Host) --- */}
         {pinnedProduct && (
           <div
             style={{
               position: "absolute",
-              bottom: "80px",
+              top: "80px",
               left: "20px",
-              background: "rgba(0, 0, 0, 0.65)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              padding: "8px",
+              background:
+                "linear-gradient(145deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.98) 100%)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              padding: "10px",
               borderRadius: "16px",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+              boxShadow:
+                "0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(255, 107, 53, 0.15)",
               display: "flex",
-              gap: "10px",
+              gap: "12px",
               alignItems: "center",
               zIndex: 100,
-              width: "280px",
-              border: "1px solid rgba(255,255,255,0.15)",
+              width: "300px",
+              border: "1px solid rgba(255, 107, 53, 0.3)",
               animation:
                 "slideInLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards",
             }}
@@ -953,29 +1013,33 @@ const EcommerceLayout = (props) => {
                   "https://via.placeholder.com/60"
                 }
                 style={{
-                  width: "60px",
-                  height: "60px",
+                  width: "70px",
+                  height: "70px",
                   objectFit: "cover",
-                  borderRadius: "10px",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
                 }}
                 alt=""
               />
               <div
                 style={{
                   position: "absolute",
-                  top: "-6px",
-                  left: "-6px",
-                  background: "linear-gradient(90deg, #ff1e00, #ff5722)",
+                  top: "-10px",
+                  left: "-10px",
+                  background:
+                    "linear-gradient(135deg, #FF1E00 0%, #FF5722 100%)",
                   color: "white",
-                  fontSize: "9px",
-                  fontWeight: "bold",
-                  padding: "2px 5px",
-                  borderRadius: "10px",
+                  fontSize: "11px",
+                  fontWeight: "900",
+                  padding: "4px 8px",
+                  borderRadius: "12px",
                   animation: "pulseBadge 2s infinite",
-                  border: "1px solid rgba(255,255,255,0.5)",
+                  border: "2px solid #1A1A1A",
+                  boxShadow: "0 4px 10px rgba(255, 30, 0, 0.4)",
+                  whiteSpace: "nowrap",
                 }}
               >
-                🔥 ĐANG GHIM
+                ĐANG GHIM
               </div>
             </div>
 
@@ -1010,24 +1074,26 @@ const EcommerceLayout = (props) => {
                   onClick={handleUnpinProduct}
                   style={{
                     width: "100%",
-                    background: "rgba(255,255,255,0.1)",
-                    color: "#e2e8f0",
-                    border: "1px solid rgba(255,255,255,0.2)",
-                    padding: "4px 0",
-                    borderRadius: "6px",
+                    background: "rgba(255,255,255,0.15)",
+                    color: "#ffffff",
+                    border: "none",
+                    padding: "6px 0",
+                    borderRadius: "8px",
                     cursor: "pointer",
-                    fontSize: "11px",
-                    fontWeight: "bold",
+                    fontSize: "12px",
+                    fontWeight: "700",
                     transition: "all 0.2s",
                   }}
                   onMouseOver={(e) =>
-                    (e.currentTarget.style.background = "rgba(255,255,255,0.2)")
+                    (e.currentTarget.style.background =
+                      "rgba(255,255,255,0.25)")
                   }
                   onMouseOut={(e) =>
-                    (e.currentTarget.style.background = "rgba(255,255,255,0.1)")
+                    (e.currentTarget.style.background =
+                      "rgba(255,255,255,0.15)")
                   }
                 >
-                  ✕ Bỏ Ghim
+                  Bỏ Ghim
                 </button>
               ) : (
                 <a
@@ -1041,18 +1107,25 @@ const EcommerceLayout = (props) => {
                     boxSizing: "border-box",
                     width: "100%",
                     background:
-                      "linear-gradient(90deg, #ff6b35 0%, #ff8e53 100%)",
+                      "linear-gradient(135deg, #FF6B35 0%, #ff2a00 100%)",
                     color: "white",
                     border: "none",
-                    padding: "4px 0",
-                    borderRadius: "6px",
+                    padding: "6px 0",
+                    borderRadius: "8px",
                     cursor: "pointer",
-                    fontSize: "11px",
-                    fontWeight: "bold",
-                    boxShadow: "0 2px 8px rgba(255,107,53,0.4)",
+                    fontSize: "12px",
+                    fontWeight: "700",
+                    boxShadow: "0 4px 12px rgba(255,107,53,0.3)",
+                    transition: "transform 0.2s",
                   }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "scale(1.02)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                  }
                 >
-                  🛒 MUA NGAY
+                  MUA NGAY
                 </a>
               )}
             </div>
@@ -1064,10 +1137,10 @@ const EcommerceLayout = (props) => {
           className="ecommerce-chat-overlay"
           style={{
             position: "absolute",
-            bottom: "0px", // Đẩy cao lên tránh Action Bar
-            right: "10px", // Đưa Chat sang BÊN PHẢI
-            width: "360px",
-            height: "50%",
+            bottom: isHost ? "20px" : "-80px", // Chỉnh Chat sát đáy nếu là Viewer, nâng lên nếu là Host
+            right: "80px", // Đưa Chat sang PHẢI, nằm KẾ BÊN thanh công cụ (Action bar)
+            width: "340px",
+            height: "45%",
             zIndex: 10,
             pointerEvents: "auto",
           }}
@@ -1120,7 +1193,7 @@ const EcommerceLayout = (props) => {
           }
           onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
-          <span style={{ fontSize: "20px" }}>🛍️</span> Giỏ Hàng
+          Giỏ Hàng
         </button>
 
         {/* Thanh công cụ Custom (Mic, Cam, Kết thúc Live) thay thế ActionsBar */}
@@ -1145,222 +1218,629 @@ const EcommerceLayout = (props) => {
           <LeaveMeetingButtonContainer />
         </div>
 
-        {/* Product Panel Overlay (TikTok Shop Style) */}
-        {showProductPanel && (
+        {/* KHU VỰC TRÁI DƯỚI (Danh sách thông báo + Giỏ hàng popup) */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "80px",
+            left: "20px",
+            display: "flex",
+            flexDirection: "column-reverse",
+            gap: "10px",
+            zIndex: 100,
+            pointerEvents: "none",
+            alignItems: "flex-start",
+          }}
+        >
+          {/* 1. Cửa hàng Popup (Sẽ nằm DƯỚI do column-reverse) */}
+          {showProductPanel && (
+            <div
+              style={{
+                width: "340px",
+                backgroundColor: "rgba(18, 18, 20, 0.9)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+                borderRadius: "24px",
+                boxShadow: "0 15px 50px rgba(0,0,0,0.6)",
+                padding: "20px",
+                maxHeight: "400px",
+                display: "flex",
+                flexDirection: "column",
+                animation:
+                  "slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                border: "1px solid rgba(255,255,255,0.15)",
+                pointerEvents: "auto",
+              }}
+            >
+              <style>
+                {`
+                  @keyframes slideUp {
+                    0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+                    100% { opacity: 1; transform: translateY(0) scale(1); }
+                  }
+                  .ecommerce-custom-scrollbar::-webkit-scrollbar {
+                    width: 4px;
+                  }
+                  .ecommerce-custom-scrollbar::-webkit-scrollbar-track {
+                    background: transparent;
+                  }
+                  .ecommerce-custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.2);
+                    border-radius: 4px;
+                  }
+                  .ecommerce-custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.4);
+                  }
+                `}
+              </style>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "15px",
+                  borderBottom: "1px solid rgba(255,255,255,0.1)",
+                  paddingBottom: "12px",
+                }}
+              >
+                <h3
+                  style={{
+                    margin: 0,
+                    color: "#ffffff",
+                    fontSize: "16px",
+                    fontWeight: "700",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  Cửa hàng
+                </h3>
+                <button
+                  onClick={() => setShowProductPanel(false)}
+                  style={{
+                    background: "rgba(255,255,255,0.1)",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "28px",
+                    height: "28px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    color: "#ffffff",
+                    fontWeight: "bold",
+                    transition: "all 0.2s",
+                  }}
+                  onMouseOver={(e) =>
+                    (e.currentTarget.style.background = "rgba(255,255,255,0.2)")
+                  }
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.background = "rgba(255,255,255,0.1)")
+                  }
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div
+                className="ecommerce-custom-scrollbar"
+                style={{
+                  flex: 1,
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                  paddingRight: "4px",
+                }}
+              >
+                {isLoadingProducts ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "30px 0",
+                      color: "#94a3b8",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "24px",
+                        marginBottom: "10px",
+                        animation: "spin 1s linear infinite",
+                      }}
+                    >
+                      ⏳
+                    </div>
+                    Đang tải sản phẩm...
+                  </div>
+                ) : products.length === 0 ? (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      padding: "30px 0",
+                      color: "#94a3b8",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    <div style={{ fontSize: "30px", marginBottom: "10px" }}>
+                      📭
+                    </div>
+                    Chưa có sản phẩm nào
+                  </div>
+                ) : (
+                  products.map((p) => {
+                    const isPinned = pinnedProduct?.id === p.id;
+                    return (
+                      <div
+                        key={p.id}
+                        style={{
+                          display: "flex",
+                          gap: "12px",
+                          padding: "10px",
+                          background: isPinned
+                            ? "linear-gradient(90deg, rgba(255, 107, 53, 0.25) 0%, rgba(255, 107, 53, 0.1) 100%)"
+                            : "rgba(255,255,255,0.05)",
+                          borderRadius: "16px",
+                          border: isPinned
+                            ? "1px solid rgba(255, 107, 53, 0.5)"
+                            : "1px solid rgba(255,255,255,0.05)",
+                          alignItems: "center",
+                          transition: "all 0.2s",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = isPinned
+                            ? "linear-gradient(90deg, rgba(255, 107, 53, 0.3) 0%, rgba(255, 107, 53, 0.15) 100%)"
+                            : "rgba(255,255,255,0.08)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = isPinned
+                            ? "linear-gradient(90deg, rgba(255, 107, 53, 0.25) 0%, rgba(255, 107, 53, 0.1) 100%)"
+                            : "rgba(255,255,255,0.05)";
+                        }}
+                      >
+                        <img
+                          src={
+                            p.image_urls?.[0] ||
+                            "https://via.placeholder.com/60"
+                          }
+                          style={{
+                            width: "65px",
+                            height: "65px",
+                            objectFit: "cover",
+                            borderRadius: "10px",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                          }}
+                          alt=""
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontWeight: "600",
+                              fontSize: "13px",
+                              color: "#ffffff",
+                              marginBottom: "4px",
+                              lineHeight: "1.3",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {p.name}
+                          </div>
+                          <div
+                            style={{
+                              color: "#FF6B35",
+                              fontWeight: "bold",
+                              fontSize: "14px",
+                            }}
+                          >
+                            {Number(p.selling_price).toLocaleString("vi-VN")}đ
+                          </div>
+                        </div>
+                        {isHost ? (
+                          <button
+                            onClick={() => handlePinProduct(p)}
+                            disabled={isPinned}
+                            style={{
+                              background: isPinned
+                                ? "rgba(255, 107, 53, 0.25)"
+                                : "linear-gradient(135deg, #FF6B35 0%, #ff2a00 100%)",
+                              color: isPinned ? "#ffffff" : "white",
+                              border: isPinned
+                                ? "1px solid rgba(255, 107, 53, 0.8)"
+                                : "none",
+                              padding: "8px 14px",
+                              borderRadius: "20px",
+                              cursor: isPinned ? "default" : "pointer",
+                              fontSize: "12px",
+                              fontWeight: "900",
+                              boxShadow: isPinned
+                                ? "0 0 10px rgba(255, 107, 53, 0.4)"
+                                : "0 4px 10px rgba(255,107,53,0.3)",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {isPinned ? "Đã ghim" : "Ghim"}
+                          </button>
+                        ) : (
+                          <a
+                            href={getProductLink(p)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              background:
+                                "linear-gradient(90deg, #ff6b35 0%, #ff8e53 100%)",
+                              color: "white",
+                              textDecoration: "none",
+                              padding: "6px 12px",
+                              borderRadius: "16px",
+                              fontSize: "11px",
+                              fontWeight: "bold",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            Mua ngay
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 2. Danh sách thông báo (Sẽ tự động nằm TRÊN Cửa hàng popup do column-reverse) */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              pointerEvents: "none",
+              transition: "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+            }}
+          >
+            {joinNotifications.map((notif) => (
+              <div
+                key={notif.id}
+                style={{
+                  background: "rgba(0, 0, 0, 0.4)",
+                  backdropFilter: "blur(6px)",
+                  color: "white",
+                  padding: "6px 14px",
+                  borderRadius: "20px",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  maxWidth: "220px",
+                  animation: "slideInLeft 0.3s ease-out forwards",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+                }}
+              >
+                <style>
+                  {`
+                    @keyframes slideInLeft {
+                      0% { opacity: 0; transform: translateX(-20px); }
+                      100% { opacity: 1; transform: translateX(0); }
+                    }
+                  `}
+                </style>
+                <span
+                  style={{
+                    color: "#ffc107",
+                    fontWeight: "bold",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    display: "inline-block",
+                  }}
+                >
+                  {truncateNameMiddle(notif.name)}
+                </span>
+                <span
+                  style={{
+                    color: "rgba(255,255,255,0.8)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t("vừa vào live", "joined")}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 4. Thanh công cụ dọc (Like, Share) */}
+        <div
+          style={{
+            position: "absolute",
+            right: "20px",
+            bottom: isHost ? "140px" : "80px", // Nâng cao lên nếu là Host để chừa chỗ cho cụm Mic/Cam/Leave
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+            zIndex: 100,
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <button
+              onClick={handleLike}
+              style={{
+                width: "44px",
+                height: "44px",
+                borderRadius: "50%",
+                background: "rgba(0,0,0,0.5)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "white",
+                fontSize: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "transform 0.1s",
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.transform = "scale(0.9)")
+              }
+              onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="#ff2a00"
+                stroke="#ff2a00"
+                strokeWidth="1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ filter: "drop-shadow(0 0 4px rgba(255,42,0,0.6))" }}
+              >
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+              </svg>
+            </button>
+            {likeCount > 0 && (
+              <span
+                style={{
+                  color: "white",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+                }}
+              >
+                {likeCount >= 1000
+                  ? (likeCount / 1000).toFixed(1) + "k"
+                  : likeCount}
+              </span>
+            )}
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <button
+              onClick={handleShare}
+              style={{
+                width: "44px",
+                height: "44px",
+                borderRadius: "50%",
+                background: "rgba(0,0,0,0.5)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "white",
+                fontSize: "20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "transform 0.1s",
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.transform = "scale(0.9)")
+              }
+              onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="#ffffff"
+                style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
+              >
+                <path d="M24 10.518l-12.87-9.518v5.865c-6.837.585-11.13 6.643-11.13 14.618 3.528-5.32 8.16-5.83 11.13-5.597v6.095l12.87-11.463z" />
+              </svg>
+            </button>
+            <span
+              style={{
+                color: "white",
+                fontSize: "12px",
+                fontWeight: "bold",
+                textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+              }}
+            >
+              Share
+            </span>
+          </div>
+        </div>
+        {/* 5. Hiệu ứng bong bóng thả tim */}
+        <div
+          style={{
+            position: "absolute",
+            right: "20px",
+            bottom: "180px",
+            width: "60px",
+            height: "300px",
+            pointerEvents: "none",
+            zIndex: 90,
+            overflow: "visible",
+          }}
+        >
+          <style>
+            {`
+              @keyframes floatUpAndFade {
+                0% { transform: translateY(0) scale(0.5); opacity: 1; }
+                50% { transform: translateY(-100px) scale(1.2) translateX(-10px); opacity: 0.8; }
+                100% { transform: translateY(-200px) scale(1) translateX(10px); opacity: 0; }
+              }
+            `}
+          </style>
+          {floatingHearts.map((heart) => (
+            <div
+              key={heart.id}
+              style={{
+                position: "absolute",
+                bottom: 0,
+                left: `${heart.left}%`,
+                color: heart.color,
+                fontSize: "24px",
+                animation: "floatUpAndFade 2.5s ease-out forwards",
+                textShadow: "0 2px 5px rgba(0,0,0,0.3)",
+              }}
+            >
+              ❤️
+            </div>
+          ))}
+        </div>
+
+        {/* --- MODAL YÊU CẦU ĐĂNG NHẬP (Dành cho Guest) --- */}
+        {showLoginModal && (
           <div
             style={{
               position: "absolute",
-              bottom: "70px",
-              left: "20px",
-              width: "320px",
-              backgroundColor: "rgba(0, 0, 0, 0.75)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              borderRadius: "20px",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
-              padding: "16px",
-              zIndex: 100,
-              maxHeight: "65vh",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundColor: "rgba(0,0,0,0.6)",
+              backdropFilter: "blur(4px)",
+              zIndex: 9999,
               display: "flex",
-              flexDirection: "column",
-              animation: "slideUp 0.3s ease-out forwards",
-              border: "1px solid rgba(255,255,255,0.15)",
+              alignItems: "center",
+              justifyContent: "center",
+              animation: "fadeIn 0.2s ease-out",
             }}
           >
+            <style>
+              {`
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+              `}
+            </style>
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "15px",
-                borderBottom: "1px solid rgba(255,255,255,0.1)",
-                paddingBottom: "12px",
+                background: "linear-gradient(145deg, #1e1e1e 0%, #121212 100%)",
+                border: "1px solid rgba(255,107,53,0.3)",
+                borderRadius: "20px",
+                padding: "30px 24px",
+                width: "320px",
+                textAlign: "center",
+                boxShadow:
+                  "0 20px 50px rgba(0,0,0,0.5), 0 0 20px rgba(255,107,53,0.15)",
+                animation:
+                  "scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
               }}
             >
-              <h3
+              <div
                 style={{
-                  margin: 0,
-                  color: "#ffffff",
-                  fontSize: "16px",
-                  fontWeight: "700",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                🛍️ Cửa hàng
-              </h3>
-              <button
-                onClick={() => setShowProductPanel(false)}
-                style={{
-                  background: "rgba(255,255,255,0.1)",
-                  border: "none",
+                  width: "60px",
+                  height: "60px",
                   borderRadius: "50%",
-                  width: "28px",
-                  height: "28px",
+                  background: "rgba(255,107,53,0.15)",
+                  color: "#FF6B35",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  cursor: "pointer",
-                  color: "#ffffff",
-                  fontWeight: "bold",
-                  transition: "all 0.2s",
+                  margin: "0 auto 20px",
+                  fontSize: "28px",
                 }}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.background = "rgba(255,255,255,0.2)")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.background = "rgba(255,255,255,0.1)")
-                }
               >
-                ✕
-              </button>
-            </div>
+                🔒
+              </div>
+              <h3
+                style={{ margin: "0 0 10px", color: "white", fontSize: "18px" }}
+              >
+                Yêu cầu đăng nhập
+              </h3>
+              <p
+                style={{
+                  color: "rgba(255,255,255,0.7)",
+                  fontSize: "14px",
+                  margin: "0 0 24px",
+                  lineHeight: "1.5",
+                }}
+              >
+                Bạn cần đăng nhập tài khoản Ovbay để sử dụng chức năng theo dõi
+                Shop và thả tim.
+              </p>
 
-            <div
-              style={{
-                flex: 1,
-                overflowY: "auto",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-                paddingRight: "4px",
-              }}
-            >
-              {isLoadingProducts ? (
-                <div
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <button
+                  onClick={handleLoginRedirect}
                   style={{
-                    textAlign: "center",
-                    padding: "30px 0",
-                    color: "#94a3b8",
+                    background:
+                      "linear-gradient(135deg, #FF6B35 0%, #ff2a00 100%)",
+                    color: "white",
+                    border: "none",
+                    padding: "12px",
+                    borderRadius: "12px",
                     fontWeight: "bold",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    boxShadow: "0 4px 15px rgba(255,107,53,0.4)",
+                    transition: "transform 0.1s",
                   }}
+                  onMouseDown={(e) =>
+                    (e.currentTarget.style.transform = "scale(0.95)")
+                  }
+                  onMouseUp={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                  }
                 >
-                  <div
-                    style={{
-                      fontSize: "24px",
-                      marginBottom: "10px",
-                      animation: "spin 1s linear infinite",
-                    }}
-                  >
-                    ⏳
-                  </div>
-                  Đang tải sản phẩm...
-                </div>
-              ) : products.length === 0 ? (
-                <div
+                  Đến trang Đăng nhập
+                </button>
+                <button
+                  onClick={() => setShowLoginModal(false)}
                   style={{
-                    textAlign: "center",
-                    padding: "30px 0",
-                    color: "#94a3b8",
-                    fontWeight: "bold",
+                    background: "rgba(255,255,255,0.1)",
+                    color: "white",
+                    border: "none",
+                    padding: "12px",
+                    borderRadius: "12px",
+                    fontWeight: "600",
+                    fontSize: "14px",
+                    cursor: "pointer",
+                    transition: "background 0.2s",
                   }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.background =
+                      "rgba(255,255,255,0.15)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "rgba(255,255,255,0.1)")
+                  }
                 >
-                  <div style={{ fontSize: "30px", marginBottom: "10px" }}>
-                    📭
-                  </div>
-                  Chưa có sản phẩm nào
-                </div>
-              ) : (
-                products.map((p) => {
-                  const isPinned = pinnedProduct?.id === p.id;
-                  return (
-                    <div
-                      key={p.id}
-                      style={{
-                        display: "flex",
-                        gap: "12px",
-                        padding: "10px",
-                        background: isPinned
-                          ? "rgba(255, 107, 53, 0.15)"
-                          : "rgba(255,255,255,0.05)",
-                        borderRadius: "12px",
-                        border: isPinned
-                          ? "1px solid rgba(255, 107, 53, 0.5)"
-                          : "1px solid rgba(255,255,255,0.05)",
-                        alignItems: "center",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      <img
-                        src={
-                          p.image_urls?.[0] || "https://via.placeholder.com/60"
-                        }
-                        style={{
-                          width: "60px",
-                          height: "60px",
-                          objectFit: "cover",
-                          borderRadius: "8px",
-                        }}
-                        alt=""
-                      />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontWeight: "600",
-                            fontSize: "13px",
-                            color: "#ffffff",
-                            marginBottom: "4px",
-                            lineHeight: "1.3",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {p.name}
-                        </div>
-                        <div
-                          style={{
-                            color: "#FF6B35",
-                            fontWeight: "bold",
-                            fontSize: "14px",
-                          }}
-                        >
-                          {Number(p.selling_price).toLocaleString("vi-VN")}đ
-                        </div>
-                      </div>
-                      {isHost ? (
-                        <button
-                          onClick={() => handlePinProduct(p)}
-                          disabled={isPinned}
-                          style={{
-                            background: isPinned
-                              ? "rgba(255,255,255,0.1)"
-                              : "linear-gradient(90deg, #ff6b35 0%, #ff8e53 100%)",
-                            color: isPinned ? "#94a3b8" : "white",
-                            border: "none",
-                            padding: "6px 12px",
-                            borderRadius: "16px",
-                            cursor: isPinned ? "not-allowed" : "pointer",
-                            fontSize: "11px",
-                            fontWeight: "bold",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {isPinned ? "Đã ghim" : "📌 Ghim"}
-                        </button>
-                      ) : (
-                        <a
-                          href={getProductLink(p)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            background:
-                              "linear-gradient(90deg, #ff6b35 0%, #ff8e53 100%)",
-                            color: "white",
-                            textDecoration: "none",
-                            padding: "6px 12px",
-                            borderRadius: "16px",
-                            fontSize: "11px",
-                            fontWeight: "bold",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          Mua ngay
-                        </a>
-                      )}
-                    </div>
-                  );
-                })
-              )}
+                  Bỏ qua
+                </button>
+              </div>
             </div>
           </div>
         )}
