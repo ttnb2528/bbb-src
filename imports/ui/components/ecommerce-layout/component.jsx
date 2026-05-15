@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { useIntl } from "react-intl";
 import Styled from "../app/styles";
 import WebcamContainer from "../webcam/component";
 import AudioContainer from "../audio/container";
@@ -23,6 +24,10 @@ import Auth from "/imports/ui/services/auth";
 import useMeeting from "/imports/ui/core/hooks/useMeeting";
 import useCurrentUser from "/imports/ui/core/hooks/useCurrentUser";
 
+import { USER_AGGREGATE_COUNT_SUBSCRIPTION } from "/imports/ui/core/graphql/queries/users";
+import useDeduplicatedSubscription from "/imports/ui/core/hooks/useDeduplicatedSubscription";
+import { useLoadedUserList } from "/imports/ui/core/hooks/useLoadedUserList";
+
 // Component dành riêng cho giao diện Bán hàng
 const EcommerceLayout = (props) => {
   const {
@@ -37,26 +42,37 @@ const EcommerceLayout = (props) => {
     isNotificationEnabled,
   } = props;
 
+  const intl = useIntl();
+  const locale = intl.locale || "en";
+  const isVietnamese = locale.toLowerCase().startsWith("vi");
+
+  // Hàm helper dịch ngôn ngữ nhanh
+  const t = (viText, enText) => (isVietnamese ? viText : enText);
+
   const [showProductPanel, setShowProductPanel] = useState(false);
+  const [shopInfo, setShopInfo] = useState(null);
   const [isCameraActive, setIsCameraActive] = useState(true); // Mặc định true để không chớp giật lúc load
+  const [hasCameraEverStarted, setHasCameraEverStarted] = useState(false); // Theo dõi xem live đã từng bật chưa
 
   // Dùng useEffect và Interval để "soi" xem thẻ video có thực sự đang chạy (live) hay không
   useEffect(() => {
     const checkCamera = () => {
       const videos = document.querySelectorAll(
-        ".ecommerce-video-wrapper video",
+        ".ecommerce-video-wrapper video, video",
       );
-      let active = false;
+      let isLive = false;
       videos.forEach((v) => {
-        // Kiểm tra xem thẻ video có gắn luồng stream không và track video có đang 'live' không
-        if (v.srcObject && typeof v.srcObject.getVideoTracks === "function") {
-          const tracks = v.srcObject.getVideoTracks();
-          if (tracks.length > 0 && tracks[0].readyState === "live") {
-            active = true;
+        if (v.readyState !== 0 && !v.paused) {
+          isLive = true;
+          setHasCameraEverStarted(true); // Ghi nhận phiên live đã chính thức chạy
+          // KÍCH HOẠT AUTO PiP GIỐNG GOOGLE MEET
+          // Khi người dùng chuyển tab, video sẽ TỰ ĐỘNG thu nhỏ mà không cần code JS can thiệp
+          if ("autoPictureInPicture" in v) {
+            v.autoPictureInPicture = true;
           }
         }
       });
-      setIsCameraActive(active);
+      setIsCameraActive(isLive);
     };
 
     const intervalId = setInterval(checkCamera, 1000);
@@ -73,6 +89,10 @@ const EcommerceLayout = (props) => {
 
   const [pinnedProduct, setPinnedProduct] = useState(null);
 
+  // Trạng thái quản lý thông báo người dùng vào phòng
+  const [joinNotifications, setJoinNotifications] = useState([]);
+  const prevUsersRef = useRef([]);
+
   // Hook lấy role của user hiện tại
   const { data: currentUser } = useCurrentUser((u) => ({
     role: u.role,
@@ -82,9 +102,61 @@ const EcommerceLayout = (props) => {
   // Hook lấy thông tin Meeting hiện tại để lấy MeetingID gửi về ovbay
   const { data: currentMeeting } = useMeeting((m) => ({
     meetingId: m.meetingId,
+    name: m.name,
     extId: m.extId,
     metadata: m.metadata,
   }));
+
+  // Hook lấy số lượng người tham gia thực tế (Viewer Count)
+  const { data: countData } = useDeduplicatedSubscription(
+    USER_AGGREGATE_COUNT_SUBSCRIPTION,
+  );
+  const actualParticipantCount =
+    countData?.user_aggregate?.aggregate?.count || 1;
+
+  // Lắng nghe sự kiện người dùng thật vào phòng thông qua danh sách User loaded
+  const { data: usersData } = useLoadedUserList(
+    { offset: 0, limit: 100 },
+    (u) => ({ userId: u.userId, name: u.name }),
+  );
+
+  useEffect(() => {
+    if (usersData && usersData.length > 0) {
+      if (
+        prevUsersRef.current.length > 0 &&
+        usersData.length > prevUsersRef.current.length
+      ) {
+        // Tìm ra những người dùng mới (chưa có trong prev list)
+        const newUsers = usersData.filter(
+          (u) =>
+            !prevUsersRef.current.some((prevU) => prevU.userId === u.userId),
+        );
+
+        newUsers.forEach((user) => {
+          // Bỏ qua nếu chính mình vừa join (Host join)
+          if (user.userId === currentUser?.userId) return;
+
+          const newNotif = { id: Date.now() + Math.random(), name: user.name };
+          setJoinNotifications((prev) => [...prev, newNotif]);
+
+          // Tự động xóa thông báo sau 3 giây
+          setTimeout(() => {
+            setJoinNotifications((prev) =>
+              prev.filter((n) => n.id !== newNotif.id),
+            );
+          }, 3000);
+        });
+      }
+      prevUsersRef.current = usersData;
+    }
+  }, [usersData, currentUser?.userId]);
+
+  // Hàm cắt chuỗi ở giữa (ví dụ: "Nguyễn Thị...h Bích")
+  const truncateNameMiddle = (name) => {
+    if (!name) return "";
+    if (name.length <= 15) return name;
+    return name.substring(0, 7) + "..." + name.substring(name.length - 5);
+  };
 
   // Hook gọi API ngay khi vào trang để pre-fetch dữ liệu
   useEffect(() => {
@@ -158,6 +230,11 @@ const EcommerceLayout = (props) => {
           const data = await response.json();
           if (data.success && data.data) {
             const currentPinnedId = data.data.current_pinned_product_id;
+
+            // Lưu thông tin shop để hiển thị avatar + tên
+            if (data.data.shop) {
+              setShopInfo(data.data.shop);
+            }
 
             // Cập nhật lại list product nếu đang mở giỏ hàng
             if (data.data.products && products.length === 0) {
@@ -245,41 +322,13 @@ const EcommerceLayout = (props) => {
     };
   }, [currentMeetingId, apiBase]);
 
-  // Hàm xử lý Mua Ngay với Picture-in-Picture
-  const triggerPiPAndNavigate = async (product) => {
-    try {
-      const videos = document.querySelectorAll(
-        ".ecommerce-video-wrapper video, video",
-      );
-      let mainVideo = null;
-      for (const v of videos) {
-        if (v.readyState !== 0 && !v.paused) {
-          mainVideo = v;
-          break;
-        }
-      }
-
-      if (mainVideo && document.pictureInPictureEnabled) {
-        if (document.pictureInPictureElement !== mainVideo) {
-          await mainVideo.requestPictureInPicture();
-        }
-      }
-    } catch (e) {
-      console.warn("Không thể bật PiP:", e);
-    }
-
-    // Mở trang sản phẩm
-    try {
-      const storefrontUrl =
-        currentMeeting?.metadata?.storefrontUrl || "http://localhost:3000";
-      const productLink = `${storefrontUrl}/main/products/${product.id}`;
-      window.open(productLink, "_blank");
-    } catch (err) {
-      window.open(
-        `http://localhost:3000/main/products/${product.id}`,
-        "_blank",
-      );
-    }
+  // Hàm lấy link sản phẩm
+  const getProductLink = (product) => {
+    const storefrontUrl =
+      currentMeeting?.metadata?.meta_storefrontUrl ||
+      currentMeeting?.metadata?.storefrontUrl ||
+      "https://ovbayvn.com";
+    return `${storefrontUrl}/main/products/${product.id}`;
   };
 
   // Hàm xử lý khi Host bấm "Ghim" sản phẩm
@@ -379,7 +428,7 @@ const EcommerceLayout = (props) => {
           dangerouslySetInnerHTML={{
             __html: `
           .ecommerce-mode {
-            background-color: #000 !important;
+            background: radial-gradient(circle at 50% 50%, #1e1b4b, #000000) !important;
           }
           
           /* Tuyệt chiêu ép Video tràn viền tuyệt đối mà không làm hỏng thẻ div */
@@ -395,7 +444,7 @@ const EcommerceLayout = (props) => {
             transform: none !important; /* Xoá các transform căn giữa */
             margin: 0 !important;
             padding: 0 !important;
-            background-color: #000 !important;
+            background: transparent !important;
             pointer-events: none !important;
           }
           
@@ -428,33 +477,12 @@ const EcommerceLayout = (props) => {
           }
           
           /* CSS Giao diện Nút bấm Custom (Mic, Cam, Kết thúc) */
-          .ecommerce-custom-controls > * {
-             display: inline-block;
-          }
-          .ecommerce-custom-controls button {
-             width: 48px !important;
-             height: 48px !important;
-             border-radius: 50% !important;
-             background: rgba(0, 0, 0, 0.4) !important;
-             backdrop-filter: blur(10px) !important;
-             -webkit-backdrop-filter: blur(10px) !important;
-             border: 1px solid rgba(255, 255, 255, 0.2) !important;
-             color: white !important;
-             box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
-             display: flex !important;
-             align-items: center !important;
-             justify-content: center !important;
-             transition: all 0.2s ease !important;
-             cursor: pointer !important;
-             padding: 0 !important;
-          }
-          .ecommerce-custom-controls button:hover {
-             background: rgba(255, 255, 255, 0.2) !important;
-             transform: scale(1.08) !important;
-             border: 1px solid rgba(255, 255, 255, 0.4) !important;
-          }
-          .ecommerce-custom-controls button i {
-             font-size: 20px !important;
+          /* Xóa class custom ghi đè lên BBB buttons để tránh hỏng SVG icon */
+          .ecommerce-custom-controls {
+             display: flex;
+             align-items: center;
+             gap: 8px;
+             padding-bottom: 5px;
           }
           
           /* Nút đỏ khi Rời phiên / Kết thúc */
@@ -470,14 +498,275 @@ const EcommerceLayout = (props) => {
              background: rgba(220, 38, 38, 0.9) !important;
           }
           
+          /* Animation cho Spinner của màn hình chờ */
+          @keyframes spin {
+             0% { transform: rotate(0deg); }
+             100% { transform: rotate(360deg); }
+          }
+          
           /* Ẩn cục Avatar mặc định của BBB khi chưa có Camera */
-          .ecommerce-video-wrapper-inactive > div {
+          .ecommerce-video-wrapper-inactive > div,
+          .ecommerce-video-wrapper [class*="avatar"],
+          .ecommerce-video-wrapper [data-test="userAvatar"],
+          .ecommerce-video-wrapper [data-test="videoPreviewModal"] {
              opacity: 0 !important;
              pointer-events: none !important;
+             display: none !important;
           }
         `,
           }}
         />
+
+        {/* --- TIKTOK STYLE HOST PROFILE BADGE (Top Left) --- */}
+        {isCameraActive && (
+          <div
+            style={{
+              position: "absolute",
+              top: "20px",
+              left: "20px",
+              display: "flex",
+              alignItems: "center",
+              background: "rgba(0,0,0,0.45)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              borderRadius: "40px",
+              padding: "4px 16px 4px 4px",
+              gap: "10px",
+              zIndex: 100,
+              border: "1px solid rgba(255,255,255,0.15)",
+              boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+              animation: "slideInDown 0.5s ease-out forwards",
+            }}
+          >
+            <style>
+              {`
+                @keyframes slideInDown {
+                  0% { opacity: 0; transform: translateY(-20px); }
+                  100% { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes blink {
+                  0% { opacity: 1; }
+                  50% { opacity: 0.4; }
+                  100% { opacity: 1; }
+                }
+              `}
+            </style>
+            <div
+              style={{
+                width: "38px",
+                height: "38px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #FF6B35, #ff2a00)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                fontWeight: "bold",
+                fontSize: "18px",
+                boxShadow: "0 2px 8px rgba(255,107,53,0.5)",
+                border: "1px solid rgba(255,255,255,0.4)",
+              }}
+            >
+              {(() => {
+                const hostAvatar =
+                  shopInfo?.avatar ||
+                  currentMeeting?.metadata?.meta_hostavatar ||
+                  currentMeeting?.metadata?.hostavatar ||
+                  currentMeeting?.metadata?.meta_hostAvatar ||
+                  currentMeeting?.metadata?.hostAvatar;
+                const hostName =
+                  shopInfo?.name ||
+                  currentMeeting?.metadata?.meta_hostname ||
+                  currentMeeting?.metadata?.hostname ||
+                  currentMeeting?.metadata?.meta_hostName ||
+                  currentMeeting?.metadata?.hostName;
+
+                if (hostAvatar) {
+                  return (
+                    <img
+                      src={hostAvatar}
+                      alt="Host"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  );
+                }
+
+                if (hostName) {
+                  return hostName.charAt(0).toUpperCase();
+                }
+
+                return "H";
+              })()}
+            </div>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "2px" }}
+            >
+              <span
+                style={{
+                  color: "white",
+                  fontWeight: "700",
+                  fontSize: "13px",
+                  lineHeight: "1.2",
+                  maxWidth: "140px",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+                }}
+              >
+                {shopInfo?.name ||
+                  currentMeeting?.metadata?.meta_hostname ||
+                  currentMeeting?.metadata?.hostname ||
+                  currentMeeting?.metadata?.meta_hostName ||
+                  currentMeeting?.metadata?.hostName ||
+                  "Phiên Live"}
+              </span>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <span
+                  style={{
+                    color: "#ff3b30",
+                    fontWeight: "900",
+                    fontSize: "10px",
+                    animation: "blink 1s infinite",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: "#ff3b30",
+                      boxShadow: "0 0 4px #ff3b30",
+                    }}
+                  ></div>
+                  LIVE
+                </span>
+                <span
+                  style={{
+                    color: "rgba(255,255,255,0.8)",
+                    fontSize: "11px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="12"
+                    height="12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  {Math.max(0, actualParticipantCount - 1)}
+                </span>
+              </div>
+            </div>
+            {/* Nút Follow giả lập */}
+            {!isHost && (
+              <button
+                style={{
+                  marginLeft: "6px",
+                  background: "linear-gradient(90deg, #ff1e00, #ff5722)",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "20px",
+                  padding: "6px 14px",
+                  fontSize: "11px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 5px rgba(255,30,0,0.4)",
+                  transition: "transform 0.2s",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.transform = "scale(1.05)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.transform = "scale(1)")
+                }
+              >
+                + Theo dõi
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* --- DANH SÁCH THÔNG BÁO VÀO PHÒNG (Góc dưới bên trái) --- */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "140px",
+            left: "20px",
+            zIndex: 100,
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            pointerEvents: "none",
+          }}
+        >
+          {joinNotifications.map((notif) => (
+            <div
+              key={notif.id}
+              style={{
+                background: "rgba(0, 0, 0, 0.4)",
+                backdropFilter: "blur(6px)",
+                color: "white",
+                padding: "6px 14px",
+                borderRadius: "20px",
+                fontSize: "13px",
+                fontWeight: "500",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                maxWidth: "220px", // Fixed width
+                animation: "slideInLeft 0.3s ease-out forwards",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+              }}
+            >
+              <style>
+                {`
+                  @keyframes slideInLeft {
+                    0% { opacity: 0; transform: translateX(-20px); }
+                    100% { opacity: 1; transform: translateX(0); }
+                  }
+                `}
+              </style>
+              <span
+                style={{
+                  color: "#ffc107",
+                  fontWeight: "bold",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  display: "inline-block",
+                }}
+              >
+                {truncateNameMiddle(notif.name)}
+              </span>
+              <span
+                style={{ color: "rgba(255,255,255,0.8)", whiteSpace: "nowrap" }}
+              >
+                {t("vừa vào live", "joined")}
+              </span>
+            </div>
+          ))}
+        </div>
 
         {/* Video Fullscreen */}
         <div
@@ -508,7 +797,7 @@ const EcommerceLayout = (props) => {
               left: 0,
               width: "100%",
               height: "100%",
-              display: "flex", // Đảm bảo ghi đè thành flex khi hiển thị
+              display: "flex",
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
@@ -517,57 +806,106 @@ const EcommerceLayout = (props) => {
               color: "white",
               textAlign: "center",
               padding: "20px",
+              /* Background chờ mờ ảo cho Viewer */
+              background: !isHost
+                ? "url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat"
+                : "none",
             }}
           >
-            <div
-              style={{
-                background: "rgba(0,0,0,0.6)",
-                padding: "30px 40px",
-                borderRadius: "16px",
-                backdropFilter: "blur(10px)",
-                pointerEvents: "auto",
-                border: "1px solid rgba(255,107,53,0.5)",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
-              }}
-            >
-              <h2
-                style={{
-                  color: "#FF6B35",
-                  marginBottom: "15px",
-                  fontSize: "24px",
-                }}
-              >
-                📸 Camera đang tắt!
-              </h2>
-              <p
-                style={{
-                  fontSize: "16px",
-                  marginBottom: "10px",
-                  lineHeight: "1.5",
-                }}
-              >
-                Vui lòng bấm vào nút <b>Bật Camera</b> ở thanh công cụ bên dưới
-                <br />
-                để bắt đầu phiên Live Commerce.
-              </p>
+            {/* Nếu là Viewer, thêm một lớp phủ đen mờ lên trên ảnh background */}
+            {!isHost && (
               <div
                 style={{
-                  marginTop: "20px",
-                  padding: "10px",
-                  background: "rgba(255,255,255,0.1)",
-                  borderRadius: "8px",
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  backgroundColor: "rgba(0,0,0,0.75)",
+                  backdropFilter: "blur(12px)",
+                  zIndex: -1,
+                }}
+              ></div>
+            )}
+
+            {isHost ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "10px",
                 }}
               >
-                <p style={{ fontSize: "13px", color: "#ddd", margin: 0 }}>
-                  ⚠️ <b>Lưu ý:</b> Nếu bạn lỡ bấm "Chặn" quyền Camera/Mic,
-                  <br />
-                  hãy click vào biểu tượng <b>Ổ khóa (🔒)</b> trên thanh địa chỉ
-                  trình duyệt
-                  <br />
-                  để cấp lại quyền "Cho phép" và tải lại trang nhé.
+                <h3
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "500",
+                    color: "rgba(255,255,255,0.95)",
+                    letterSpacing: "0.5px",
+                    textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+                  }}
+                >
+                  {t("Camera đang tắt", "Camera is off")}
+                </h3>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: "rgba(255,255,255,0.6)",
+                    maxWidth: "80%",
+                    lineHeight: "1.4",
+                    textAlign: "center",
+                  }}
+                >
+                  {t(
+                    "Bật camera để bắt đầu phiên Live",
+                    "Turn on your camera to start the Live session",
+                  )}
                 </p>
               </div>
-            </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "15px",
+                }}
+              >
+                {/* Vòng lặp Spinner Animation */}
+                <div
+                  style={{
+                    width: "50px",
+                    height: "50px",
+                    border: "3px solid rgba(255, 255, 255, 0.15)",
+                    borderTop: "3px solid #FF6B35",
+                    borderRadius: "50%",
+                    animation:
+                      "spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite",
+                  }}
+                ></div>
+                <h3
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "500",
+                    color: "rgba(255,255,255,0.95)",
+                    letterSpacing: "0.5px",
+                    marginTop: "10px",
+                    textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+                  }}
+                >
+                  {hasCameraEverStarted
+                    ? t(
+                        "Phiên Live đang tạm gián đoạn. Vui lòng chờ trong giây lát...",
+                        "Livestream is temporarily paused. Please wait a moment...",
+                      )
+                    : t(
+                        "Phiên Live chuẩn bị diễn ra. Vui lòng chờ Host...",
+                        "Livestream is about to start. Please wait for the Host...",
+                      )}
+                </h3>
+              </div>
+            )}
           </div>
         )}
 
@@ -576,19 +914,20 @@ const EcommerceLayout = (props) => {
           <div
             style={{
               position: "absolute",
-              top: "20px",
+              bottom: "80px",
               left: "20px",
-              background: "rgba(255, 255, 255, 0.95)",
-              backdropFilter: "blur(10px)",
-              padding: "12px",
-              borderRadius: "12px",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+              background: "rgba(0, 0, 0, 0.65)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              padding: "8px",
+              borderRadius: "16px",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
               display: "flex",
-              gap: "12px",
+              gap: "10px",
               alignItems: "center",
               zIndex: 100,
-              maxWidth: "350px",
-              border: "1px solid rgba(255, 107, 53, 0.3)",
+              width: "280px",
+              border: "1px solid rgba(255,255,255,0.15)",
               animation:
                 "slideInLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards",
             }}
@@ -611,55 +950,56 @@ const EcommerceLayout = (props) => {
               <img
                 src={
                   pinnedProduct.image_urls?.[0] ||
-                  "https://via.placeholder.com/80"
+                  "https://via.placeholder.com/60"
                 }
                 style={{
-                  width: "80px",
-                  height: "80px",
+                  width: "60px",
+                  height: "60px",
                   objectFit: "cover",
-                  borderRadius: "8px",
+                  borderRadius: "10px",
                 }}
                 alt=""
               />
               <div
                 style={{
                   position: "absolute",
-                  top: "-8px",
-                  left: "-8px",
-                  background: "#ff1e00",
+                  top: "-6px",
+                  left: "-6px",
+                  background: "linear-gradient(90deg, #ff1e00, #ff5722)",
                   color: "white",
-                  fontSize: "10px",
+                  fontSize: "9px",
                   fontWeight: "bold",
-                  padding: "2px 6px",
+                  padding: "2px 5px",
                   borderRadius: "10px",
                   animation: "pulseBadge 2s infinite",
-                  border: "2px solid white",
+                  border: "1px solid rgba(255,255,255,0.5)",
                 }}
               >
-                🔥 ĐANG GIỚI THIỆU
+                🔥 ĐANG GHIM
               </div>
             </div>
 
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div
                 style={{
-                  fontWeight: "bold",
-                  fontSize: "14px",
-                  color: "#1a1a1a",
-                  marginBottom: "4px",
-                  lineHeight: "1.2",
+                  fontWeight: "600",
+                  fontSize: "13px",
+                  color: "#ffffff",
+                  marginBottom: "2px",
+                  lineHeight: "1.3",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
-                {pinnedProduct.name.length > 35
-                  ? pinnedProduct.name.substring(0, 35) + "..."
-                  : pinnedProduct.name}
+                {pinnedProduct.name}
               </div>
               <div
                 style={{
-                  color: "#ff6b35",
-                  fontWeight: "900",
-                  fontSize: "16px",
-                  marginBottom: "8px",
+                  color: "#FF6B35",
+                  fontWeight: "bold",
+                  fontSize: "14px",
+                  marginBottom: "6px",
                 }}
               >
                 {Number(pinnedProduct.selling_price).toLocaleString("vi-VN")}đ
@@ -670,37 +1010,50 @@ const EcommerceLayout = (props) => {
                   onClick={handleUnpinProduct}
                   style={{
                     width: "100%",
-                    background: "#f1f5f9",
-                    color: "#64748b",
-                    border: "none",
-                    padding: "6px 0",
+                    background: "rgba(255,255,255,0.1)",
+                    color: "#e2e8f0",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    padding: "4px 0",
                     borderRadius: "6px",
                     cursor: "pointer",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: "bold",
+                    transition: "all 0.2s",
                   }}
+                  onMouseOver={(e) =>
+                    (e.currentTarget.style.background = "rgba(255,255,255,0.2)")
+                  }
+                  onMouseOut={(e) =>
+                    (e.currentTarget.style.background = "rgba(255,255,255,0.1)")
+                  }
                 >
-                  ✖ Bỏ Ghim
+                  ✕ Bỏ Ghim
                 </button>
               ) : (
-                <button
-                  onClick={() => triggerPiPAndNavigate(pinnedProduct)}
+                <a
+                  href={getProductLink(pinnedProduct)}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{
+                    display: "block",
+                    textAlign: "center",
+                    textDecoration: "none",
+                    boxSizing: "border-box",
                     width: "100%",
                     background:
                       "linear-gradient(90deg, #ff6b35 0%, #ff8e53 100%)",
                     color: "white",
                     border: "none",
-                    padding: "6px 0",
+                    padding: "4px 0",
                     borderRadius: "6px",
                     cursor: "pointer",
-                    fontSize: "12px",
+                    fontSize: "11px",
                     fontWeight: "bold",
                     boxShadow: "0 2px 8px rgba(255,107,53,0.4)",
                   }}
                 >
                   🛒 MUA NGAY
-                </button>
+                </a>
               )}
             </div>
           </div>
@@ -745,8 +1098,8 @@ const EcommerceLayout = (props) => {
           onClick={() => setShowProductPanel(!showProductPanel)}
           style={{
             position: "absolute",
-            bottom: "90px",
-            left: "20px", // Đưa Giỏ Hàng sang BÊN TRÁI (Ngang với Chat)
+            bottom: "20px",
+            left: "20px", // Đưa Giỏ Hàng sang BÊN TRÁI
             padding: "12px 24px",
             background: "linear-gradient(135deg, #FF6B35 0%, #F97316 100%)",
             color: "#fff",
@@ -760,8 +1113,12 @@ const EcommerceLayout = (props) => {
             alignItems: "center",
             gap: "8px",
             zIndex: 30,
-            transition: "all 0.2s ease",
+            transition: "transform 0.2s ease",
           }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.transform = "scale(1.05)")
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
           <span style={{ fontSize: "20px" }}>🛍️</span> Giỏ Hàng
         </button>
@@ -793,21 +1150,21 @@ const EcommerceLayout = (props) => {
           <div
             style={{
               position: "absolute",
-              bottom: "80px",
+              bottom: "70px",
               left: "20px",
-              width: "340px",
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              width: "320px",
+              backgroundColor: "rgba(0, 0, 0, 0.75)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
               borderRadius: "20px",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
-              padding: "20px",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+              padding: "16px",
               zIndex: 100,
               maxHeight: "65vh",
               display: "flex",
               flexDirection: "column",
               animation: "slideUp 0.3s ease-out forwards",
-              border: "1px solid rgba(255,255,255,0.5)",
+              border: "1px solid rgba(255,255,255,0.15)",
             }}
           >
             <div
@@ -816,35 +1173,43 @@ const EcommerceLayout = (props) => {
                 justifyContent: "space-between",
                 alignItems: "center",
                 marginBottom: "15px",
-                borderBottom: "2px solid #f1f5f9",
+                borderBottom: "1px solid rgba(255,255,255,0.1)",
                 paddingBottom: "12px",
               }}
             >
               <h3
                 style={{
                   margin: 0,
-                  color: "#0f172a",
-                  fontSize: "18px",
-                  fontWeight: "800",
+                  color: "#ffffff",
+                  fontSize: "16px",
+                  fontWeight: "700",
+                  letterSpacing: "0.5px",
                 }}
               >
-                🛍️ Danh sách sản phẩm
+                🛍️ Cửa hàng
               </h3>
               <button
                 onClick={() => setShowProductPanel(false)}
                 style={{
-                  background: "#f1f5f9",
+                  background: "rgba(255,255,255,0.1)",
                   border: "none",
                   borderRadius: "50%",
-                  width: "30px",
-                  height: "30px",
+                  width: "28px",
+                  height: "28px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
-                  color: "#64748b",
+                  color: "#ffffff",
                   fontWeight: "bold",
+                  transition: "all 0.2s",
                 }}
+                onMouseOver={(e) =>
+                  (e.currentTarget.style.background = "rgba(255,255,255,0.2)")
+                }
+                onMouseOut={(e) =>
+                  (e.currentTarget.style.background = "rgba(255,255,255,0.1)")
+                }
               >
                 ✕
               </button>
@@ -895,129 +1260,106 @@ const EcommerceLayout = (props) => {
                   Chưa có sản phẩm nào
                 </div>
               ) : (
-                products.map((p) => (
-                  <div
-                    key={p.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "stretch",
-                      gap: "12px",
-                      padding: "10px",
-                      background: "#ffffff",
-                      borderRadius: "14px",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                      border: "1px solid #f8fafc",
-                      transition: "transform 0.2s",
-                      cursor: "pointer",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.transform = "scale(1.02)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.transform = "scale(1)")
-                    }
-                  >
-                    <div style={{ position: "relative" }}>
-                      <img
-                        src={
-                          p.image_urls && p.image_urls.length > 0
-                            ? p.image_urls[0]
-                            : "https://via.placeholder.com/100"
-                        }
-                        alt={p.name}
-                        style={{
-                          width: "70px",
-                          height: "70px",
-                          borderRadius: "10px",
-                          objectFit: "cover",
-                          boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-                        }}
-                      />
-                    </div>
+                products.map((p) => {
+                  const isPinned = pinnedProduct?.id === p.id;
+                  return (
                     <div
+                      key={p.id}
                       style={{
-                        flex: 1,
                         display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-between",
+                        gap: "12px",
+                        padding: "10px",
+                        background: isPinned
+                          ? "rgba(255, 107, 53, 0.15)"
+                          : "rgba(255,255,255,0.05)",
+                        borderRadius: "12px",
+                        border: isPinned
+                          ? "1px solid rgba(255, 107, 53, 0.5)"
+                          : "1px solid rgba(255,255,255,0.05)",
+                        alignItems: "center",
+                        transition: "all 0.2s",
                       }}
                     >
-                      <div
+                      <img
+                        src={
+                          p.image_urls?.[0] || "https://via.placeholder.com/60"
+                        }
                         style={{
-                          fontWeight: "700",
-                          fontSize: "14px",
-                          color: "#1e293b",
-                          lineHeight: "1.3",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
+                          width: "60px",
+                          height: "60px",
+                          objectFit: "cover",
+                          borderRadius: "8px",
                         }}
-                      >
-                        {p.name}
-                      </div>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-end",
-                        }}
-                      >
+                        alt=""
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div
                           style={{
-                            color: "#ef4444",
-                            fontWeight: "900",
-                            fontSize: "15px",
+                            fontWeight: "600",
+                            fontSize: "13px",
+                            color: "#ffffff",
+                            marginBottom: "4px",
+                            lineHeight: "1.3",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                           }}
                         >
-                          {p.selling_price
-                            ? new Intl.NumberFormat("vi-VN").format(
-                                p.selling_price,
-                              )
-                            : 0}
-                          đ
+                          {p.name}
                         </div>
-                        {isHost ? (
-                          <button
-                            onClick={() => handlePinProduct(p)}
-                            style={{
-                              padding: "6px 14px",
-                              background:
-                                "linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)",
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: "20px",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: "bold",
-                              boxShadow: "0 2px 5px rgba(14, 165, 233, 0.4)",
-                            }}
-                          >
-                            📌 Ghim
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => triggerPiPAndNavigate(p)}
-                            style={{
-                              padding: "6px 14px",
-                              background:
-                                "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: "20px",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              fontWeight: "bold",
-                              boxShadow: "0 2px 5px rgba(249, 115, 22, 0.4)",
-                            }}
-                          >
-                            Mua ngay
-                          </button>
-                        )}
+                        <div
+                          style={{
+                            color: "#FF6B35",
+                            fontWeight: "bold",
+                            fontSize: "14px",
+                          }}
+                        >
+                          {Number(p.selling_price).toLocaleString("vi-VN")}đ
+                        </div>
                       </div>
+                      {isHost ? (
+                        <button
+                          onClick={() => handlePinProduct(p)}
+                          disabled={isPinned}
+                          style={{
+                            background: isPinned
+                              ? "rgba(255,255,255,0.1)"
+                              : "linear-gradient(90deg, #ff6b35 0%, #ff8e53 100%)",
+                            color: isPinned ? "#94a3b8" : "white",
+                            border: "none",
+                            padding: "6px 12px",
+                            borderRadius: "16px",
+                            cursor: isPinned ? "not-allowed" : "pointer",
+                            fontSize: "11px",
+                            fontWeight: "bold",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {isPinned ? "Đã ghim" : "📌 Ghim"}
+                        </button>
+                      ) : (
+                        <a
+                          href={getProductLink(p)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            background:
+                              "linear-gradient(90deg, #ff6b35 0%, #ff8e53 100%)",
+                            color: "white",
+                            textDecoration: "none",
+                            padding: "6px 12px",
+                            borderRadius: "16px",
+                            fontSize: "11px",
+                            fontWeight: "bold",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Mua ngay
+                        </a>
+                      )}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
