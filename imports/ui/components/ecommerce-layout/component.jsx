@@ -1300,7 +1300,7 @@ const EcommerceLayout = (props) => {
             className="ecommerce-custom-controls"
             style={{
               position: "absolute",
-              bottom: "20px",
+              bottom: "40px",
               right: "20px",
               display: "flex",
               gap: "8px",

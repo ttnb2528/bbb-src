@@ -440,6 +440,10 @@ class App extends Component {
       (typeof window !== "undefined" &&
         window.location.href.includes("ecommerce=true"));
 
+    if (typeof window !== "undefined") {
+      window.isEcommerceLive = isEcommerceMode;
+    }
+
     return (
       <>
         <ScreenReaderAlertAdapter />

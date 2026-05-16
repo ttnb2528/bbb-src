@@ -77,9 +77,9 @@ const EcommerceChat = ({ isMobile, isHost }) => {
     <div
       style={{
         position: "absolute",
-        bottom: isMobile ? "10px" : isHost ? "20px" : "-80px",
+        bottom: isMobile ? "10px" : "40px",
         left: isMobile ? "10px" : "auto", // Cho phép tin nhắn trải full từ mép trái
-        right: isMobile ? "10px" : "80px", // Cho phép tin nhắn trải full đến mép phải
+        right: isMobile ? "10px" : isHost ? "200px" : "80px", // Tránh đè lên 3 nút của Host (Mic, Cam, Leave)
         width: isMobile ? "auto" : "340px",
         height: isMobile ? "220px" : "45%",
         zIndex: 10,

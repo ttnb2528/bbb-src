@@ -90,7 +90,7 @@ const AudioModalContainer = (props) => {
   const { enabled: LOCAL_ECHO_TEST_ENABLED } =
     window.meetingClientSettings.public.media.localEchoTest;
 
-  const isEcommerceLive = window.location.pathname.includes("/live/");
+  const isEcommerceLive = window.isEcommerceLive;
   const forceListenOnlyAttendee =
     (forceListenOnly || isEcommerceLive) && !isModerator;
   const reactiveInputDeviceId = useReactiveVar(

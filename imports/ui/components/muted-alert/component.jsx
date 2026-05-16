@@ -1,12 +1,12 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import hark from 'hark';
-import Icon from '/imports/ui/components/common/icon/component';
-import Styled from './styles';
-import { defineMessages, injectIntl } from 'react-intl';
-import { notify } from '/imports/ui/services/notification';
-import TooltipContainer from '/imports/ui/components/common/tooltip/container';
-import { isMobile } from '/imports/utils/deviceInfo';
+import React, { Component } from "react";
+import PropTypes from "prop-types";
+import hark from "hark";
+import Icon from "/imports/ui/components/common/icon/component";
+import Styled from "./styles";
+import { defineMessages, injectIntl } from "react-intl";
+import { notify } from "/imports/ui/services/notification";
+import TooltipContainer from "/imports/ui/components/common/tooltip/container";
+import { isMobile } from "/imports/utils/deviceInfo";
 
 const propTypes = {
   inputStream: PropTypes.objectOf(PropTypes.any).isRequired,
@@ -17,20 +17,20 @@ const propTypes = {
 
 const intlMessages = defineMessages({
   disableMessage: {
-    id: 'app.muteWarning.disableMessage',
-    description: 'Message used when mute alerts has been disabled',
+    id: "app.muteWarning.disableMessage",
+    description: "Message used when mute alerts has been disabled",
   },
   tooltip: {
-    id: 'app.muteWarning.tooltip',
-    description: 'Tooltip message',
+    id: "app.muteWarning.tooltip",
+    description: "Tooltip message",
   },
   warningLabel: {
-    id: 'app.muteWarning.label',
-    description: 'Warning when someone speaks while muted',
+    id: "app.muteWarning.label",
+    description: "Warning when someone speaks while muted",
   },
   unmuteAudio: {
-    id: 'app.actionsBar.unmuteLabel',
-    description: 'Unmute audio button label',
+    id: "app.actionsBar.unmuteLabel",
+    description: "Unmute audio button label",
   },
 });
 
@@ -52,7 +52,8 @@ class MutedAlert extends Component {
   }
 
   componentDidMount() {
-    const MUTE_ALERT_CONFIG = window.meetingClientSettings.public.app.mutedAlert;
+    const MUTE_ALERT_CONFIG =
+      window.meetingClientSettings.public.app.mutedAlert;
 
     this._isMounted = true;
 
@@ -62,15 +63,16 @@ class MutedAlert extends Component {
     if (this.inputStream) {
       const { interval, threshold, duration } = MUTE_ALERT_CONFIG;
       this.speechEvents = hark(this.inputStream, { interval, threshold });
-      this.speechEvents.on('speaking', () => {
+      this.speechEvents.on("speaking", () => {
         this.resetTimer();
         if (this._isMounted) this.setState({ visible: true });
       });
-      this.speechEvents.on('stopped_speaking', () => {
+      this.speechEvents.on("stopped_speaking", () => {
         if (this._isMounted) {
-          this.timer = setTimeout(() => this.setState(
-            { visible: false },
-          ), duration);
+          this.timer = setTimeout(
+            () => this.setState({ visible: false }),
+            duration,
+          );
         }
       });
     }
@@ -102,7 +104,9 @@ class MutedAlert extends Component {
   /* eslint-disable no-param-reassign */
   enableInputStreamAudioTracks() {
     if (!this.inputStream) return;
-    this.inputStream.getAudioTracks().forEach((t) => { t.enabled = true; });
+    this.inputStream.getAudioTracks().forEach((t) => {
+      t.enabled = true;
+    });
   }
   /* eslint-enable no-param-reassign */
 
@@ -114,10 +118,12 @@ class MutedAlert extends Component {
   hasValidInputStream() {
     const { inputStream } = this.props;
 
-    if (inputStream
-      && (typeof inputStream.getAudioTracks === 'function')
-      && (inputStream.getAudioTracks().length > 0)
-    ) return true;
+    if (
+      inputStream &&
+      typeof inputStream.getAudioTracks === "function" &&
+      inputStream.getAudioTracks().length > 0
+    )
+      return true;
 
     return false;
   }
@@ -128,16 +134,15 @@ class MutedAlert extends Component {
     this.setState({ visible: false });
     this.speechEvents.stop();
 
-    notify(intl.formatMessage(intlMessages.disableMessage), 'info', 'mute');
+    notify(intl.formatMessage(intlMessages.disableMessage), "info", "mute");
   }
 
   render() {
-    const {
-      muted, intl,
-    } = this.props;
+    const { muted, intl } = this.props;
     const { visible } = this.state;
+    const isEcommerceLive = window.isEcommerceLive;
 
-    return visible && muted ? (
+    return visible && muted && !isEcommerceLive ? (
       <TooltipContainer
         title={intl.formatMessage(intlMessages.tooltip)}
         position="top"
@@ -147,7 +152,16 @@ class MutedAlert extends Component {
           $mobile={isMobile}
         >
           <span>
-            {intl.formatMessage(intlMessages.warningLabel, { unmuteIcon: <><span class="sr-only">{intl.formatMessage(intlMessages.unmuteAudio)}</span><Icon iconName="mute" aria-hidden="true" /></> })}
+            {intl.formatMessage(intlMessages.warningLabel, {
+              unmuteIcon: (
+                <>
+                  <span class="sr-only">
+                    {intl.formatMessage(intlMessages.unmuteAudio)}
+                  </span>
+                  <Icon iconName="mute" aria-hidden="true" />
+                </>
+              ),
+            })}
           </span>
         </Styled.MuteWarning>
       </TooltipContainer>
