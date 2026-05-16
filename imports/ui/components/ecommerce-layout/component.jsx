@@ -4,7 +4,7 @@ import Styled from "../app/styles";
 import WebcamContainer from "../webcam/component";
 import AudioContainer from "../audio/container";
 import ChatAlertContainerGraphql from "../chat/chat-graphql/alert/component";
-import FloatingChatContainer from "../chat/floating-chat/container";
+import EcommerceChat from "./ecommerce-chat";
 import ActionsBarContainer from "../actions-bar/container";
 import NotificationsBarContainer from "../notifications-bar/container";
 import ToastContainer from "/imports/ui/components/common/toast/container";
@@ -54,6 +54,17 @@ const EcommerceLayout = (props) => {
   const [shopInfo, setShopInfo] = useState(null);
   const [isCameraActive, setIsCameraActive] = useState(true); // Mặc định true để không chớp giật lúc load
   const [hasCameraEverStarted, setHasCameraEverStarted] = useState(false); // Theo dõi xem live đã từng bật chưa
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false,
+  );
+  const [showMobileHostSettings, setShowMobileHostSettings] = useState(false);
+
+  // Resize listener cho mobile
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Dùng useEffect và Interval để "soi" xem thẻ video có thực sự đang chạy (live) hay không
   useEffect(() => {
@@ -522,12 +533,19 @@ const EcommerceLayout = (props) => {
     <>
       <Styled.Layout
         id="ecommerce-layout"
+        onDoubleClick={isMobile ? handleLike : undefined}
         style={{
           width: "100%",
           height: "100%",
           backgroundColor: "#000", // Nền đen cho video
-          position: "relative",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
           overflow: "hidden",
+          touchAction: "manipulation",
+          zIndex: 1,
         }}
         className="ecommerce-mode"
       >
@@ -538,6 +556,11 @@ const EcommerceLayout = (props) => {
             __html: `
           .ecommerce-mode {
             background: radial-gradient(circle at 50% 50%, #1e1b4b, #000000) !important;
+          }
+          html, body, #app, #content, [class*="layout"] {
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+            scroll-behavior: auto !important;
           }
           
           /* Tuyệt chiêu ép Video tràn viền tuyệt đối mà không làm hỏng thẻ div */
@@ -631,20 +654,22 @@ const EcommerceLayout = (props) => {
           <div
             style={{
               position: "absolute",
-              top: "20px",
-              left: "20px",
+              top: isMobile ? "10px" : "20px",
+              left: isMobile ? "10px" : "20px",
               display: "flex",
               alignItems: "center",
-              background: "rgba(0,0,0,0.45)",
+              background:
+                "linear-gradient(135deg, rgba(20,20,20,0.85) 0%, rgba(0,0,0,0.9) 100%)",
               backdropFilter: "blur(12px)",
               WebkitBackdropFilter: "blur(12px)",
               borderRadius: "40px",
-              padding: "4px 16px 4px 4px",
-              gap: "10px",
+              padding: isMobile ? "4px 16px 4px 8px" : "8px 20px 8px 12px",
+              gap: isMobile ? "6px" : "10px",
               zIndex: 100,
-              border: "1px solid rgba(255,255,255,0.15)",
-              boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
               animation: "slideInDown 0.5s ease-out forwards",
+              maxWidth: "calc(100vw - 60px)",
             }}
           >
             <style>
@@ -662,8 +687,8 @@ const EcommerceLayout = (props) => {
             </style>
             <div
               style={{
-                width: "38px",
-                height: "38px",
+                width: isMobile ? "28px" : "38px",
+                height: isMobile ? "28px" : "38px",
                 borderRadius: "50%",
                 background: "linear-gradient(135deg, #FF6B35, #ff2a00)",
                 display: "flex",
@@ -671,7 +696,7 @@ const EcommerceLayout = (props) => {
                 justifyContent: "center",
                 color: "white",
                 fontWeight: "bold",
-                fontSize: "18px",
+                fontSize: isMobile ? "14px" : "18px",
                 boxShadow: "0 2px 8px rgba(255,107,53,0.5)",
                 border: "1px solid rgba(255,255,255,0.4)",
               }}
@@ -719,9 +744,9 @@ const EcommerceLayout = (props) => {
                 style={{
                   color: "white",
                   fontWeight: "700",
-                  fontSize: "13px",
+                  fontSize: isMobile ? "11px" : "13px",
                   lineHeight: "1.2",
-                  maxWidth: "140px",
+                  maxWidth: isMobile ? "80px" : "140px",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -762,6 +787,7 @@ const EcommerceLayout = (props) => {
                   LIVE
                 </span>
                 <span
+                  key={likeCount}
                   style={{
                     color: "rgba(255,255,255,0.8)",
                     fontSize: "11px",
@@ -769,22 +795,32 @@ const EcommerceLayout = (props) => {
                     alignItems: "center",
                     gap: "4px",
                     fontWeight: "bold",
+                    animation:
+                      likeCount > 0 ? "popHeart 0.3s ease-out" : "none",
                   }}
                 >
+                  <style>
+                    {`
+                      @keyframes popHeart {
+                        0% { transform: scale(1); }
+                        50% { transform: scale(1.4); }
+                        100% { transform: scale(1); }
+                      }
+                    `}
+                  </style>
                   <svg
                     viewBox="0 0 24 24"
                     width="12"
                     height="12"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                    fill="#ff2a00"
                   >
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                   </svg>
-                  {Math.max(0, actualParticipantCount - 1)}
+                  {likeCount >= 1000000
+                    ? (likeCount / 1000000).toFixed(1) + "m"
+                    : likeCount >= 1000
+                      ? (likeCount / 1000).toFixed(1) + "k"
+                      : likeCount}
                 </span>
               </div>
             </div>
@@ -793,7 +829,7 @@ const EcommerceLayout = (props) => {
               <button
                 onClick={handleFollow}
                 style={{
-                  marginLeft: "6px",
+                  marginLeft: "2px",
                   background: isFollowing
                     ? "rgba(255,255,255,0.2)"
                     : "linear-gradient(90deg, #ff1e00, #ff5722)",
@@ -802,8 +838,8 @@ const EcommerceLayout = (props) => {
                     ? "1px solid rgba(255,255,255,0.3)"
                     : "none",
                   borderRadius: "20px",
-                  padding: "6px 14px",
-                  fontSize: "11px",
+                  padding: isMobile ? "4px 8px" : "6px 14px",
+                  fontSize: isMobile ? "10px" : "11px",
                   fontWeight: "bold",
                   cursor: isFollowing ? "default" : "pointer",
                   boxShadow: isFollowing
@@ -820,7 +856,11 @@ const EcommerceLayout = (props) => {
                     e.currentTarget.style.transform = "scale(1)";
                 }}
               >
-                {isFollowing ? "Đã theo dõi" : "+ Theo dõi"}
+                {isFollowing
+                  ? "Đã theo dõi"
+                  : isMobile
+                    ? "Follow"
+                    : "+ Theo dõi"}
               </button>
             )}
           </div>
@@ -840,8 +880,20 @@ const EcommerceLayout = (props) => {
             height: "100vh",
             zIndex: 1,
             overflow: "hidden",
+            backgroundColor: "#000",
           }}
         >
+          {isMobile && (
+            <style>
+              {`
+                .ecommerce-video-wrapper video {
+                  object-fit: cover !important;
+                  width: 100% !important;
+                  height: 100% !important;
+                }
+              `}
+            </style>
+          )}
           <WebcamContainer />
         </div>
 
@@ -967,29 +1019,34 @@ const EcommerceLayout = (props) => {
           </div>
         )}
 
-        {/* --- OVERLAY SẢN PHẨM ĐANG GHIM (Góc trên bên trái, dưới Profile Host) --- */}
+        {/* --- OVERLAY SẢN PHẨM ĐANG GHIM --- */}
         {pinnedProduct && (
           <div
             style={{
               position: "absolute",
-              top: "80px",
-              left: "20px",
-              background:
-                "linear-gradient(145deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.98) 100%)",
+              bottom: isMobile ? "70px" : "auto",
+              top: isMobile ? "auto" : "80px",
+              left: "10px",
+              background: isMobile
+                ? "rgba(255, 255, 255, 0.95)"
+                : "linear-gradient(145deg, rgba(30,30,30,0.95) 0%, rgba(15,15,15,0.98) 100%)",
               backdropFilter: "blur(16px)",
               WebkitBackdropFilter: "blur(16px)",
-              padding: "10px",
-              borderRadius: "16px",
-              boxShadow:
-                "0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(255, 107, 53, 0.15)",
+              padding: isMobile ? "8px" : "10px",
+              borderRadius: isMobile ? "8px" : "16px",
+              boxShadow: isMobile
+                ? "0 4px 12px rgba(0,0,0,0.15)"
+                : "0 10px 30px rgba(0,0,0,0.5), 0 0 15px rgba(255, 107, 53, 0.15)",
               display: "flex",
-              gap: "12px",
+              gap: isMobile ? "8px" : "12px",
               alignItems: "center",
               zIndex: 100,
-              width: "300px",
-              border: "1px solid rgba(255, 107, 53, 0.3)",
+              width: isMobile ? "calc(100vw - 80px)" : "300px",
+              maxWidth: "300px",
+              border: isMobile ? "none" : "1px solid rgba(255, 107, 53, 0.3)",
               animation:
                 "slideInLeft 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards",
+              color: isMobile ? "#000" : "#fff",
             }}
           >
             <style>
@@ -1013,28 +1070,28 @@ const EcommerceLayout = (props) => {
                   "https://via.placeholder.com/60"
                 }
                 style={{
-                  width: "70px",
-                  height: "70px",
+                  width: isMobile ? "48px" : "70px",
+                  height: isMobile ? "48px" : "70px",
                   objectFit: "cover",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+                  borderRadius: isMobile ? "6px" : "12px",
+                  boxShadow: isMobile ? "none" : "0 4px 10px rgba(0,0,0,0.3)",
                 }}
                 alt=""
               />
               <div
                 style={{
                   position: "absolute",
-                  top: "-10px",
-                  left: "-10px",
+                  top: isMobile ? "-6px" : "-10px",
+                  left: isMobile ? "-6px" : "-10px",
                   background:
                     "linear-gradient(135deg, #FF1E00 0%, #FF5722 100%)",
                   color: "white",
-                  fontSize: "11px",
+                  fontSize: isMobile ? "9px" : "11px",
                   fontWeight: "900",
-                  padding: "4px 8px",
-                  borderRadius: "12px",
+                  padding: isMobile ? "2px 6px" : "4px 8px",
+                  borderRadius: isMobile ? "8px" : "12px",
                   animation: "pulseBadge 2s infinite",
-                  border: "2px solid #1A1A1A",
+                  border: isMobile ? "1px solid #fff" : "2px solid #1A1A1A",
                   boxShadow: "0 4px 10px rgba(255, 30, 0, 0.4)",
                   whiteSpace: "nowrap",
                 }}
@@ -1047,8 +1104,8 @@ const EcommerceLayout = (props) => {
               <div
                 style={{
                   fontWeight: "600",
-                  fontSize: "13px",
-                  color: "#ffffff",
+                  fontSize: isMobile ? "12px" : "13px",
+                  color: isMobile ? "#333" : "#ffffff",
                   marginBottom: "2px",
                   lineHeight: "1.3",
                   whiteSpace: "nowrap",
@@ -1060,40 +1117,90 @@ const EcommerceLayout = (props) => {
               </div>
               <div
                 style={{
-                  color: "#FF6B35",
+                  color: "#FF1E00",
                   fontWeight: "bold",
-                  fontSize: "14px",
-                  marginBottom: "6px",
+                  fontSize: isMobile ? "13px" : "14px",
+                  marginBottom: isMobile ? "0" : "6px",
                 }}
               >
                 {Number(pinnedProduct.selling_price).toLocaleString("vi-VN")}đ
               </div>
 
-              {isHost ? (
+              {/* Nút tác vụ PC */}
+              {!isMobile &&
+                (isHost ? (
+                  <button
+                    onClick={handleUnpinProduct}
+                    style={{
+                      width: "100%",
+                      background: "rgba(255,255,255,0.15)",
+                      color: "#ffffff",
+                      border: "none",
+                      padding: "6px 0",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) =>
+                      (e.currentTarget.style.background =
+                        "rgba(255,255,255,0.25)")
+                    }
+                    onMouseOut={(e) =>
+                      (e.currentTarget.style.background =
+                        "rgba(255,255,255,0.15)")
+                    }
+                  >
+                    Bỏ Ghim
+                  </button>
+                ) : (
+                  <a
+                    href={getProductLink(pinnedProduct)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "block",
+                      textAlign: "center",
+                      textDecoration: "none",
+                      boxSizing: "border-box",
+                      width: "100%",
+                      background:
+                        "linear-gradient(135deg, #FF6B35 0%, #ff2a00 100%)",
+                      color: "white",
+                      border: "none",
+                      padding: "6px 0",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      boxShadow: "0 4px 12px rgba(255,107,53,0.3)",
+                      transition: "transform 0.2s",
+                    }}
+                  >
+                    MUA NGAY
+                  </a>
+                ))}
+            </div>
+
+            {/* Nút tác vụ Mobile (Nằm ngang) */}
+            {isMobile &&
+              (isHost ? (
                 <button
                   onClick={handleUnpinProduct}
                   style={{
-                    width: "100%",
-                    background: "rgba(255,255,255,0.15)",
-                    color: "#ffffff",
+                    background: "#f1f5f9",
+                    color: "#64748b",
                     border: "none",
-                    padding: "6px 0",
-                    borderRadius: "8px",
+                    padding: "6px 10px",
+                    borderRadius: "6px",
                     cursor: "pointer",
-                    fontSize: "12px",
-                    fontWeight: "700",
-                    transition: "all 0.2s",
+                    fontSize: "11px",
+                    fontWeight: "bold",
+                    flexShrink: 0,
                   }}
-                  onMouseOver={(e) =>
-                    (e.currentTarget.style.background =
-                      "rgba(255,255,255,0.25)")
-                  }
-                  onMouseOut={(e) =>
-                    (e.currentTarget.style.background =
-                      "rgba(255,255,255,0.15)")
-                  }
                 >
-                  Bỏ Ghim
+                  Bỏ ghim
                 </button>
               ) : (
                 <a
@@ -1102,51 +1209,25 @@ const EcommerceLayout = (props) => {
                   rel="noopener noreferrer"
                   style={{
                     display: "block",
-                    textAlign: "center",
                     textDecoration: "none",
-                    boxSizing: "border-box",
-                    width: "100%",
-                    background:
-                      "linear-gradient(135deg, #FF6B35 0%, #ff2a00 100%)",
+                    background: "#ff1e00",
                     color: "white",
-                    border: "none",
-                    padding: "6px 0",
-                    borderRadius: "8px",
-                    cursor: "pointer",
+                    padding: "6px 14px",
+                    borderRadius: "20px",
                     fontSize: "12px",
-                    fontWeight: "700",
-                    boxShadow: "0 4px 12px rgba(255,107,53,0.3)",
-                    transition: "transform 0.2s",
+                    fontWeight: "bold",
+                    flexShrink: 0,
+                    boxShadow: "0 2px 5px rgba(255,30,0,0.3)",
                   }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = "scale(1.02)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = "scale(1)")
-                  }
                 >
-                  MUA NGAY
+                  Mua
                 </a>
-              )}
-            </div>
+              ))}
           </div>
         )}
 
-        {/* Khung Chat nổi lên trên video */}
-        <div
-          className="ecommerce-chat-overlay"
-          style={{
-            position: "absolute",
-            bottom: isHost ? "20px" : "-80px", // Chỉnh Chat sát đáy nếu là Viewer, nâng lên nếu là Host
-            right: "80px", // Đưa Chat sang PHẢI, nằm KẾ BÊN thanh công cụ (Action bar)
-            width: "340px",
-            height: "45%",
-            zIndex: 10,
-            pointerEvents: "auto",
-          }}
-        >
-          <FloatingChatContainer />
-        </div>
+        {/* Khung Chat dành riêng cho Live Commerce */}
+        <EcommerceChat isMobile={isMobile} isHost={isHost} />
 
         {/* Widget Sản phẩm sẽ được thêm vào đây sau */}
         <div id="ecommerce-product-widget-slot"></div>
@@ -1166,68 +1247,246 @@ const EcommerceLayout = (props) => {
         )}
         <ChatAlertContainerGraphql />
 
-        {/* Nút Giỏ Hàng Floating */}
+        {/* Nút Giỏ Hàng (Mở ds sản phẩm) */}
         <button
           onClick={() => setShowProductPanel(!showProductPanel)}
           style={{
             position: "absolute",
-            bottom: "20px",
-            left: "20px", // Đưa Giỏ Hàng sang BÊN TRÁI
-            padding: "12px 24px",
-            background: "linear-gradient(135deg, #FF6B35 0%, #F97316 100%)",
+            bottom: isMobile ? "10px" : "20px",
+            left: isMobile ? "10px" : "20px",
+            background: "linear-gradient(135deg, #FF6B35 0%, #ff2a00 100%)",
             color: "#fff",
             border: "none",
-            borderRadius: "30px",
+            borderRadius: isMobile ? "50%" : "30px",
             cursor: "pointer",
             fontWeight: "bold",
             fontSize: "15px",
             boxShadow: "0 4px 15px rgba(255, 107, 53, 0.4)",
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
             gap: "8px",
             zIndex: 30,
             transition: "transform 0.2s ease",
+            width: isMobile ? "44px" : "auto",
+            height: isMobile ? "44px" : "auto",
+            padding: isMobile ? "0" : "12px 24px",
           }}
           onMouseEnter={(e) =>
             (e.currentTarget.style.transform = "scale(1.05)")
           }
           onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
-          Giỏ Hàng
+          <svg
+            width={isMobile ? "20" : "24"}
+            height={isMobile ? "20" : "24"}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          {!isMobile && "Giỏ Hàng"}
         </button>
 
-        {/* Thanh công cụ Custom (Mic, Cam, Kết thúc Live) thay thế ActionsBar */}
-        <div
-          className="ecommerce-custom-controls"
-          style={{
-            position: "absolute",
-            bottom: "20px",
-            right: "20px",
-            display: "flex",
-            gap: "12px",
-            zIndex: 40,
-            alignItems: "center",
-          }}
-        >
-          {isHost && (
-            <>
+        {/* Thanh công cụ Custom (Mic, Cam, Kết thúc Live) thay thế ActionsBar trên PC */}
+        {!isMobile && (
+          <div
+            className="ecommerce-custom-controls"
+            style={{
+              position: "absolute",
+              bottom: "20px",
+              right: "20px",
+              display: "flex",
+              gap: "8px",
+              zIndex: 40,
+              alignItems: "center",
+            }}
+          >
+            {isHost && (
+              <>
+                <AudioControlsContainer />
+                <JoinVideoOptionsContainer />
+              </>
+            )}
+            <LeaveMeetingButtonContainer />
+          </div>
+        )}
+
+        {/* Nút Leave cho Mobile (X ở góc trên phải) kèm Mắt Xem */}
+        {isMobile && (
+          <div
+            className="ecommerce-top-right-actions"
+            style={{
+              position: "absolute",
+              top: "10px",
+              right: "10px",
+              zIndex: 100,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <div
+              style={{
+                background: "rgba(0,0,0,0.5)",
+                backdropFilter: "blur(4px)",
+                borderRadius: "16px",
+                padding: "4px 10px",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                color: "white",
+                fontSize: "12px",
+                fontWeight: "bold",
+                border: "1px solid rgba(255,255,255,0.2)",
+              }}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              {Math.max(0, actualParticipantCount - 1)}
+            </div>
+
+            <div className="ecommerce-leave-mobile-wrapper">
+              <style>
+                {`
+                  .ecommerce-leave-mobile-wrapper button {
+                    background: rgba(0,0,0,0.5) !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                    color: transparent !important;
+                    position: relative;
+                    width: 32px !important;
+                    height: 32px !important;
+                    border-radius: 50% !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                  }
+                  .ecommerce-leave-mobile-wrapper button i,
+                  .ecommerce-leave-mobile-wrapper button svg,
+                  .ecommerce-leave-mobile-wrapper button span {
+                    display: none !important;
+                  }
+                  .ecommerce-leave-mobile-wrapper button::after {
+                    content: "✕";
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    color: white !important;
+                    font-size: 16px !important;
+                    font-weight: bold;
+                  }
+                `}
+              </style>
+              <LeaveMeetingButtonContainer />
+            </div>
+          </div>
+        )}
+
+        {/* Action Sheet (Settings) cho Host Mobile */}
+        {isMobile && isHost && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              width: "100%",
+              background: "rgba(28, 28, 30, 0.95)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              borderTopLeftRadius: "24px",
+              borderTopRightRadius: "24px",
+              padding: "20px 20px 40px 20px",
+              zIndex: 9999,
+              transition:
+                "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s, visibility 0.3s",
+              transform: showMobileHostSettings
+                ? "translateY(0) scale(1)"
+                : "translateY(20px) scale(0.95)",
+              opacity: showMobileHostSettings ? 1 : 0,
+              visibility: showMobileHostSettings ? "visible" : "hidden",
+              pointerEvents: showMobileHostSettings ? "auto" : "none",
+              display: "flex",
+              flexDirection: "column",
+              gap: "20px",
+              boxShadow: "0 -5px 20px rgba(0,0,0,0.5)",
+              boxSizing: "border-box",
+            }}
+          >
+            <div
+              style={{
+                textAlign: "center",
+                color: "white",
+                fontWeight: "bold",
+                fontSize: "16px",
+              }}
+            >
+              Cài đặt Live
+            </div>
+
+            <div
+              onClickCapture={(e) => {
+                if (document.activeElement) {
+                  document.activeElement.blur();
+                }
+                setTimeout(() => setShowMobileHostSettings(false), 200);
+              }}
+              style={{
+                display: "flex",
+                justifyContent: "space-around",
+                padding: "10px 0",
+              }}
+            >
               <AudioControlsContainer />
               <JoinVideoOptionsContainer />
-            </>
-          )}
-          <LeaveMeetingButtonContainer />
-        </div>
+            </div>
+
+            <button
+              onClick={() => setShowMobileHostSettings(false)}
+              style={{
+                background: "rgba(255,255,255,0.1)",
+                color: "white",
+                border: "none",
+                padding: "16px",
+                borderRadius: "14px",
+                fontWeight: "bold",
+                fontSize: "16px",
+                cursor: "pointer",
+              }}
+            >
+              Đóng
+            </button>
+          </div>
+        )}
 
         {/* KHU VỰC TRÁI DƯỚI (Danh sách thông báo + Giỏ hàng popup) */}
         <div
           style={{
             position: "absolute",
-            bottom: "80px",
-            left: "20px",
+            bottom: isMobile ? "70px" : "80px",
+            left: isMobile ? "10px" : "20px",
             display: "flex",
             flexDirection: "column-reverse",
             gap: "10px",
-            zIndex: 100,
+            zIndex: 9990, // Tăng z-index cực cao để đè lên nút Share/Settings
             pointerEvents: "none",
             alignItems: "flex-start",
           }}
@@ -1236,13 +1495,14 @@ const EcommerceLayout = (props) => {
           {showProductPanel && (
             <div
               style={{
-                width: "340px",
+                width: isMobile ? "calc(100vw - 20px)" : "340px",
+                maxWidth: "400px",
                 backgroundColor: "rgba(18, 18, 20, 0.9)",
                 backdropFilter: "blur(24px)",
                 WebkitBackdropFilter: "blur(24px)",
                 borderRadius: "24px",
                 boxShadow: "0 15px 50px rgba(0,0,0,0.6)",
-                padding: "20px",
+                padding: isMobile ? "12px" : "20px",
                 maxHeight: "400px",
                 display: "flex",
                 flexDirection: "column",
@@ -1287,7 +1547,7 @@ const EcommerceLayout = (props) => {
                   style={{
                     margin: 0,
                     color: "#ffffff",
-                    fontSize: "16px",
+                    fontSize: isMobile ? "14px" : "16px",
                     fontWeight: "700",
                     letterSpacing: "0.5px",
                   }}
@@ -1300,8 +1560,8 @@ const EcommerceLayout = (props) => {
                     background: "rgba(255,255,255,0.1)",
                     border: "none",
                     borderRadius: "50%",
-                    width: "28px",
-                    height: "28px",
+                    width: isMobile ? "24px" : "28px",
+                    height: isMobile ? "24px" : "28px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1550,12 +1810,12 @@ const EcommerceLayout = (props) => {
           </div>
         </div>
 
-        {/* 4. Thanh công cụ dọc (Like, Share) */}
+        {/* 4. Thanh công cụ dọc (Like, Share, Settings) */}
         <div
           style={{
             position: "absolute",
-            right: "20px",
-            bottom: isHost ? "140px" : "80px", // Nâng cao lên nếu là Host để chừa chỗ cho cụm Mic/Cam/Leave
+            right: isMobile ? "10px" : "20px",
+            bottom: isMobile ? "10px" : isHost ? "140px" : "80px", // Ép Share xuống ngang hàng Chat
             display: "flex",
             flexDirection: "column",
             gap: "20px",
@@ -1563,16 +1823,10 @@ const EcommerceLayout = (props) => {
             alignItems: "center",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "4px",
-            }}
-          >
+          {/* Nút Cài đặt (Mic/Cam) cho Host Mobile */}
+          {isMobile && isHost && (
             <button
-              onClick={handleLike}
+              onClick={() => setShowMobileHostSettings(true)}
               style={{
                 width: "44px",
                 height: "44px",
@@ -1581,47 +1835,17 @@ const EcommerceLayout = (props) => {
                 backdropFilter: "blur(8px)",
                 border: "1px solid rgba(255,255,255,0.2)",
                 color: "white",
-                fontSize: "20px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                zIndex: 100,
+                fontSize: "20px",
                 cursor: "pointer",
-                transition: "transform 0.1s",
               }}
-              onMouseDown={(e) =>
-                (e.currentTarget.style.transform = "scale(0.9)")
-              }
-              onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
             >
-              <svg
-                viewBox="0 0 24 24"
-                width="22"
-                height="22"
-                fill="#ff2a00"
-                stroke="#ff2a00"
-                strokeWidth="1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ filter: "drop-shadow(0 0 4px rgba(255,42,0,0.6))" }}
-              >
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-              </svg>
+              ⚙️
             </button>
-            {likeCount > 0 && (
-              <span
-                style={{
-                  color: "white",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-                }}
-              >
-                {likeCount >= 1000
-                  ? (likeCount / 1000).toFixed(1) + "k"
-                  : likeCount}
-              </span>
-            )}
-          </div>
+          )}
 
           <div
             style={{
@@ -1663,24 +1887,26 @@ const EcommerceLayout = (props) => {
                 <path d="M24 10.518l-12.87-9.518v5.865c-6.837.585-11.13 6.643-11.13 14.618 3.528-5.32 8.16-5.83 11.13-5.597v6.095l12.87-11.463z" />
               </svg>
             </button>
-            <span
-              style={{
-                color: "white",
-                fontSize: "12px",
-                fontWeight: "bold",
-                textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-              }}
-            >
-              Share
-            </span>
+            {!isMobile && (
+              <span
+                style={{
+                  color: "white",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+                }}
+              >
+                Share
+              </span>
+            )}
           </div>
         </div>
         {/* 5. Hiệu ứng bong bóng thả tim */}
         <div
           style={{
             position: "absolute",
-            right: "20px",
-            bottom: "180px",
+            right: isMobile ? "10px" : "20px",
+            bottom: isMobile ? "220px" : "180px",
             width: "60px",
             height: "300px",
             pointerEvents: "none",

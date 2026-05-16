@@ -1,30 +1,22 @@
-import React, {
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
-import PropTypes from 'prop-types';
-import {
-  defineMessages, injectIntl, FormattedMessage,
-} from 'react-intl';
-import { useMutation } from '@apollo/client';
-import Styled from './styles';
-import AudioSettings from '../audio-settings/component';
-import EchoTest from '../echo-test/component';
-import Help from '../help/component';
-import AudioDial from '../audio-dial/component';
-import AudioAutoplayPrompt from '../autoplay/component';
-import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
-import usePreviousValue from '/imports/ui/hooks/usePreviousValue';
-import { SET_AWAY } from '/imports/ui/components/user-list/user-list-content/user-participants/user-list-participants/user-actions/mutations';
-import VideoService from '/imports/ui/components/video-provider/service';
-import AudioCaptionsSelectContainer from '../audio-graphql/audio-captions/captions/component';
-import useToggleVoice from '/imports/ui/components/audio/audio-graphql/hooks/useToggleVoice';
-import {
-  muteAway,
-} from '/imports/ui/components/audio/audio-graphql/audio-controls/input-stream-live-selector/service';
-import Session from '/imports/ui/services/storage/in-memory';
-import logger from '/imports/startup/client/logger';
+import React, { useCallback, useEffect, useState } from "react";
+import PropTypes from "prop-types";
+import { defineMessages, injectIntl, FormattedMessage } from "react-intl";
+import { useMutation } from "@apollo/client";
+import Styled from "./styles";
+import AudioSettings from "../audio-settings/component";
+import EchoTest from "../echo-test/component";
+import Help from "../help/component";
+import AudioDial from "../audio-dial/component";
+import AudioAutoplayPrompt from "../autoplay/component";
+import { getSettingsSingletonInstance } from "/imports/ui/services/settings";
+import usePreviousValue from "/imports/ui/hooks/usePreviousValue";
+import { SET_AWAY } from "/imports/ui/components/user-list/user-list-content/user-participants/user-list-participants/user-actions/mutations";
+import VideoService from "/imports/ui/components/video-provider/service";
+import AudioCaptionsSelectContainer from "../audio-graphql/audio-captions/captions/component";
+import useToggleVoice from "/imports/ui/components/audio/audio-graphql/hooks/useToggleVoice";
+import { muteAway } from "/imports/ui/components/audio/audio-graphql/audio-controls/input-stream-live-selector/service";
+import Session from "/imports/ui/services/storage/in-memory";
+import logger from "/imports/startup/client/logger";
 
 const propTypes = {
   intl: PropTypes.shape({
@@ -92,76 +84,76 @@ const propTypes = {
 
 const intlMessages = defineMessages({
   microphoneLabel: {
-    id: 'app.audioModal.microphoneLabel',
-    description: 'Join mic audio button label',
+    id: "app.audioModal.microphoneLabel",
+    description: "Join mic audio button label",
   },
   listenOnlyLabel: {
-    id: 'app.audioModal.listenOnlyLabel',
-    description: 'Join listen only audio button label',
+    id: "app.audioModal.listenOnlyLabel",
+    description: "Join listen only audio button label",
   },
   listenOnlyDesc: {
-    id: 'app.audioModal.listenOnlyDesc',
-    description: 'Join listen only audio button description',
+    id: "app.audioModal.listenOnlyDesc",
+    description: "Join listen only audio button description",
   },
   microphoneDesc: {
-    id: 'app.audioModal.microphoneDesc',
-    description: 'Join mic audio button description',
+    id: "app.audioModal.microphoneDesc",
+    description: "Join mic audio button description",
   },
   closeLabel: {
-    id: 'app.audioModal.closeLabel',
-    description: 'close audio modal button label',
+    id: "app.audioModal.closeLabel",
+    description: "close audio modal button label",
   },
   audioChoiceLabel: {
-    id: 'app.audioModal.audioChoiceLabel',
-    description: 'Join audio modal title',
+    id: "app.audioModal.audioChoiceLabel",
+    description: "Join audio modal title",
   },
   iOSError: {
-    id: 'app.audioModal.iOSBrowser',
-    description: 'Audio/Video Not supported warning',
+    id: "app.audioModal.iOSBrowser",
+    description: "Audio/Video Not supported warning",
   },
   iOSErrorDescription: {
-    id: 'app.audioModal.iOSErrorDescription',
-    description: 'Audio/Video not supported description',
+    id: "app.audioModal.iOSErrorDescription",
+    description: "Audio/Video not supported description",
   },
   iOSErrorRecommendation: {
-    id: 'app.audioModal.iOSErrorRecommendation',
-    description: 'Audio/Video recommended action',
+    id: "app.audioModal.iOSErrorRecommendation",
+    description: "Audio/Video recommended action",
   },
   echoTestTitle: {
-    id: 'app.audioModal.echoTestTitle',
-    description: 'Title for the echo test',
+    id: "app.audioModal.echoTestTitle",
+    description: "Title for the echo test",
   },
   settingsTitle: {
-    id: 'app.audio.audioSettings.titleLabel',
-    description: 'Title for the audio modal',
+    id: "app.audio.audioSettings.titleLabel",
+    description: "Title for the audio modal",
   },
   helpTitle: {
-    id: 'app.audioModal.helpTitle',
-    description: 'Title for the audio help',
+    id: "app.audioModal.helpTitle",
+    description: "Title for the audio help",
   },
   audioDialTitle: {
-    id: 'app.audioModal.audioDialTitle',
-    description: 'Title for the audio dial',
+    id: "app.audioModal.audioDialTitle",
+    description: "Title for the audio dial",
   },
   connecting: {
-    id: 'app.audioModal.connecting',
-    description: 'Message for audio connecting',
+    id: "app.audioModal.connecting",
+    description: "Message for audio connecting",
   },
   retrying: {
-    id: 'app.audioModal.retrying',
-    description: 'Message for audio retrying',
+    id: "app.audioModal.retrying",
+    description: "Message for audio retrying",
   },
   ariaModalTitle: {
-    id: 'app.audioModal.ariaTitle',
-    description: 'aria label for modal title',
+    id: "app.audioModal.ariaTitle",
+    description: "aria label for modal title",
   },
   autoplayPromptTitle: {
-    id: 'app.audioModal.autoplayBlockedDesc',
-    description: 'Message for autoplay audio block',
+    id: "app.audioModal.autoplayBlockedDesc",
+    description: "Message for autoplay audio block",
   },
   findingDevicesTitle: {
-    id: 'app.audio.audioSettings.findingDevicesTitle',
-    description: 'Message for finding audio devices',
+    id: "app.audio.audioSettings.findingDevicesTitle",
+    description: "Message for finding audio devices",
   },
 });
 
@@ -240,15 +232,15 @@ const AudioModal = ({
     const { type, errCode, errMessage } = err;
 
     switch (type) {
-      case 'MEDIA_ERROR':
-        setContent('help');
+      case "MEDIA_ERROR":
+        setContent("help");
         setErrorInfo({
           errCode,
           errMessage,
         });
         setDisableActions(false);
         break;
-      case 'CONNECTION_ERROR':
+      case "CONNECTION_ERROR":
       default:
         setErrorInfo({
           errCode,
@@ -264,18 +256,18 @@ const AudioModal = ({
     //   - withEcho: true
     // Echo test will be local and done in the AudioSettings view instead of the
     // old E2E -> yes/no -> join view
-    setContent('settings');
+    setContent("settings");
   };
 
   const handleGoToEchoTest = () => {
     const { MIC_ERROR } = AudioError;
-    const noSSL = !window.location.protocol.includes('https');
+    const noSSL = !window.location.protocol.includes("https");
 
     if (noSSL) {
-      setContent('help');
+      setContent("help");
       setErrorInfo({
         errCode: MIC_ERROR.NO_SSL,
-        errMessage: 'NoSSL',
+        errMessage: "NoSSL",
       });
       return null;
     }
@@ -287,32 +279,37 @@ const AudioModal = ({
     setHasError(false);
     setDisableActions(true);
 
-    return joinEchoTest().then(() => {
-      setContent('echoTest');
-      setDisableActions(true);
-    }).catch((err) => {
-      handleJoinAudioError(err);
-    });
+    return joinEchoTest()
+      .then(() => {
+        setContent("echoTest");
+        setDisableActions(true);
+      })
+      .catch((err) => {
+        handleJoinAudioError(err);
+      });
   };
 
   const handleGUMFailure = (error) => {
     const { MIC_ERROR } = AudioError;
     let errCode;
 
-    logger.error({
-      logCode: 'audio_gum_failed',
-      extraInfo: {
-        errorMessage: error.message,
-        errorName: error.name,
+    logger.error(
+      {
+        logCode: "audio_gum_failed",
+        extraInfo: {
+          errorMessage: error.message,
+          errorName: error.name,
+        },
       },
-    }, `Audio gUM failed: ${error.name}`);
+      `Audio gUM failed: ${error.name}`,
+    );
 
     switch (error?.name) {
-      case 'NotAllowedError':
+      case "NotAllowedError":
         errCode = MIC_ERROR.NO_PERMISSION;
         break;
 
-      case 'NotFoundError':
+      case "NotFoundError":
         errCode = MIC_ERROR.DEVICE_NOT_FOUND;
         break;
 
@@ -321,12 +318,12 @@ const AudioModal = ({
         break;
     }
 
-    setContent('help');
+    setContent("help");
     setDisableActions(false);
     setHasError(true);
     setErrorInfo({
       errCode,
-      errMessage: error?.name || 'getUserMediaError',
+      errMessage: error?.name || "getUserMediaError",
     });
   };
 
@@ -341,10 +338,9 @@ const AudioModal = ({
           return hasPermission;
         }
 
-        handleGUMFailure(new DOMException(
-          'Permissions API says denied',
-          'NotAllowedError',
-        ));
+        handleGUMFailure(
+          new DOMException("Permissions API says denied", "NotAllowedError"),
+        );
 
         return false;
       })
@@ -364,7 +360,7 @@ const AudioModal = ({
 
   const handleGoToAudioSettings = () => {
     leaveEchoTest().then(() => {
-      setContent('settings');
+      setContent("settings");
     });
   };
 
@@ -395,12 +391,14 @@ const AudioModal = ({
     setHasError(false);
     setErrorInfo(null);
 
-    return joinListenOnly().then(() => {
-      setDisableActions(false);
-      disableAwayMode();
-    }).catch((err) => {
-      handleJoinAudioError(err);
-    });
+    return joinListenOnly()
+      .then(() => {
+        setDisableActions(false);
+        disableAwayMode();
+      })
+      .catch((err) => {
+        handleJoinAudioError(err);
+      });
   };
 
   const handleJoinMicrophone = () => {
@@ -410,78 +408,88 @@ const AudioModal = ({
     setDisableActions(true);
     setErrorInfo(null);
 
-    joinMicrophone().then(() => {
-      setDisableActions(false);
-    }).catch((err) => {
-      handleJoinAudioError(err);
-    });
+    joinMicrophone()
+      .then(() => {
+        setDisableActions(false);
+      })
+      .catch((err) => {
+        handleJoinAudioError(err);
+      });
   };
 
-  const handleAudioSettingsConfirmation = useCallback((inputStream) => {
-    // Reset the modal to a connecting state - this kind of sucks?
-    // prlanzarin Apr 04 2022
-    setContent(null);
-    
-    // If inputStream is provided, set it
-    if (inputStream) {
-      // Ensure stream is active and tracks are enabled before setting it
-      if (inputStream.active) {
-        inputStream.getAudioTracks().forEach((track) => {
-          if (track.readyState === 'live') {
-            track.enabled = true;
-          }
-        });
-      }
-      // Set the stream before joining to ensure it's available
-      changeInputStream(inputStream);
-    }
+  const handleAudioSettingsConfirmation = useCallback(
+    (inputStream) => {
+      // Reset the modal to a connecting state - this kind of sucks?
+      // prlanzarin Apr 04 2022
+      setContent(null);
 
-    if (!isConnected) {
-      // If no stream provided but we're not connected, we need to join
-      // This handles the case where user selected microphone but stream wasn't generated
-      if (!inputStream) {
-        // Stream will be generated in joinMicrophone if needed
-        logger.info({
-          logCode: 'audiomodal_confirm_no_stream',
-          extraInfo: { logType: 'user_action' },
-        }, 'Audio settings confirmed without stream, will generate in joinMicrophone');
+      // If inputStream is provided, set it
+      if (inputStream) {
+        // Ensure stream is active and tracks are enabled before setting it
+        if (inputStream.active) {
+          inputStream.getAudioTracks().forEach((track) => {
+            if (track.readyState === "live") {
+              track.enabled = true;
+            }
+          });
+        }
+        // Set the stream before joining to ensure it's available
+        changeInputStream(inputStream);
       }
-      // Ensure stream is set and then join
-      // The stream from echo test should be used in joinMicrophone
-      handleJoinMicrophone();
-      disableAwayMode();
-    } else {
-      // If already connected, the device change was handled by liveChangeInputDevice
-      // However, we need to ensure the stream is set and track is enabled
-      // This is especially important when switching from listen-only to microphone
-      if (inputStream && inputStream.active) {
-        // Ensure stream is set and tracks are enabled
-        // Add a small delay to ensure liveChangeInputDevice has completed
-        setTimeout(() => {
-          // Double-check that stream is still active and enable tracks
-          if (inputStream && inputStream.active) {
-            inputStream.getAudioTracks().forEach((track) => {
-              if (track.readyState === 'live') {
-                track.enabled = true;
-              }
-            });
-          }
-        }, 300);
+
+      if (!isConnected) {
+        // If no stream provided but we're not connected, we need to join
+        // This handles the case where user selected microphone but stream wasn't generated
+        if (!inputStream) {
+          // Stream will be generated in joinMicrophone if needed
+          logger.info(
+            {
+              logCode: "audiomodal_confirm_no_stream",
+              extraInfo: { logType: "user_action" },
+            },
+            "Audio settings confirmed without stream, will generate in joinMicrophone",
+          );
+        }
+        // Ensure stream is set and then join
+        // The stream from echo test should be used in joinMicrophone
+        handleJoinMicrophone();
+        disableAwayMode();
+      } else {
+        // If already connected, the device change was handled by liveChangeInputDevice
+        // However, we need to ensure the stream is set and track is enabled
+        // This is especially important when switching from listen-only to microphone
+        if (inputStream && inputStream.active) {
+          // Ensure stream is set and tracks are enabled
+          // Add a small delay to ensure liveChangeInputDevice has completed
+          setTimeout(() => {
+            // Double-check that stream is still active and enable tracks
+            if (inputStream && inputStream.active) {
+              inputStream.getAudioTracks().forEach((track) => {
+                if (track.readyState === "live") {
+                  track.enabled = true;
+                }
+              });
+            }
+          }, 300);
+        }
+        // Close the modal
+        closeModal();
       }
-      // Close the modal
-      closeModal();
-    }
-  }, [changeInputStream, isConnected, handleJoinMicrophone]);
+    },
+    [changeInputStream, isConnected, handleJoinMicrophone],
+  );
 
   const skipAudioOptions = useCallback(
     // eslint-disable-next-line max-len
-    () => !hasError && (isConnecting || (forceListenOnlyAttendee && !autoplayChecked)),
+    () =>
+      !hasError &&
+      (isConnecting || (forceListenOnlyAttendee && !autoplayChecked)),
     [hasError, isConnecting, forceListenOnlyAttendee, autoplayChecked],
   );
 
   const renderAudioOptions = () => {
     const hideMicrophone = forceListenOnlyAttendee || audioLocked;
-    const arrow = isRTL ? '←' : '→';
+    const arrow = isRTL ? "←" : "→";
     const dialAudioLabel = `${intl.formatMessage(intlMessages.audioDialTitle)} ${arrow}`;
 
     return (
@@ -531,7 +539,7 @@ const AudioModal = ({
             size="md"
             color="secondary"
             onClick={() => {
-              setContent('audioDial');
+              setContent("audioDial");
             }}
           />
         ) : null}
@@ -551,9 +559,7 @@ const AudioModal = ({
     // If audio is active, audio options are flagged to be skipped (see skipAudioOptions)
     // or listen only mode is deactivated (which means there are no actual options
     // in the base modal), clicking back on any of the sub-modals should close the base modal
-    if (isConnecting
-      || isConnected
-      || skipAudioOptions()) {
+    if (isConnecting || isConnected || skipAudioOptions()) {
       closeModal();
     } else {
       handleGoToAudioOptions();
@@ -636,9 +642,7 @@ const AudioModal = ({
   );
 
   const renderAutoplayOverlay = () => (
-    <AudioAutoplayPrompt
-      handleAllowAutoplay={handleAllowAutoplay}
-    />
+    <AudioAutoplayPrompt handleAllowAutoplay={handleAllowAutoplay} />
   );
 
   const contents = {
@@ -682,7 +686,11 @@ const AudioModal = ({
       if (skipAudioOptions()) {
         return (
           <Styled.Connecting role="alert">
-            <span data-test={!isEchoTest ? 'establishingAudioLabel' : 'connectingToEchoTest'}>
+            <span
+              data-test={
+                !isEchoTest ? "establishingAudioLabel" : "connectingToEchoTest"
+              }
+            >
               {intl.formatMessage(intlMessages.connecting)}
             </span>
             {isReconnecting && (
@@ -706,19 +714,28 @@ const AudioModal = ({
       // - forceListenOnlyAttendee/audioLocked: will hide microphone button
       // - listenOnlyMode: will show/hide listen only button
       // - joinFullAudioImmediately: will determine if echo test is skipped
+      const isEcommerceLive = window.location.pathname.includes("/live/");
+
+      if (isEcommerceLive && forceListenOnlyAttendee && !initialJoinExecuted) {
+        setInitialJoinExecuted(true);
+        handleJoinListenOnly();
+        return;
+      }
+
       if (!listenOnlyMode && joinFullAudioImmediately && !initialJoinExecuted) {
         // Only auto-join if explicitly configured to do so
         // Otherwise, show the audio options modal for user to choose
         setInitialJoinExecuted(true);
-        checkMicrophonePermission({ doGUM: true, permissionStatus })
-          .then((hasPermission) => {
+        checkMicrophonePermission({ doGUM: true, permissionStatus }).then(
+          (hasPermission) => {
             // No permission - let the Help screen be shown as it's triggered
             // by the checkMicrophonePermission function
             if (hasPermission === false) return;
 
             // Permission is granted or undetermined, so we can proceed
             handleJoinMicrophone();
-          });
+          },
+        );
       }
       // Modal will show audio options for user to choose
       // If forceListenOnlyAttendee or audioLocked, microphone button will be hidden
@@ -735,29 +752,30 @@ const AudioModal = ({
 
   useEffect(() => {
     if (autoplayBlocked) {
-      setContent('autoplayBlocked');
+      setContent("autoplayBlocked");
     } else if (prevAutoplayBlocked) {
       closeModal();
     }
   }, [autoplayBlocked]);
 
-  useEffect(() => () => {
-    if (isEchoTest) {
-      exitAudio();
-    }
-    if (resolve) resolve();
-    Session.setItem('audioModalIsOpen', false);
-  }, []);
+  useEffect(
+    () => () => {
+      if (isEchoTest) {
+        exitAudio();
+      }
+      if (resolve) resolve();
+      Session.setItem("audioModalIsOpen", false);
+    },
+    [],
+  );
 
   let title = content
     ? intl.formatMessage(contents[content].title)
     : intl.formatMessage(intlMessages.audioChoiceLabel);
-  title = (!skipAudioOptions() && !findingDevices) || content
-    ? title
-    : null;
+  title = (!skipAudioOptions() && !findingDevices) || content ? title : null;
 
   return (
-    <Styled.Background isBlurred={Session.getItem('audioModalIsOpen')}>
+    <Styled.Background isBlurred={Session.getItem("audioModalIsOpen")}>
       <Styled.AudioModal
         modalName="AUDIO"
         onRequestClose={closeModal}
@@ -777,15 +795,15 @@ const AudioModal = ({
               id="app.audioModal.unsupportedBrowserLabel"
               description="Warning when someone joins with a browser that isn't supported"
               values={{
-                supportedBrowser1: <a href="https://www.google.com/chrome/">Chrome</a>,
+                supportedBrowser1: (
+                  <a href="https://www.google.com/chrome/">Chrome</a>
+                ),
                 supportedBrowser2: <a href="https://getfirefox.com">Firefox</a>,
               }}
             />
           </Styled.BrowserWarning>
         ) : null}
-        <Styled.Content>
-          {renderContent()}
-        </Styled.Content>
+        <Styled.Content>{renderContent()}</Styled.Content>
       </Styled.AudioModal>
     </Styled.Background>
   );
