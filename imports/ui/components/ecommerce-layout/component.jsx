@@ -54,16 +54,35 @@ const EcommerceLayout = (props) => {
   const [shopInfo, setShopInfo] = useState(null);
   const [isCameraActive, setIsCameraActive] = useState(true); // Mặc định true để không chớp giật lúc load
   const [hasCameraEverStarted, setHasCameraEverStarted] = useState(false); // Theo dõi xem live đã từng bật chưa
-  const [isMobile, setIsMobile] = useState(
-    typeof window !== "undefined" ? window.innerWidth <= 768 : false,
+  const [isRealDesktop, setIsRealDesktop] = useState(
+    typeof window !== "undefined" ? window.innerWidth > 768 : false,
   );
   const [showMobileHostSettings, setShowMobileHostSettings] = useState(false);
 
-  // Resize listener cho mobile
+  // FORCE MOBILE LAYOUT FOR UNIFIED UI (TikTok Style)
+  const isMobile = true;
+
+  // Resize listener
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    const handleResize = () => setIsRealDesktop(window.innerWidth > 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Chặn tự động xoay màn hình trên thiết bị di động
+  useEffect(() => {
+    if (
+      typeof screen !== "undefined" &&
+      screen.orientation &&
+      screen.orientation.lock
+    ) {
+      screen.orientation.lock("portrait").catch((error) => {
+        console.warn(
+          "Khóa xoay màn hình không được hỗ trợ hoặc bị từ chối:",
+          error,
+        );
+      });
+    }
   }, []);
 
   // Dùng useEffect và Interval để "soi" xem thẻ video có thực sự đang chạy (live) hay không
@@ -534,20 +553,22 @@ const EcommerceLayout = (props) => {
       <Styled.Layout
         id="ecommerce-layout"
         onDoubleClick={isMobile ? handleLike : undefined}
+        className="ecommerce-layout-container ecommerce-mode"
         style={{
-          width: "100%",
-          height: "100%",
-          backgroundColor: "#000", // Nền đen cho video
           position: "fixed",
           top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          left: isRealDesktop ? "50%" : 0,
+          transform: isRealDesktop ? "translateX(-50%)" : "none",
+          width: "100%",
+          maxWidth: isRealDesktop ? "430px" : "100vw",
+          height: "100vh",
+          backgroundColor: "#000",
           overflow: "hidden",
+          fontFamily: "'Inter', sans-serif",
+          zIndex: 9999,
+          boxShadow: isRealDesktop ? "0 0 50px rgba(0,0,0,0.8)" : "none",
           touchAction: "manipulation",
-          zIndex: 1,
         }}
-        className="ecommerce-mode"
       >
         <ActivityCheckContainer />
         <ScreenReaderAlertContainer />
@@ -562,15 +583,18 @@ const EcommerceLayout = (props) => {
             overscroll-behavior: none !important;
             scroll-behavior: auto !important;
           }
+          body {
+            background-color: #050505 !important;
+          }
           
           /* Tuyệt chiêu ép Video tràn viền tuyệt đối mà không làm hỏng thẻ div */
           .ecommerce-video-wrapper video {
-            position: fixed !important;
+            position: absolute !important;
             top: 0 !important;
             left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            object-fit: contain !important; /* Hiển thị đủ ảnh 16:9 không bị cắt */
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important; /* Cover để không bị cắt 2 viền đen trên PC */
             border-radius: 0 !important;
             z-index: 1 !important;
             transform: none !important; /* Xoá các transform căn giữa */
