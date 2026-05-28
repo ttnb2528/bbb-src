@@ -23,8 +23,21 @@ const OneToOneLayout = (props) => {
     audioCaptionsNode,
   } = props;
 
+  const AppStyled = Styled?.default || Styled;
+  const Layout = AppStyled?.Layout || 'div';
+  const ActivityCheck = ActivityCheckContainer?.default || ActivityCheckContainer;
+  const ScreenReaderAlert = ScreenReaderAlertContainer?.default || ScreenReaderAlertContainer;
+  const Webcam = WebcamContainer?.default || WebcamContainer;
+  const AudioCaptionsSpeech = AudioCaptionsSpeechContainer?.default || AudioCaptionsSpeechContainer;
+  const LiveKitRoom = BBBLiveKitRoomContainer?.default || BBBLiveKitRoomContainer;
+  const Audio = AudioContainer?.default || AudioContainer;
+  const FloatingChat = FloatingChatContainer?.default || FloatingChatContainer;
+  const WakeLock = WakeLockContainer?.default || WakeLockContainer;
+  const ActionsBar = ActionsBarContainer?.default || ActionsBarContainer;
+  const VoiceActivity = VoiceActivityAdapter?.default || VoiceActivityAdapter;
+
   return (
-    <Styled.Layout
+    <Layout
       id="layout"
       className="one-to-one-layout"
       style={{
@@ -109,13 +122,13 @@ const OneToOneLayout = (props) => {
         `}
       </style>
       <div className="oto-backdrop" />
-      <ActivityCheckContainer />
-      <ScreenReaderAlertContainer />
-      <WebcamContainer />
-      <AudioCaptionsSpeechContainer />
+      <ActivityCheck />
+      <ScreenReaderAlert />
+      <Webcam />
+      <AudioCaptionsSpeech />
       {audioCaptionsNode}
-      <BBBLiveKitRoomContainer />
-      <AudioContainer
+      <LiveKitRoom />
+      <Audio
         {...{
           isAudioModalOpen,
           setAudioModalIsOpen,
@@ -123,16 +136,16 @@ const OneToOneLayout = (props) => {
           setVideoPreviewModalIsOpen,
         }}
       />
-      <FloatingChatContainer />
-      <WakeLockContainer />
+      <FloatingChat />
+      <WakeLock />
       {!hideActionsBar && (
-        <ActionsBarContainer
+        <ActionsBar
           presentationIsOpen={presentationIsOpen}
           setPresentationFitToWidth={setPresentationFitToWidth}
         />
       )}
-      <VoiceActivityAdapter />
-    </Styled.Layout>
+      <VoiceActivity />
+    </Layout>
   );
 };
 

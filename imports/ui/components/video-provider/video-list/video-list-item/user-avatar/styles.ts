@@ -6,6 +6,47 @@ import {
 import { colorPrimary } from '/imports/ui/stylesheets/styled-components/palette';
 import styled from 'styled-components';
 
+const AvatarBackdrop = styled.div<{
+  $isOneToOne: boolean;
+  $avatarUrl: string;
+}>`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+
+  & > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  ${({ $isOneToOne, $avatarUrl }) => $isOneToOne && $avatarUrl
+    && `
+    &::before {
+      content: '';
+      position: absolute;
+      inset: -10%;
+      background-image: url('${$avatarUrl}');
+      background-position: center;
+      background-size: cover;
+      filter: blur(20px) saturate(1.1);
+      opacity: 0.35;
+      transform: scale(1.08);
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(180deg, rgba(3, 10, 24, 0.45) 0%, rgba(2, 8, 18, 0.65) 100%);
+    }
+  `}
+`;
+
 const UserAvatarStyled = styled(UserAvatar)<{
   unhealthyStream: boolean;
   dialIn: boolean;
@@ -59,5 +100,6 @@ const UserAvatarStyled = styled(UserAvatar)<{
 `;
 
 export default {
+  AvatarBackdrop,
   UserAvatarStyled,
 };

@@ -26,6 +26,12 @@ const UserAvatarVideo: React.FC<UserAvatarVideoProps> = (props) => {
   } = data;
 
   const { talking = false } = voiceUser;
+  const isOneToOneCall = (
+    typeof window !== 'undefined'
+    && (window as Window & { isOneToOneCall?: boolean }).isOneToOneCall === true
+  )
+    || (typeof document !== 'undefined'
+      && document.body.classList.contains('bbb-one-to-one-call'));
 
   const handleUserIcon = () => {
     return <>{name.toLowerCase().slice(0, 2)}</>;
@@ -38,19 +44,24 @@ const UserAvatarVideo: React.FC<UserAvatarVideoProps> = (props) => {
   }
 
   return (
-    <Styled.UserAvatarStyled
-      moderator={isModerator}
-      presenter={presenter}
-      dialIn={clientType === 'dial-in-user'}
-      color={color}
-      emoji={false}
-      avatar={avatar}
-      unhealthyStream={unhealthyStream}
-      talking={talking}
-      whiteboardAccess={undefined}
+    <Styled.AvatarBackdrop
+      $isOneToOne={isOneToOneCall}
+      $avatarUrl={avatar}
     >
-      {handleUserIcon()}
-    </Styled.UserAvatarStyled>
+      <Styled.UserAvatarStyled
+        moderator={isModerator}
+        presenter={presenter}
+        dialIn={clientType === 'dial-in-user'}
+        color={color}
+        emoji={false}
+        avatar={avatar}
+        unhealthyStream={unhealthyStream}
+        talking={talking}
+        whiteboardAccess={undefined}
+      >
+        {handleUserIcon()}
+      </Styled.UserAvatarStyled>
+    </Styled.AvatarBackdrop>
   );
 };
 

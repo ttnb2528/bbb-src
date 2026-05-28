@@ -9,7 +9,7 @@ import { defineMessages, useIntl } from 'react-intl';
 import Button from '/imports/ui/components/common/button/component';
 import AudioModalContainer from '../../audio-modal/container';
 import AudioManager from '/imports/ui/services/audio-manager';
-import { joinListenOnly } from './service';
+import { joinMicrophone } from '/imports/ui/components/audio/audio-modal/service';
 import Styled from './styles';
 import InputStreamLiveSelectorContainer from './input-stream-live-selector/component';
 import { UPDATE_ECHO_TEST_RUNNING } from './queries';
@@ -64,6 +64,19 @@ const AudioControls: React.FC<AudioControlsProps> = ({
   const intl = useIntl();
   const joinAudioShortcut = useShortcut('joinAudio');
   const echoTestIntervalRef = React.useRef<ReturnType<typeof setTimeout>>();
+  const isOneToOneCall = (() => {
+    if (typeof window === 'undefined') return false;
+    const globalFlags = window as unknown as { isOneToOneCall?: boolean };
+    const queryParams = new URLSearchParams(window.location.search);
+    const queryLayout = (queryParams.get('layout') || '').toLowerCase();
+    const queryMode = (queryParams.get('mode') || '').toLowerCase();
+    return (
+      globalFlags.isOneToOneCall === true
+      || document.body.classList.contains('bbb-one-to-one-call')
+      || ['one-to-one', 'one_to_one', '1-1', '1v1', 'one2one'].includes(queryLayout)
+      || ['one-to-one', 'one_to_one', '1-1', '1v1', 'one2one'].includes(queryMode)
+    );
+  })();
 
   const [isAudioModalOpen, setIsAudioModalOpen] = React.useState(false);
   const [audioModalContent, setAudioModalContent] = React.useState<string | null>(null);
@@ -71,10 +84,20 @@ const AudioControls: React.FC<AudioControlsProps> = ({
 
   const [setListenOnlyInputDevice] = useMutation(SET_LISTEN_ONLY_INPUT_DEVICE);
 
-  const handleJoinAudio = useCallback((connected: boolean) => {
-    // Always open modal to let user choose between microphone and listen only
-    setIsAudioModalOpen(true);
-  }, []);
+  const handleJoinAudio = useCallback(() => {
+    if (isConnecting) {
+      AudioManager.forceExitAudio();
+    }
+    // Microphone-first join. Open the modal only as a fallback.
+    joinMicrophone({
+      skipEchoTest: true,
+      muted: true,
+    }).catch(() => {
+      if (!isOneToOneCall) {
+        setIsAudioModalOpen(true);
+      }
+    });
+  }, [isConnecting, isOneToOneCall]);
 
   const openAudioSettings = useCallback((props: { unmuteOnExit?: boolean } = {}) => {
     setAudioModalContent('settings');
@@ -88,7 +111,7 @@ const AudioControls: React.FC<AudioControlsProps> = ({
     return (
       // eslint-disable-next-line jsx-a11y/no-access-key
       <Button
-        onClick={() => handleJoinAudio(isConnected)}
+        onClick={handleJoinAudio}
         disabled={disabled}
         hideLabel
         aria-label={intl.formatMessage(joinAudioLabel)}
@@ -134,7 +157,7 @@ const AudioControls: React.FC<AudioControlsProps> = ({
   // Debug log to verify component render and inAudio state
   // eslint-disable-next-line no-console
   console.log('[AudioControls] Render - inAudio:', inAudio, 'isConnected:', isConnected, 'timestamp:', new Date().toISOString());
-  
+
   return (
     <Styled.Container>
       {!inAudio ? joinButton : <InputStreamLiveSelectorContainer openAudioSettings={openAudioSettings} />}
@@ -194,7 +217,7 @@ export const AudioControlsContainer: React.FC = () => {
     <AudioControls
       inAudio={inAudio}
       isConnected={isConnected}
-      disabled={(isConnecting || isHangingUp || !isClientConnected)}
+      disabled={(isHangingUp || !isClientConnected)}
       isEchoTest={isEchoTest}
       updateEchoTestRunning={updateEchoTestRunning}
       away={currentUser.away ?? false}

@@ -237,7 +237,8 @@ const Video = styled.video<{
   }
 
   body.bbb-one-to-one-call [data-test="videoStripWrapper"] & {
-    object-fit: cover;
+    object-fit: contain;
+    background: #020916;
   }
 `;
 

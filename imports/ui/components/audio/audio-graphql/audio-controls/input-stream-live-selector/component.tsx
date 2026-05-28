@@ -20,6 +20,7 @@ import {
 import useMeeting from '/imports/ui/core/hooks/useMeeting';
 import logger from '/imports/startup/client/logger';
 import MutedAlert from '/imports/ui/components/muted-alert/component';
+import AudioService from '/imports/ui/components/audio/service';
 import MuteToggle from './buttons/muteToggle';
 import ListenOnly from './buttons/listenOnly';
 import LiveSelection from './buttons/LiveSelection';
@@ -27,6 +28,7 @@ import useWhoIsTalking from '/imports/ui/core/hooks/useWhoIsTalking';
 import useWhoIsUnmuted from '/imports/ui/core/hooks/useWhoIsUnmuted';
 import useToggleVoice from '/imports/ui/components/audio/audio-graphql/hooks/useToggleVoice';
 import useIsAudioConnected from '/imports/ui/components/audio/audio-graphql/hooks/useIsAudioConnected';
+import Session from '/imports/ui/services/storage/in-memory';
 
 const AUDIO_INPUT = 'audioinput';
 const AUDIO_OUTPUT = 'audiooutput';
@@ -109,14 +111,17 @@ const InputStreamLiveSelector: React.FC<InputStreamLiveSelectorProps> = ({
 }) => {
   const intl = useIntl();
   const toggleVoice = useToggleVoice();
+  const userSelectedListenOnly = AudioService.didUserSelectListenOnly();
+  const forceListenOnlyUI = inputDeviceId === 'listen-only' && userSelectedListenOnly;
   const isOneToOneCall = (() => {
     if (typeof window === 'undefined') return false;
+    const oneToOneWindow = window as Window & { isOneToOneCall?: boolean };
     const queryParams = new URLSearchParams(window.location.search);
     const queryLayout = (queryParams.get('layout') || '').toLowerCase();
     const queryMode = (queryParams.get('mode') || '').toLowerCase();
 
     return (
-      (window as any).isOneToOneCall === true
+      oneToOneWindow.isOneToOneCall === true
       || document.body.classList.contains('bbb-one-to-one-call')
       || ['one-to-one', 'one_to_one', '1-1', '1v1', 'one2one'].includes(
         queryLayout,
@@ -290,7 +295,8 @@ const InputStreamLiveSelector: React.FC<InputStreamLiveSelectorProps> = ({
         ) : null}
       {enableDynamicAudioDeviceSelection ? (
         <LiveSelection
-          listenOnly={inputDeviceId === 'listen-only' ? true : listenOnly}
+          isConnected={isConnected}
+          listenOnly={forceListenOnlyUI ? true : listenOnly}
           inputDevices={inputDevices}
           outputDevices={outputDevices}
           inputDeviceId={inputDeviceId}
@@ -311,31 +317,36 @@ const InputStreamLiveSelector: React.FC<InputStreamLiveSelectorProps> = ({
           {/* Priority: inputDeviceId === 'listen-only' means definitely listen-only, show ListenOnly icon */}
           {/* Otherwise, use listenOnly from GraphQL or supportsTransparentListenOnly */}
           {(() => {
-            const isActuallyListenOnly = inputDeviceId === 'listen-only'
-              ? true
-              : !supportsTransparentListenOnly && listenOnly;
-            const shouldShowMicrophone = isConnected && !isActuallyListenOnly;
+            const isActuallyListenOnly = !isOneToOneCall
+              && (forceListenOnlyUI || (!supportsTransparentListenOnly && listenOnly));
+            const shouldShowMicrophone = !isActuallyListenOnly;
 
             return shouldShowMicrophone ? (
               <MuteToggle
                 talking={talking}
                 muted={muted}
-                disabled={disabled || isAudioLocked}
+                disabled={disabled || isAudioLocked || !isConnected}
                 isAudioLocked={isAudioLocked}
                 toggleMuteMicrophone={toggleMuteMicrophone}
                 away={away}
                 openAudioSettings={openAudioSettings}
-                noInputDevice={inputDeviceId === 'listen-only'}
+                noInputDevice={forceListenOnlyUI}
               />
             ) : null;
           })()}
-          <ListenOnly
-            listenOnly={inputDeviceId === 'listen-only' ? true : listenOnly}
-            handleLeaveAudio={handleLeaveAudio}
-            meetingIsBreakout={meetingIsBreakout}
-            actAsDeviceSelector={enableDynamicAudioDeviceSelection && isMobile}
-            openAudioSettings={openAudioSettings}
-          />
+          {(() => {
+            const isActuallyListenOnly = !isOneToOneCall
+              && (forceListenOnlyUI || (!supportsTransparentListenOnly && listenOnly));
+            return isActuallyListenOnly ? (
+              <ListenOnly
+                listenOnly={forceListenOnlyUI ? true : listenOnly}
+                handleLeaveAudio={handleLeaveAudio}
+                meetingIsBreakout={meetingIsBreakout}
+                actAsDeviceSelector={enableDynamicAudioDeviceSelection && isMobile}
+                openAudioSettings={openAudioSettings}
+              />
+            ) : null;
+          })()}
         </>
       )}
     </>
@@ -525,14 +536,7 @@ const InputStreamLiveSelectorContainer: React.FC<
       const timeSinceLastToggle = Date.now() - getLastToggleTime();
 
       // Check if this is an auto-join with muted (check storage)
-      // We need to import Session properly, but for now use a workaround
-      let wasAutoJoin = false;
-      try {
-        const Session = require('/imports/ui/services/storage/in-memory').default;
-        wasAutoJoin = Session.getItem('audioModalIsOpen') === null;
-      } catch (e) {
-        // If can't check, assume not auto-join to be safe
-      }
+      const wasAutoJoin = Session.getItem('audioModalIsOpen') === null;
 
       // Only sync if AudioManager says muted but GraphQL says unmuted (user just joined mic)
       // AND user hasn't toggled mute recently (to prevent overriding user action)

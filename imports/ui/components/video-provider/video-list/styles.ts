@@ -476,11 +476,18 @@ const PresenterStageVideo = styled.div<{
 
   body.bbb-one-to-one-call & {
     border-radius: 20px;
-    background: transparent;
+    background: #020916;
+    aspect-ratio: 16 / 9;
+    width: min(100%, calc((100vh - 170px) * 16 / 9));
+    height: min(100%, calc((100vw - 24px) * 9 / 16));
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0 auto;
   }
 
   body.bbb-one-to-one-call & video {
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center center;
   }
 `;
 

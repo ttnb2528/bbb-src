@@ -20,6 +20,7 @@ import {
 } from '../service';
 import MuteToggle from './muteToggle';
 import ListenOnly from './listenOnly';
+import AudioService from '/imports/ui/components/audio/service';
 import { PluginsContext } from '/imports/ui/components/components-data/plugin-context/context';
 
 const AUDIO_INPUT = 'audioinput';
@@ -94,6 +95,7 @@ interface MuteToggleProps {
 }
 
 interface LiveSelectionProps extends MuteToggleProps {
+  isConnected: boolean;
   listenOnly: boolean;
   inputDevices: MediaDeviceInfo[];
   outputDevices: MediaDeviceInfo[];
@@ -106,6 +108,7 @@ interface LiveSelectionProps extends MuteToggleProps {
 }
 
 export const LiveSelection: React.FC<LiveSelectionProps> = ({
+  isConnected,
   listenOnly,
   inputDevices,
   outputDevices,
@@ -122,13 +125,16 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
   supportsTransparentListenOnly,
 }) => {
   const intl = useIntl();
+  const userSelectedListenOnly = AudioService.didUserSelectListenOnly();
+  const forceListenOnlyUI = inputDeviceId === 'listen-only' && userSelectedListenOnly;
   const isOneToOneCall = (() => {
     if (typeof window === 'undefined') return false;
+    const oneToOneWindow = window as Window & { isOneToOneCall?: boolean };
     const queryParams = new URLSearchParams(window.location.search);
     const queryLayout = (queryParams.get('layout') || '').toLowerCase();
     const queryMode = (queryParams.get('mode') || '').toLowerCase();
     return (
-      (window as any).isOneToOneCall === true
+      oneToOneWindow.isOneToOneCall === true
       || document.body.classList.contains('bbb-one-to-one-call')
       || ['one-to-one', 'one_to_one', '1-1', '1v1', 'one2one'].includes(
         queryLayout,
@@ -178,8 +184,16 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
   // Priority: inputDeviceId === 'listen-only' means definitely listen-only
   // Otherwise, use listenOnly from GraphQL or supportsTransparentListenOnly
   const shouldTreatAsMicrophone = () => {
+    if (isOneToOneCall) {
+      return true;
+    }
+    // During initial join/reload, prefer microphone UI to avoid transient
+    // listen-only icon flashes before audio state settles.
+    if (!isConnected && !forceListenOnlyUI) {
+      return true;
+    }
     // If inputDeviceId is explicitly 'listen-only', treat as listen-only
-    if (inputDeviceId === 'listen-only') {
+    if (forceListenOnlyUI) {
       return false;
     }
     // Otherwise, use the original logic
@@ -381,7 +395,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
 
   const customStyles = { top: '-1rem' };
   const { isMobile } = deviceInfo;
-  const noInputDevice = inputDeviceId === 'listen-only';
+  const noInputDevice = forceListenOnlyUI;
 
   return (
     <>
@@ -403,7 +417,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
               <MuteToggle
                 talking={talking}
                 muted={muted}
-                disabled={disabled || isAudioLocked}
+                disabled={disabled || isAudioLocked || !isConnected}
                 isAudioLocked={isAudioLocked}
                 toggleMuteMicrophone={toggleMuteMicrophone}
                 away={away}
@@ -412,7 +426,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
               />
             ) : (
               <ListenOnly
-                listenOnly={inputDeviceId === 'listen-only' ? true : listenOnly}
+                listenOnly={forceListenOnlyUI ? true : listenOnly}
                 handleLeaveAudio={handleLeaveAudio}
                 meetingIsBreakout={meetingIsBreakout}
                 actAsDeviceSelector={isMobile}

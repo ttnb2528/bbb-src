@@ -70,6 +70,34 @@ const findOptimalGrid = (
 const ASPECT_RATIO = 4 / 3;
 // const ACTION_NAME_BACKGROUND = 'blurBackground';
 
+const isOneToOneMode = () => {
+  if (typeof window === 'undefined') return false;
+
+  const fromFlag = (
+    window as Window & { isOneToOneCall?: boolean }
+  ).isOneToOneCall === true;
+  const fromBody = typeof document !== 'undefined'
+    && document.body.classList.contains('bbb-one-to-one-call');
+
+  return fromFlag || fromBody;
+};
+
+const isPresenterItem = (item: VideoItem) => {
+  if (item.type === VIDEO_TYPES.STREAM) return item.user?.presenter;
+  if (item.type === VIDEO_TYPES.GRID) return item.presenter;
+  return false;
+};
+
+const isModeratorItem = (item: VideoItem) => {
+  if (item.type === VIDEO_TYPES.STREAM) return item.user?.role === 'MODERATOR';
+  if (item.type === VIDEO_TYPES.GRID) return item.role === 'MODERATOR';
+  return false;
+};
+
+const getItemKey = (item: VideoItem) => (
+  item.type !== VIDEO_TYPES.GRID ? item.stream : item.userId
+);
+
 interface VideoListProps {
   pluginUserCameraHelperPerPosition: UserCameraHelperAreas;
   layoutType: string;
@@ -101,14 +129,6 @@ interface VideoListProps {
 }
 
 interface VideoListState {
-  optimalGrid: {
-    cols: number;
-    rows: number;
-    filledArea: number;
-    width: number;
-    height: number;
-    columns: number;
-  };
   autoplayBlocked: boolean;
   canScrollLeft: boolean;
   canScrollRight: boolean;
@@ -137,14 +157,6 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     super(props);
 
     this.state = {
-      optimalGrid: {
-        cols: 1,
-        rows: 1,
-        filledArea: 0,
-        columns: 0,
-        height: 0,
-        width: 0,
-      },
       autoplayBlocked: false,
       canScrollLeft: false,
       canScrollRight: false,
@@ -172,7 +184,6 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     this.handleStripMouseDown = this.handleStripMouseDown.bind(this);
     this.handleStripMouseMove = this.handleStripMouseMove.bind(this);
     this.handleStripMouseUp = this.handleStripMouseUp.bind(this);
-    this.handleStripMouseLeave = this.handleStripMouseLeave.bind(this);
     this.handleGlobalMouseMove = this.handleGlobalMouseMove.bind(this);
     this.handleGlobalMouseUp = this.handleGlobalMouseUp.bind(this);
   }
@@ -291,27 +302,26 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     this.ticking = true;
   }
 
-  isOneToOneMode() {
-    if (typeof window === 'undefined') return false;
-    const fromFlag = (window as any).isOneToOneCall === true;
-    const fromBody = typeof document !== 'undefined'
-      && document.body.classList.contains('bbb-one-to-one-call');
-    return fromFlag || fromBody;
-  }
-
-  getStageStream(streams: VideoItem[], focusedId: string) {
-    if (this.isOneToOneMode()) {
-      const remoteStream = streams.find((item) => {
-        const anyItem = item as any;
-        const uid = anyItem?.userId ?? anyItem?.user?.userId;
-        return (
-          uid
-          && String(uid) !== String(Auth.userID)
-          && item.type !== VIDEO_TYPES.CONNECTING
-        );
+  static getStageStream(streams: VideoItem[], focusedId: string) {
+    if (isOneToOneMode()) {
+      const remoteVideoStream = streams.find((item) => {
+        if (item.type !== VIDEO_TYPES.STREAM) return false;
+        return !VideoService.isLocalStream(item.stream);
       });
 
-      if (remoteStream) return remoteStream;
+      if (remoteVideoStream) return remoteVideoStream;
+
+      const remoteParticipantFallback = streams.find((item) => {
+        if (item.type === VIDEO_TYPES.CONNECTING) return false;
+
+        if (item.type === VIDEO_TYPES.STREAM) {
+          return !VideoService.isLocalStream(item.stream);
+        }
+
+        return item.userId && String(item.userId) !== String(Auth.userID);
+      });
+
+      if (remoteParticipantFallback) return remoteParticipantFallback;
 
       const fallbackNonConnecting = streams.find(
         (item) => item.type !== VIDEO_TYPES.CONNECTING,
@@ -321,32 +331,21 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       return streams[0];
     }
 
-    let stageStream = streams.find((item) => {
-      const anyItem = item as any;
-      return item.type !== VIDEO_TYPES.GRID && anyItem?.stream === focusedId;
-    });
+    let stageStream = streams.find(
+      (item) => item.type !== VIDEO_TYPES.GRID && item.stream === focusedId,
+    );
 
     if (!stageStream) {
-      stageStream = streams.find((item) => {
-        const anyItem = item as any;
-        return (
-          (item.type === VIDEO_TYPES.STREAM && anyItem?.user?.presenter)
-          || (item.type === VIDEO_TYPES.GRID && anyItem?.presenter)
-        );
-      });
+      stageStream = streams.find((item) => isPresenterItem(item));
     }
 
     if (!stageStream) {
-      stageStream = streams.find((item) => {
-        const anyItem = item as any;
-        return (
-          anyItem?.user?.role === 'MODERATOR' || anyItem?.role === 'MODERATOR'
-        );
-      });
+      stageStream = streams.find((item) => isModeratorItem(item));
     }
 
     if (!stageStream) {
-      stageStream = streams[0];
+      const [firstStream] = streams;
+      stageStream = firstStream;
     }
 
     return stageStream;
@@ -369,16 +368,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     );
 
     // Ki?m tra xem có presenter không
-    const hasPresenter = streams.some((s) => {
-      const anyItem = s as any;
-      if (s.type === VIDEO_TYPES.STREAM) {
-        return anyItem?.user?.presenter;
-      }
-      if (s.type === VIDEO_TYPES.GRID) {
-        return anyItem?.presenter;
-      }
-      return false;
-    });
+    const hasPresenter = streams.some((s) => isPresenterItem(s));
 
     const hasFocusedItem = streams.filter(
       (s) => s.type !== VIDEO_TYPES.GRID && s.stream === focusedId,
@@ -450,9 +440,6 @@ class VideoList extends Component<VideoListProps, VideoListState> {
         width: optimalGrid.width,
         height: optimalGrid.height,
       },
-    });
-    this.setState({
-      optimalGrid,
     });
   }
 
@@ -542,15 +529,8 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     const numOfStreams = streams.length;
     const { userId, name } = item;
     const isStream = item.type !== VIDEO_TYPES.GRID;
-    const anyItem = item as any;
-    const isOneToOne = this.isOneToOneMode();
-    const isPresenter = isOneToOne
-      ? false
-      : isStream
-        ? anyItem?.user?.presenter
-        : item.type === VIDEO_TYPES.GRID
-          ? anyItem?.presenter
-          : false;
+    const isOneToOne = isOneToOneMode();
+    const isPresenter = isOneToOne ? false : isPresenterItem(item);
     const stream = isStream ? item.stream : null;
     const key = isStream ? stream : userId;
     const isFocused = isStream && focusedId === stream && numOfStreams > 2;
@@ -668,11 +648,6 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     }
   }
 
-  // Handler cho drag scroll - mouse leave (khi chuột ra khỏi vùng)
-  handleStripMouseLeave() {
-    // Không cần làm gì, global handlers sẽ xử lý
-  }
-
   // Global mouse move handler (để drag hoạt động khi chuột ra ngoài VideoStrip)
   handleGlobalMouseMove(e: MouseEvent) {
     if (!this.isDragging || !this.stripRef.current) return;
@@ -738,9 +713,9 @@ class VideoList extends Component<VideoListProps, VideoListState> {
 
   renderVideoList() {
     const { streams, focusedId, hasSharedContent } = this.props;
-    const isOneToOne = this.isOneToOneMode();
+    const isOneToOne = isOneToOneMode();
     const effectiveHasSharedContent = !isOneToOne && hasSharedContent;
-    const stageStream = this.getStageStream(streams, focusedId);
+    const stageStream = VideoList.getStageStream(streams, focusedId);
     return (
       <Styled.CustomLayoutContainer $hasSharedContent={effectiveHasSharedContent}>
         {!effectiveHasSharedContent && (
@@ -762,33 +737,21 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       streams, hasSharedContent, hasSidebarOpen, focusedId,
     } = this.props;
     const { canScrollLeft, canScrollRight } = this.state;
-    const isOneToOne = this.isOneToOneMode();
+    const isOneToOne = isOneToOneMode();
     const effectiveHasSharedContent = !isOneToOne && hasSharedContent;
-    const stageStream = this.getStageStream(streams, focusedId);
-    const stageStreamKey = stageStream
-      ? stageStream.type !== VIDEO_TYPES.GRID
-        ? stageStream.stream
-        : stageStream.userId
-      : null;
+    const stageStream = VideoList.getStageStream(streams, focusedId);
+    const stageStreamKey = stageStream ? getItemKey(stageStream) : null;
     const sortedStripStreams = [...streams]
       .filter((item) => {
         if (!effectiveHasSharedContent && stageStreamKey) {
-          const itemKey = item.type !== VIDEO_TYPES.GRID ? item.stream : item.userId;
+          const itemKey = getItemKey(item);
           return itemKey !== stageStreamKey;
         }
         return true;
       })
       .sort((a, b) => {
-        const anyA = a as any;
-        const anyB = b as any;
-        const aIsPresenter = (a.type === VIDEO_TYPES.STREAM && anyA?.user?.presenter)
-          || (a.type === VIDEO_TYPES.GRID && anyA?.presenter)
-          || anyA?.user?.role === 'MODERATOR'
-          || anyA?.role === 'MODERATOR';
-        const bIsPresenter = (b.type === VIDEO_TYPES.STREAM && anyB?.user?.presenter)
-          || (b.type === VIDEO_TYPES.GRID && anyB?.presenter)
-          || anyB?.user?.role === 'MODERATOR'
-          || anyB?.role === 'MODERATOR';
+        const aIsPresenter = isPresenterItem(a) || isModeratorItem(a);
+        const bIsPresenter = isPresenterItem(b) || isModeratorItem(b);
         if (aIsPresenter && !bIsPresenter) return -1;
         if (!aIsPresenter && bIsPresenter) return 1;
         return 0;

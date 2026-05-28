@@ -1,82 +1,81 @@
-import React, { useCallback, useEffect } from "react";
-import PropTypes from "prop-types";
-import Session from "/imports/ui/services/storage/in-memory";
-import { injectIntl, defineMessages } from "react-intl";
-import { range } from "/imports/utils/array-utils";
-import { useMeetingIsBreakout } from "/imports/ui/components/app/service";
-import { notify } from "/imports/ui/services/notification";
-import getFromUserSettings from "/imports/ui/services/users-settings";
-import VideoPreviewContainer from "/imports/ui/components/video-preview/container";
-import lockContextContainer from "/imports/ui/components/lock-viewers/context/container";
+import React, { useCallback, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import Session from '/imports/ui/services/storage/in-memory';
+import { injectIntl, defineMessages } from 'react-intl';
+import { range } from '/imports/utils/array-utils';
+import { useMeetingIsBreakout } from '/imports/ui/components/app/service';
+import { notify } from '/imports/ui/services/notification';
+import getFromUserSettings from '/imports/ui/services/users-settings';
+import VideoPreviewContainer from '/imports/ui/components/video-preview/container';
+import lockContextContainer from '/imports/ui/components/lock-viewers/context/container';
 import {
   joinMicrophone,
-  joinListenOnly,
-} from "/imports/ui/components/audio/audio-modal/service";
+} from '/imports/ui/components/audio/audio-modal/service';
 
-import Service from "./service";
-import AudioModalContainer from "./audio-modal/container";
-import useToggleVoice from "./audio-graphql/hooks/useToggleVoice";
-import usePreviousValue from "/imports/ui/hooks/usePreviousValue";
-import useCurrentUser from "/imports/ui/core/hooks/useCurrentUser";
-import { toggleMuteMicrophone } from "/imports/ui/components/audio/audio-graphql/audio-controls/input-stream-live-selector/service";
-import useSettings from "../../services/settings/hooks/useSettings";
-import { SETTINGS } from "../../services/settings/enums";
-import { useStorageKey } from "../../services/storage/hooks";
-import useMeeting from "../../core/hooks/useMeeting";
-import useWhoIsUnmuted from "../../core/hooks/useWhoIsUnmuted";
-import useIsAudioConnected from "./audio-graphql/hooks/useIsAudioConnected";
-import Storage from "../../services/storage/session";
-import Auth from "../../services/auth";
-import meetingStaticData from "../../core/singletons/meetingStaticData";
+import Service from './service';
+import AudioModalContainer from './audio-modal/container';
+import useToggleVoice from './audio-graphql/hooks/useToggleVoice';
+import usePreviousValue from '/imports/ui/hooks/usePreviousValue';
+import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
+import { toggleMuteMicrophone } from '/imports/ui/components/audio/audio-graphql/audio-controls/input-stream-live-selector/service';
+import useSettings from '../../services/settings/hooks/useSettings';
+import { SETTINGS } from '../../services/settings/enums';
+import { useStorageKey } from '../../services/storage/hooks';
+import useMeeting from '../../core/hooks/useMeeting';
+import useWhoIsUnmuted from '../../core/hooks/useWhoIsUnmuted';
+import useIsAudioConnected from './audio-graphql/hooks/useIsAudioConnected';
+import Storage from '../../services/storage/session';
+import Auth from '../../services/auth';
+import meetingStaticData from '../../core/singletons/meetingStaticData';
 import AudioService, {
   CLIENT_DID_USER_SELECT_MICROPHONE_KEY,
   CLIENT_DID_USER_SELECT_LISTEN_ONLY_KEY,
-} from "/imports/ui/components/audio/service";
+} from '/imports/ui/components/audio/service';
 
 const intlMessages = defineMessages({
   joinedAudio: {
-    id: "app.audioManager.joinedAudio",
-    description: "Joined audio toast message",
+    id: 'app.audioManager.joinedAudio',
+    description: 'Joined audio toast message',
   },
   joinedEcho: {
-    id: "app.audioManager.joinedEcho",
-    description: "Joined echo test toast message",
+    id: 'app.audioManager.joinedEcho',
+    description: 'Joined echo test toast message',
   },
   leftAudio: {
-    id: "app.audioManager.leftAudio",
-    description: "Left audio toast message",
+    id: 'app.audioManager.leftAudio',
+    description: 'Left audio toast message',
   },
   reconnectingAudio: {
-    id: "app.audioManager.reconnectingAudio",
-    description: "Reconnecting audio toast message",
+    id: 'app.audioManager.reconnectingAudio',
+    description: 'Reconnecting audio toast message',
   },
   genericError: {
-    id: "app.audioManager.genericError",
-    description: "Generic error message",
+    id: 'app.audioManager.genericError',
+    description: 'Generic error message',
   },
   connectionError: {
-    id: "app.audioManager.connectionError",
-    description: "Connection error message",
+    id: 'app.audioManager.connectionError',
+    description: 'Connection error message',
   },
   requestTimeout: {
-    id: "app.audioManager.requestTimeout",
-    description: "Request timeout error message",
+    id: 'app.audioManager.requestTimeout',
+    description: 'Request timeout error message',
   },
   invalidTarget: {
-    id: "app.audioManager.invalidTarget",
-    description: "Invalid target error message",
+    id: 'app.audioManager.invalidTarget',
+    description: 'Invalid target error message',
   },
   mediaError: {
-    id: "app.audioManager.mediaError",
-    description: "Media error message",
+    id: 'app.audioManager.mediaError',
+    description: 'Media error message',
   },
   BrowserNotSupported: {
-    id: "app.audioNotification.audioFailedError1003",
-    description: "browser not supported error message",
+    id: 'app.audioNotification.audioFailedError1003',
+    description: 'browser not supported error message',
   },
   reconectingAsListener: {
-    id: "app.audioNotificaion.reconnectingAsListenOnly",
-    description: "ice negotiation error message",
+    id: 'app.audioNotificaion.reconnectingAsListenOnly',
+    description: 'ice negotiation error message',
   },
 });
 
@@ -118,17 +117,16 @@ const AudioContainer = (props) => {
     userLocks,
   } = props;
 
-  const APP_CONFIG = window.meetingClientSettings.public.app;
   const KURENTO_CONFIG = window.meetingClientSettings.public.kurento;
 
   // Ép buộc autoJoin luôn bằng true (rất tiện cho Dev Hot-reload)
   const autoJoin = true;
   const enableVideo = getFromUserSettings(
-    "bbb_enable_video",
+    'bbb_enable_video',
     KURENTO_CONFIG.enableVideo,
   );
   const autoShareWebcam = getFromUserSettings(
-    "bbb_auto_share_webcam",
+    'bbb_auto_share_webcam',
     KURENTO_CONFIG.autoShareWebcam,
   );
   const { userWebcam } = userLocks;
@@ -137,11 +135,11 @@ const AudioContainer = (props) => {
   const toggleVoice = useToggleVoice();
   const userSelectedMicrophone = !!useStorageKey(
     CLIENT_DID_USER_SELECT_MICROPHONE_KEY,
-    "session",
+    'session',
   );
   const userSelectedListenOnly = !!useStorageKey(
     CLIENT_DID_USER_SELECT_LISTEN_ONLY_KEY,
-    "session",
+    'session',
   );
   const { microphoneConstraints } = useSettings(SETTINGS.APPLICATION);
 
@@ -161,14 +159,15 @@ const AudioContainer = (props) => {
     breakoutRoomsSummary: u.breakoutRoomsSummary,
   }));
 
-  const hasBreakoutRooms =
-    (currentUser?.breakoutRoomsSummary?.totalOfBreakoutRooms ?? 0) > 0;
+  const hasBreakoutRooms = (currentUser?.breakoutRoomsSummary?.totalOfBreakoutRooms ?? 0) > 0;
 
   // public.media.defaultFullAudioBridge/public.media.defaultListenOnlyBridge
   // are legacy configs. They will be removed in the future. Use
   // audioBridge (bbb-web, create) instead.
-  const { defaultFullAudioBridge, defaultListenOnlyBridge } =
-    window.meetingClientSettings.public.media || {};
+  const {
+    defaultFullAudioBridge,
+    defaultListenOnlyBridge,
+  } = window.meetingClientSettings.public.media || {};
   const bridges = {
     fullAudioBridge: meeting?.audioBridge ?? defaultFullAudioBridge,
     listenOnlyBridge: meeting?.audioBridge ?? defaultListenOnlyBridge,
@@ -191,6 +190,14 @@ const AudioContainer = (props) => {
       bridges,
     );
 
+    // Force microphone-first behavior on auto-join sessions.
+    // If a prior runtime state left inputDeviceId as listen-only, reset it
+    // before rendering audio controls to avoid flashing the listen icon.
+    if (Service.inputDeviceId() === 'listen-only') {
+      Service.changeInputDevice('');
+    }
+    AudioService.setUserSelectedListenOnly(false);
+
     if (!autoJoin || didMountAutoJoin) {
       if (enableVideo && autoShareWebcam) {
         openVideoPreviewModal();
@@ -207,7 +214,7 @@ const AudioContainer = (props) => {
       const isBreakout = meetingStaticStore?.isBreakout;
       const parentId = meetingStaticStore?.breakoutPolicies?.parentId;
       const meetingId = isBreakout && parentId ? parentId : Auth.meetingID;
-      const MUTED_KEY = "muted";
+      const MUTED_KEY = 'muted';
       const storageKey = `${MUTED_KEY}_${meetingId}`;
       Storage.setItem(storageKey, true); // Set muted = true trong storage
 
@@ -227,9 +234,9 @@ const AudioContainer = (props) => {
           // để đảm bảo recoverMicState đã chạy xong
           setTimeout(() => {
             if (
-              Service.isConnected() &&
-              !Service.isListenOnly() &&
-              !Service.isMuted()
+              Service.isConnected()
+              && !Service.isListenOnly()
+              && !Service.isMuted()
             ) {
               if (currentUser?.userId) {
                 toggleVoice(currentUser.userId, true);
@@ -241,9 +248,9 @@ const AudioContainer = (props) => {
           // Mute lại sau 1.5s để đảm bảo (backup)
           setTimeout(() => {
             if (
-              Service.isConnected() &&
-              !Service.isListenOnly() &&
-              !Service.isMuted()
+              Service.isConnected()
+              && !Service.isListenOnly()
+              && !Service.isMuted()
             ) {
               if (currentUser?.userId) {
                 toggleVoice(currentUser.userId, true);
@@ -253,12 +260,13 @@ const AudioContainer = (props) => {
           }, 1500);
         })
         .catch(() => {
-          // Khi hot-reload, thỉnh thoảng socket chưa kịp mount nên xin quyền mic bị từ chối/lỗi.
-          // Thay vì ném user về Listen Only (loa), ta sẽ đợi 1.5s và thử xin vô Mic lại lần nữa.
+          // Khi hot-reload/reconnect, nếu join mic lỗi thì retry mic trước.
+          // Không bật modal chọn nghe/nói để tránh popup gây gián đoạn.
           setTimeout(() => {
             joinMicrophone({ skipEchoTest: true, muted: true }).catch(() => {
-              Session.setItem("audioModalIsOpen", true);
-              openAudioModal();
+              // Không fallback sang listen-only.
+              // Reset trạng thái kết nối để user có thể bấm join lại ngay.
+              Service.forceExitAudio();
             });
           }, 1500);
         });
@@ -271,7 +279,7 @@ const AudioContainer = (props) => {
     }
 
     // Nếu user đã chọn microphone trước đó, mở modal như bình thường
-    Session.setItem("audioModalIsOpen", true);
+    Session.setItem('audioModalIsOpen', true);
     if (enableVideo && autoShareWebcam) {
       openAudioModal();
       openVideoPreviewModal();
@@ -289,26 +297,20 @@ const AudioContainer = (props) => {
   const userIsReturningFromBreakoutRoom = hadBreakoutRooms && !hasBreakoutRooms;
 
   const { data: unmutedUsers } = useWhoIsUnmuted();
-  const currentUserMuted =
-    currentUser?.userId && !unmutedUsers[currentUser.userId];
+  const currentUserMuted = currentUser?.userId && !unmutedUsers[currentUser.userId];
 
   const joinAudio = useCallback(() => {
     if (Service.isConnected()) return;
 
     // Mặc định join microphone ở trạng thái muted
     // User có thể bật mic khi cần nói
-    if (userSelectedListenOnly) {
-      // Chỉ join listen-only nếu user đã chọn listen-only trước đó
-      joinListenOnly();
-      return;
-    }
-
+    AudioService.setUserSelectedListenOnly(false);
     // Mặc định join microphone với mic tắt
     joinMicrophone({
       skipEchoTest: true,
       muted: true, // Mặc định mic tắt, user sẽ bật khi cần
     });
-  }, [userSelectedMicrophone, userSelectedListenOnly]);
+  }, [userSelectedMicrophone]);
 
   useEffect(() => {
     // Data is not loaded yet.
@@ -330,8 +332,7 @@ const AudioContainer = (props) => {
   }, [userIsReturningFromBreakoutRoom]);
 
   useEffect(() => {
-    const CONFIRMATION_ON_LEAVE =
-      window.meetingClientSettings.public.app.askForConfirmationOnLeave;
+    const CONFIRMATION_ON_LEAVE = window.meetingClientSettings.public.app.askForConfirmationOnLeave;
     if (CONFIRMATION_ON_LEAVE) {
       window.onbeforeunload = (event) => {
         if (AudioService.isUsingAudio() && !AudioService.isMuted()) {
@@ -340,7 +341,7 @@ const AudioContainer = (props) => {
         event.stopImmediatePropagation();
         event.preventDefault();
         // eslint-disable-next-line no-param-reassign
-        event.returnValue = "";
+        event.returnValue = '';
       };
     }
   }, [currentUser?.userId, toggleVoice]);
@@ -357,15 +358,14 @@ const AudioContainer = (props) => {
   const prevIsConnected = usePreviousValue(isConnected);
   useEffect(() => {
     // Chỉ áp dụng khi auto join và chưa có user selection (mặc định join với mic tắt)
-    const wasAutoJoin =
-      Session.getItem("audioModalIsOpen") === null && didMountAutoJoin;
+    const wasAutoJoin = Session.getItem('audioModalIsOpen') === null && didMountAutoJoin;
 
     // Mute ngay khi chuyển từ disconnected sang connected
     if (
-      wasAutoJoin &&
-      prevIsConnected === false &&
-      isConnected === true &&
-      !Service.isListenOnly()
+      wasAutoJoin
+      && prevIsConnected === false
+      && isConnected === true
+      && !Service.isListenOnly()
     ) {
       // Mute ngay khi connected
       if (currentUser?.userId) {
@@ -381,10 +381,10 @@ const AudioContainer = (props) => {
 
     // Cũng mute nếu đã connected và mic chưa mute (backup)
     if (
-      wasAutoJoin &&
-      isConnected &&
-      !Service.isListenOnly() &&
-      !Service.isMuted()
+      wasAutoJoin
+      && isConnected
+      && !Service.isListenOnly()
+      && !Service.isMuted()
     ) {
       if (currentUser?.userId) {
         toggleVoice(currentUser.userId, true);
@@ -399,8 +399,8 @@ const AudioContainer = (props) => {
         toggleMuteMicrophone(!currentUserMuted, toggleVoice);
         notify(
           intl.formatMessage(intlMessages.reconectingAsListener),
-          "info",
-          "volume_level_2",
+          'info',
+          'volume_level_2',
         );
       }
     }
@@ -411,7 +411,7 @@ const AudioContainer = (props) => {
       {isAudioModalOpen && !isVideoPreviewModalOpen ? (
         <AudioModalContainer
           {...{
-            priority: "medium",
+            priority: 'medium',
             setIsOpen: setAudioModalIsOpen,
             isOpen: isAudioModalOpen && !isVideoPreviewModalOpen,
           }}
@@ -423,7 +423,7 @@ const AudioContainer = (props) => {
             callbackToClose: () => {
               setVideoPreviewModalIsOpen(false);
             },
-            priority: "medium",
+            priority: 'medium',
             setIsOpen: setVideoPreviewModalIsOpen,
             isOpen: isVideoPreviewModalOpen,
           }}
