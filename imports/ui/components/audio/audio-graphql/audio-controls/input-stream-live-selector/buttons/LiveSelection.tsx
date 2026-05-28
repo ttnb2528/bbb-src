@@ -1,83 +1,83 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import React, { useCallback, useContext } from "react";
-import deviceInfo from "/imports/utils/deviceInfo";
-import { defineMessages, useIntl } from "react-intl";
-import { useShortcut } from "/imports/ui/core/hooks/useShortcut";
-import BBBMenu from "/imports/ui/components/common/menu/component";
+import React, { useCallback, useContext } from 'react';
+import deviceInfo from '/imports/utils/deviceInfo';
+import { defineMessages, useIntl } from 'react-intl';
+import { useShortcut } from '/imports/ui/core/hooks/useShortcut';
+import BBBMenu from '/imports/ui/components/common/menu/component';
 import {
   MenuSeparatorItemType,
   MenuOptionItemType,
-} from "/imports/ui/components/common/menu/menuTypes";
-import * as PluginSdk from "bigbluebutton-html-plugin-sdk";
-import { AudioSettingsDropdownItemType } from "bigbluebutton-html-plugin-sdk/dist/cjs/extensible-areas/audio-settings-dropdown-item/enums";
-import Styled from "../styles";
+} from '/imports/ui/components/common/menu/menuTypes';
+import * as PluginSdk from 'bigbluebutton-html-plugin-sdk';
+import { AudioSettingsDropdownItemType } from 'bigbluebutton-html-plugin-sdk/dist/cjs/extensible-areas/audio-settings-dropdown-item/enums';
+import Styled from '../styles';
 import {
   handleLeaveAudio,
   liveChangeInputDevice,
   liveChangeOutputDevice,
   notify,
   truncateDeviceName,
-} from "../service";
-import MuteToggle from "./muteToggle";
-import ListenOnly from "./listenOnly";
-import { PluginsContext } from "/imports/ui/components/components-data/plugin-context/context";
+} from '../service';
+import MuteToggle from './muteToggle';
+import ListenOnly from './listenOnly';
+import { PluginsContext } from '/imports/ui/components/components-data/plugin-context/context';
 
-const AUDIO_INPUT = "audioinput";
-const AUDIO_OUTPUT = "audiooutput";
-const SET_SINK_ID_SUPPORTED = "setSinkId" in HTMLMediaElement.prototype;
+const AUDIO_INPUT = 'audioinput';
+const AUDIO_OUTPUT = 'audiooutput';
+const SET_SINK_ID_SUPPORTED = 'setSinkId' in HTMLMediaElement.prototype;
 
 const intlMessages = defineMessages({
   defaultOutputDeviceLabel: {
-    id: "app.audio.audioSettings.defaultOutputDeviceLabel",
-    description: "Default output device label",
+    id: 'app.audio.audioSettings.defaultOutputDeviceLabel',
+    description: 'Default output device label',
   },
   loading: {
-    id: "app.audio.loading",
-    description: "Loading audio dropdown item label",
+    id: 'app.audio.loading',
+    description: 'Loading audio dropdown item label',
   },
   noDeviceFound: {
-    id: "app.audio.noDeviceFound",
-    description: "No device found",
+    id: 'app.audio.noDeviceFound',
+    description: 'No device found',
   },
   microphones: {
-    id: "app.audio.microphones",
-    description: "Input audio dropdown item label",
+    id: 'app.audio.microphones',
+    description: 'Input audio dropdown item label',
   },
   speakers: {
-    id: "app.audio.speakers",
-    description: "Output audio dropdown item label",
+    id: 'app.audio.speakers',
+    description: 'Output audio dropdown item label',
   },
   leaveAudio: {
-    id: "app.audio.leaveAudio",
-    description: "Leave audio dropdown item label",
+    id: 'app.audio.leaveAudio',
+    description: 'Leave audio dropdown item label',
   },
   changeAudioDevice: {
-    id: "app.audio.changeAudioDevice",
-    description: "Change audio device button label",
+    id: 'app.audio.changeAudioDevice',
+    description: 'Change audio device button label',
   },
   deviceChangeFailed: {
-    id: "app.audioNotification.deviceChangeFailed",
-    description: "Device change failed",
+    id: 'app.audioNotification.deviceChangeFailed',
+    description: 'Device change failed',
   },
   fallbackInputLabel: {
-    id: "app.audio.audioSettings.fallbackInputLabel",
-    description: "Audio input device label",
+    id: 'app.audio.audioSettings.fallbackInputLabel',
+    description: 'Audio input device label',
   },
   fallbackOutputLabel: {
-    id: "app.audio.audioSettings.fallbackOutputLabel",
-    description: "Audio output device label",
+    id: 'app.audio.audioSettings.fallbackOutputLabel',
+    description: 'Audio output device label',
   },
   fallbackNoPermissionLabel: {
-    id: "app.audio.audioSettings.fallbackNoPermission",
-    description: "No permission to access audio devices label",
+    id: 'app.audio.audioSettings.fallbackNoPermission',
+    description: 'No permission to access audio devices label',
   },
   audioSettingsTitle: {
-    id: "app.audio.audioSettings.titleLabel",
-    description: "Audio settings button label",
+    id: 'app.audio.audioSettings.titleLabel',
+    description: 'Audio settings button label',
   },
   noMicListenOnlyLabel: {
-    id: "app.audio.audioSettings.noMicListenOnly",
-    description: "No microphone (listen only) label",
+    id: 'app.audio.audioSettings.noMicListenOnly',
+    description: 'No microphone (listen only) label',
   },
 });
 
@@ -122,24 +122,39 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
   supportsTransparentListenOnly,
 }) => {
   const intl = useIntl();
+  const isOneToOneCall = (() => {
+    if (typeof window === 'undefined') return false;
+    const queryParams = new URLSearchParams(window.location.search);
+    const queryLayout = (queryParams.get('layout') || '').toLowerCase();
+    const queryMode = (queryParams.get('mode') || '').toLowerCase();
+    return (
+      (window as any).isOneToOneCall === true
+      || document.body.classList.contains('bbb-one-to-one-call')
+      || ['one-to-one', 'one_to_one', '1-1', '1v1', 'one2one'].includes(
+        queryLayout,
+      )
+      || ['one-to-one', 'one_to_one', '1-1', '1v1', 'one2one'].includes(
+        queryMode,
+      )
+    );
+  })();
 
   // Debug log to verify component re-renders when inputDeviceId changes
   // eslint-disable-next-line no-console
   console.log(
-    "[LiveSelection] Render - inputDeviceId:",
+    '[LiveSelection] Render - inputDeviceId:',
     inputDeviceId,
-    "listenOnly (prop):",
+    'listenOnly (prop):',
     listenOnly,
-    "shouldTreatAsMicrophone:",
-    inputDeviceId !== "listen-only" &&
-      (!listenOnly || supportsTransparentListenOnly),
+    'shouldTreatAsMicrophone:',
+    inputDeviceId !== 'listen-only'
+      && (!listenOnly || supportsTransparentListenOnly),
   );
 
-  const leaveAudioShourtcut = useShortcut("leaveAudio");
+  const leaveAudioShourtcut = useShortcut('leaveAudio');
 
   const { pluginsExtensibleAreasAggregatedState } = useContext(PluginsContext);
-  let audioSettingsDropdownItems =
-    [] as PluginSdk.AudioSettingsDropdownInterface[];
+  let audioSettingsDropdownItems = [] as PluginSdk.AudioSettingsDropdownInterface[];
   if (pluginsExtensibleAreasAggregatedState.audioSettingsDropdownItems) {
     audioSettingsDropdownItems = [
       ...pluginsExtensibleAreasAggregatedState.audioSettingsDropdownItems,
@@ -147,10 +162,9 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
   }
 
   const getFallbackLabel = (device: MediaDeviceInfo, index: number) => {
-    const baseLabel =
-      device?.kind === AUDIO_OUTPUT
-        ? intlMessages.fallbackOutputLabel
-        : intlMessages.fallbackInputLabel;
+    const baseLabel = device?.kind === AUDIO_OUTPUT
+      ? intlMessages.fallbackOutputLabel
+      : intlMessages.fallbackInputLabel;
     let label = intl.formatMessage(baseLabel, { index });
 
     if (!device?.deviceId) {
@@ -165,7 +179,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
   // Otherwise, use listenOnly from GraphQL or supportsTransparentListenOnly
   const shouldTreatAsMicrophone = () => {
     // If inputDeviceId is explicitly 'listen-only', treat as listen-only
-    if (inputDeviceId === "listen-only") {
+    if (inputDeviceId === 'listen-only') {
       return false;
     }
     // Otherwise, use the original logic
@@ -185,7 +199,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
         {
           key: `audioDeviceList-${deviceKind}`,
           label: title,
-          icon: deviceKind === "audioinput" ? "unmute" : "listen",
+          icon: deviceKind === 'audioinput' ? 'unmute' : 'listen',
           disabled: true,
           customStyles: Styled.DisabledLabel,
           onClick: () => {},
@@ -201,9 +215,8 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
           // couldn't infer it. In this case, consider the first device as the
           // system default - as specified in "Media Capture and Streams API",
           // Section 9.2, enumerateDevices algorithm.
-          const isCurrentDevice =
-            device.deviceId === currentDeviceId ||
-            (!currentDeviceId && index === 0);
+          const isCurrentDevice = device.deviceId === currentDeviceId
+            || (!currentDeviceId && index === 0);
 
           return {
             key: `${device.deviceId}-${deviceKind}`,
@@ -215,15 +228,14 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
               ? Styled.SelectedLabel
               : Styled.DeviceLabel,
             iconStyles: isCurrentDevice ? Styled.SelectedLabelIcon : null,
-            iconRight: isCurrentDevice ? "check" : null,
-            onClick: () =>
-              onDeviceListClick(device.deviceId, deviceKind, callback),
+            iconRight: isCurrentDevice ? 'check' : null,
+            onClick: () => onDeviceListClick(device.deviceId, deviceKind, callback),
           } as MenuOptionItemType;
         });
       } else if (
-        deviceKind === AUDIO_OUTPUT &&
-        !SET_SINK_ID_SUPPORTED &&
-        listLength === 0
+        deviceKind === AUDIO_OUTPUT
+        && !SET_SINK_ID_SUPPORTED
+        && listLength === 0
       ) {
         // If the browser doesn't support setSinkId, show the chosen output device
         // as a placeholder Default - like it's done in audio/device-selector
@@ -232,7 +244,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
             key: `defaultDeviceKey-${deviceKind}`,
             label: intl.formatMessage(intlMessages.defaultOutputDeviceLabel),
             customStyles: Styled.SelectedLabel,
-            iconRight: "check",
+            iconRight: 'check',
             disabled: true,
           } as MenuOptionItemType,
         ];
@@ -250,8 +262,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
 
       if (deviceKind === AUDIO_INPUT && supportsTransparentListenOnly) {
         // "None" option for audio input devices - aka listen-only
-        const listenOnly =
-          deviceKind === AUDIO_INPUT && currentDeviceId === "listen-only";
+        const listenOnly = deviceKind === AUDIO_INPUT && currentDeviceId === 'listen-only';
 
         deviceList.push({
           key: `listenOnly-${deviceKind}`,
@@ -259,8 +270,8 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
           label: intl.formatMessage(intlMessages.noMicListenOnlyLabel),
           customStyles: listenOnly ? Styled.SelectedLabel : Styled.DeviceLabel,
           iconStyles: listenOnly ? Styled.SelectedLabelIcon : null,
-          iconRight: listenOnly ? "check" : null,
-          onClick: () => onDeviceListClick("listen-only", deviceKind, callback),
+          iconRight: listenOnly ? 'check' : null,
+          onClick: () => onDeviceListClick('listen-only', deviceKind, callback),
         } as MenuOptionItemType);
       }
 
@@ -299,12 +310,12 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
 
   const inputDeviceList = shouldTreatAsMicrophone()
     ? renderDeviceList(
-        AUDIO_INPUT,
-        inputDevices,
-        liveChangeInputDevice,
-        intl.formatMessage(intlMessages.microphones),
-        inputDeviceId,
-      )
+      AUDIO_INPUT,
+      inputDevices,
+      liveChangeInputDevice,
+      intl.formatMessage(intlMessages.microphones),
+      inputDeviceId,
+    )
     : [];
 
   const outputDeviceList = renderDeviceList(
@@ -316,10 +327,10 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
   );
 
   const audioSettingsOption = {
-    icon: "settings",
+    icon: 'settings',
     label: intl.formatMessage(intlMessages.audioSettingsTitle),
-    key: "audioSettingsOption",
-    dataTest: "input-selector-audio-settings",
+    key: 'audioSettingsOption',
+    dataTest: 'input-selector-audio-settings',
     customStyles: Styled.AudioSettingsOption,
     dividerTop: true,
     onClick: () => openAudioSettings(),
@@ -329,12 +340,12 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
   // Thay vào đó, khi ở listen-only mode, click vào nút sẽ mở audio settings để chọn microphone
   const dropdownListComplete = inputDeviceList
     .concat({
-      key: "separator-01",
+      key: 'separator-01',
       isSeparator: true,
     } as MenuSeparatorItemType)
     .concat(outputDeviceList)
     .concat({
-      key: "separator-02",
+      key: 'separator-02',
       isSeparator: true,
     } as MenuSeparatorItemType);
   if (shouldTreatAsMicrophone()) dropdownListComplete.push(audioSettingsOption);
@@ -344,8 +355,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
     (audioSettingsDropdownItem: PluginSdk.AudioSettingsDropdownInterface) => {
       switch (audioSettingsDropdownItem.type) {
         case AudioSettingsDropdownItemType.OPTION: {
-          const audioSettingsDropdownOption =
-            audioSettingsDropdownItem as PluginSdk.AudioSettingsDropdownOption;
+          const audioSettingsDropdownOption = audioSettingsDropdownItem as PluginSdk.AudioSettingsDropdownOption;
           dropdownListComplete.push({
             label: audioSettingsDropdownOption.label,
             iconRight: audioSettingsDropdownOption.icon,
@@ -356,8 +366,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
           break;
         }
         case AudioSettingsDropdownItemType.SEPARATOR: {
-          const audioSettingsDropdownSeparator =
-            audioSettingsDropdownItem as PluginSdk.AudioSettingsDropdownOption;
+          const audioSettingsDropdownSeparator = audioSettingsDropdownItem as PluginSdk.AudioSettingsDropdownOption;
           dropdownListComplete.push({
             isSeparator: true,
             key: audioSettingsDropdownSeparator.id,
@@ -370,16 +379,16 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
     },
   );
 
-  const customStyles = { top: "-1rem" };
+  const customStyles = { top: '-1rem' };
   const { isMobile } = deviceInfo;
-  const noInputDevice = inputDeviceId === "listen-only";
+  const noInputDevice = inputDeviceId === 'listen-only';
 
   return (
     <>
       {shouldTreatAsMicrophone() ? (
         // eslint-disable-next-line jsx-a11y/no-access-key
         <span
-          style={{ display: "none" }}
+          style={{ display: 'none' }}
           accessKey={leaveAudioShourtcut}
           onClick={() => handleLeaveAudio(meetingIsBreakout)}
           aria-hidden="true"
@@ -388,8 +397,8 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
       {/* Bỏ MuteToggle riêng trên mobile - chỉ dùng trong BBBMenu trigger để tránh hiển thị 2 icon */}
       <BBBMenu
         customStyles={!isMobile ? customStyles : null}
-        trigger={
-          <span style={{ position: "relative", display: "flex" }}>
+        trigger={(
+          <span style={{ position: 'relative', display: 'flex' }}>
             {shouldTreatAsMicrophone() ? (
               <MuteToggle
                 talking={talking}
@@ -403,7 +412,7 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
               />
             ) : (
               <ListenOnly
-                listenOnly={inputDeviceId === "listen-only" ? true : listenOnly}
+                listenOnly={inputDeviceId === 'listen-only' ? true : listenOnly}
                 handleLeaveAudio={handleLeaveAudio}
                 meetingIsBreakout={meetingIsBreakout}
                 actAsDeviceSelector={isMobile}
@@ -411,26 +420,28 @@ export const LiveSelection: React.FC<LiveSelectionProps> = ({
               />
             )}
             {/* Trên mobile: vẫn hiển thị AudioDropdown nhưng nhỏ hơn (đã fix size trong styles) */}
-            <Styled.AudioDropdown
-              data-test="audioDropdownMenu"
-              emoji="device_list_selector"
-              label={intl.formatMessage(intlMessages.changeAudioDevice)}
-              hideLabel
-              tabIndex={0}
-              rotate
-            />
+            {!isOneToOneCall && (
+              <Styled.AudioDropdown
+                data-test="audioDropdownMenu"
+                emoji="device_list_selector"
+                label={intl.formatMessage(intlMessages.changeAudioDevice)}
+                hideLabel
+                tabIndex={0}
+                rotate
+              />
+            )}
           </span>
-        }
+        )}
         actions={!isAudioLocked ? dropdownListComplete : []}
         opts={{
-          id: "audio-selector-dropdown-menu",
+          id: 'audio-selector-dropdown-menu',
           keepMounted: true,
           transitionDuration: 0,
           elevation: 3,
           getcontentanchorel: null,
-          fullwidth: "true",
-          anchorOrigin: { vertical: "top", horizontal: "center" },
-          transformOrigin: { vertical: "bottom", horizontal: "center" },
+          fullwidth: 'true',
+          anchorOrigin: { vertical: 'top', horizontal: 'center' },
+          transformOrigin: { vertical: 'bottom', horizontal: 'center' },
         }}
       />
     </>

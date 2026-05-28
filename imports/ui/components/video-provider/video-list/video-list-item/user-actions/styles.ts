@@ -97,6 +97,10 @@ const Dropdown = styled.div<{
 
 const MenuWrapper = styled.div`
   max-width: 60%;
+
+  body.bbb-one-to-one-call & {
+    display: none !important;
+  }
 `;
 
 const MenuWrapperSqueezed = styled.div`

@@ -1,63 +1,63 @@
-import React, { PureComponent } from "react";
-import { defineMessages, injectIntl } from "react-intl";
-import PropTypes from "prop-types";
-import BBBMenu from "/imports/ui/components/common/menu/component";
-import Button from "/imports/ui/components/common/button/component";
-import Styled from "./styles";
-import { PANELS, ACTIONS } from "../../layout/enums";
-import deviceInfo from "/imports/utils/deviceInfo";
-import AboutContainer from "/imports/ui/components/about/container";
-import ShortcutHelpComponent from "/imports/ui/components/shortcut-help/component";
-import OptionsMenuContainer from "/imports/ui/components/settings/container";
-import FullscreenService from "/imports/ui/components/common/fullscreen-button/service";
-import ConnectionStatusModalContainer from "/imports/ui/components/connection-status/modal/container";
-import browserInfo from "/imports/utils/browserInfo";
+import React, { PureComponent } from 'react';
+import { defineMessages, injectIntl } from 'react-intl';
+import PropTypes from 'prop-types';
+import BBBMenu from '/imports/ui/components/common/menu/component';
+import Button from '/imports/ui/components/common/button/component';
+import Styled from './styles';
+import { PANELS, ACTIONS } from '../../layout/enums';
+import deviceInfo from '/imports/utils/deviceInfo';
+import AboutContainer from '/imports/ui/components/about/container';
+import ShortcutHelpComponent from '/imports/ui/components/shortcut-help/component';
+import OptionsMenuContainer from '/imports/ui/components/settings/container';
+import FullscreenService from '/imports/ui/components/common/fullscreen-button/service';
+import ConnectionStatusModalContainer from '/imports/ui/components/connection-status/modal/container';
+import browserInfo from '/imports/utils/browserInfo';
 
 const intlMessages = defineMessages({
   moreLabel: {
-    id: "app.actionsBar.moreMenu.moreLabel",
-    description: "More button label",
-    defaultMessage: "More",
+    id: 'app.actionsBar.moreMenu.moreLabel',
+    description: 'More button label',
+    defaultMessage: 'More',
   },
   settingsLabel: {
-    id: "app.navBar.optionsDropdown.settingsLabel",
-    description: "Settings label",
-    defaultMessage: "Settings",
+    id: 'app.navBar.optionsDropdown.settingsLabel',
+    description: 'Settings label',
+    defaultMessage: 'Settings',
   },
   userListLabel: {
-    id: "app.navBar.userListToggleBtnLabel",
-    description: "User list label",
-    defaultMessage: "Users",
+    id: 'app.navBar.userListToggleBtnLabel',
+    description: 'User list label',
+    defaultMessage: 'Users',
   },
   chatLabel: {
-    id: "app.chat.titlePublic",
-    description: "Public chat label",
-    defaultMessage: "Public Chat",
+    id: 'app.chat.titlePublic',
+    description: 'Public chat label',
+    defaultMessage: 'Public Chat',
   },
   fullscreenLabel: {
-    id: "app.navBar.optionsDropdown.fullscreenLabel",
-    description: "Fullscreen label",
+    id: 'app.navBar.optionsDropdown.fullscreenLabel',
+    description: 'Fullscreen label',
   },
   exitFullscreenLabel: {
-    id: "app.navBar.optionsDropdown.exitFullscreenLabel",
-    description: "Exit fullscreen label",
+    id: 'app.navBar.optionsDropdown.exitFullscreenLabel',
+    description: 'Exit fullscreen label',
   },
   aboutLabel: {
-    id: "app.navBar.optionsDropdown.aboutLabel",
-    description: "About label",
+    id: 'app.navBar.optionsDropdown.aboutLabel',
+    description: 'About label',
   },
   helpLabel: {
-    id: "app.navBar.optionsDropdown.helpLabel",
-    description: "Help label",
+    id: 'app.navBar.optionsDropdown.helpLabel',
+    description: 'Help label',
   },
   hotkeysLabel: {
-    id: "app.navBar.optionsDropdown.hotkeysLabel",
-    description: "Hotkeys label",
+    id: 'app.navBar.optionsDropdown.hotkeysLabel',
+    description: 'Hotkeys label',
   },
   connectionStatusLabel: {
-    id: "app.navBar.optionsDropdown.connectionStatusLabel",
-    description: "Connection Status label",
-    defaultMessage: "Connection Status",
+    id: 'app.navBar.optionsDropdown.connectionStatusLabel',
+    description: 'Connection Status label',
+    defaultMessage: 'Connection Status',
   },
 });
 
@@ -83,8 +83,8 @@ const { isSafari, isValidSafariVersion } = browserInfo;
 const { isIphone } = deviceInfo;
 const noIOSFullscreen = !!((isSafari && !isValidSafariVersion) || isIphone);
 const FULLSCREEN_CHANGE_EVENT = isSafari
-  ? "webkitfullscreenchange"
-  : "fullscreenchange";
+  ? 'webkitfullscreenchange'
+  : 'fullscreenchange';
 
 class MoreMenu extends PureComponent {
   constructor(props) {
@@ -139,37 +139,35 @@ class MoreMenu extends PureComponent {
     } = this.props;
 
     const { isFullscreen } = this.state;
-    const ALLOW_FULLSCREEN =
-      window.meetingClientSettings?.public?.app?.allowFullscreen;
-    const { showHelpButton: helpButton, helpLink } =
-      window.meetingClientSettings?.public?.app || {};
+    const ALLOW_FULLSCREEN = window.meetingClientSettings?.public?.app?.allowFullscreen;
+    const { showHelpButton: helpButton, helpLink } = window.meetingClientSettings?.public?.app || {};
 
     const menuItems = [
       {
-        key: "list-item-user-list",
-        icon: "user",
+        key: 'list-item-user-list',
+        icon: 'user',
         label: intl.formatMessage(intlMessages.userListLabel),
         onClick: () => {
           onToggleUserList();
           this.setState({ isDropdownOpen: false });
         },
-        "aria-expanded":
-          sidebarContent?.isOpen &&
-          sidebarContent?.sidebarContentPanel === PANELS.USERLIST,
+        'aria-expanded':
+          sidebarContent?.isOpen
+          && sidebarContent?.sidebarContentPanel === PANELS.USERLIST,
       },
     ];
 
     if (onTogglePrivateChat) {
       menuItems.push({
-        key: "list-item-private-chats",
-        icon: "chat",
+        key: 'list-item-private-chats',
+        icon: 'chat',
         label:
           privateUnreadCount > 0
-            ? `${intl.formatMessage({ id: "app.chat.privateChatLabel", defaultMessage: "Private Chats" })} (${privateUnreadCount > 99 ? "99+" : privateUnreadCount})`
+            ? `${intl.formatMessage({ id: 'app.chat.titlePrivate', defaultMessage: 'Private Chats' })} (${privateUnreadCount > 99 ? '99+' : privateUnreadCount})`
             : intl.formatMessage({
-                id: "app.chat.privateChatLabel",
-                defaultMessage: "Private Chats",
-              }),
+              id: 'app.chat.titlePrivate',
+              defaultMessage: 'Private Chats',
+            }),
         onClick: () => {
           onTogglePrivateChat();
           this.setState({ isDropdownOpen: false });
@@ -180,11 +178,11 @@ class MoreMenu extends PureComponent {
     // Thêm menu item "Activities" cho presenter (nếu cần thiết ở trong menu này)
     if (amIPresenter && onOpenActivities) {
       menuItems.push({
-        key: "list-item-activities",
-        icon: "plus",
+        key: 'list-item-activities',
+        icon: 'plus',
         label: intl.formatMessage({
-          id: "app.actionsBar.actionsDropdown.actionsLabel",
-          defaultMessage: "Activities",
+          id: 'app.actionsBar.actionsDropdown.actionsLabel',
+          defaultMessage: 'Activities',
         }),
         onClick: () => {
           onOpenActivities();
@@ -195,8 +193,8 @@ class MoreMenu extends PureComponent {
 
     // Group Setting
     menuItems.push({
-      key: "list-item-settings",
-      icon: "settings",
+      key: 'list-item-settings',
+      icon: 'settings',
       label: intl.formatMessage(intlMessages.settingsLabel),
       onClick: () => {
         this.setState({
@@ -213,10 +211,10 @@ class MoreMenu extends PureComponent {
       const fullscreenLabel = isFullscreen
         ? intl.formatMessage(intlMessages.exitFullscreenLabel)
         : intl.formatMessage(intlMessages.fullscreenLabel);
-      const fullscreenIcon = isFullscreen ? "exit_fullscreen" : "fullscreen";
+      const fullscreenIcon = isFullscreen ? 'exit_fullscreen' : 'fullscreen';
 
       menuItems.push({
-        key: "list-item-fullscreen",
+        key: 'list-item-fullscreen',
         icon: fullscreenIcon,
         label: fullscreenLabel,
         onClick: () => {
@@ -228,8 +226,8 @@ class MoreMenu extends PureComponent {
 
     // About option
     menuItems.push({
-      key: "list-item-about",
-      icon: "about",
+      key: 'list-item-about',
+      icon: 'about',
       label: intl.formatMessage(intlMessages.aboutLabel),
       onClick: () => {
         this.setState({ isAboutModalOpen: true, isDropdownOpen: false });
@@ -239,9 +237,9 @@ class MoreMenu extends PureComponent {
     // Help option
     if (helpButton) {
       menuItems.push({
-        key: "list-item-help",
-        icon: "help",
-        iconRight: "popout_window",
+        key: 'list-item-help',
+        icon: 'help',
+        iconRight: 'popout_window',
         label: intl.formatMessage(intlMessages.helpLabel),
         onClick: () => {
           if (helpLink) {
@@ -267,8 +265,8 @@ class MoreMenu extends PureComponent {
     // Connection Status
     if (showConnectionStatus) {
       menuItems.push({
-        key: "list-item-connection-status",
-        icon: "network",
+        key: 'list-item-connection-status',
+        icon: 'network',
         label: intl.formatMessage(intlMessages.connectionStatusLabel),
         onClick: () => {
           this.setState({
@@ -308,7 +306,7 @@ class MoreMenu extends PureComponent {
 
     if (!deviceInfo.isMobile) return null;
 
-    const customStyles = { top: "1rem" };
+    const customStyles = { top: '1rem' };
 
     // Tính tổng private unread count
     const totalUnreadCount = privateUnreadCount || 0;
@@ -321,7 +319,7 @@ class MoreMenu extends PureComponent {
         <BBBMenu
           modernActionSheet
           customStyles={customStyles}
-          trigger={
+          trigger={(
             <Styled.BadgeWrapper>
               <Styled.MoreButton
                 label={intl.formatMessage(intlMessages.moreLabel)}
@@ -335,21 +333,21 @@ class MoreMenu extends PureComponent {
               />
               {shouldShowBadge && (
                 <Styled.UnreadBadge>
-                  {totalUnreadCount > 99 ? "99+" : totalUnreadCount}
+                  {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
                 </Styled.UnreadBadge>
               )}
             </Styled.BadgeWrapper>
-          }
+          )}
           actions={this.renderMenuItems()}
           opts={{
-            id: "actions-bar-more-menu",
+            id: 'actions-bar-more-menu',
             keepMounted: true,
             transitionDuration: 120, // mượt hơn khi mở
             elevation: 3,
             getcontentanchorel: null,
-            fullwidth: "true",
-            anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            transformorigin: { vertical: "top", horizontal: "right" },
+            fullwidth: 'true',
+            anchorOrigin: { vertical: 'bottom', horizontal: 'right' },
+            transformorigin: { vertical: 'top', horizontal: 'right' },
           }}
           onCloseCallback={() => {
             this.setState({ isDropdownOpen: false });
@@ -358,27 +356,25 @@ class MoreMenu extends PureComponent {
         {this.renderModal(
           isAboutModalOpen,
           (value) => this.setState({ isAboutModalOpen: value }),
-          "low",
+          'low',
           AboutContainer,
         )}
         {this.renderModal(
           isShortcutHelpModalOpen,
           (value) => this.setState({ isShortcutHelpModalOpen: value }),
-          "low",
+          'low',
           ShortcutHelpComponent,
         )}
         {this.renderModal(
           isOptionsMenuModalOpen,
           (value) => this.setState({ isOptionsMenuModalOpen: value }),
-          "low",
+          'low',
           OptionsMenuContainer,
         )}
         {isConnectionStatusModalOpen && (
           <ConnectionStatusModalContainer
             isModalOpen={isConnectionStatusModalOpen}
-            setModalIsOpen={(value) =>
-              this.setState({ isConnectionStatusModalOpen: value })
-            }
+            setModalIsOpen={(value) => this.setState({ isConnectionStatusModalOpen: value })}
           />
         )}
       </>

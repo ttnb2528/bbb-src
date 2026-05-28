@@ -1,27 +1,27 @@
-import styled from "styled-components";
+import styled from 'styled-components';
 import {
   smallOnly,
   hasPhoneWidth,
-} from "/imports/ui/stylesheets/styled-components/breakpoints";
+} from '/imports/ui/stylesheets/styled-components/breakpoints';
 import {
   smPaddingX,
   smPaddingY,
   barsPadding,
   xsPadding,
   borderSize,
-} from "/imports/ui/stylesheets/styled-components/general";
+} from '/imports/ui/stylesheets/styled-components/general';
 import {
   colorWhite,
   colorBackground,
   colorDanger,
   colorGrayLight,
   colorGrayDark,
-} from "/imports/ui/stylesheets/styled-components/palette";
+} from '/imports/ui/stylesheets/styled-components/palette';
 import {
   fontSizeBase,
   fontSizeSmall,
-} from "/imports/ui/stylesheets/styled-components/typography";
-import Button from "/imports/ui/components/common/button/component";
+} from '/imports/ui/stylesheets/styled-components/typography';
+import Button from '/imports/ui/components/common/button/component';
 
 const ActionsBar = styled.div`
   display: flex;
@@ -54,9 +54,8 @@ const ActionsBarWrapper = styled.section`
   transition:
     transform 0.35s cubic-bezier(0.25, 1, 0.5, 1),
     opacity 0.35s ease;
-  ${(props) =>
-    props.$isUIHidden &&
-    `
+  ${(props) => props.$isUIHidden
+    && `
       transform: translateX(120vw) !important;
       opacity: 0;
       pointer-events: none;
@@ -77,6 +76,196 @@ const ActionsBarWrapper = styled.section`
     padding: 0px 10px 14px 10px !important; /* Tăng padding ngang để nút có khoảng thở */
     min-height: 72px !important; /* Tăng chiều cao tối thiểu lên 72px */
     min-width: 260px; /* Even smaller min-width on phone */
+  }
+
+  body.bbb-one-to-one-call &,
+  &.bbb-oto-actions-bar {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    bottom: 16px !important;
+    width: auto;
+    min-width: 290px;
+    max-width: calc(100vw - 28px);
+    padding: 7px 12px !important;
+    border-radius: 999px;
+    border: none;
+    background: rgba(14, 23, 35, 0.84);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 12px 38px rgba(0, 0, 0, 0.45);
+
+    .buttonWrapper {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .buttonWrapper[data-test="muteMicButton"],
+    .buttonWrapper[data-test="unmuteMicButton"],
+    .buttonWrapper[data-test="joinVideo"],
+    .buttonWrapper[data-test="leaveVideo"],
+    .buttonWrapper[data-test="leaveMeetingDropdown"] {
+      margin: 0 5px !important;
+      padding: 0 !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      width: auto !important;
+      height: auto !important;
+    }
+
+    button {
+      border: none !important;
+      background: transparent !important;
+      color: #ecf4ff !important;
+      box-shadow: none !important;
+      outline: none !important;
+    }
+
+    button > span {
+      border: none !important;
+      box-shadow: none !important;
+      outline: none !important;
+    }
+
+    button[data-test="audioDropdownMenu"],
+    button[data-test="videoDropdownMenu"] {
+      display: none !important;
+    }
+
+    span:has(> div > button[data-test="audioDropdownMenu"]),
+    span:has(> div > button[data-test="videoDropdownMenu"]),
+    span:has(> button[data-test="audioDropdownMenu"]),
+    span:has(> button[data-test="videoDropdownMenu"]) {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+    }
+
+    button[data-test="muteMicButton"] > span:first-of-type,
+    button[data-test="unmuteMicButton"] > span:first-of-type,
+    button[data-test="joinVideo"] > span:first-of-type,
+    button[data-test="leaveVideo"] > span:first-of-type {
+      width: 46px !important;
+      height: 46px !important;
+      border-radius: 50% !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: rgba(18, 31, 49, 0.88) !important;
+      border: 1px solid rgba(171, 193, 223, 0.42) !important;
+      color: #edf4ff !important;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.34) !important;
+      transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        filter 0.18s ease !important;
+    }
+
+    .buttonWrapper[data-test="muteMicButton"]::before,
+    .buttonWrapper[data-test="muteMicButton"]::after,
+    .buttonWrapper[data-test="unmuteMicButton"]::before,
+    .buttonWrapper[data-test="unmuteMicButton"]::after,
+    .buttonWrapper[data-test="joinVideo"]::before,
+    .buttonWrapper[data-test="joinVideo"]::after,
+    .buttonWrapper[data-test="leaveVideo"]::before,
+    .buttonWrapper[data-test="leaveVideo"]::after {
+      content: none !important;
+      display: none !important;
+      animation: none !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    button[data-test="muteMicButton"] > span:first-of-type::before,
+    button[data-test="muteMicButton"] > span:first-of-type::after,
+    button[data-test="unmuteMicButton"] > span:first-of-type::before,
+    button[data-test="unmuteMicButton"] > span:first-of-type::after,
+    button[data-test="joinVideo"] > span:first-of-type::before,
+    button[data-test="joinVideo"] > span:first-of-type::after,
+    button[data-test="leaveVideo"] > span:first-of-type::before,
+    button[data-test="leaveVideo"] > span:first-of-type::after {
+      content: none !important;
+      display: none !important;
+    }
+
+    button[data-test="muteMicButton"] i,
+    button[data-test="unmuteMicButton"] i,
+    button[data-test="joinVideo"] i,
+    button[data-test="leaveVideo"] i,
+    [data-test="leaveMeetingDropdown"] i {
+      font-size: 19px !important;
+      line-height: 1 !important;
+    }
+
+    button[data-test="muteMicButton"]:hover > span:first-of-type,
+    button[data-test="unmuteMicButton"]:hover > span:first-of-type,
+    button[data-test="joinVideo"]:hover > span:first-of-type,
+    button[data-test="leaveVideo"]:hover > span:first-of-type {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.4) !important;
+      filter: brightness(1.08) !important;
+    }
+
+    button[data-test="muteMicButton"] > span:first-of-type {
+      background: linear-gradient(
+        135deg,
+        rgba(35, 116, 255, 0.95),
+        rgba(66, 150, 255, 0.95)
+      ) !important;
+      border-color: rgba(149, 203, 255, 0.55) !important;
+      color: #ffffff !important;
+    }
+
+    button[data-test="leaveVideo"] > span:first-of-type {
+      background: linear-gradient(
+        135deg,
+        rgba(255, 79, 79, 0.96),
+        rgba(255, 122, 122, 0.96)
+      ) !important;
+      border-color: rgba(255, 176, 176, 0.62) !important;
+      color: #fff !important;
+    }
+
+    button:focus,
+    button:focus-visible,
+    button:active {
+      outline: none !important;
+      box-shadow: none !important;
+    }
+
+    [data-test="leaveMeetingDropdown"] > span,
+    [data-test="leaveMeetingDropdown"] {
+      background: linear-gradient(
+        135deg,
+        rgba(255, 74, 74, 0.95),
+        rgba(255, 120, 120, 0.95)
+      ) !important;
+      border: none !important;
+      color: #fff !important;
+    }
+
+    [data-test="leaveMeetingDropdown"] > span {
+      width: 46px !important;
+      height: 46px !important;
+      border-radius: 50% !important;
+      box-shadow: 0 10px 24px rgba(182, 26, 26, 0.45) !important;
+    }
+  }
+
+  @media ${smallOnly} {
+    body.bbb-one-to-one-call &,
+    &.bbb-oto-actions-bar {
+      min-width: 0;
+      width: calc(100vw - 20px);
+      border-radius: 18px;
+      padding: 8px 10px 12px !important;
+      bottom: 8px !important;
+      left: 50% !important;
+      right: auto !important;
+      transform: translateX(-50%);
+    }
   }
 `;
 
@@ -231,9 +420,8 @@ const Right = styled.div`
 `;
 
 const RaiseHandButton = styled(Button)`
-  ${({ ghost }) =>
-    ghost &&
-    `
+  ${({ ghost }) => ghost
+    && `
     & > span {
       box-shadow: none;
       background-color: transparent !important;

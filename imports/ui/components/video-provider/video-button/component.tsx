@@ -84,6 +84,27 @@ const JoinVideoButton: React.FC<JoinVideoButtonProps> = ({
   stopVideo,
   videoConnecting,
 }) => {
+  const isOneToOneCall = (() => {
+    if (typeof window === 'undefined') return false;
+    const queryParams = new URLSearchParams(window.location.search);
+    const queryLayout = (queryParams.get('layout') || '').toLowerCase();
+    const queryMode = (queryParams.get('mode') || '').toLowerCase();
+    const normalizedTitle = (document.title || '').toLowerCase();
+    return (
+      (window as any).isOneToOneCall === true
+      || document.body.classList.contains('bbb-one-to-one-call')
+      || window.location.href.includes('oneToOne=true')
+      || normalizedTitle.includes(' 1-1 ')
+      || normalizedTitle.includes(' one-to-one ')
+      || ['one-to-one', 'one_to_one', '1-1', '1v1', 'one2one'].includes(
+        queryLayout,
+      )
+      || ['one-to-one', 'one_to_one', '1-1', '1v1', 'one2one'].includes(
+        queryMode,
+      )
+    );
+  })();
+
   const { isMobile } = deviceInfo;
   const isMobileSharingCamera = hasVideoStream && isMobile;
   const isDesktopSharingCamera = hasVideoStream && !isMobile;
@@ -150,6 +171,8 @@ const JoinVideoButton: React.FC<JoinVideoButtonProps> = ({
     : intl.formatMessage(intlMessages[getMessageFromStatus() as keyof typeof intlMessages]);
 
   const renderUserActions = () => {
+    if (isOneToOneCall) return null;
+
     const actions = [];
 
     if (shouldEnableWebcamSelectorButton) {

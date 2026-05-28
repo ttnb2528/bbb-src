@@ -128,6 +128,16 @@ const Content = styled.div<{
     height: 100vh;
     z-index: 99;
   `}
+
+  body.bbb-one-to-one-call & {
+    border-radius: 14px;
+    box-shadow: none;
+  }
+
+  body.bbb-one-to-one-call &::after {
+    border: none;
+    border-radius: 14px;
+  }
 `;
 
 const WebcamConnecting = styled.div<{
@@ -158,6 +168,11 @@ const WebcamConnecting = styled.div<{
       `
       transition: opacity .1s;
     `}
+  }
+
+  body.bbb-one-to-one-call & {
+    background:
+      linear-gradient(145deg, rgba(26, 58, 104, 0.85), rgba(48, 24, 90, 0.86));
   }
 `;
 
@@ -219,6 +234,10 @@ const Video = styled.video<{
   body.bbb-external-video-active [data-camera-position]:not([data-camera-position="contentTop"]) [data-test="webcamItem"] &,
   body.bbb-external-video-active [data-camera-position]:not([data-camera-position="contentTop"]) [data-test="webcamItemTalkingUser"] & {
     display: none !important;
+  }
+
+  body.bbb-one-to-one-call [data-test="videoStripWrapper"] & {
+    object-fit: cover;
   }
 `;
 

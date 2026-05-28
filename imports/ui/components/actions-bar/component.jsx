@@ -711,6 +711,34 @@ class ActionsBar extends PureComponent {
     );
   }
 
+  isOneToOneCallMode() {
+    if (typeof window === "undefined") return false;
+
+    const queryParams = new URLSearchParams(window.location.search);
+    const queryLayout = (queryParams.get("layout") || "").toLowerCase();
+    const queryMode = (queryParams.get("mode") || "").toLowerCase();
+    const normalizedTitle = (document?.title || "").toLowerCase();
+    const byQuery =
+      ["one-to-one", "one_to_one", "1-1", "1v1", "one2one"].includes(
+        queryLayout,
+      ) ||
+      ["one-to-one", "one_to_one", "1-1", "1v1", "one2one"].includes(
+        queryMode,
+      );
+
+    const byTitle =
+      normalizedTitle.includes(" 1-1 ") ||
+      normalizedTitle.includes(" one-to-one ") ||
+      normalizedTitle.startsWith("1-1 ");
+
+    return (
+      (window.isOneToOneCall === true && window.isEcommerceLive !== true) ||
+      document.body.classList.contains("bbb-one-to-one-call") ||
+      byQuery ||
+      byTitle
+    );
+  }
+
   render() {
     const {
       amIPresenter,
@@ -764,17 +792,13 @@ class ActionsBar extends PureComponent {
       selectedLayout !== LAYOUT_TYPE.PRESENTATION_ONLY &&
       selectedLayout !== LAYOUT_TYPE.PARTICIPANTS_AND_CHAT_ONLY;
     const shouldRenderActionBar = selectedLayout !== LAYOUT_TYPE.PLUGINS_ONLY;
-
-    const shouldShowOptionsButton =
-      (isPresentationEnabled && isThereCurrentPresentation) ||
-      isSharingVideo ||
-      hasScreenshare ||
-      isSharedNotesPinned;
+    const isOneToOneMode = this.isOneToOneCallMode();
 
     return (
       shouldRenderActionBar && (
         <Styled.ActionsBarWrapper
           id="ActionsBar"
+          className={isOneToOneMode ? "bbb-oto-actions-bar" : undefined}
           $isUIHidden={isUIHidden}
           role="region"
           aria-label={intl.formatMessage(intlMessages.actionsBarLabel)}
@@ -798,68 +822,70 @@ class ActionsBar extends PureComponent {
             }}
           >
             <Styled.Left>
-              <Styled.RoomInfo>
-                {/* Time */}
-                <Styled.Time>{currentTime}</Styled.Time>
-                <TimerIndicatorContainer />
+              {!isOneToOneMode && (
+                <Styled.RoomInfo>
+                  {/* Time */}
+                  <Styled.Time>{currentTime}</Styled.Time>
+                  <TimerIndicatorContainer />
 
-                {/* Room name với dropdown */}
-                <Styled.Separator aria-hidden="true">|</Styled.Separator>
-                <Styled.RoomName
-                  onClick={() => this.setModalIsOpen(true)}
-                  data-test="roomName"
-                >
-                  <Tooltip
-                    title={intl.formatMessage({
-                      id: "app.navBar.openDetailsTooltip",
-                      defaultMessage: "Session",
-                    })}
+                  {/* Room name với dropdown */}
+                  <Styled.Separator aria-hidden="true">|</Styled.Separator>
+                  <Styled.RoomName
+                    onClick={() => this.setModalIsOpen(true)}
+                    data-test="roomName"
                   >
-                    <span>
-                      {presentationTitle || meetingName || "Room"}
-                      <Icon iconName="device_list_selector" />
-                    </span>
-                  </Tooltip>
-                </Styled.RoomName>
-                {this.renderModal(
-                  this.state.isModalOpen,
-                  this.setModalIsOpen,
-                  "low",
-                  SessionDetailsModal,
-                )}
+                    <Tooltip
+                      title={intl.formatMessage({
+                        id: "app.navBar.openDetailsTooltip",
+                        defaultMessage: "Session",
+                      })}
+                    >
+                      <span>
+                        {presentationTitle || meetingName || "Room"}
+                        <Icon iconName="device_list_selector" />
+                      </span>
+                    </Tooltip>
+                  </Styled.RoomName>
+                  {this.renderModal(
+                    this.state.isModalOpen,
+                    this.setModalIsOpen,
+                    "low",
+                    SessionDetailsModal,
+                  )}
 
-                {/* ActionsDropdown (nút dấu cộng) - chỉ hiển thị nếu là presenter */}
-                {amIPresenter && !this.state.isMobileDevice && (
-                  <>
-                    <Styled.Separator aria-hidden="true">|</Styled.Separator>
-                    <ActionsDropdown
-                      amIPresenter={amIPresenter}
-                      amIModerator={amIModerator}
-                      isMeteorConnected={isMeteorConnected}
-                      isSharingVideo={isSharingVideo}
-                      isPollingEnabled={isPollingEnabled}
-                      isTimerActive={isTimerActive}
-                      isTimerEnabled={isTimerEnabled}
-                      allowExternalVideo={allowExternalVideo}
-                      stopExternalVideoShare={stopExternalVideoShare}
-                      hasCameraAsContent={hasCameraAsContent}
-                      setMeetingLayout={setMeetingLayout}
-                      setPushLayout={setPushLayout}
-                      showPushLayout={showPushLayout}
-                      setPresentationFitToWidth={setPresentationFitToWidth}
-                    />
-                  </>
-                )}
-              </Styled.RoomInfo>
+                  {/* ActionsDropdown (nút dấu cộng) - chỉ hiển thị nếu là presenter */}
+                  {amIPresenter && !this.state.isMobileDevice && (
+                    <>
+                      <Styled.Separator aria-hidden="true">|</Styled.Separator>
+                      <ActionsDropdown
+                        amIPresenter={amIPresenter}
+                        amIModerator={amIModerator}
+                        isMeteorConnected={isMeteorConnected}
+                        isSharingVideo={isSharingVideo}
+                        isPollingEnabled={isPollingEnabled}
+                        isTimerActive={isTimerActive}
+                        isTimerEnabled={isTimerEnabled}
+                        allowExternalVideo={allowExternalVideo}
+                        stopExternalVideoShare={stopExternalVideoShare}
+                        hasCameraAsContent={hasCameraAsContent}
+                        setMeetingLayout={setMeetingLayout}
+                        setPushLayout={setPushLayout}
+                        showPushLayout={showPushLayout}
+                        setPresentationFitToWidth={setPresentationFitToWidth}
+                      />
+                    </>
+                  )}
+                </Styled.RoomInfo>
+              )}
             </Styled.Left>
             <Styled.Center>
               {this.renderPluginsActionBarItems(ActionsBarPosition.LEFT)}
-              <AudioCaptionsButtonContainer />
               <AudioControlsContainer />
               {shouldShowVideoButton && enableVideo ? (
                 <JoinVideoOptionsContainer />
               ) : null}
-              {shouldShowPresentationButton && (
+              {!isOneToOneMode && <AudioCaptionsButtonContainer />}
+              {!isOneToOneMode && shouldShowPresentationButton && (
                 <ScreenshareButtonContainer
                   {...{
                     amIPresenter,
@@ -867,12 +893,23 @@ class ActionsBar extends PureComponent {
                   }}
                 />
               )}
-              {isReactionsButtonEnabled && this.renderReactionsButton()}
-              {isRaiseHandEnabled && <RaiseHandButtonContainer />}
+              {!isOneToOneMode &&
+                isReactionsButtonEnabled &&
+                this.renderReactionsButton()}
+              {!isOneToOneMode && isRaiseHandEnabled && (
+                <RaiseHandButtonContainer />
+              )}
               {this.renderPluginsActionBarItems(ActionsBarPosition.RIGHT)}
             </Styled.Center>
             <Styled.Right>
               <Styled.Gap>
+                {isOneToOneMode ? (
+                  isDirectLeaveButtonEnabled &&
+                  isMeteorConnected && (
+                    <LeaveMeetingButtonContainer amIModerator={amIModerator} />
+                  )
+                ) : (
+                  <>
                 {/* Mobile: Chỉ hiển thị More menu và Leave button */}
                 {this.state.isMobileDevice ? (
                   <>
@@ -997,22 +1034,26 @@ class ActionsBar extends PureComponent {
                     )}
                   </>
                 )}
+                  </>
+                )}
               </Styled.Gap>
             </Styled.Right>
           </Styled.ActionsBar>
-          {/* Render PrivateChatNotificationPanel */}
-          <PrivateChatNotificationPanel
-            isOpen={this.state.isPrivateChatNotificationPanelOpen}
-            onClose={this.handleCloseNotificationPanel}
-            onSelectChat={this.handleSelectChatFromPanel}
-            anchorElement={this.state.privateChatButtonRef}
-          />
+          {!isOneToOneMode && (
+            <>
+              {/* Render PrivateChatNotificationPanel */}
+              <PrivateChatNotificationPanel
+                isOpen={this.state.isPrivateChatNotificationPanelOpen}
+                onClose={this.handleCloseNotificationPanel}
+                onSelectChat={this.handleSelectChatFromPanel}
+                anchorElement={this.state.privateChatButtonRef}
+              />
 
-          {/* Helper component để query chats và tìm chatId từ userId */}
-          <PrivateChatHelper />
+              {/* Helper component để query chats và tìm chatId từ userId */}
+              <PrivateChatHelper />
 
-          {/* Render nhiều PrivateChatModal - mỗi chatId một popup hoặc icon */}
-          {(() => {
+              {/* Render nhiều PrivateChatModal - mỗi chatId một popup hoặc icon */}
+              {(() => {
             // Lấy tất cả chat minimized
             const allMinimizedChats = Object.keys(
               this.state.openPrivateChats,
@@ -1100,10 +1141,13 @@ class ActionsBar extends PureComponent {
             }
 
             return renderedChats;
-          })()}
+              })()}
+            </>
+          )}
 
           {/* Render dock bar khi có nhiều chat minimized */}
-          {(() => {
+          {!isOneToOneMode &&
+            (() => {
             const minimizedChats = Object.keys(
               this.state.openPrivateChats,
             ).filter(
@@ -1136,10 +1180,10 @@ class ActionsBar extends PureComponent {
                 anchorPosition={anchorPosition || undefined}
               />
             );
-          })()}
+            })()}
 
           {/* Activities Drawer cho mobile presenter */}
-          {this.state.isMobileDevice && amIPresenter && (
+          {!isOneToOneMode && this.state.isMobileDevice && amIPresenter && (
             <MobileDrawer
               isOpen={this.state.isActivitiesModalOpen}
               onClose={() => this.setActivitiesModalOpen(false)}
@@ -1178,7 +1222,8 @@ class ActionsBar extends PureComponent {
 
           {/* Modals render ở level cao hơn (ngoài drawer) để không bị unmount */}
           {/* External Video Modal */}
-          {this.state.isMobileDevice &&
+          {!isOneToOneMode &&
+            this.state.isMobileDevice &&
             amIPresenter &&
             this.state.isExternalVideoModalOpen && (
               <ExternalVideoModal
@@ -1190,7 +1235,8 @@ class ActionsBar extends PureComponent {
             )}
 
           {/* Camera as Content Modal */}
-          {this.state.isMobileDevice &&
+          {!isOneToOneMode &&
+            this.state.isMobileDevice &&
             amIPresenter &&
             this.state.isCameraAsContentModalOpen && (
               <VideoPreviewContainer

@@ -254,27 +254,33 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
     setIsSelfViewDisabled(settingsSelfViewDisable);
   }, [settingsSelfViewDisable]);
 
+  const isOneToOneCall = (typeof window !== 'undefined' && (window as any).isOneToOneCall === true)
+    || (typeof document !== 'undefined'
+      && document.body.classList.contains('bbb-one-to-one-call'));
+
   const renderSqueezedButton = () => (
-    <UserActions
-      name={name}
-      stream={stream}
-      videoContainer={videoContainer}
-      isVideoSqueezed={isVideoSqueezed}
-      cameraId={cameraId}
-      numOfStreams={numOfStreams}
-      onHandleVideoFocus={onHandleVideoFocus}
-      focused={focused}
-      onHandleMirror={() => setIsMirrored((value) => !value)}
-      isMirrored={isMirrored}
-      isRTL={isRTL}
-      isStream={isStream}
-      onHandleDisableCam={() => setIsSelfViewDisabled((value) => !value)}
-      isSelfViewDisabled={isSelfViewDisabled}
-      amIModerator={amIModerator}
-      isFullscreenContext={isFullscreenContext}
-      layoutContextDispatch={layoutContextDispatch}
-      isPresenter={isPresenter}
-    />
+    isOneToOneCall ? null : (
+      <UserActions
+        name={name}
+        stream={stream}
+        videoContainer={videoContainer}
+        isVideoSqueezed={isVideoSqueezed}
+        cameraId={cameraId}
+        numOfStreams={numOfStreams}
+        onHandleVideoFocus={onHandleVideoFocus}
+        focused={focused}
+        onHandleMirror={() => setIsMirrored((value) => !value)}
+        isMirrored={isMirrored}
+        isRTL={isRTL}
+        isStream={isStream}
+        onHandleDisableCam={() => setIsSelfViewDisabled((value) => !value)}
+        isSelfViewDisabled={isSelfViewDisabled}
+        amIModerator={amIModerator}
+        isFullscreenContext={isFullscreenContext}
+        layoutContextDispatch={layoutContextDispatch}
+        isPresenter={isPresenter}
+      />
+    )
   );
 
   const renderWebcamConnecting = () => (
@@ -293,25 +299,27 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
         {raiseHand && <Styled.RaiseHand>✋</Styled.RaiseHand>}
       </Styled.TopBar>
       <Styled.BottomBar $isPresenter={isPresenter}>
-        <UserActions
-          name={name}
-          stream={stream}
-          cameraId={cameraId}
-          numOfStreams={numOfStreams}
-          onHandleVideoFocus={onHandleVideoFocus}
-          focused={focused}
-          onHandleMirror={() => setIsMirrored((value) => !value)}
-          isMirrored={isMirrored}
-          isRTL={isRTL}
-          isStream={isStream}
-          onHandleDisableCam={() => setIsSelfViewDisabled((value) => !value)}
-          isSelfViewDisabled={isSelfViewDisabled}
-          amIModerator={amIModerator}
-          videoContainer={videoContainer}
-          isFullscreenContext={isFullscreenContext}
-          layoutContextDispatch={layoutContextDispatch}
-          isPresenter={isPresenter}
-        />
+        {!isOneToOneCall && (
+          <UserActions
+            name={name}
+            stream={stream}
+            cameraId={cameraId}
+            numOfStreams={numOfStreams}
+            onHandleVideoFocus={onHandleVideoFocus}
+            focused={focused}
+            onHandleMirror={() => setIsMirrored((value) => !value)}
+            isMirrored={isMirrored}
+            isRTL={isRTL}
+            isStream={isStream}
+            onHandleDisableCam={() => setIsSelfViewDisabled((value) => !value)}
+            isSelfViewDisabled={isSelfViewDisabled}
+            amIModerator={amIModerator}
+            videoContainer={videoContainer}
+            isFullscreenContext={isFullscreenContext}
+            layoutContextDispatch={layoutContextDispatch}
+            isPresenter={isPresenter}
+          />
+        )}
         <UserStatus
           voiceUser={voiceUser}
           user={user}
@@ -384,25 +392,27 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
         />
       </Styled.TopBar>
       <Styled.BottomBar $isPresenter={isPresenter}>
-        <UserActions
-          name={name}
-          stream={stream}
-          cameraId={cameraId}
-          numOfStreams={numOfStreams}
-          onHandleVideoFocus={onHandleVideoFocus}
-          focused={focused}
-          onHandleMirror={() => setIsMirrored((value) => !value)}
-          isMirrored={isMirrored}
-          isRTL={isRTL}
-          isStream={isStream}
-          onHandleDisableCam={() => setIsSelfViewDisabled((value) => !value)}
-          isSelfViewDisabled={isSelfViewDisabled}
-          amIModerator={amIModerator}
-          videoContainer={videoContainer}
-          isFullscreenContext={isFullscreenContext}
-          layoutContextDispatch={layoutContextDispatch}
-          isPresenter={isPresenter}
-        />
+        {!isOneToOneCall && (
+          <UserActions
+            name={name}
+            stream={stream}
+            cameraId={cameraId}
+            numOfStreams={numOfStreams}
+            onHandleVideoFocus={onHandleVideoFocus}
+            focused={focused}
+            onHandleMirror={() => setIsMirrored((value) => !value)}
+            isMirrored={isMirrored}
+            isRTL={isRTL}
+            isStream={isStream}
+            onHandleDisableCam={() => setIsSelfViewDisabled((value) => !value)}
+            isSelfViewDisabled={isSelfViewDisabled}
+            amIModerator={amIModerator}
+            videoContainer={videoContainer}
+            isFullscreenContext={isFullscreenContext}
+            layoutContextDispatch={layoutContextDispatch}
+            isPresenter={isPresenter}
+          />
+        )}
         <UserStatus
           voiceUser={voiceUser}
           user={user}
@@ -419,10 +429,10 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
   } = makeDragOperations(stream.userId);
 
   // Kiểm tra xem user có phải presenter không
-  const isPresenter = stream.type === VIDEO_TYPES.STREAM 
-    ? stream.user?.presenter 
-    : stream.type === VIDEO_TYPES.GRID 
-      ? stream?.presenter 
+  const isPresenter = stream.type === VIDEO_TYPES.STREAM
+    ? stream.user?.presenter
+    : stream.type === VIDEO_TYPES.GRID
+      ? stream?.presenter
       : false;
 
   return (
