@@ -13,6 +13,23 @@ const LeaveButton = styled(Button)`
   font-size: 1rem;
   line-height: 1.1rem;
   font-weight: 400;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+
+  & > i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    line-height: 1;
+  }
+
+  svg {
+    display: block;
+    width: 1.05rem;
+    height: 1.05rem;
+  }
 
   ${({ state }) => state === 'open' && `
     @media ${smallOnly} {

@@ -3,6 +3,7 @@ import { useMutation, useReactiveVar } from '@apollo/client';
 import LeaveMeetingButton from './component';
 import { layoutSelect } from '../../layout/context';
 import { USER_LEAVE_MEETING } from '/imports/ui/core/graphql/mutations/userMutations';
+import { MEETING_END } from '/imports/ui/components/end-meeting-confirmation/mutations';
 import { useStorageKey } from '/imports/ui/services/storage/hooks';
 import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
 import connectionStatus from '/imports/ui/core/graphql/singletons/connectionStatus';
@@ -26,6 +27,7 @@ const LeaveMeetingButtonContainer = (props) => {
   const { isMobile } = deviceInfo;
   const isRTL = layoutSelect((i) => i.isRTL);
   const [userLeaveMeeting] = useMutation(USER_LEAVE_MEETING);
+  const [meetingEnd] = useMutation(MEETING_END);
   const isDropdownOpen = useStorageKey('dropdownOpen');
 
   const openLeaveMenu = useShortcut('openLeaveMenu');
@@ -39,6 +41,7 @@ const LeaveMeetingButtonContainer = (props) => {
         ismobile: isMobile,
         isRTL,
         userLeaveMeeting,
+        meetingEnd,
         isDropdownOpen,
         amIModerator,
         connected,

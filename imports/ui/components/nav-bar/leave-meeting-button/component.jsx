@@ -50,7 +50,9 @@ const propTypes = {
   connected: PropTypes.bool.isRequired,
   isDropdownOpen: PropTypes.bool,
   ismobile: PropTypes.bool.isRequired,
+  isRTL: PropTypes.bool,
   userLeaveMeeting: PropTypes.func.isRequired,
+  meetingEnd: PropTypes.func.isRequired,
   openLeaveMenu: PropTypes.string,
 };
 
@@ -74,6 +76,24 @@ class LeaveMeetingButton extends PureComponent {
     this.setEndMeetingConfirmationModalIsOpen = this
       .setEndMeetingConfirmationModalIsOpen.bind(this);
     this.leaveSession = this.leaveSession.bind(this);
+    this.handleOneToOneEndCall = this.handleOneToOneEndCall.bind(this);
+  }
+
+  handleOneToOneEndCall() {
+    const {
+      amIModerator,
+      isBreakoutRoom,
+      connected,
+      meetingEnd,
+    } = this.props;
+
+    // In one-to-one calls, one click should end the call for both users.
+    if (amIModerator && !isBreakoutRoom && connected) {
+      meetingEnd();
+      return;
+    }
+
+    this.leaveSession();
   }
 
   setEndMeetingConfirmationModalIsOpen(value) {
@@ -167,6 +187,29 @@ class LeaveMeetingButton extends PureComponent {
     const { isEndMeetingConfirmationModalOpen } = this.state;
 
     const customStyles = { top: '1rem' };
+    const isOneToOneCall = typeof window !== 'undefined'
+      && (window.isOneToOneCall === true
+        || document.body.classList.contains('bbb-one-to-one-call'));
+
+    if (isOneToOneCall) {
+      return (
+        <Styled.LeaveButton
+          state={isDropdownOpen ? 'open' : 'closed'}
+          ismobile={ismobile.toString()}
+          accessKey={openLeaveMenu}
+          aria-label={intl.formatMessage(intlMessages.endMeetingLabel)}
+          label={intl.formatMessage(intlMessages.endMeetingLabel)}
+          tooltipLabel={intl.formatMessage(intlMessages.endMeetingLabel)}
+          description={intl.formatMessage(intlMessages.endMeetingDesc)}
+          data-test="leaveMeetingDropdown"
+          svgIcon="endCall"
+          color="danger"
+          size="md"
+          hideLabel
+          onClick={this.handleOneToOneEndCall}
+        />
+      );
+    }
 
     return (
       <>
@@ -182,13 +225,13 @@ class LeaveMeetingButton extends PureComponent {
               tooltipLabel={intl.formatMessage(intlMessages.leaveMeetingBtnLabel)}
               description={intl.formatMessage(intlMessages.leaveMeetingBtnDesc)}
               data-test="leaveMeetingDropdown"
-              icon="logout" /* Dùng icon logout có sẵn để tránh lỗi missing glyph */
+              icon="close"
               color="danger"
-              size="md" /* Kích thước vừa, đồng bộ với các action */
+              size="md"
               hideLabel
               // FIXME: Without onClick react proptypes keep warning
               // even after the DropdownTrigger inject an onClick handler
-              onClick={() => null} 
+              onClick={() => null}
             />
           )}
           actions={this.renderMenuItems()}
