@@ -108,21 +108,13 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
   } = props;
 
   const intl = useIntl();
-  const [hasExternalVideo, setHasExternalVideo] = useState<boolean>(false);
-
-  // Lắng nghe class global (do external video set lên body) để ẩn/hiện cam lớn
-  useEffect(() => {
-    const check = () => {
-      setHasExternalVideo(document.body.classList.contains('bbb-external-video-active'));
-    };
-    check();
-    const observer = new MutationObserver(check);
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
 
   const [videoDataLoaded, setVideoDataLoaded] = useState(false);
-  const [isStreamHealthy, setIsStreamHealthy] = useState(false);
+  // STREAM tiles should be treated as healthy by default; otherwise if the
+  // initial stream-state event is missed, the tile can get stuck on avatar.
+  const [isStreamHealthy, setIsStreamHealthy] = useState(
+    stream.type === VIDEO_TYPES.STREAM,
+  );
   const [isMirrored, setIsMirrored] = useState<boolean>(VideoService.mirrorOwnWebcam(stream.userId));
   const [isVideoSqueezed, setIsVideoSqueezed] = useState(false);
   const [isSelfViewDisabled, setIsSelfViewDisabled] = useState(false);
@@ -212,16 +204,44 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
 
   // component did mount
   useEffect(() => {
-    subscribeToStreamStateChange(cameraId, onStreamStateChange);
-    onVideoItemMount(videoTag.current!);
+    const videoElement = videoTag.current;
+
+    if (videoElement) {
+      // Register listeners before attaching stream to avoid missing early media-ready events.
+      videoElement.addEventListener('loadeddata', onLoadedData);
+      videoElement.addEventListener('loadedmetadata', onLoadedData);
+      videoElement.addEventListener('canplay', onLoadedData);
+      videoElement.addEventListener('playing', onLoadedData);
+      onVideoItemMount(videoElement);
+      // Fallback for races where media is already ready when listeners are attached.
+      if (videoElement.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        onLoadedData();
+      }
+    }
+
     if (videoContainer.current) resizeObserver.observe(videoContainer.current);
-    videoTag?.current?.addEventListener('loadeddata', onLoadedData);
 
     return () => {
-      videoTag?.current?.removeEventListener('loadeddata', onLoadedData);
+      videoElement?.removeEventListener('loadeddata', onLoadedData);
+      videoElement?.removeEventListener('loadedmetadata', onLoadedData);
+      videoElement?.removeEventListener('canplay', onLoadedData);
+      videoElement?.removeEventListener('playing', onLoadedData);
       resizeObserver.disconnect();
     };
   }, []);
+
+  // Stream tiles can mount as CONNECTING first, then transition to STREAM.
+  // Subscribe with dependencies so we don't miss the transition.
+  useEffect(() => {
+    if (stream.type !== VIDEO_TYPES.STREAM || !cameraId) return undefined;
+
+    setIsStreamHealthy(true);
+    subscribeToStreamStateChange(cameraId, onStreamStateChange);
+
+    return () => {
+      unsubscribeFromStreamStateChange(cameraId, onStreamStateChange);
+    };
+  }, [cameraId, stream.type]);
 
   // component will mount
   useEffect(() => {
@@ -246,7 +266,6 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
 
   // component will unmount
   useEffect(() => () => {
-    unsubscribeFromStreamStateChange(cameraId, onStreamStateChange);
     onVideoItemUnmount(cameraId);
   }, []);
 
@@ -254,7 +273,8 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
     setIsSelfViewDisabled(settingsSelfViewDisable);
   }, [settingsSelfViewDisable]);
 
-  const isOneToOneCall = (typeof window !== 'undefined' && (window as any).isOneToOneCall === true)
+  const isOneToOneCall = (typeof window !== 'undefined'
+    && (window as Window & { isOneToOneCall?: boolean }).isOneToOneCall === true)
     || (typeof document !== 'undefined'
       && document.body.classList.contains('bbb-one-to-one-call'));
 
@@ -296,7 +316,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
         squeezed={false}
       />
       <Styled.TopBar>
-        {raiseHand && <Styled.RaiseHand>✋</Styled.RaiseHand>}
+        {raiseHand && <Styled.RaiseHand>âœ‹</Styled.RaiseHand>}
       </Styled.TopBar>
       <Styled.BottomBar $isPresenter={isPresenter}>
         {!isOneToOneCall && (
@@ -385,7 +405,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
   const renderDefaultButtons = () => (
     <>
       <Styled.TopBar>
-        {raiseHand && <Styled.RaiseHand>✋</Styled.RaiseHand>}
+        {raiseHand && <Styled.RaiseHand>âœ‹</Styled.RaiseHand>}
         <PinArea
           stream={stream}
           amIModerator={amIModerator}
@@ -428,12 +448,13 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
     onDrop,
   } = makeDragOperations(stream.userId);
 
-  // Kiểm tra xem user có phải presenter không
-  const isPresenter = stream.type === VIDEO_TYPES.STREAM
-    ? stream.user?.presenter
-    : stream.type === VIDEO_TYPES.GRID
-      ? stream?.presenter
-      : false;
+  // Kiá»ƒm tra xem user cÃ³ pháº£i presenter khÃ´ng
+  let isPresenter = false;
+  if (stream.type === VIDEO_TYPES.STREAM) {
+    isPresenter = !!stream.user?.presenter;
+  } else if (stream.type === VIDEO_TYPES.GRID) {
+    isPresenter = !!stream?.presenter;
+  }
 
   return (
     // @ts-expect-error -> Until everything in Typescript.

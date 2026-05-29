@@ -122,6 +122,21 @@ const VideoCanvas = styled.div<{
     align-content: center;
     order: 0;
   `}
+
+  body.bbb-one-to-one-call & {
+    background:
+      radial-gradient(
+        circle at 15% 10%,
+        rgba(114, 173, 250, 0.11),
+        transparent 42%
+      ),
+      radial-gradient(
+        circle at 85% 8%,
+        rgba(173, 151, 250, 0.1),
+        transparent 45%
+      ),
+      linear-gradient(180deg, #031224 0%, #02101f 62%, #010d19 100%);
+  }
 `;
 
 const VideoList = styled.div`
@@ -163,7 +178,7 @@ const CustomLayoutContainer = styled.div<{
   pointer-events: none; /* Cho phép click xuyên qua để vẽ bảng */
 
   body.bbb-one-to-one-call & {
-    padding: 10px 10px 72px 10px;
+    padding: 10px 10px clamp(12px, 2.2vh, 22px) 10px;
     background:
       radial-gradient(
         circle at 15% 10%,
@@ -274,13 +289,14 @@ const VideoStrip = styled.div<{
   }
 
   body.bbb-one-to-one-call & {
-    height: 112px !important;
-    min-height: 112px !important;
-    max-height: 112px !important;
-    width: 196px !important;
-    max-width: 196px !important;
+    height: clamp(108px, 13vh, 148px) !important;
+    min-height: 108px !important;
+    max-height: 148px !important;
+    width: clamp(180px, 19vw, 252px) !important;
+    min-width: 180px !important;
+    max-width: 252px !important;
     padding: 0 !important;
-    border-radius: 16px;
+    border-radius: 18px;
     border: none;
     box-shadow: 0 14px 32px rgba(2, 6, 16, 0.36);
     backdrop-filter: blur(10px);
@@ -374,8 +390,10 @@ const VideoStripItem = styled.div<{
     width: 100% !important;
     min-width: 100% !important;
     max-width: 100% !important;
-    border-radius: 16px;
+    border-radius: 18px;
     border: none;
+    padding: 0;
+    box-sizing: border-box;
   }
 `;
 
@@ -417,9 +435,9 @@ const MainStage = styled.div`
 
   body.bbb-one-to-one-call & {
     border-radius: 16px;
-    border: 1px solid rgba(126, 156, 208, 0.18);
-    box-shadow: 0 10px 22px rgba(1, 6, 16, 0.22);
-    background: transparent;
+    border: none;
+    box-shadow: none;
+    background: linear-gradient(180deg, rgba(5, 17, 35, 0.96) 0%, rgba(3, 14, 29, 0.98) 100%);
   }
 `;
 
@@ -476,18 +494,19 @@ const PresenterStageVideo = styled.div<{
 
   body.bbb-one-to-one-call & {
     border-radius: 20px;
-    background: #020916;
-    aspect-ratio: 16 / 9;
-    width: min(100%, calc((100vh - 170px) * 16 / 9));
-    height: min(100%, calc((100vw - 24px) * 9 / 16));
+    background: linear-gradient(180deg, rgba(6, 20, 40, 0.95) 0%, rgba(4, 14, 30, 0.98) 100%);
+    aspect-ratio: auto;
+    width: 100%;
+    height: 100%;
     max-width: 100%;
     max-height: 100%;
-    margin: 0 auto;
+    margin: 0;
   }
 
   body.bbb-one-to-one-call & video {
     object-fit: contain;
     object-position: center center;
+    background: #020916;
   }
 `;
 
@@ -530,12 +549,13 @@ const VideoStripWrapper = styled.div`
   }
 
   body.bbb-one-to-one-call & {
-    top: 12px !important;
+    top: 14px !important;
     bottom: auto !important;
-    right: 12px !important;
+    right: 14px !important;
     left: auto !important;
-    width: 196px !important;
-    max-width: 196px !important;
+    width: clamp(180px, 19vw, 252px) !important;
+    min-width: 180px !important;
+    max-width: 252px !important;
     justify-content: flex-end;
     gap: 0;
     z-index: 35 !important;

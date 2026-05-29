@@ -97,6 +97,28 @@ const UserAvatarStyled = styled(UserAvatar)<{
   body.bbb-one-to-one-call &::before {
     display: none !important;
   }
+
+  body.bbb-one-to-one-call & {
+    scale: 1;
+    width: clamp(60px, 9vw, 88px);
+    height: clamp(60px, 9vw, 88px);
+    max-width: none;
+    max-height: none;
+    border-radius: 50% !important;
+    border: 2px solid rgba(141, 102, 255, 0.92) !important;
+    box-shadow:
+      0 0 0 2px rgba(7, 16, 34, 0.9),
+      0 10px 28px rgba(4, 12, 28, 0.5);
+    overflow: hidden;
+  }
+
+  body.bbb-one-to-one-call & img,
+  body.bbb-one-to-one-call & [class*="Img"] {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+  }
 `;
 
 export default {
