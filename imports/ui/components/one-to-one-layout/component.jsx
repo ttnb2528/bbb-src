@@ -84,15 +84,58 @@ const OneToOneLayout = (props) => {
 
   const remoteAvatar = useMemo(() => {
     if (typeof window === 'undefined') return '';
+
+    const decodeSafe = (value) => {
+      if (!value || typeof value !== 'string') return '';
+      let current = value;
+      for (let i = 0; i < 2; i += 1) {
+        try {
+          const decoded = decodeURIComponent(current);
+          if (decoded === current) break;
+          current = decoded;
+        } catch {
+          break;
+        }
+      }
+      return current.trim();
+    };
+
+    const pickFromParams = (params) => (
+      params.get('peerAvatar')
+      || params.get('remoteAvatar')
+      || params.get('guestAvatar')
+      || params.get('otherAvatar')
+      || params.get('participantAvatar')
+      || ''
+    );
+
+    try {
+      const rawWindowName = String(window.name || '');
+      if (rawWindowName.startsWith('ovfcall:')) {
+        const payload = JSON.parse(rawWindowName.slice('ovfcall:'.length));
+        const fromWindowName = decodeSafe(payload?.peerAvatar || payload?.remoteAvatar || '');
+        if (fromWindowName) return fromWindowName;
+      }
+    } catch {
+      // ignore
+    }
+
     try {
       const params = new URLSearchParams(window.location.search);
-      const fromQuery = params.get('peerAvatar')
-        || params.get('remoteAvatar')
-        || params.get('guestAvatar')
-        || params.get('otherAvatar')
-        || params.get('participantAvatar')
-        || '';
-      if (fromQuery) return decodeURIComponent(fromQuery);
+      const fromQuery = decodeSafe(pickFromParams(params));
+      if (fromQuery) return fromQuery;
+    } catch {
+      // ignore
+    }
+
+    try {
+      const rawReferrer = (document?.referrer || '').trim();
+      if (rawReferrer) {
+        const refUrl = new URL(rawReferrer, window.location.origin);
+        const refParams = new URLSearchParams(refUrl.search);
+        const fromReferrer = decodeSafe(pickFromParams(refParams));
+        if (fromReferrer) return fromReferrer;
+      }
     } catch {
       // ignore
     }
@@ -101,13 +144,7 @@ const OneToOneLayout = (props) => {
       const raw = window.localStorage?.getItem('ovfOneToOneCallContext');
       if (!raw) return '';
       const parsed = JSON.parse(raw);
-      const fromStorage = parsed?.peerAvatar || parsed?.remoteAvatar || '';
-      if (!fromStorage) return '';
-      try {
-        return decodeURIComponent(fromStorage);
-      } catch {
-        return fromStorage;
-      }
+      return decodeSafe(parsed?.peerAvatar || parsed?.remoteAvatar || '');
     } catch {
       return '';
     }
