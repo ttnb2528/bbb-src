@@ -1930,6 +1930,18 @@ class AudioManager {
       : null;
     const mode = (queryParams?.get("mode") || "").toLowerCase();
     const layout = (queryParams?.get("layout") || "").toLowerCase();
+    const referrer = typeof document !== "undefined" ? (document.referrer || "").toLowerCase() : "";
+    const hasStoredOneToOneContext = (() => {
+      if (typeof window === "undefined") return false;
+      try {
+        const raw = window.localStorage?.getItem("ovfOneToOneCallContext");
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        return !!parsed && typeof parsed === "object";
+      } catch {
+        return false;
+      }
+    })();
     const isOneToOneCall = typeof window !== "undefined"
       && (
         window.isOneToOneCall === true
@@ -1937,6 +1949,11 @@ class AudioManager {
         || ["1-1", "1v1", "one-to-one", "one_to_one", "one2one"].includes(mode)
         || ["1-1", "1v1", "one-to-one", "one_to_one", "one2one"].includes(layout)
         || window.location.href.includes("oneToOne=true")
+        || referrer.includes("mode=1-1")
+        || referrer.includes("mode=one-to-one")
+        || referrer.includes("onetoone=true")
+        || referrer.includes("/call/join/")
+        || hasStoredOneToOneContext
       );
 
     if (isOneToOneCall) return;

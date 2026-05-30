@@ -46,6 +46,16 @@ const intlMessage = defineMessages({
     id: 'app.meeting.endedMessage',
     description: 'message saying to go back to home screen',
   },
+  oneToOneEndedTitle: {
+    id: 'app.oneToOneCall.endedTitle',
+    description: 'message title when one-to-one call has ended',
+    defaultMessage: 'Cuộc gọi đã kết thúc',
+  },
+  oneToOneEndedMessage: {
+    id: 'app.oneToOneCall.endedMessage',
+    description: 'message body when one-to-one call has ended',
+    defaultMessage: 'Bạn sẽ được chuyển trở lại màn hình chat',
+  },
   messageEndedByUser: {
     id: 'app.meeting.endedByUserMessage',
     description: 'message informing who ended the meeting',
@@ -182,10 +192,45 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
     authToken,
     meetingId,
   }] = useAuthData();
+  const hasStoredOneToOneContext = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const raw = window.localStorage?.getItem('ovfOneToOneCallContext');
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      return !!parsed && typeof parsed === 'object';
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const isOneToOneCall = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    const mode = (params.get('mode') || '').toLowerCase();
+    const layout = (params.get('layout') || '').toLowerCase();
+    const { referrer = '' } = document;
+    const normalizedReferrer = referrer.toLowerCase();
+    const isOneToOneByReferrer = normalizedReferrer.includes('mode=1-1')
+      || normalizedReferrer.includes('mode=one-to-one')
+      || normalizedReferrer.includes('mode=one_to_one')
+      || normalizedReferrer.includes('mode=1v1')
+      || normalizedReferrer.includes('onetoone=true')
+      || normalizedReferrer.includes('/call/join/');
+    return (
+      document?.body?.classList?.contains('bbb-one-to-one-call')
+      || (window as Window & { isOneToOneCall?: boolean }).isOneToOneCall === true
+      || ['1-1', '1v1', 'one-to-one', 'one_to_one', 'one2one'].includes(mode)
+      || ['1-1', '1v1', 'one-to-one', 'one_to_one', 'one2one'].includes(layout)
+      || window.location.href.includes('oneToOne=true')
+      || isOneToOneByReferrer
+      || hasStoredOneToOneContext
+    );
+  }, [hasStoredOneToOneContext]);
 
   const getReturnUrl = () => {
     try {
-      const referrer = document.referrer;
+      const { referrer } = document;
       if (referrer && isURL(referrer, {
         // This option is merged with isFQDN
         // so it's not a valid ts error /validator/lib/isURL.js line 153
@@ -202,6 +247,9 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
   };
 
   const generateEndMessage = useCallback((joinErrorCode: string, meetingEndedCode: string, endedBy: string) => {
+    if (isOneToOneCall) {
+      return intl.formatMessage(intlMessage.oneToOneEndedTitle);
+    }
     if (!isEmpty(endedBy)) {
       return intl.formatMessage(intlMessage.messageEndedByUser, { userName: endedBy });
     }
@@ -209,7 +257,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
 
     const code = meetingEndedCode || joinErrorCode || '410';
     return intl.formatMessage(intlMessage[code]);
-  }, []);
+  }, [intl, isOneToOneCall]);
 
   const confirmRedirect = (isBreakout: boolean, allowRedirect: boolean) => {
     if (isBreakout) window.close();
@@ -256,7 +304,9 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
               ) : null
           }
           <Styled.Text>
-            {intl.formatMessage(intlMessage.messageEnded)}
+            {isOneToOneCall
+              ? intl.formatMessage(intlMessage.oneToOneEndedMessage)
+              : intl.formatMessage(intlMessage.messageEnded)}
           </Styled.Text>
           {
             isURL(logoutUrl, {

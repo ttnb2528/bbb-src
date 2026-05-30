@@ -328,12 +328,31 @@ class App extends Component {
     const normalizedDocumentTitle = typeof document !== 'undefined'
       ? (document.title || '').toLowerCase().trim()
       : '';
+    const normalizedReferrer = typeof document !== 'undefined'
+      ? (document.referrer || '').toLowerCase().trim()
+      : '';
+    const hasStoredOneToOneContext = (() => {
+      if (typeof window === 'undefined') return false;
+      try {
+        const raw = window.localStorage?.getItem('ovfOneToOneCallContext');
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        return !!(parsed && typeof parsed === 'object');
+      } catch (_err) {
+        return false;
+      }
+    })();
     const looksLikeOneToOneByName = normalizedMeetingName.startsWith('1-1 ')
       || normalizedMeetingName.startsWith('1:1 ')
       || normalizedMeetingName.includes(' one-to-one ')
       || normalizedMeetingName.includes(' 1-1 ');
     const looksLikeOneToOneByTitle = normalizedDocumentTitle.includes(' 1-1 ')
       || normalizedDocumentTitle.includes(' one-to-one ');
+    const looksLikeOneToOneByReferrer = normalizedReferrer.includes('mode=1-1')
+      || normalizedReferrer.includes('mode=one-to-one')
+      || normalizedReferrer.includes('layout=one-to-one')
+      || normalizedReferrer.includes('onetoone=true')
+      || normalizedReferrer.includes('/call/join/');
 
     return (
       ['one-to-one', 'one_to_one', '1-1', '1v1', 'one2one'].includes(
@@ -347,6 +366,8 @@ class App extends Component {
       )
       || looksLikeOneToOneByName
       || looksLikeOneToOneByTitle
+      || looksLikeOneToOneByReferrer
+      || hasStoredOneToOneContext
       || (typeof window !== 'undefined'
         && window.location.href.includes('oneToOne=true'))
     );
