@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Styled from '../app/styles';
 import ActivityCheckContainer from '/imports/ui/components/activity-check/container';
 import ScreenReaderAlertContainer from '/imports/ui/components/screenreader-alert/container';
@@ -10,6 +10,9 @@ import WakeLockContainer from '/imports/ui/components/wake-lock/container';
 import ActionsBarContainer from '/imports/ui/components/actions-bar/container';
 import VoiceActivityAdapter from '/imports/ui/core/adapters/voice-activity';
 import FloatingChatContainer from '/imports/ui/components/chat/floating-chat/container';
+import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
+import useUsersBasicInfo from '/imports/ui/core/hooks/useUsersBasicInfo';
+import Auth from '/imports/ui/services/auth';
 
 const OneToOneLayout = (props) => {
   const {
@@ -35,6 +38,58 @@ const OneToOneLayout = (props) => {
   const WakeLock = WakeLockContainer?.default || WakeLockContainer;
   const ActionsBar = ActionsBarContainer?.default || ActionsBarContainer;
   const VoiceActivity = VoiceActivityAdapter?.default || VoiceActivityAdapter;
+  const { data: currentUser } = useCurrentUser((u) => ({ userId: u.userId }));
+  const { data: usersBasicInfo } = useUsersBasicInfo((u) => ({ userId: u.userId }));
+  const [timedOut, setTimedOut] = useState(false);
+
+  const callMeta = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return {
+        role: '',
+        expiresAtMs: null,
+      };
+    }
+    const params = new URLSearchParams(window.location.search);
+    const role = (params.get('callRole') || params.get('call_role') || '').toLowerCase();
+    const rawExpiresAt = params.get('callExpiresAt') || params.get('call_expires_at') || '';
+    const parsedExpiresAt = rawExpiresAt ? Date.parse(rawExpiresAt) : Number.NaN;
+    return {
+      role,
+      expiresAtMs: Number.isFinite(parsedExpiresAt) ? parsedExpiresAt : null,
+    };
+  }, []);
+
+  const hasRemoteParticipant = useMemo(() => {
+    const me = String(currentUser?.userId || '');
+    if (!Array.isArray(usersBasicInfo) || !me) return false;
+    return usersBasicInfo.some((u) => String(u?.userId || '') !== me);
+  }, [usersBasicInfo, currentUser?.userId]);
+
+  useEffect(() => {
+    if (timedOut) return undefined;
+    if (callMeta.role !== 'caller') return undefined;
+    if (!callMeta.expiresAtMs) return undefined;
+    if (hasRemoteParticipant) return undefined;
+
+    const tick = () => {
+      const now = Date.now();
+      if (now < callMeta.expiresAtMs) return;
+      setTimedOut(true);
+      const leaveTimer = setTimeout(() => {
+        const logoutURL = Auth.logoutURL || '/';
+        if (window.opener && !window.opener.closed) {
+          window.close();
+          return;
+        }
+        window.location.href = logoutURL;
+      }, 1800);
+      return () => clearTimeout(leaveTimer);
+    };
+
+    tick();
+    const intervalId = setInterval(tick, 1000);
+    return () => clearInterval(intervalId);
+  }, [timedOut, callMeta.role, callMeta.expiresAtMs, hasRemoteParticipant]);
 
   return (
     <Layout
@@ -122,6 +177,40 @@ const OneToOneLayout = (props) => {
         `}
       </style>
       <div className="oto-backdrop" />
+      {timedOut && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.56)',
+            backdropFilter: 'blur(3px)',
+          }}
+        >
+          <div
+            style={{
+              width: 'min(92vw, 360px)',
+              borderRadius: 16,
+              border: '1px solid rgba(255,255,255,0.12)',
+              background: 'rgba(11, 20, 38, 0.9)',
+              boxShadow: '0 16px 50px rgba(0,0,0,0.35)',
+              padding: '18px 16px',
+              textAlign: 'center',
+              color: '#fff',
+            }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
+              Không có phản hồi
+            </div>
+            <div style={{ fontSize: 14, opacity: 0.92 }}>
+              Người nhận không trả lời cuộc gọi.
+            </div>
+          </div>
+        </div>
+      )}
       <ActivityCheck />
       <ScreenReaderAlert />
       <Webcam />

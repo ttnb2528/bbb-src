@@ -1,9 +1,9 @@
 /* eslint react/jsx-filename-extension: 0 */
-import React from "react";
-import { toast } from "react-toastify";
-import { isEqual } from "radash";
-import Styled from "./styles";
-import Toast from "/imports/ui/components/common/toast/component";
+import React from 'react';
+import { toast } from 'react-toastify';
+import { isEqual } from 'radash';
+import Styled from './styles';
+import Toast from '/imports/ui/components/common/toast/component';
 
 let lastToast = {
   id: null,
@@ -12,14 +12,36 @@ let lastToast = {
   icon: null,
 };
 
-export function notify(
+  export function notify(
   message,
-  type = "default",
+  type = 'default',
   icon,
   options,
   content,
   small,
 ) {
+  const queryParams = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search)
+    : null;
+  const mode = (queryParams?.get('mode') || '').toLowerCase();
+  const layout = (queryParams?.get('layout') || '').toLowerCase();
+  const isOneToOneCall = typeof window !== 'undefined'
+    && (
+      window.isOneToOneCall === true
+      || document?.body?.classList?.contains('bbb-one-to-one-call')
+      || ['1-1', '1v1', 'one-to-one', 'one_to_one', 'one2one'].includes(mode)
+      || ['1-1', '1v1', 'one-to-one', 'one_to_one', 'one2one'].includes(layout)
+      || window.location.href.includes('oneToOne=true')
+    );
+
+  if (isOneToOneCall) {
+    // In one-to-one mode we keep the call UI clean: no toasts/alerts.
+    if (lastToast.id && toast.isActive(lastToast.id)) {
+      toast.dismiss(lastToast.id);
+    }
+    return null;
+  }
+
   if (window.isEcommerceLive) return null;
 
   const settings = {
@@ -58,9 +80,9 @@ export function notify(
       return id;
     }
     if (
-      toast.isActive(lastToast.id) &&
-      isEqual(lastToastProps.key, toastProps.key) &&
-      options?.autoClose > 0
+      toast.isActive(lastToast.id)
+      && isEqual(lastToastProps.key, toastProps.key)
+      && options?.autoClose > 0
     ) {
       toast.update(lastToast.id, {
         render: (

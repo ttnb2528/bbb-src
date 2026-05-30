@@ -1925,6 +1925,22 @@ class AudioManager {
   }
 
   notify(message, error = false, icon = "unmute") {
+    const queryParams = typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : null;
+    const mode = (queryParams?.get("mode") || "").toLowerCase();
+    const layout = (queryParams?.get("layout") || "").toLowerCase();
+    const isOneToOneCall = typeof window !== "undefined"
+      && (
+        window.isOneToOneCall === true
+        || document?.body?.classList?.contains("bbb-one-to-one-call")
+        || ["1-1", "1v1", "one-to-one", "one_to_one", "one2one"].includes(mode)
+        || ["1-1", "1v1", "one-to-one", "one_to_one", "one2one"].includes(layout)
+        || window.location.href.includes("oneToOne=true")
+      );
+
+    if (isOneToOneCall) return;
+
     const audioIcon = this.isListenOnly ? "listen" : icon;
 
     notify(message, error ? "error" : "info", audioIcon);
