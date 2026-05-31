@@ -42,19 +42,28 @@ const intlMessage = defineMessages({
     id: 'app.error.removed',
     description: 'Message to display when user is removed from the conference',
   },
-  messageEnded: {
-    id: 'app.meeting.endedMessage',
-    description: 'message saying to go back to home screen',
-  },
+  
   oneToOneEndedTitle: {
     id: 'app.oneToOneCall.endedTitle',
     description: 'message title when one-to-one call has ended',
-    defaultMessage: 'Cuộc gọi đã kết thúc',
+    defaultMessage: 'Cuoc goi da ket thuc',
   },
+  
   oneToOneEndedMessage: {
     id: 'app.oneToOneCall.endedMessage',
     description: 'message body when one-to-one call has ended',
-    defaultMessage: 'Bạn sẽ được chuyển trở lại màn hình chat',
+    defaultMessage: 'Ban se duoc chuyen tro lai man hinh chat',
+  },
+  
+  oneToOneRejectedTitle: {
+    id: 'app.oneToOneCall.rejectedTitle',
+    description: 'message title when one-to-one call is rejected before connecting',
+    defaultMessage: 'Cuoc goi bi tu choi',
+  },
+  oneToOneRejectedMessage: {
+    id: 'app.oneToOneCall.rejectedMessage',
+    description: 'message body when one-to-one call is rejected before connecting',
+    defaultMessage: 'Doi phuong khong chap nhan cuoc goi',
   },
   messageEndedByUser: {
     id: 'app.meeting.endedByUserMessage',
@@ -203,6 +212,14 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
       return false;
     }
   }, []);
+  const oneToOneEverConnected = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.sessionStorage.getItem('ovf_1to1_connected') === '1';
+    } catch {
+      return false;
+    }
+  }, []);
 
   const isOneToOneCall = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -248,6 +265,9 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
 
   const generateEndMessage = useCallback((joinErrorCode: string, meetingEndedCode: string, endedBy: string) => {
     if (isOneToOneCall) {
+      if (!oneToOneEverConnected) {
+        return intl.formatMessage(intlMessage.oneToOneRejectedTitle);
+      }
       return intl.formatMessage(intlMessage.oneToOneEndedTitle);
     }
     if (!isEmpty(endedBy)) {
@@ -257,7 +277,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
 
     const code = meetingEndedCode || joinErrorCode || '410';
     return intl.formatMessage(intlMessage[code]);
-  }, [intl, isOneToOneCall]);
+  }, [intl, isOneToOneCall, oneToOneEverConnected]);
 
   const confirmRedirect = (isBreakout: boolean, allowRedirect: boolean) => {
     if (isBreakout) window.close();
@@ -305,7 +325,9 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
           }
           <Styled.Text>
             {isOneToOneCall
-              ? intl.formatMessage(intlMessage.oneToOneEndedMessage)
+              ? (oneToOneEverConnected
+                ? intl.formatMessage(intlMessage.oneToOneEndedMessage)
+                : intl.formatMessage(intlMessage.oneToOneRejectedMessage))
               : intl.formatMessage(intlMessage.messageEnded)}
           </Styled.Text>
           {
@@ -330,7 +352,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
         </Styled.Wrapper>
       )
     );
-  }, [learningDashboardAccessToken, isModerator, meetingId, authToken, learningDashboardBase, logoutUrl]);
+  }, [learningDashboardAccessToken, isModerator, meetingId, authToken, learningDashboardBase, logoutUrl, oneToOneEverConnected, isOneToOneCall]);
 
   useEffect(() => {
     // Sets Loading to falsed and removes loading splash screen
@@ -480,3 +502,6 @@ const MeetingEndedContainer: React.FC<MeetingEndedContainerProps> = ({
 };
 
 export default MeetingEndedContainer;
+
+
+

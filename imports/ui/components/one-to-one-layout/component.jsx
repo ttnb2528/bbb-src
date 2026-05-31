@@ -43,6 +43,15 @@ const OneToOneLayout = (props) => {
   const [timedOut, setTimedOut] = useState(false);
   const [remainingWaitSec, setRemainingWaitSec] = useState(null);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.sessionStorage.removeItem('ovf_1to1_connected');
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const callMeta = useMemo(() => {
     if (typeof window === 'undefined') {
       return {
@@ -186,6 +195,17 @@ const OneToOneLayout = (props) => {
     }
     return usersBasicInfo.some((u) => String(u?.userId || '') !== me);
   }, [usersBasicInfo, currentUser?.userId, expectedRemoteUserId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      if (hasRemoteParticipant) {
+        window.sessionStorage.setItem('ovf_1to1_connected', '1');
+      }
+    } catch {
+      // ignore
+    }
+  }, [hasRemoteParticipant]);
 
   const shouldWaitForPeer = useMemo(() => {
     if (timedOut) return false;
