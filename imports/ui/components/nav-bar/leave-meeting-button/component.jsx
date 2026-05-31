@@ -87,6 +87,15 @@ class LeaveMeetingButton extends PureComponent {
       meetingEnd,
     } = this.props;
 
+    // Persist explicit user intent so the meeting-ended screen can show the right reason.
+    try {
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('ovf_1to1_end_reason', 'cancelled_by_you');
+      }
+    } catch {
+      // ignore
+    }
+
     // In one-to-one calls, one click should end the call for both users.
     if (amIModerator && !isBreakoutRoom && connected) {
       meetingEnd();
