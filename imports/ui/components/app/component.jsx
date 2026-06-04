@@ -314,6 +314,9 @@ class App extends Component {
     if (typeof document !== 'undefined') {
       document.body.classList.remove('bbb-one-to-one-call');
     }
+    if (typeof window !== 'undefined') {
+      window.isOneToOneCall = false;
+    }
   }
 
   resolveOneToOneMode(metadata, meetingName = '') {
@@ -338,6 +341,21 @@ class App extends Component {
         if (!raw) return false;
         const parsed = JSON.parse(raw);
         return !!(parsed && typeof parsed === 'object');
+      } catch (_err) {
+        return false;
+      }
+    })();
+    const hasPopupOneToOneContext = (() => {
+      if (typeof window === 'undefined') return false;
+      try {
+        const rawWindowName = String(window.name || '');
+        if (!rawWindowName.startsWith('ovfcall:')) return false;
+        const parsed = JSON.parse(rawWindowName.slice('ovfcall:'.length));
+        return !!(
+          parsed
+          && typeof parsed === 'object'
+          && (parsed.role || parsed.callerId || parsed.calleeId || parsed.peerAvatar || parsed.selfAvatar)
+        );
       } catch (_err) {
         return false;
       }
@@ -367,6 +385,7 @@ class App extends Component {
       || looksLikeOneToOneByName
       || looksLikeOneToOneByTitle
       || looksLikeOneToOneByReferrer
+      || hasPopupOneToOneContext
       || hasStoredOneToOneContext
       || (typeof window !== 'undefined'
         && window.location.href.includes('oneToOne=true'))
@@ -374,13 +393,23 @@ class App extends Component {
   }
 
   applyOneToOneBodyClass() {
-    if (typeof document === 'undefined') return;
+    if (typeof document === 'undefined' || typeof window === 'undefined') return;
 
     const isOneToOneMode = this.resolveOneToOneMode(
       this.props.metadata,
       this.props.meetingName,
     );
     document.body.classList.toggle('bbb-one-to-one-call', !!isOneToOneMode);
+    window.isOneToOneCall = !!isOneToOneMode;
+    try {
+      if (isOneToOneMode) {
+        window.sessionStorage.setItem('ovf_bbb_one_to_one', '1');
+      } else {
+        window.sessionStorage.removeItem('ovf_bbb_one_to_one');
+      }
+    } catch (_err) {
+      // ignore storage issues
+    }
   }
 
   setPresentationFitToWidth(presentationFitToWidth) {

@@ -205,6 +205,8 @@ interface MeetingEndedProps extends MeetingEndedContainerProps {
   learningDashboardBase: string;
   isBreakout: boolean;
   allowRedirect: boolean;
+  meetingName: string;
+  meetingMetadata: Record<string, unknown>;
 }
 
 const MeetingEnded: React.FC<MeetingEndedProps> = ({
@@ -218,6 +220,8 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
   learningDashboardBase,
   isBreakout,
   allowRedirect,
+  meetingName,
+  meetingMetadata,
 }) => {
   const loadingContextInfo = useContext(LoadingContext);
   const intl = useIntl();
@@ -337,24 +341,36 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
     const layout = (params.get('layout') || '').toLowerCase();
     const { referrer = '' } = document;
     const normalizedReferrer = referrer.toLowerCase();
+    const normalizedMeetingName = String(meetingName || '').toLowerCase().trim();
+    const metadataRoomType = String(
+      (meetingMetadata as { meta_roomType?: string; roomType?: string } | null)?.meta_roomType
+      || (meetingMetadata as { meta_roomType?: string; roomType?: string } | null)?.roomType
+      || '',
+    ).toLowerCase().trim();
     const isOneToOneByReferrer = normalizedReferrer.includes('mode=1-1')
       || normalizedReferrer.includes('mode=one-to-one')
       || normalizedReferrer.includes('mode=one_to_one')
       || normalizedReferrer.includes('mode=1v1')
       || normalizedReferrer.includes('onetoone=true')
       || normalizedReferrer.includes('/call/join/');
+    const looksLikeOneToOneByName = normalizedMeetingName.startsWith('1-1 ')
+      || normalizedMeetingName.startsWith('1:1 ')
+      || normalizedMeetingName.includes(' one-to-one ')
+      || normalizedMeetingName.includes(' 1-1 ');
     return (
       document?.body?.classList?.contains('bbb-one-to-one-call')
       || (window as Window & { isOneToOneCall?: boolean }).isOneToOneCall === true
       || ['1-1', '1v1', 'one-to-one', 'one_to_one', 'one2one'].includes(mode)
       || ['1-1', '1v1', 'one-to-one', 'one_to_one', 'one2one'].includes(layout)
+      || ['1-1', '1v1', 'one-to-one', 'one_to_one', 'one2one'].includes(metadataRoomType)
       || window.location.href.includes('oneToOne=true')
       || isOneToOneByReferrer
+      || looksLikeOneToOneByName
       || persistedOneToOneFlag
       || hasPopupOneToOneContext
       || hasStoredOneToOneContext
     );
-  }, [hasPopupOneToOneContext, hasStoredOneToOneContext, persistedOneToOneFlag]);
+  }, [hasPopupOneToOneContext, hasStoredOneToOneContext, meetingMetadata, meetingName, persistedOneToOneFlag]);
 
   const normalizedEndedBy = useMemo(() => {
     const raw = String(endedBy || '').trim();
@@ -405,7 +421,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
         return intl.formatMessage(intlMessage.oneToOneCancelledByYouTitle);
       }
       if (!oneToOneEverConnected) {
-        if (oneToOneRole === 'callee') {
+        if (oneToOneRole !== 'caller') {
           return intl.formatMessage(intlMessage.oneToOneCancelledByPeerTitle);
         }
         return intl.formatMessage(intlMessage.oneToOneRejectedTitle);
@@ -421,21 +437,23 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
     return intl.formatMessage(intlMessage[code]);
   }, [intl, isOneToOneSession, oneToOneEverConnected, oneToOneEndReason, oneToOneRole, normalizedEndedBy]);
 
-  const closeMeetingWindow = useCallback((fallbackUrl: string) => {
+  const closeMeetingWindow = useCallback((fallbackUrl: string, allowFallbackRedirect = true) => {
     if (typeof window === 'undefined') return;
 
     if (isMobileDevice) {
       if (window.history.length > 1) {
         window.history.back();
         window.setTimeout(() => {
-          if (document.visibilityState === 'visible') {
+          if (allowFallbackRedirect && document.visibilityState === 'visible') {
             window.location.replace(fallbackUrl);
           }
         }, 250);
         return;
       }
 
-      window.location.replace(fallbackUrl);
+      if (allowFallbackRedirect) {
+        window.location.replace(fallbackUrl);
+      }
       return;
     }
 
@@ -456,13 +474,13 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
     }
 
     window.setTimeout(() => {
-      if (!window.closed) {
+      if (allowFallbackRedirect && !window.closed) {
         window.location.replace(fallbackUrl);
       }
     }, 120);
   }, [isMobileDevice]);
 
-  const confirmRedirect = (isBreakout: boolean, allowRedirect: boolean) => {
+  const confirmRedirect = (isBreakout: boolean, allowRedirect: boolean, closeOnly = false) => {
     if (isBreakout) window.close();
     const baseUrl = getReturnUrl();
 
@@ -475,7 +493,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
         // ignore
       }
 
-      closeMeetingWindow(baseUrl);
+      closeMeetingWindow(baseUrl, !closeOnly);
       return;
     }
 
@@ -509,7 +527,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
       return intl.formatMessage(intlMessage.oneToOneCancelledByYouMessage);
     }
 
-    if (!oneToOneEverConnected && oneToOneRole === 'callee') {
+    if (!oneToOneEverConnected && oneToOneRole !== 'caller') {
       return intl.formatMessage(intlMessage.oneToOneCancelledByPeerMessage);
     }
 
@@ -640,7 +658,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
       && (allowRedirect || isOneToOneSession)
     ) {
       setTimeout(() => {
-        confirmRedirect(isBreakout, allowRedirect);
+        confirmRedirect(isBreakout, allowRedirect, isOneToOneSession);
       }, timeoutBeforeRedirectOnMeetingEnd);
     }
   }, [allowRedirect, confirmRedirect, isBreakout, isOneToOneSession, skipMeetingEnded]);
@@ -679,6 +697,8 @@ const MeetingEndedContainer: React.FC<MeetingEndedContainerProps> = ({
     data: meetingData,
   } = useMeeting((m) => ({
     isBreakout: m.isBreakout,
+    name: m.name,
+    metadata: m.metadata,
   }));
 
   const {
@@ -708,6 +728,8 @@ const MeetingEndedContainer: React.FC<MeetingEndedContainerProps> = ({
         logoutUrl=""
         learningDashboardBase=""
         isBreakout={false}
+        meetingName=""
+        meetingMetadata={{}}
       />
     );
   }
@@ -727,7 +749,7 @@ const MeetingEndedContainer: React.FC<MeetingEndedContainerProps> = ({
   const {
     skipMeetingEnded,
     learningDashboardBase,
-  } = window.meetingClientSettings.public.app;
+  } = window.meetingClientSettings.public.app; 
 
   const allowRedirect = allowRedirectToLogoutURL(logoutUrl ?? '');
 
@@ -743,6 +765,8 @@ const MeetingEndedContainer: React.FC<MeetingEndedContainerProps> = ({
       logoutUrl={logoutUrl ?? ''}
       learningDashboardBase={learningDashboardBase}
       isBreakout={meetingData?.isBreakout ?? false}
+      meetingName={String(meetingData?.name ?? '')}
+      meetingMetadata={(meetingData?.metadata as Record<string, unknown> | undefined) ?? {}}
     />
   );
 };
