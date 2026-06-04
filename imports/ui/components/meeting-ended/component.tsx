@@ -52,7 +52,7 @@ const intlMessage = defineMessages({
   oneToOneEndedMessage: {
     id: 'app.oneToOneCall.endedMessage',
     description: 'message body when one-to-one call has ended',
-    defaultMessage: 'You will be redirected back to chat.',
+    defaultMessage: 'Press OK to close this call window.',
   },
   
   oneToOneRejectedTitle: {
@@ -74,6 +74,16 @@ const intlMessage = defineMessages({
     id: 'app.oneToOneCall.cancelledByYouMessage',
     description: 'message body when one-to-one call is ended by current user',
     defaultMessage: 'You ended the call.',
+  },
+  oneToOneCancelledByPeerTitle: {
+    id: 'app.oneToOneCall.cancelledByPeerTitle',
+    description: 'message title when the other person ends a one-to-one call before it connects',
+    defaultMessage: 'Call ended',
+  },
+  oneToOneCancelledByPeerMessage: {
+    id: 'app.oneToOneCall.cancelledByPeerMessage',
+    description: 'message body when the other person ends a one-to-one call before it connects',
+    defaultMessage: 'The caller ended the call while you were connecting.',
   },
   messageEnded: {
     id: 'app.meeting.endedMessage',
@@ -226,6 +236,38 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
       return false;
     }
   }, []);
+  const storedOneToOneContext = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage?.getItem('ovfOneToOneCallContext');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+      return null;
+    }
+  }, []);
+  const popupOneToOneContext = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const rawWindowName = String(window.name || '');
+      if (!rawWindowName.startsWith('ovfcall:')) return null;
+      const parsed = JSON.parse(rawWindowName.slice('ovfcall:'.length));
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+      return null;
+    }
+  }, []);
+  const hasPopupOneToOneContext = useMemo(() => {
+    if (!popupOneToOneContext || typeof popupOneToOneContext !== 'object') return false;
+    return !!(
+      popupOneToOneContext.role
+      || popupOneToOneContext.callerId
+      || popupOneToOneContext.calleeId
+      || popupOneToOneContext.peerAvatar
+      || popupOneToOneContext.selfAvatar
+    );
+  }, [popupOneToOneContext]);
   const oneToOneEverConnected = useMemo(() => {
     if (typeof window === 'undefined') return false;
     try {
@@ -242,6 +284,51 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
       return '';
     }
   }, []);
+  const persistedOneToOneFlag = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.sessionStorage.getItem('ovf_bbb_one_to_one') === '1';
+    } catch {
+      return false;
+    }
+  }, []);
+  const oneToOneRole = useMemo(() => {
+    if (typeof window === 'undefined') return '';
+
+    const params = new URLSearchParams(window.location.search);
+    const queryRole = (params.get('callRole') || params.get('call_role') || '').toLowerCase().trim();
+    if (queryRole === 'caller' || queryRole === 'callee') {
+      return queryRole;
+    }
+
+    const popupRole = String(popupOneToOneContext?.role || '').toLowerCase().trim();
+    if (popupRole === 'caller' || popupRole === 'callee') {
+      return popupRole;
+    }
+
+    const selfUserId = String(
+      popupOneToOneContext?.selfUserId
+      || popupOneToOneContext?.localUserId
+      || storedOneToOneContext?.selfUserId
+      || storedOneToOneContext?.localUserId
+      || '',
+    ).trim();
+    const callerId = String(
+      popupOneToOneContext?.callerId
+      || storedOneToOneContext?.callerId
+      || '',
+    ).trim();
+    const calleeId = String(
+      popupOneToOneContext?.calleeId
+      || storedOneToOneContext?.calleeId
+      || '',
+    ).trim();
+
+    if (selfUserId && callerId && selfUserId === callerId) return 'caller';
+    if (selfUserId && calleeId && selfUserId === calleeId) return 'callee';
+
+    return '';
+  }, [popupOneToOneContext, storedOneToOneContext]);
 
   const isOneToOneCall = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -263,9 +350,36 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
       || ['1-1', '1v1', 'one-to-one', 'one_to_one', 'one2one'].includes(layout)
       || window.location.href.includes('oneToOne=true')
       || isOneToOneByReferrer
+      || persistedOneToOneFlag
+      || hasPopupOneToOneContext
       || hasStoredOneToOneContext
     );
-  }, [hasStoredOneToOneContext]);
+  }, [hasPopupOneToOneContext, hasStoredOneToOneContext, persistedOneToOneFlag]);
+
+  const normalizedEndedBy = useMemo(() => {
+    const raw = String(endedBy || '').trim();
+    if (!raw) return '';
+    if (raw === '0' || raw === '(0)' || raw === '()' || raw.toLowerCase() === '(null)') {
+      return '';
+    }
+    return raw;
+  }, [endedBy]);
+
+  const isOneToOneSession = isOneToOneCall || oneToOneRole === 'caller' || oneToOneRole === 'callee';
+  const isMobileDevice = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const userAgent = window.navigator.userAgent || '';
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+      || window.matchMedia('(max-width: 767px)').matches;
+  }, []);
+  const hasPopupParent = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return !!(window.opener && !window.opener.closed);
+    } catch {
+      return false;
+    }
+  }, []);
 
   const getReturnUrl = () => {
     try {
@@ -285,36 +399,126 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
     return logoutUrl;
   };
 
-  const generateEndMessage = useCallback((joinErrorCode: string, meetingEndedCode: string, endedBy: string) => {
-    if (isOneToOneCall) {
+  const generateEndMessage = useCallback((joinErrorCode: string, meetingEndedCode: string) => {
+    if (isOneToOneSession) {
       if (oneToOneEndReason === 'cancelled_by_you') {
         return intl.formatMessage(intlMessage.oneToOneCancelledByYouTitle);
       }
       if (!oneToOneEverConnected) {
+        if (oneToOneRole === 'callee') {
+          return intl.formatMessage(intlMessage.oneToOneCancelledByPeerTitle);
+        }
         return intl.formatMessage(intlMessage.oneToOneRejectedTitle);
       }
       return intl.formatMessage(intlMessage.oneToOneEndedTitle);
     }
-    if (!isEmpty(endedBy)) {
-      return intl.formatMessage(intlMessage.messageEndedByUser, { userName: endedBy });
+    if (!isEmpty(normalizedEndedBy)) {
+      return intl.formatMessage(intlMessage.messageEndedByUser, { userName: normalizedEndedBy });
     }
     // OR opetaror always returns the first truthy value
 
     const code = meetingEndedCode || joinErrorCode || '410';
     return intl.formatMessage(intlMessage[code]);
-  }, [intl, isOneToOneCall, oneToOneEverConnected, oneToOneEndReason]);
+  }, [intl, isOneToOneSession, oneToOneEverConnected, oneToOneEndReason, oneToOneRole, normalizedEndedBy]);
+
+  const closeMeetingWindow = useCallback((fallbackUrl: string) => {
+    if (typeof window === 'undefined') return;
+
+    if (isMobileDevice) {
+      if (window.history.length > 1) {
+        window.history.back();
+        window.setTimeout(() => {
+          if (document.visibilityState === 'visible') {
+            window.location.replace(fallbackUrl);
+          }
+        }, 250);
+        return;
+      }
+
+      window.location.replace(fallbackUrl);
+      return;
+    }
+
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.close();
+        return;
+      }
+    } catch {
+      // ignore
+    }
+
+    try {
+      window.open('', '_self');
+      window.close();
+    } catch {
+      // ignore
+    }
+
+    window.setTimeout(() => {
+      if (!window.closed) {
+        window.location.replace(fallbackUrl);
+      }
+    }, 120);
+  }, [isMobileDevice]);
 
   const confirmRedirect = (isBreakout: boolean, allowRedirect: boolean) => {
     if (isBreakout) window.close();
+    const baseUrl = getReturnUrl();
+
+    if (isOneToOneSession || hasPopupParent || isMobileDevice) {
+      try {
+        window.sessionStorage.removeItem('ovf_bbb_one_to_one');
+        window.sessionStorage.removeItem('ovf_1to1_connected');
+        window.sessionStorage.removeItem('ovf_1to1_end_reason');
+      } catch {
+        // ignore
+      }
+
+      closeMeetingWindow(baseUrl);
+      return;
+    }
+
     if (allowRedirect) {
-      const reason = generateEndMessage(joinErrorCode, meetingEndedCode, endedBy);
-      const baseUrl = getReturnUrl();
+      const reason = generateEndMessage(joinErrorCode, meetingEndedCode);
       const finalUrl = reason
         ? `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}reason=${encodeURIComponent(reason)}`
         : baseUrl;
       window.location.href = finalUrl;
     }
   };
+
+  const shouldShowOkayButton = useMemo(() => (
+    isOneToOneSession
+    || hasPopupParent
+    || isMobileDevice
+    || isURL(logoutUrl, {
+      // This option is merged with isFQDN
+      // so it's not a valid ts error /validator/lib/isURL.js line 153
+      // @ts-ignore
+      allow_numeric_tld: true,
+    })
+  ), [hasPopupParent, isMobileDevice, isOneToOneSession, logoutUrl]);
+
+  const endDescription = useMemo(() => {
+    if (!isOneToOneSession) {
+      return intl.formatMessage(intlMessage.messageEnded);
+    }
+
+    if (oneToOneEndReason === 'cancelled_by_you') {
+      return intl.formatMessage(intlMessage.oneToOneCancelledByYouMessage);
+    }
+
+    if (!oneToOneEverConnected && oneToOneRole === 'callee') {
+      return intl.formatMessage(intlMessage.oneToOneCancelledByPeerMessage);
+    }
+
+    if (oneToOneEverConnected) {
+      return intl.formatMessage(intlMessage.oneToOneEndedMessage);
+    }
+
+    return intl.formatMessage(intlMessage.oneToOneRejectedMessage);
+  }, [intl, isOneToOneSession, oneToOneEndReason, oneToOneEverConnected, oneToOneRole]);
 
   const logoutButton = useMemo(() => {
     const { locale } = intl;
@@ -349,21 +553,10 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
               ) : null
           }
           <Styled.Text>
-            {isOneToOneCall
-              ? (oneToOneEndReason === 'cancelled_by_you'
-                ? intl.formatMessage(intlMessage.oneToOneCancelledByYouMessage)
-                : (oneToOneEverConnected
-                  ? intl.formatMessage(intlMessage.oneToOneEndedMessage)
-                  : intl.formatMessage(intlMessage.oneToOneRejectedMessage)))
-              : intl.formatMessage(intlMessage.messageEnded)}
+            {endDescription}
           </Styled.Text>
           {
-            isURL(logoutUrl, {
-              // This option is merged with isFQDN
-              // so it's not a valid ts error /validator/lib/isURL.js line 153
-              // @ts-ignore
-              allow_numeric_tld: true,
-            }) ? (
+            shouldShowOkayButton ? (
               <Styled.MeetingEndedButton
                 color="primary"
                 onClick={() => confirmRedirect(isBreakout, allowRedirect)}
@@ -373,13 +566,25 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
               >
                 {intl.formatMessage(intlMessage.buttonOkay)}
               </Styled.MeetingEndedButton>
-              ) : null
+            ) : null
           }
 
         </Styled.Wrapper>
       )
     );
-  }, [learningDashboardAccessToken, isModerator, meetingId, authToken, learningDashboardBase, logoutUrl, oneToOneEverConnected, isOneToOneCall, oneToOneEndReason]);
+  }, [
+    allowRedirect,
+    authToken,
+    confirmRedirect,
+    endDescription,
+    intl,
+    isBreakout,
+    isModerator,
+    learningDashboardAccessToken,
+    learningDashboardBase,
+    meetingId,
+    shouldShowOkayButton,
+  ]);
 
   useEffect(() => {
     // Sets Loading to falsed and removes loading splash screen
@@ -420,6 +625,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
+      window.sessionStorage.removeItem('ovf_bbb_one_to_one');
       window.sessionStorage.removeItem('ovf_1to1_end_reason');
     } catch {
       // ignore
@@ -428,12 +634,16 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
 
   useEffect(() => {
     const { timeoutBeforeRedirectOnMeetingEnd } = window.meetingClientSettings.public.app;
-    if (typeof timeoutBeforeRedirectOnMeetingEnd === 'number' && !skipMeetingEnded) {
+    if (
+      typeof timeoutBeforeRedirectOnMeetingEnd === 'number'
+      && !skipMeetingEnded
+      && (allowRedirect || isOneToOneSession)
+    ) {
       setTimeout(() => {
         confirmRedirect(isBreakout, allowRedirect);
       }, timeoutBeforeRedirectOnMeetingEnd);
     }
-  }, []);
+  }, [allowRedirect, confirmRedirect, isBreakout, isOneToOneSession, skipMeetingEnded]);
 
   if (skipMeetingEnded) {
     confirmRedirect(isBreakout, allowRedirect);
@@ -447,7 +657,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
           <Styled.Title>
             {generateEndMessage(joinErrorCode, meetingEndedCode, endedBy)}
           </Styled.Title>
-          {allowRedirect ? logoutButton : null}
+          {(allowRedirect || isOneToOneSession) ? logoutButton : null}
         </Styled.Content>
       </Styled.Modal>
     </Styled.Parent>
@@ -538,6 +748,3 @@ const MeetingEndedContainer: React.FC<MeetingEndedContainerProps> = ({
 };
 
 export default MeetingEndedContainer;
-
-
-

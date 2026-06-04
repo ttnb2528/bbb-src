@@ -537,6 +537,15 @@ class App extends Component {
     if (typeof window !== 'undefined') {
       window.isEcommerceLive = isEcommerceMode;
       window.isOneToOneCall = isOneToOneMode;
+      try {
+        if (isOneToOneMode) {
+          window.sessionStorage.setItem('ovf_bbb_one_to_one', '1');
+        } else {
+          window.sessionStorage.removeItem('ovf_bbb_one_to_one');
+        }
+      } catch (_err) {
+        // ignore storage issues
+      }
     }
 
     return (
