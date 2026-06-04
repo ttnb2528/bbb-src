@@ -75,6 +75,10 @@ const intlMessage = defineMessages({
     description: 'message body when one-to-one call is ended by current user',
     defaultMessage: 'You ended the call.',
   },
+  messageEnded: {
+    id: 'app.meeting.endedMessage',
+    description: 'default message shown when a meeting or call has ended',
+  },
   messageEndedByUser: {
     id: 'app.meeting.endedByUserMessage',
     description: 'message informing who ended the meeting',
