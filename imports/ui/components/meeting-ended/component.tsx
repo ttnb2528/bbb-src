@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
 } from 'react';
 import { defineMessages, useIntl } from 'react-intl';
 import { isEmpty } from 'radash';
@@ -396,6 +397,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
       return false;
     }
   }, []);
+  const immediateCloseTriggeredRef = useRef(false);
 
   const getReturnUrl = () => {
     try {
@@ -437,6 +439,39 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
     return intl.formatMessage(intlMessage[code]);
   }, [intl, isOneToOneSession, oneToOneEverConnected, oneToOneEndReason, oneToOneRole, normalizedEndedBy]);
 
+  const attemptImmediatePopupClose = useCallback(() => {
+    if (typeof window === 'undefined') return false;
+
+    try {
+      window.close();
+    } catch {
+      // ignore
+    }
+    if (window.closed) return true;
+
+    try {
+      window.open('', '_self');
+      window.close();
+    } catch {
+      // ignore
+    }
+    if (window.closed) return true;
+
+    try {
+      window.location.replace('about:blank');
+    } catch {
+      // ignore
+    }
+
+    try {
+      window.close();
+    } catch {
+      // ignore
+    }
+
+    return window.closed;
+  }, []);
+
   const closeMeetingWindow = useCallback((fallbackUrl: string, allowFallbackRedirect = true) => {
     if (typeof window === 'undefined') return;
 
@@ -457,28 +492,45 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
       return;
     }
 
-    try {
-      if (window.opener && !window.opener.closed) {
-        window.close();
-        return;
-      }
-    } catch {
-      // ignore
-    }
+    const finalizeCloseAttempt = () => {
+      window.setTimeout(() => {
+        if (window.closed) return;
 
-    try {
-      window.open('', '_self');
-      window.close();
-    } catch {
-      // ignore
-    }
+        try {
+          window.open('', '_self');
+          window.close();
+        } catch {
+          // ignore
+        }
 
-    window.setTimeout(() => {
-      if (allowFallbackRedirect && !window.closed) {
-        window.location.replace(fallbackUrl);
-      }
-    }, 120);
-  }, [isMobileDevice]);
+        window.setTimeout(() => {
+          if (window.closed) return;
+
+          try {
+            window.location.replace('about:blank');
+          } catch {
+            // ignore
+          }
+
+          window.setTimeout(() => {
+            try {
+              window.close();
+            } catch {
+              // ignore
+            }
+
+            if (allowFallbackRedirect && !window.closed) {
+              window.location.replace(fallbackUrl);
+            }
+          }, 120);
+        }, 120);
+      }, 80);
+    };
+
+    attemptImmediatePopupClose();
+
+    finalizeCloseAttempt();
+  }, [attemptImmediatePopupClose, isMobileDevice]);
 
   const confirmRedirect = (isBreakout: boolean, allowRedirect: boolean, closeOnly = false) => {
     if (isBreakout) window.close();
@@ -517,6 +569,15 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
       allow_numeric_tld: true,
     })
   ), [hasPopupParent, isMobileDevice, isOneToOneSession, logoutUrl]);
+  const shouldCloseOnlyOnOkay = isOneToOneSession || hasPopupParent || isMobileDevice;
+  const handleOkayPressStart = useCallback(() => {
+    if (!shouldCloseOnlyOnOkay || immediateCloseTriggeredRef.current) return;
+    immediateCloseTriggeredRef.current = true;
+    attemptImmediatePopupClose();
+    window.setTimeout(() => {
+      immediateCloseTriggeredRef.current = false;
+    }, 250);
+  }, [attemptImmediatePopupClose, shouldCloseOnlyOnOkay]);
 
   const endDescription = useMemo(() => {
     if (!isOneToOneSession) {
@@ -577,7 +638,9 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
             shouldShowOkayButton ? (
               <Styled.MeetingEndedButton
                 color="primary"
-                onClick={() => confirmRedirect(isBreakout, allowRedirect)}
+                onMouseDown={handleOkayPressStart}
+                onTouchStart={handleOkayPressStart}
+                onClick={() => confirmRedirect(isBreakout, allowRedirect, shouldCloseOnlyOnOkay)}
                 /* @eslint-disable-next-line */
                 aria-details={intl.formatMessage(intlMessage.confirmDesc)}
                 data-test="redirectButton"
@@ -593,6 +656,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
   }, [
     allowRedirect,
     authToken,
+    handleOkayPressStart,
     confirmRedirect,
     endDescription,
     intl,
@@ -601,6 +665,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
     learningDashboardAccessToken,
     learningDashboardBase,
     meetingId,
+    shouldCloseOnlyOnOkay,
     shouldShowOkayButton,
   ]);
 
