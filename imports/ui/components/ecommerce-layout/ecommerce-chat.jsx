@@ -78,7 +78,7 @@ const EcommerceChat = ({ isMobile, isHost }) => {
         position: "absolute",
         bottom: isMobile ? "10px" : "24px",
         left: isMobile ? "10px" : "auto", // Cho phép tin nhắn trải full từ mép trái
-        right: isMobile ? "10px" : isHost ? "190px" : "80px",
+        right: isMobile ? (isHost ? "10px" : "64px") : isHost ? "190px" : "80px",
         width: isMobile ? "auto" : "360px",
         height: isMobile ? "220px" : "34%",
         zIndex: 10,
@@ -191,7 +191,7 @@ const EcommerceChat = ({ isMobile, isHost }) => {
         style={{
           display: "flex",
           marginLeft: isMobile ? "52px" : "0", // Tránh nút Giỏ hàng (44px) + gap 8px
-          marginRight: isMobile ? "52px" : "0", // Tránh nút Share (44px) + gap 8px
+          marginRight: "0",
           maxWidth: "none",
           boxSizing: "border-box",
           background: "rgba(0,0,0,0.5)",

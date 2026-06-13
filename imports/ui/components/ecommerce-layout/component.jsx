@@ -615,16 +615,16 @@ const EcommerceLayout = (props) => {
           left: 0,
           transform: "none",
           width: isMobile ? "100vw" : "100%",
-          maxWidth: isMobile ? "430px" : "none",
+          maxWidth: "none",
           height: "100vh",
           background:
             "radial-gradient(circle at top left, rgba(255,107,53,0.22) 0%, rgba(255,107,53,0) 28%), linear-gradient(180deg, #1a1120 0%, #0c0b14 55%, #060606 100%)",
           overflow: "hidden",
           fontFamily: "'Inter', sans-serif",
           zIndex: 9999,
-          boxShadow: isMobile ? "0 0 50px rgba(0,0,0,0.8)" : "none",
-          margin: isMobile ? "0 auto" : "0",
-          right: isMobile ? "auto" : 0,
+          boxShadow: "none",
+          margin: 0,
+          right: 0,
           touchAction: "manipulation",
         }}
       >
@@ -687,14 +687,16 @@ const EcommerceLayout = (props) => {
             z-index: 25000 !important;
           }
 
-          body.ovbay-ecommerce-live-active #modals-container .modal-low:has([data-test="webcamSettingsModal"]),
-          body.ovbay-ecommerce-live-active #modals-container .modal-medium:has([data-test="webcamSettingsModal"]),
-          body.ovbay-ecommerce-live-active #modals-container .modal-high:has([data-test="webcamSettingsModal"]) {
+          body.ovbay-ecommerce-live-active #modals-container .modal-low,
+          body.ovbay-ecommerce-live-active #modals-container .modal-medium,
+          body.ovbay-ecommerce-live-active #modals-container .modal-high {
             display: block !important;
             z-index: 25001 !important;
           }
 
           body.ovbay-ecommerce-live-active #modals-container [data-test="webcamSettingsModal"] {
+            display: block !important;
+            position: relative !important;
             z-index: 25002 !important;
             pointer-events: auto !important;
           }
@@ -1593,29 +1595,6 @@ const EcommerceLayout = (props) => {
                 <path d="M24 10.518l-12.87-9.518v5.865c-6.837.585-11.13 6.643-11.13 14.618 3.528-5.32 8.16-5.83 11.13-5.597v6.095l12.87-11.463z" />
               </svg>
             </button>
-            {!isHost && (
-              <button
-                type="button"
-                onClick={handleLike}
-                aria-label="Thả tim"
-                style={{
-                  width: "44px",
-                  height: "44px",
-                  borderRadius: "50%",
-                  border: "1px solid rgba(255,255,255,0.18)",
-                  background: "rgba(0,0,0,0.5)",
-                  color: "#ff5a4f",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "20px",
-                  cursor: "pointer",
-                  boxShadow: "0 8px 18px rgba(0,0,0,0.15)",
-                }}
-              >
-                ♥
-              </button>
-            )}
             {isHost && (
               <>
                 <AudioControlsContainer />
@@ -1654,7 +1633,7 @@ const EcommerceLayout = (props) => {
             style={{
               position: "absolute",
               right: "20px",
-              bottom: "96px",
+              bottom: "108px",
               width: "48px",
               height: "48px",
               borderRadius: "50%",
@@ -2221,31 +2200,6 @@ const EcommerceLayout = (props) => {
             </button>
           )}
 
-          {!isHost && (
-            <button
-              type="button"
-              onClick={handleLike}
-              aria-label="Thả tim"
-              style={{
-                width: "44px",
-                height: "44px",
-                borderRadius: "50%",
-                background: "rgba(0,0,0,0.5)",
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                color: "#ff5a4f",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 100,
-                fontSize: "22px",
-                cursor: "pointer",
-              }}
-            >
-              ♥
-            </button>
-          )}
-
           <div
             style={{
               display: "flex",
@@ -2289,12 +2243,41 @@ const EcommerceLayout = (props) => {
           </div>
           </div>
         )}
+
+        {isMobile && !isHost && (
+          <button
+            type="button"
+            onClick={handleLike}
+            aria-label="Thả tim"
+            style={{
+              position: "absolute",
+              right: "10px",
+              bottom: "116px",
+              width: "44px",
+              height: "44px",
+              borderRadius: "50%",
+              background: "rgba(0,0,0,0.5)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,0.2)",
+              color: "#ff5a4f",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 101,
+              fontSize: "22px",
+              cursor: "pointer",
+              boxShadow: "0 8px 18px rgba(0,0,0,0.15)",
+            }}
+          >
+            {"\u2665"}
+          </button>
+        )}
         {/* 5. Hiệu ứng bong bóng thả tim */}
         <div
           style={{
             position: "absolute",
             right: isMobile ? "10px" : "20px",
-            bottom: isMobile ? "220px" : "180px",
+            bottom: isMobile ? "170px" : "190px",
             width: "60px",
             height: "300px",
             pointerEvents: "none",
