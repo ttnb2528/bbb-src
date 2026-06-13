@@ -682,19 +682,24 @@ const EcommerceLayout = (props) => {
             z-index: 20001 !important;
           }
 
-          body.ovbay-ecommerce-device-modal-open #ecommerce-layout {
-            opacity: 0 !important;
-            pointer-events: none !important;
+          body.ovbay-ecommerce-live-active #modals-container {
+            position: relative;
+            z-index: 25000 !important;
           }
 
-          body.ovbay-ecommerce-device-modal-open #ecommerce-layout *,
-          body.ovbay-ecommerce-device-modal-open #ecommerce-layout::before,
-          body.ovbay-ecommerce-device-modal-open #ecommerce-layout::after {
-            pointer-events: none !important;
+          body.ovbay-ecommerce-live-active #modals-container .modal-low:has([data-test="webcamSettingsModal"]),
+          body.ovbay-ecommerce-live-active #modals-container .modal-medium:has([data-test="webcamSettingsModal"]),
+          body.ovbay-ecommerce-live-active #modals-container .modal-high:has([data-test="webcamSettingsModal"]) {
+            display: block !important;
+            z-index: 25001 !important;
+          }
+
+          body.ovbay-ecommerce-live-active #modals-container [data-test="webcamSettingsModal"] {
+            z-index: 25002 !important;
+            pointer-events: auto !important;
           }
 
           #app[aria-hidden="true"] #ecommerce-layout {
-            opacity: 0 !important;
             pointer-events: none !important;
           }
 
@@ -702,10 +707,6 @@ const EcommerceLayout = (props) => {
             pointer-events: none !important;
           }
 
-          #app[aria-hidden="true"] .ecommerce-video-wrapper {
-            opacity: 0 !important;
-          }
-          
           /* Với livestream OVBay, để BBB tự quản lý stage/layout webcam.
              Chỉ ép phần tử webcam fill đúng stage và giữ tỉ lệ ở giữa. */
           .ecommerce-video-wrapper [data-test="webcamItem"],
@@ -746,6 +747,18 @@ const EcommerceLayout = (props) => {
             background: transparent !important;
             object-fit: contain !important;
             object-position: center center !important;
+          }
+
+          .ecommerce-video-wrapper::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background:
+              linear-gradient(90deg, rgba(10,15,34,0.24) 0%, transparent 12%, transparent 88%, rgba(10,15,34,0.24) 100%),
+              linear-gradient(180deg, rgba(10,15,34,0.24) 0%, transparent 14%, transparent 86%, rgba(10,15,34,0.24) 100%);
+            box-shadow: inset 0 0 120px rgba(7, 12, 25, 0.18);
+            z-index: 2;
           }
           
           /* Ẩn cục tên người dùng và các nút nhỏ xíu trên góc của thẻ Camera mặc định BBB */
@@ -807,12 +820,11 @@ const EcommerceLayout = (props) => {
           /* Ẩn cục Avatar mặc định của BBB khi chưa có Camera */
           .ecommerce-video-wrapper-inactive > div,
           .ecommerce-video-wrapper [class*="avatar"],
-          .ecommerce-video-wrapper [data-test="userAvatar"],
-          .ecommerce-video-wrapper [data-test="videoPreviewModal"] {
+          .ecommerce-video-wrapper [data-test="userAvatar"] {
              opacity: 0 !important;
              pointer-events: none !important;
              display: none !important;
-          }
+           }
         `,
           }}
         />
@@ -1581,6 +1593,29 @@ const EcommerceLayout = (props) => {
                 <path d="M24 10.518l-12.87-9.518v5.865c-6.837.585-11.13 6.643-11.13 14.618 3.528-5.32 8.16-5.83 11.13-5.597v6.095l12.87-11.463z" />
               </svg>
             </button>
+            {!isHost && (
+              <button
+                type="button"
+                onClick={handleLike}
+                aria-label="Thả tim"
+                style={{
+                  width: "44px",
+                  height: "44px",
+                  borderRadius: "50%",
+                  border: "1px solid rgba(255,255,255,0.18)",
+                  background: "rgba(0,0,0,0.5)",
+                  color: "#ff5a4f",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "20px",
+                  cursor: "pointer",
+                  boxShadow: "0 8px 18px rgba(0,0,0,0.15)",
+                }}
+              >
+                ♥
+              </button>
+            )}
             {isHost && (
               <>
                 <AudioControlsContainer />
@@ -1609,6 +1644,34 @@ const EcommerceLayout = (props) => {
               ✕
             </button>
           </div>
+        )}
+
+        {!isMobile && !isHost && (
+          <button
+            type="button"
+            onClick={handleLike}
+            aria-label="Thả tim"
+            style={{
+              position: "absolute",
+              right: "20px",
+              bottom: "96px",
+              width: "48px",
+              height: "48px",
+              borderRadius: "50%",
+              border: "1px solid rgba(255,255,255,0.18)",
+              background: "rgba(0,0,0,0.5)",
+              color: "#ff5a4f",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "22px",
+              cursor: "pointer",
+              zIndex: 120,
+              boxShadow: "0 8px 18px rgba(0,0,0,0.15)",
+            }}
+          >
+            ♥
+          </button>
         )}
 
         {/* Nút Leave cho Mobile (X ở góc trên phải) kèm Mắt Xem */}
@@ -2155,6 +2218,31 @@ const EcommerceLayout = (props) => {
               }}
             >
               ⚙️
+            </button>
+          )}
+
+          {!isHost && (
+            <button
+              type="button"
+              onClick={handleLike}
+              aria-label="Thả tim"
+              style={{
+                width: "44px",
+                height: "44px",
+                borderRadius: "50%",
+                background: "rgba(0,0,0,0.5)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "#ff5a4f",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 100,
+                fontSize: "22px",
+                cursor: "pointer",
+              }}
+            >
+              ♥
             </button>
           )}
 
