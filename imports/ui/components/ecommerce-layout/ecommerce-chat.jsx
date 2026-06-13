@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useMutation } from "@apollo/client";
 import { CHAT_SEND_MESSAGE } from "/imports/ui/components/chat/chat-graphql/chat-message-form/mutations";
 import { CHAT_MESSAGE_FLOATING_SUBSCRIPTION } from "/imports/ui/components/chat/floating-chat/queries";
@@ -11,6 +11,7 @@ const MAX_MESSAGES = 50;
 
 const EcommerceChat = ({ isMobile, isHost }) => {
   const scrollRef = useRef(null);
+  const isNearBottomRef = useRef(true);
   const [inputValue, setInputValue] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [visibleMessages, setVisibleMessages] = useState([]);
@@ -27,29 +28,46 @@ const EcommerceChat = ({ isMobile, isHost }) => {
 
   useEffect(() => {
     if (!chatMessagesHistory?.chat_message_public) return;
-    const newMessagesList = chatMessagesHistory.chat_message_public;
+
     const CHAT_CONFIG = window.meetingClientSettings?.public?.chat || {};
     const PUBLIC_GROUP_CHAT_ID =
       CHAT_CONFIG.public_group_id || "MAIN-PUBLIC-GROUP-CHAT";
 
-    let validMessages = newMessagesList.filter((msg) => {
-      const isPublicGroup = msg.chatId === PUBLIC_GROUP_CHAT_ID;
-      const isSystemMsg =
-        msg.messageType === ChatMessageType.USER_AWAY_STATUS_MSG ||
-        msg.messageType === ChatMessageType.USER_IS_PRESENTER_MSG ||
-        msg.messageType === ChatMessageType.PRESENTATION ||
-        msg.messageType === ChatMessageType.CHAT_CLEAR ||
-        msg.messageType === ChatMessageType.POLL;
-      return isPublicGroup && !isSystemMsg;
-    });
+    const validMessages = chatMessagesHistory.chat_message_public
+      .filter((msg) => {
+        const isPublicGroup = msg.chatId === PUBLIC_GROUP_CHAT_ID;
+        const isSystemMsg =
+          msg.messageType === ChatMessageType.USER_AWAY_STATUS_MSG ||
+          msg.messageType === ChatMessageType.USER_IS_PRESENTER_MSG ||
+          msg.messageType === ChatMessageType.PRESENTATION ||
+          msg.messageType === ChatMessageType.CHAT_CLEAR ||
+          msg.messageType === ChatMessageType.POLL;
+        return isPublicGroup && !isSystemMsg;
+      })
+      .sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
 
     setVisibleMessages(validMessages);
   }, [chatMessagesHistory]);
 
-  // Cuộn xuống khi có tin nhắn mới
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight + 1000;
+    const node = scrollRef.current;
+    if (!node) return undefined;
+
+    const onScroll = () => {
+      const distanceToBottom =
+        node.scrollHeight - node.scrollTop - node.clientHeight;
+      isNearBottomRef.current = distanceToBottom < 80;
+    };
+
+    node.addEventListener("scroll", onScroll);
+    onScroll();
+    return () => node.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const node = scrollRef.current;
+    if (node && isNearBottomRef.current) {
+      node.scrollTop = node.scrollHeight;
     }
   }, [visibleMessages.length]);
 
@@ -63,7 +81,7 @@ const EcommerceChat = ({ isMobile, isHost }) => {
 
     sendMessage({
       variables: {
-        chatId: chatId,
+        chatId,
         chatMessageInMarkdownFormat: inputValue.trim(),
       },
     })
@@ -77,8 +95,8 @@ const EcommerceChat = ({ isMobile, isHost }) => {
       style={{
         position: "absolute",
         bottom: isMobile ? "10px" : "24px",
-        left: isMobile ? "10px" : "auto", // Cho phép tin nhắn trải full từ mép trái
-        right: isMobile ? "64px" : isHost ? "190px" : "80px",
+        left: isMobile ? "10px" : "auto",
+        right: isMobile ? (isHost ? "112px" : "64px") : isHost ? "190px" : "80px",
         width: isMobile ? "auto" : "360px",
         height: isMobile ? "220px" : "34%",
         zIndex: 10,
@@ -86,10 +104,9 @@ const EcommerceChat = ({ isMobile, isHost }) => {
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
-        alignItems: "stretch", // Ép form giãn ra
+        alignItems: "stretch",
       }}
     >
-      {/* Danh sách tin nhắn */}
       <div
         ref={scrollRef}
         style={{
@@ -100,14 +117,12 @@ const EcommerceChat = ({ isMobile, isHost }) => {
           overflowX: "hidden",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-end",
+          justifyContent: "flex-start",
           gap: "8px",
           paddingTop: "16px",
           paddingBottom: "10px",
-          maskImage:
-            "linear-gradient(to bottom, transparent, black 15%, black)",
-          WebkitMaskImage:
-            "linear-gradient(to bottom, transparent, black 15%, black)",
+          maskImage: "linear-gradient(to bottom, transparent, black 15%, black)",
+          WebkitMaskImage: "linear-gradient(to bottom, transparent, black 15%, black)",
         }}
         className="ecommerce-live-chat-scroll"
       >
@@ -125,7 +140,6 @@ const EcommerceChat = ({ isMobile, isHost }) => {
               padding: "2px 0",
             }}
           >
-            {/* Avatar mặc định */}
             <div
               style={{
                 width: "28px",
@@ -145,16 +159,13 @@ const EcommerceChat = ({ isMobile, isHost }) => {
               {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : "U"}
             </div>
 
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "2px" }}
-            >
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               <span
                 style={{
                   fontSize: "13px",
                   color: "rgba(255,255,255,0.6)",
                   fontWeight: "bold",
-                  textShadow:
-                    "1px 1px 3px rgba(0,0,0,0.9), 0px 0px 2px rgba(0,0,0,0.8)",
+                  textShadow: "1px 1px 3px rgba(0,0,0,0.9), 0px 0px 2px rgba(0,0,0,0.8)",
                 }}
               >
                 {msg.senderName || "User"}
@@ -163,8 +174,7 @@ const EcommerceChat = ({ isMobile, isHost }) => {
                 style={{
                   fontSize: "15px",
                   color: "white",
-                  textShadow:
-                    "1px 1px 4px rgba(0,0,0,1), 0px 0px 2px rgba(0,0,0,0.8)",
+                  textShadow: "1px 1px 4px rgba(0,0,0,1), 0px 0px 2px rgba(0,0,0,0.8)",
                   wordBreak: "break-word",
                   lineHeight: "1.3",
                 }}
@@ -172,8 +182,7 @@ const EcommerceChat = ({ isMobile, isHost }) => {
                 <ReactMarkdown
                   linkTarget="_blank"
                   allowedElements={
-                    window.meetingClientSettings?.public?.chat
-                      ?.allowedElements || []
+                    window.meetingClientSettings?.public?.chat?.allowedElements || []
                   }
                   unwrapDisallowed
                 >
@@ -185,12 +194,11 @@ const EcommerceChat = ({ isMobile, isHost }) => {
         ))}
       </div>
 
-      {/* Input Form */}
       <form
         onSubmit={handleSend}
         style={{
           display: "flex",
-          marginLeft: isMobile ? "52px" : "0", // Tránh nút Giỏ hàng (44px) + gap 8px
+          marginLeft: isMobile ? "52px" : "0",
           marginRight: "0",
           maxWidth: "none",
           boxSizing: "border-box",

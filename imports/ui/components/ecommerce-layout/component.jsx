@@ -167,8 +167,56 @@ const EcommerceLayout = (props) => {
   const [likeCount, setLikeCount] = useState(0);
   const [floatingHearts, setFloatingHearts] = useState([]);
   const [fomoNotifications, setFomoNotifications] = useState([]);
+  const likeCountRef = useRef(0);
+  const pendingLikeFlushRef = useRef(null);
+  const pendingLikeRequestsRef = useRef(0);
+  const likeInFlightRef = useRef(false);
   const [userLeaveMeeting] = useMutation(USER_LEAVE_MEETING);
   const [meetingEnd] = useMutation(MEETING_END);
+
+  useEffect(() => {
+    likeCountRef.current = likeCount;
+  }, [likeCount]);
+
+  const flushLikeQueue = async () => {
+    if (likeInFlightRef.current) return;
+    if (!apiBase || !currentMeetingId) return;
+    if (pendingLikeRequestsRef.current <= 0) return;
+
+    likeInFlightRef.current = true;
+
+    try {
+      const response = await fetch(
+        `${apiBase}/api/livestream/${currentMeetingId}/like`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUser?.extId }),
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const serverLikes =
+          data?.data?.likes_count ?? data?.data?.likes ?? data?.likes;
+        if (typeof serverLikes === "number") {
+          setLikeCount((prev) => Math.max(prev, serverLikes));
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      pendingLikeRequestsRef.current = Math.max(
+        0,
+        pendingLikeRequestsRef.current - 1,
+      );
+      likeInFlightRef.current = false;
+
+      if (pendingLikeRequestsRef.current > 0) {
+        pendingLikeFlushRef.current = setTimeout(flushLikeQueue, 120);
+      }
+    }
+  };
 
   // Handlers cho các action
   const handleLike = () => {
@@ -187,13 +235,11 @@ const EcommerceLayout = (props) => {
       setFloatingHearts((prev) => prev.filter((h) => h.id !== newHeart.id));
     }, 3000);
 
-    if (apiBase && currentMeetingId) {
-      fetch(`${apiBase}/api/livestream/${currentMeetingId}/like`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUser?.extId }),
-      }).catch((e) => console.error(e));
+    pendingLikeRequestsRef.current += 1;
+    if (pendingLikeFlushRef.current) {
+      clearTimeout(pendingLikeFlushRef.current);
     }
+    pendingLikeFlushRef.current = setTimeout(flushLikeQueue, 120);
   };
 
   const isGuest = () => {
@@ -384,7 +430,7 @@ const EcommerceLayout = (props) => {
               }
               // Set số lượt thích hiện tại và kiểm tra follow
               if (data.data.likes_count !== undefined) {
-                setLikeCount(data.data.likes_count);
+                setLikeCount((prev) => Math.max(prev, data.data.likes_count));
               }
               if (localStorage.getItem(`followed_shop_${meetingId}`)) {
                 setIsFollowing(true);
@@ -423,9 +469,9 @@ const EcommerceLayout = (props) => {
             // Cập nhật số lượt thích
             if (
               data.data.likes_count !== undefined &&
-              data.data.likes_count > likeCount
+              data.data.likes_count > likeCountRef.current
             ) {
-              setLikeCount(data.data.likes_count);
+              setLikeCount((prev) => Math.max(prev, data.data.likes_count));
             }
 
             // Cập nhật lại list product nếu đang mở giỏ hàng
@@ -718,9 +764,7 @@ const EcommerceLayout = (props) => {
             height: 100% !important;
             max-width: 100% !important;
             max-height: 100% !important;
-            background:
-              radial-gradient(circle at top, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 35%),
-              linear-gradient(180deg, rgba(15,36,46,0.95) 0%, rgba(12,15,34,0.98) 100%) !important;
+            background: transparent !important;
           }
 
           .ecommerce-video-wrapper [data-test="videoContainer"],
@@ -737,9 +781,7 @@ const EcommerceLayout = (props) => {
             border-radius: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
-            background:
-              radial-gradient(circle at top, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 35%),
-              linear-gradient(180deg, rgba(15,36,46,0.95) 0%, rgba(12,15,34,0.98) 100%) !important;
+            background: transparent !important;
             pointer-events: none !important;
           }
 
@@ -777,10 +819,8 @@ const EcommerceLayout = (props) => {
             position: absolute;
             inset: 0;
             pointer-events: none;
-            background:
-              linear-gradient(90deg, rgba(10,15,34,0.24) 0%, transparent 12%, transparent 88%, rgba(10,15,34,0.24) 100%),
-              linear-gradient(180deg, rgba(10,15,34,0.24) 0%, transparent 14%, transparent 86%, rgba(10,15,34,0.24) 100%);
-            box-shadow: inset 0 0 120px rgba(7, 12, 25, 0.18);
+            background: transparent;
+            box-shadow: none;
             z-index: 2;
           }
           
@@ -1075,7 +1115,7 @@ const EcommerceLayout = (props) => {
             "ecommerce-video-wrapper " +
             (!isCameraActive ? "ecommerce-video-wrapper-inactive" : "")
           }
-          style={{
+        style={{
             position: "absolute",
             top: 0,
             left: 0,
@@ -1087,6 +1127,16 @@ const EcommerceLayout = (props) => {
               "radial-gradient(circle at top left, rgba(255,107,53,0.18) 0%, rgba(255,107,53,0) 22%), radial-gradient(circle at top right, rgba(56,189,248,0.16) 0%, rgba(56,189,248,0) 24%), linear-gradient(180deg, rgba(13,36,48,0.96) 0%, rgba(10,15,34,0.98) 100%)",
           }}
         >
+          <style>
+            {`
+              .ecommerce-video-wrapper .videoContainer,
+              .ecommerce-video-wrapper [data-test="videoContainer"],
+              .ecommerce-video-wrapper [data-test="mirroredVideoContainer"] {
+                background: transparent !important;
+                box-shadow: none !important;
+              }
+            `}
+          </style>
           {isMobile && (
             <style>
               {`
