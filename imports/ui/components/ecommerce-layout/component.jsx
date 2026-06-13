@@ -35,6 +35,7 @@ const shouldUseMobileShell = () => {
   if (typeof window === "undefined") return false;
 
   const userAgent = window.navigator.userAgent || "";
+  const narrowViewport = window.innerWidth < 700;
   const isTouchTabletOrPhone =
     window.matchMedia("(pointer: coarse)").matches ||
     window.matchMedia("(hover: none)").matches ||
@@ -44,7 +45,7 @@ const shouldUseMobileShell = () => {
     (window.navigator.platform === "MacIntel" &&
       window.navigator.maxTouchPoints > 1);
 
-  return isTouchTabletOrPhone && window.innerWidth < 768;
+  return narrowViewport || (isTouchTabletOrPhone && window.innerWidth < 768);
 };
 
 const EcommerceLayout = (props) => {
@@ -1048,7 +1049,7 @@ const EcommerceLayout = (props) => {
             zIndex: 1,
             overflow: "hidden",
             background:
-              "radial-gradient(circle at top, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 35%), linear-gradient(180deg, rgba(18,18,18,0.92) 0%, rgba(6,6,6,0.98) 100%)",
+              "radial-gradient(circle at top left, rgba(255,107,53,0.18) 0%, rgba(255,107,53,0) 22%), radial-gradient(circle at top right, rgba(56,189,248,0.16) 0%, rgba(56,189,248,0) 24%), linear-gradient(180deg, rgba(13,36,48,0.96) 0%, rgba(10,15,34,0.98) 100%)",
           }}
         >
           {isMobile && (
@@ -1086,10 +1087,9 @@ const EcommerceLayout = (props) => {
               color: "white",
               textAlign: "center",
               padding: "20px",
-              /* Background chờ mờ ảo cho Viewer */
-              background: !isHost
-                ? "url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat"
-                : "none",
+              background: isHost
+                ? "radial-gradient(circle at top left, rgba(255,107,53,0.18) 0%, rgba(255,107,53,0) 22%), radial-gradient(circle at top right, rgba(56,189,248,0.16) 0%, rgba(56,189,248,0) 24%), linear-gradient(180deg, rgba(13,36,48,0.96) 0%, rgba(10,15,34,0.98) 100%)"
+                : "url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2000&auto=format&fit=crop') center/cover no-repeat",
             }}
           >
             {/* Nếu là Viewer, thêm một lớp phủ đen mờ lên trên ảnh background */}
