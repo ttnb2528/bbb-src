@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useMutation } from "@apollo/client";
 import { useIntl } from "react-intl";
 import Styled from "../app/styles";
 import WebcamContainer from "../webcam/component";
@@ -18,17 +19,34 @@ import Notifications from "../notifications/component";
 
 import AudioControlsContainer from "../audio/audio-graphql/audio-controls/component";
 import JoinVideoOptionsContainer from "../video-provider/video-button/container";
-import LeaveMeetingButtonContainer from "../nav-bar/leave-meeting-button/container";
-
 import Auth from "/imports/ui/services/auth";
+import Session from "/imports/ui/services/storage/in-memory";
 import useMeeting from "/imports/ui/core/hooks/useMeeting";
 import useCurrentUser from "/imports/ui/core/hooks/useCurrentUser";
+import { USER_LEAVE_MEETING } from "/imports/ui/core/graphql/mutations/userMutations";
+import { MEETING_END } from "/imports/ui/components/end-meeting-confirmation/mutations";
 
 import { USER_AGGREGATE_COUNT_SUBSCRIPTION } from "/imports/ui/core/graphql/queries/users";
 import useDeduplicatedSubscription from "/imports/ui/core/hooks/useDeduplicatedSubscription";
 import { useLoadedUserList } from "/imports/ui/core/hooks/useLoadedUserList";
 
 // Component dành riêng cho giao diện Bán hàng
+const shouldUseMobileShell = () => {
+  if (typeof window === "undefined") return false;
+
+  const userAgent = window.navigator.userAgent || "";
+  const isTouchTabletOrPhone =
+    window.matchMedia("(pointer: coarse)").matches ||
+    window.matchMedia("(hover: none)").matches ||
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(
+      userAgent,
+    ) ||
+    (window.navigator.platform === "MacIntel" &&
+      window.navigator.maxTouchPoints > 1);
+
+  return isTouchTabletOrPhone && window.innerWidth < 768;
+};
+
 const EcommerceLayout = (props) => {
   const {
     isAudioModalOpen,
@@ -55,22 +73,41 @@ const EcommerceLayout = (props) => {
   const [isCameraActive, setIsCameraActive] = useState(true); // Mặc định true để không chớp giật lúc load
   const [hasCameraEverStarted, setHasCameraEverStarted] = useState(false); // Theo dõi xem live đã từng bật chưa
   const [isRealDesktop, setIsRealDesktop] = useState(
-    typeof window !== "undefined" ? window.innerWidth > 768 : false,
+    typeof window !== "undefined" ? !shouldUseMobileShell() : true,
   );
   const [showMobileHostSettings, setShowMobileHostSettings] = useState(false);
+  const isDeviceModalOpen = isAudioModalOpen || isVideoPreviewModalOpen;
 
-  // FORCE MOBILE LAYOUT FOR UNIFIED UI (TikTok Style)
-  const isMobile = true;
+  // Chỉ dùng shell dọc kiểu mobile trên màn hình nhỏ.
+  // Desktop phải render full stage để không bóp méo layout webcam của BBB.
+  const isMobile = !isRealDesktop;
 
   // Resize listener
   useEffect(() => {
-    const handleResize = () => setIsRealDesktop(window.innerWidth > 768);
+    const handleResize = () => setIsRealDesktop(!shouldUseMobileShell());
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    document.body.classList.add("ovbay-ecommerce-live-active");
+
+    return () => {
+      document.body.classList.remove("ovbay-ecommerce-live-active");
+      document.body.classList.remove("ovbay-ecommerce-device-modal-open");
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.toggle(
+      "ovbay-ecommerce-device-modal-open",
+      isDeviceModalOpen,
+    );
+  }, [isDeviceModalOpen]);
+
   // Chặn tự động xoay màn hình trên thiết bị di động
   useEffect(() => {
+    if (isRealDesktop) return;
     if (
       typeof screen !== "undefined" &&
       screen.orientation &&
@@ -83,7 +120,7 @@ const EcommerceLayout = (props) => {
         );
       });
     }
-  }, []);
+  }, [isRealDesktop]);
 
   // Dùng useEffect và Interval để "soi" xem thẻ video có thực sự đang chạy (live) hay không
   useEffect(() => {
@@ -129,6 +166,8 @@ const EcommerceLayout = (props) => {
   const [likeCount, setLikeCount] = useState(0);
   const [floatingHearts, setFloatingHearts] = useState([]);
   const [fomoNotifications, setFomoNotifications] = useState([]);
+  const [userLeaveMeeting] = useMutation(USER_LEAVE_MEETING);
+  const [meetingEnd] = useMutation(MEETING_END);
 
   // Handlers cho các action
   const handleLike = () => {
@@ -220,6 +259,19 @@ const EcommerceLayout = (props) => {
     name: u.name,
   }));
   const isHost = currentUser?.role === "MODERATOR";
+  const handleExitLive = async () => {
+    try {
+      if (isHost) {
+        await meetingEnd();
+        return;
+      }
+
+      await userLeaveMeeting();
+      Session.setItem("codeError", "680");
+    } catch (error) {
+      console.error("Không thể thoát phiên live:", error);
+    }
+  };
 
   // Hook lấy thông tin Meeting hiện tại để lấy MeetingID gửi về ovbay
   const { data: currentMeeting } = useMeeting((m) => ({
@@ -553,20 +605,25 @@ const EcommerceLayout = (props) => {
       <Styled.Layout
         id="ecommerce-layout"
         onDoubleClick={isMobile ? handleLike : undefined}
-        className="ecommerce-layout-container ecommerce-mode"
+        className={`ecommerce-layout-container ecommerce-mode${
+          isDeviceModalOpen ? " ecommerce-device-modal-open" : ""
+        }`}
         style={{
           position: "fixed",
           top: 0,
-          left: isRealDesktop ? "50%" : 0,
-          transform: isRealDesktop ? "translateX(-50%)" : "none",
-          width: "100%",
-          maxWidth: isRealDesktop ? "430px" : "100vw",
+          left: 0,
+          transform: "none",
+          width: isMobile ? "100vw" : "100%",
+          maxWidth: isMobile ? "430px" : "none",
           height: "100vh",
-          backgroundColor: "#000",
+          background:
+            "radial-gradient(circle at top left, rgba(255,107,53,0.22) 0%, rgba(255,107,53,0) 28%), linear-gradient(180deg, #1a1120 0%, #0c0b14 55%, #060606 100%)",
           overflow: "hidden",
           fontFamily: "'Inter', sans-serif",
           zIndex: 9999,
-          boxShadow: isRealDesktop ? "0 0 50px rgba(0,0,0,0.8)" : "none",
+          boxShadow: isMobile ? "0 0 50px rgba(0,0,0,0.8)" : "none",
+          margin: isMobile ? "0 auto" : "0",
+          right: isMobile ? "auto" : 0,
           touchAction: "manipulation",
         }}
       >
@@ -576,7 +633,24 @@ const EcommerceLayout = (props) => {
           dangerouslySetInnerHTML={{
             __html: `
           .ecommerce-mode {
-            background: radial-gradient(circle at 50% 50%, #1e1b4b, #000000) !important;
+            background:
+              radial-gradient(circle at top left, rgba(255,107,53,0.22) 0%, rgba(255,107,53,0) 30%),
+              radial-gradient(circle at top right, rgba(59,130,246,0.14) 0%, rgba(59,130,246,0) 26%),
+              linear-gradient(180deg, #1a1120 0%, #0c0b14 55%, #060606 100%) !important;
+          }
+          .ecommerce-layout-container.ecommerce-mode {
+            width: 100% !important;
+            height: 100vh !important;
+          }
+          @media (min-width: 769px) {
+            .ecommerce-layout-container.ecommerce-mode {
+              max-width: none !important;
+              left: 0 !important;
+              right: 0 !important;
+              transform: none !important;
+              margin: 0 !important;
+              box-shadow: none !important;
+            }
           }
           html, body, #app, #content, [class*="layout"] {
             overflow: hidden !important;
@@ -584,24 +658,93 @@ const EcommerceLayout = (props) => {
             scroll-behavior: auto !important;
           }
           body {
-            background-color: #050505 !important;
+            background:
+              radial-gradient(circle at top left, rgba(255,107,53,0.18) 0%, rgba(255,107,53,0) 30%),
+              linear-gradient(180deg, #140e1b 0%, #09090f 58%, #050505 100%) !important;
+          }
+
+          body.ovbay-ecommerce-live-active .ReactModalPortal {
+            position: relative;
+            z-index: 20000 !important;
+          }
+
+          body.ovbay-ecommerce-live-active .ReactModalPortal .ReactModal__Overlay {
+            z-index: 20000 !important;
+          }
+
+          body.ovbay-ecommerce-live-active .ReactModalPortal .ReactModal__Content {
+            z-index: 20001 !important;
+          }
+
+          body.ovbay-ecommerce-live-active .ReactModalPortal [data-test="audioModal"],
+          body.ovbay-ecommerce-live-active .ReactModalPortal [data-test="webcamSettingsModal"] {
+            z-index: 20001 !important;
+          }
+
+          body.ovbay-ecommerce-device-modal-open #ecommerce-layout {
+            opacity: 0 !important;
+            pointer-events: none !important;
+          }
+
+          body.ovbay-ecommerce-device-modal-open #ecommerce-layout *,
+          body.ovbay-ecommerce-device-modal-open #ecommerce-layout::before,
+          body.ovbay-ecommerce-device-modal-open #ecommerce-layout::after {
+            pointer-events: none !important;
+          }
+
+          #app[aria-hidden="true"] #ecommerce-layout {
+            opacity: 0 !important;
+            pointer-events: none !important;
+          }
+
+          #app[aria-hidden="true"] #ecommerce-layout * {
+            pointer-events: none !important;
+          }
+
+          #app[aria-hidden="true"] .ecommerce-video-wrapper {
+            opacity: 0 !important;
           }
           
-          /* Tuyệt chiêu ép Video tràn viền tuyệt đối mà không làm hỏng thẻ div */
-          .ecommerce-video-wrapper video {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
+          /* Với livestream OVBay, để BBB tự quản lý stage/layout webcam.
+             Chỉ ép phần tử webcam fill đúng stage và giữ tỉ lệ ở giữa. */
+          .ecommerce-video-wrapper [data-test="webcamItem"],
+          .ecommerce-video-wrapper [data-test="webcamItemTalkingUser"],
+          .ecommerce-video-wrapper .videoContainer {
             width: 100% !important;
             height: 100% !important;
-            object-fit: cover !important; /* Cover để không bị cắt 2 viền đen trên PC */
+            max-width: 100% !important;
+            max-height: 100% !important;
+            background:
+              radial-gradient(circle at top, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 35%),
+              linear-gradient(180deg, rgba(15,36,46,0.95) 0%, rgba(12,15,34,0.98) 100%) !important;
+          }
+
+          .ecommerce-video-wrapper [data-test="videoContainer"],
+          .ecommerce-video-wrapper [data-test="mirroredVideoContainer"] {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            object-fit: contain !important;
+            object-position: center center !important;
             border-radius: 0 !important;
-            z-index: 1 !important;
-            transform: none !important; /* Xoá các transform căn giữa */
             margin: 0 !important;
             padding: 0 !important;
-            background: transparent !important;
+            background:
+              radial-gradient(circle at top, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 35%),
+              linear-gradient(180deg, rgba(15,36,46,0.95) 0%, rgba(12,15,34,0.98) 100%) !important;
             pointer-events: none !important;
+          }
+
+          .ecommerce-video-wrapper video,
+          .ecommerce-video-wrapper [data-test="videoContainer"] video,
+          .ecommerce-video-wrapper [data-test="mirroredVideoContainer"] video {
+            background: transparent !important;
+            object-fit: contain !important;
+            object-position: center center !important;
           }
           
           /* Ẩn cục tên người dùng và các nút nhỏ xíu trên góc của thẻ Camera mặc định BBB */
@@ -900,18 +1043,21 @@ const EcommerceLayout = (props) => {
             position: "absolute",
             top: 0,
             left: 0,
-            width: "100vw",
-            height: "100vh",
+            width: "100%",
+            height: "100%",
             zIndex: 1,
             overflow: "hidden",
-            backgroundColor: "#000",
+            background:
+              "radial-gradient(circle at top, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 35%), linear-gradient(180deg, rgba(18,18,18,0.92) 0%, rgba(6,6,6,0.98) 100%)",
           }}
         >
           {isMobile && (
             <style>
               {`
-                .ecommerce-video-wrapper video {
-                  object-fit: cover !important;
+                .ecommerce-video-wrapper [data-test="videoContainer"],
+                .ecommerce-video-wrapper [data-test="mirroredVideoContainer"] {
+                  object-fit: contain !important;
+                  object-position: center center !important;
                   width: 100% !important;
                   height: 100% !important;
                 }
@@ -1321,24 +1467,147 @@ const EcommerceLayout = (props) => {
         {/* Thanh công cụ Custom (Mic, Cam, Kết thúc Live) thay thế ActionsBar trên PC */}
         {!isMobile && (
           <div
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: "20px",
+              zIndex: 110,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "6px 12px",
+              borderRadius: "999px",
+              color: "#fff",
+              fontSize: "13px",
+              fontWeight: "bold",
+              background: "rgba(0,0,0,0.38)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 8px 20px rgba(0,0,0,0.18)",
+            }}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            {Math.max(0, actualParticipantCount - 1)}
+            <button
+              onClick={handleShare}
+              aria-label="Chia sẻ live"
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.08)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                color: "white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "transform 0.1s",
+                marginLeft: "4px",
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.transform = "scale(0.92)")
+              }
+              onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="#ffffff"
+                style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.35))" }}
+              >
+                <path d="M24 10.518l-12.87-9.518v5.865c-6.837.585-11.13 6.643-11.13 14.618 3.528-5.32 8.16-5.83 11.13-5.597v6.095l12.87-11.463z" />
+              </svg>
+            </button>
+          </div>
+        )}
+
+        {!isMobile && (
+          <div
             className="ecommerce-custom-controls"
             style={{
               position: "absolute",
-              bottom: "40px",
+              bottom: "24px",
               right: "20px",
               display: "flex",
-              gap: "8px",
-              zIndex: 40,
+              gap: "12px",
+              zIndex: 120,
               alignItems: "center",
             }}
           >
+            <button
+              onClick={handleShare}
+              aria-label="Chia sẻ live"
+              style={{
+                display: "none",
+                width: "44px",
+                height: "44px",
+                borderRadius: "50%",
+                background: "rgba(0,0,0,0.5)",
+                backdropFilter: "blur(8px)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "white",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                transition: "transform 0.1s",
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.transform = "scale(0.9)")
+              }
+              onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="#ffffff"
+                style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}
+              >
+                <path d="M24 10.518l-12.87-9.518v5.865c-6.837.585-11.13 6.643-11.13 14.618 3.528-5.32 8.16-5.83 11.13-5.597v6.095l12.87-11.463z" />
+              </svg>
+            </button>
             {isHost && (
               <>
                 <AudioControlsContainer />
                 <JoinVideoOptionsContainer />
               </>
             )}
-            <LeaveMeetingButtonContainer />
+            <button
+              type="button"
+              onClick={handleExitLive}
+              aria-label={isHost ? "Kết thúc live" : "Rời live"}
+              style={{
+                width: "44px",
+                height: "44px",
+                borderRadius: "50%",
+                border: "1px solid rgba(239,68,68,0.45)",
+                background: "rgba(239, 68, 68, 0.88)",
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "22px",
+                cursor: "pointer",
+                boxShadow: "0 10px 28px rgba(239,68,68,0.28)",
+              }}
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -1392,16 +1661,21 @@ const EcommerceLayout = (props) => {
                 {`
                   .ecommerce-leave-mobile-wrapper button {
                     background: rgba(0,0,0,0.5) !important;
-                    border: none !important;
+                    border: 1px solid rgba(255,255,255,0.14) !important;
                     box-shadow: none !important;
-                    color: transparent !important;
-                    position: relative;
+                    color: white !important;
                     width: 32px !important;
                     height: 32px !important;
                     border-radius: 50% !important;
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
+                  }
+                  .ecommerce-leave-mobile-wrapper button:hover {
+                    background: rgba(255,255,255,0.12) !important;
+                  }
+                  .ecommerce-leave-mobile-wrapper button::after {
+                    display: none !important;
                   }
                   .ecommerce-leave-mobile-wrapper button i,
                   .ecommerce-leave-mobile-wrapper button svg,
@@ -1420,7 +1694,19 @@ const EcommerceLayout = (props) => {
                   }
                 `}
               </style>
-              <LeaveMeetingButtonContainer />
+              <button
+                type="button"
+                onClick={handleExitLive}
+                aria-label={isHost ? "Kết thúc live" : "Rời live"}
+                style={{
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                  lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
             </div>
           </div>
         )}
@@ -1835,18 +2121,19 @@ const EcommerceLayout = (props) => {
         </div>
 
         {/* 4. Thanh công cụ dọc (Like, Share, Settings) */}
-        <div
-          style={{
-            position: "absolute",
-            right: isMobile ? "10px" : "20px",
-            bottom: isMobile ? "10px" : isHost ? "140px" : "80px", // Ép Share xuống ngang hàng Chat
-            display: "flex",
-            flexDirection: "column",
-            gap: "20px",
-            zIndex: 100,
-            alignItems: "center",
-          }}
-        >
+        {isMobile && (
+          <div
+            style={{
+              position: "absolute",
+              right: "10px",
+              bottom: "10px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "20px",
+              zIndex: 100,
+              alignItems: "center",
+            }}
+          >
           {/* Nút Cài đặt (Mic/Cam) cho Host Mobile */}
           {isMobile && isHost && (
             <button
@@ -1911,20 +2198,9 @@ const EcommerceLayout = (props) => {
                 <path d="M24 10.518l-12.87-9.518v5.865c-6.837.585-11.13 6.643-11.13 14.618 3.528-5.32 8.16-5.83 11.13-5.597v6.095l12.87-11.463z" />
               </svg>
             </button>
-            {!isMobile && (
-              <span
-                style={{
-                  color: "white",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-                }}
-              >
-                Share
-              </span>
-            )}
           </div>
-        </div>
+          </div>
+        )}
         {/* 5. Hiệu ứng bong bóng thả tim */}
         <div
           style={{

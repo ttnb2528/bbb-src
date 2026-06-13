@@ -43,7 +43,6 @@ const EcommerceChat = ({ isMobile, isHost }) => {
       return isPublicGroup && !isSystemMsg;
     });
 
-    validMessages.reverse();
     setVisibleMessages(validMessages);
   }, [chatMessagesHistory]);
 
@@ -77,11 +76,11 @@ const EcommerceChat = ({ isMobile, isHost }) => {
     <div
       style={{
         position: "absolute",
-        bottom: isMobile ? "10px" : "40px",
+        bottom: isMobile ? "10px" : "24px",
         left: isMobile ? "10px" : "auto", // Cho phép tin nhắn trải full từ mép trái
-        right: isMobile ? "10px" : isHost ? "200px" : "80px", // Tránh đè lên 3 nút của Host (Mic, Cam, Leave)
-        width: isMobile ? "auto" : "340px",
-        height: isMobile ? "220px" : "45%",
+        right: isMobile ? "10px" : isHost ? "190px" : "80px",
+        width: isMobile ? "auto" : "360px",
+        height: isMobile ? "220px" : "34%",
         zIndex: 10,
         pointerEvents: "auto",
         display: "flex",
@@ -101,7 +100,9 @@ const EcommerceChat = ({ isMobile, isHost }) => {
           overflowX: "hidden",
           display: "flex",
           flexDirection: "column",
+          justifyContent: "flex-end",
           gap: "8px",
+          paddingTop: "16px",
           paddingBottom: "10px",
           maskImage:
             "linear-gradient(to bottom, transparent, black 15%, black)",
