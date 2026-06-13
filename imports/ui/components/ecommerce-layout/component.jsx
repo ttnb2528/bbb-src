@@ -743,6 +743,27 @@ const EcommerceLayout = (props) => {
             pointer-events: none !important;
           }
 
+          .ecommerce-video-wrapper [data-test="webcamItem"],
+          .ecommerce-video-wrapper [data-test="webcamItem"] > div,
+          .ecommerce-video-wrapper [data-test="webcamItemTalkingUser"],
+          .ecommerce-video-wrapper [data-test="webcamItemTalkingUser"] > div,
+          .ecommerce-video-wrapper [data-test="webcamItem"] video,
+          .ecommerce-video-wrapper [data-test="webcamItemTalkingUser"] video {
+            background: transparent !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          .ecommerce-video-wrapper #cameraDock,
+          .ecommerce-video-wrapper #cameraDock > div {
+            background: transparent !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            overflow: hidden !important;
+          }
+
           .ecommerce-video-wrapper video,
           .ecommerce-video-wrapper [data-test="videoContainer"] video,
           .ecommerce-video-wrapper [data-test="mirroredVideoContainer"] video {
