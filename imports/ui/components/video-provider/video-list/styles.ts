@@ -248,9 +248,10 @@ const VideoStrip = styled.div<{
   scroll-behavior: smooth;
   cursor: grab;
   box-shadow: none;
+  pointer-events: auto !important; /* Quan trọng: Cho phép touch/click vào danh sách cam để cuộn */
+  -webkit-overflow-scrolling: touch; /* Cuộn mượt trên iOS */
   /* Ensure VideoStrip scales properly with zoom */
   box-sizing: border-box;
-  pointer-events: none; /* Xuyên qua phần bù rỗng full-width */
 
   & > * {
     pointer-events: auto; /* Trả lại tương tác cho video box */
@@ -616,13 +617,15 @@ const VideoStripWrapper = styled.div<{
     `
       top: 14px !important;
       bottom: 80px !important;
-      left: 6px !important;
+      left: max(6px, env(safe-area-inset-left)) !important;
       right: auto !important;
-      width: clamp(70px, 12vw, 95px) !important; /* Thu nhỏ box cam lại một xíu */
-      max-width: 95px !important;
+      width: clamp(55px, 9vw, 75px) !important; /* Thu nhỏ box cam lại để không đè nhiều lên màn hình share */
+      max-width: 75px !important;
       flex-direction: column !important;
       transform: ${
-        $isStripCollapsed ? "translateX(calc(-100% - 10px))" : "translateX(0)"
+        $isStripCollapsed
+          ? "translateX(calc(-100% - max(10px, env(safe-area-inset-left))))"
+          : "translateX(0)"
       };
       height: calc(100vh - 100px); /* Cho phép chiều cao dài ra để chứa nhiều cam */
   `}
@@ -738,32 +741,51 @@ const ScrollArrow = styled.button<{
 
 const StripToggleButton = styled.button<{ $isStripCollapsed?: boolean }>`
   position: absolute;
-  top: 50%;
-  right: -24px;
-  transform: translateY(-50%);
-  width: 24px;
-  height: 48px;
-  background-color: rgba(0, 0, 0, 0.4);
-  color: white;
-  border: none;
-  border-radius: 0 8px 8px 0;
+  top: 48px; /* Căn xuống một chút từ viền trên để né Dynamic Island ở giữa và không bị thấp */
+  width: 32px;
+  height: 32px;
+  background-color: rgba(15, 23, 42, 0.65); /* Dark slate semi-transparent */
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 20;
   pointer-events: auto;
-  backdrop-filter: blur(4px);
-  transition:
-    background-color 0.2s,
-    right 0.3s;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Logic vị trí và hình dáng thông minh */
+  ${({ $isStripCollapsed }) =>
+    $isStripCollapsed
+      ? `
+        /* KHI ĐÓNG: Nhô hẳn ra ngoài mép trái màn hình và bù trừ phần Tai thỏ (Dynamic Island) để luôn bấm được */
+        right: calc(-36px - env(safe-area-inset-left)); 
+        border-radius: 0 16px 16px 0; /* Hình dáng tab nửa tròn ôm mép màn hình */
+      `
+      : `
+        /* KHI MỞ: Nằm ngay mép phải, nhô ra một nửa để không che mất camera */
+        right: -16px; 
+        border-radius: 50%; /* Nút hình tròn hoàn hảo */
+      `}
 
   &:hover {
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(15, 23, 42, 0.9);
+    transform: scale(1.1);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  &:active {
+    transform: scale(0.95);
   }
 
   i {
     font-size: 14px;
+    margin-left: ${({ $isStripCollapsed }) =>
+      $isStripCollapsed ? "2px" : "-2px"};
   }
 `;
 

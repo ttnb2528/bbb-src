@@ -799,7 +799,8 @@ const CustomLayout = (props) => {
       if (isCameraTop) {
         // Detect landscape to place video strip on the left instead of top
         const isLandscape = windowWidth() > windowHeight();
-        const isMobileLandscape = isMobile && isLandscape;
+        // Use windowWidth() < 1200 to match deviceInfo.isMobile logic in VideoList
+        const isMobileLandscape = windowWidth() < 1200 && isLandscape;
 
         // Chiều cao/rộng dự phòng cho strip cam nhỏ (khớp với CSS)
         const videoStripReserve = isMobileLandscape ? 100 : 120;

@@ -652,7 +652,8 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   // Handler cho wheel scroll trên strip
   handleStripWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     const strip = e.currentTarget;
-    e.preventDefault();
+    // Bỏ preventDefault() vì onWheel là passive event trên React 17+, gây lỗi console.
+    // Trình duyệt vẫn sẽ scroll bình thường.
     if (this.state.isLandscape) {
       strip.scrollTop += e.deltaY;
     } else {
@@ -681,6 +682,9 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     ) {
       return;
     }
+
+    // Quan trọng: Vô hiệu hóa custom drag trên màn hình cảm ứng để trình duyệt tự xử lý vuộn mượt (native scroll)
+    if (typeof window !== "undefined" && "ontouchstart" in window) return;
 
     // Bắt đầu drag
     this.isDragging = true;
@@ -820,7 +824,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   renderVideoList() {
     const { streams, focusedId, hasSharedContent } = this.props;
     const isOneToOne = isOneToOneMode();
-    const effectiveHasSharedContent = !isOneToOne && hasSharedContent;
+    const effectiveHasSharedContent = hasSharedContent;
     const stageStream = VideoList.getStageStream(streams, focusedId);
     return (
       <Styled.CustomLayoutContainer
@@ -846,7 +850,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     const { streams, hasSharedContent, hasSidebarOpen, focusedId } = this.props;
     const { canScrollLeft, canScrollRight } = this.state;
     const isOneToOne = isOneToOneMode();
-    const effectiveHasSharedContent = !isOneToOne && hasSharedContent;
+    const effectiveHasSharedContent = hasSharedContent;
     const stageStream = VideoList.getStageStream(streams, focusedId);
     const stageStreamKey = stageStream ? getItemKey(stageStream) : null;
     const sortedStripStreams = [...streams]
