@@ -1,12 +1,12 @@
-import styled from 'styled-components';
-import { colorWhite } from '/imports/ui/stylesheets/styled-components/palette';
+import styled from "styled-components";
+import { colorWhite } from "/imports/ui/stylesheets/styled-components/palette";
 import {
   mediumUp,
   smallOnly,
   hasPhoneWidth,
-} from '/imports/ui/stylesheets/styled-components/breakpoints';
-import { mdPaddingX } from '/imports/ui/stylesheets/styled-components/general';
-import Button from '/imports/ui/components/common/button/component';
+} from "/imports/ui/stylesheets/styled-components/breakpoints";
+import { mdPaddingX } from "/imports/ui/stylesheets/styled-components/general";
+import Button from "/imports/ui/components/common/button/component";
 
 // @ts-expect-error -> Untyped component.
 const NextPageButton = styled(Button)`
@@ -29,8 +29,9 @@ const NextPageButton = styled(Button)`
     margin-left: 2px;
   }
 
-  ${({ position }) => (position === 'contentRight' || position === 'contentLeft')
-    && `
+  ${({ position }) =>
+    (position === "contentRight" || position === "contentLeft") &&
+    `
     order: 3;
     margin-right: 2px;
   `}
@@ -57,8 +58,9 @@ const PreviousPageButton = styled(Button)`
     margin-right: 2px;
   }
 
-  ${({ position }) => (position === 'contentRight' || position === 'contentLeft')
-    && `
+  ${({ position }) =>
+    (position === "contentRight" || position === "contentLeft") &&
+    `
     order: 2;
     margin-left: 2px;
   `}
@@ -73,15 +75,17 @@ const VideoListItem = styled.div<{
   width: 100%;
   max-height: 100%;
 
-  ${({ $focused }) => $focused
-    && `
+  ${({ $focused }) =>
+    $focused &&
+    `
     grid-column: 1 / span 2;
     grid-row: 1 / span 2;
   `}
 
   /* PRESENTER CAM - TO HON VÀ N?I B?T HON */
-  ${({ $isPresenter }) => $isPresenter
-    && `
+  ${({ $isPresenter }) =>
+    $isPresenter &&
+    `
     grid-column: 1 / span 2;
     grid-row: 1 / span 2;
     order: -1;
@@ -116,16 +120,16 @@ const VideoCanvas = styled.div<{
     height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-  ${({ $position }) => ($position === 'contentRight' || $position === 'contentLeft')
-    && `
+  ${({ $position }) =>
+    ($position === "contentRight" || $position === "contentLeft") &&
+    `
     flex-wrap: wrap;
     align-content: center;
     order: 0;
   `}
 
   body.bbb-one-to-one-call & {
-    background:
-      radial-gradient(
+    background: radial-gradient(
         circle at 15% 10%,
         rgba(114, 173, 250, 0.11),
         transparent 42%
@@ -161,6 +165,7 @@ const Break = styled.div`
 // Layout m?i: Container chính - MainStage chiếm full height, VideoStrip overlay
 const CustomLayoutContainer = styled.div<{
   $hasSharedContent?: boolean;
+  $isLandscape?: boolean;
 }>`
   position: relative; /* Enable absolute positioning for VideoStrip */
   display: flex;
@@ -169,7 +174,12 @@ const CustomLayoutContainer = styled.div<{
   height: 100%;
   /* Chừa không gian phía trên cho dải cam nhỏ + tạo khoảng cách với cam lớn */
   /* Khi share content thì không cần padding vì MainStage đã bị ẩn */
-  padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '0' : 'clamp(120px, 10vh, 150px) 15px 25px 15px')};
+  padding: ${({ $hasSharedContent, $isLandscape }) =>
+    $hasSharedContent
+      ? "0"
+      : $isLandscape
+        ? "15px 15px 15px clamp(110px, 15vw, 130px)"
+        : "clamp(120px, 10vh, 150px) 15px 25px 15px"};
   overflow: hidden; /* Prevent overflow */
   min-width: 0; /* Allow flex shrinking */
   min-height: 0; /* Allow flex shrinking */
@@ -179,8 +189,7 @@ const CustomLayoutContainer = styled.div<{
 
   body.bbb-one-to-one-call & {
     padding: 10px 10px clamp(12px, 2.2vh, 22px) 10px;
-    background:
-      radial-gradient(
+    background: radial-gradient(
         circle at 15% 10%,
         rgba(114, 173, 250, 0.11),
         transparent 42%
@@ -200,17 +209,20 @@ const CustomLayoutContainer = styled.div<{
 const VideoStrip = styled.div<{
   $hasSharedContent?: boolean;
   $hasSidebarOpen?: boolean;
+  $isLandscape?: boolean;
 }>`
   position: relative !important; /* Relative để nằm trong flex container */
   flex: 1; /* Chiếm phần còn lại của wrapper */
   min-width: 0; /* Cho phép shrink */
   /* QUAN TRỌNG: Trên mobile, khi sidebar mở, giảm z-index để sidebar hiển thị trên video strip */
-  z-index: ${({ $hasSidebarOpen }) => ($hasSidebarOpen
-    ? 5
-    : 10)} !important; /* Above MainStage, below sidebar when open */
+  z-index: ${({ $hasSidebarOpen }) =>
+    $hasSidebarOpen
+      ? 5
+      : 10} !important; /* Above MainStage, below sidebar when open */
   display: flex !important;
   gap: clamp(6px, 0.65vw, 10px); /* Tăng gap giữa các cam nhỏ */
-  padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '6px 10px 10px 10px' : '8px 10px 10px 10px')};
+  padding: ${({ $hasSharedContent }) =>
+    $hasSharedContent ? "6px 10px 10px 10px" : "8px 10px 10px 10px"};
   backdrop-filter: blur(8px); /* Blur effect like Google Meet */
   border-radius: 8px;
   overflow-x: auto;
@@ -247,42 +259,58 @@ const VideoStrip = styled.div<{
 
   /* Mobile responsive - đẩy lên cao hơn bằng cách giảm padding-top */
   @media ${smallOnly} {
-    /* Use clamp for better responsive behavior - improved for zoom */
-    height: clamp(
-      80px,
-      12vh,
-      120px
-    ) !important; /* Responsive: min 80px, preferred 12vh, max 120px */
-    min-height: 80px !important; /* Reduced for better zoom handling */
-    max-height: 120px !important;
-    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 8px 10px 8px' : '6px 8px 10px 8px')};
+    ${({ $isLandscape }) =>
+      $isLandscape
+        ? `
+      flex-direction: column !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      height: 100% !important;
+      max-height: none !important;
+      width: 100% !important;
+    `
+        : `
+      /* Use clamp for better responsive behavior - improved for zoom */
+      height: clamp(80px, 12vh, 120px) !important;
+      min-height: 80px !important;
+      max-height: 120px !important;
+      width: 100%;
+      max-width: 100%;
+    `}
+    padding: ${({ $hasSharedContent }) =>
+      $hasSharedContent ? "4px 8px 10px 8px" : "6px 8px 10px 8px"};
     gap: clamp(8px, 1.5vw, 12px); /* Tăng gap để các cam không dính nhau */
     /* Bỏ box-shadow trên mobile để gọn hơn */
     box-shadow: none;
-    /* Width sẽ được tính từ flex container */
-    width: 100%;
-    max-width: 100%;
     position: relative !important;
     /* QUAN TRỌNG: Trên mobile, khi sidebar mở, giảm z-index để sidebar hiển thị trên video strip */
     z-index: ${({ $hasSidebarOpen }) => ($hasSidebarOpen ? 5 : 10)} !important;
   }
 
   @media ${hasPhoneWidth} {
-    /* Use clamp for better responsive behavior on phones - improved for zoom */
-    height: clamp(
-      60px,
-      12vh,
-      100px
-    ) !important; /* Responsive: min 60px, preferred 10vh, max 100px */
-    min-height: 60px !important; /* Reduced for better zoom handling */
-    max-height: 100px !important;
-    padding: ${({ $hasSharedContent }) => ($hasSharedContent ? '4px 6px 8px 6px' : '6px 6px 8px 6px')};
+    ${({ $isLandscape }) =>
+      $isLandscape
+        ? `
+      flex-direction: column !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      height: 100% !important;
+      max-height: none !important;
+      width: 100% !important;
+    `
+        : `
+      /* Use clamp for better responsive behavior on phones - improved for zoom */
+      height: clamp(60px, 12vh, 100px) !important;
+      min-height: 60px !important;
+      max-height: 100px !important;
+      width: 100%;
+      max-width: 100%;
+    `}
+    padding: ${({ $hasSharedContent }) =>
+      $hasSharedContent ? "4px 6px 8px 6px" : "6px 6px 8px 6px"};
     gap: clamp(6px, 1.2vw, 10px); /* Tăng gap để các cam không dính nhau */
     /* Bỏ box-shadow trên mobile để gọn hơn */
     box-shadow: none;
-    /* Width sẽ được tính từ flex container */
-    width: 100%;
-    max-width: 100%;
     position: relative !important;
     /* QUAN TRỌNG: Trên mobile, khi sidebar mở, giảm z-index để sidebar hiển thị trên video strip */
     z-index: ${({ $hasSidebarOpen }) => ($hasSidebarOpen ? 5 : 10)} !important;
@@ -330,8 +358,9 @@ const VideoStripItem = styled.div<{
   /* Ensure proper scaling with zoom */
   box-sizing: border-box;
 
-  ${({ $isPresenter }) => $isPresenter
-    && `
+  ${({ $isPresenter }) =>
+    $isPresenter &&
+    `
     /* Border nổi bật cho presenter/host */
     border: 3px solid #6366F1 !important; /* Indigo */
     width: clamp(110px, min(12vw, 14%), 160px); /* Giảm kích thước presenter để gọn hơn */
@@ -355,8 +384,16 @@ const VideoStripItem = styled.div<{
     min-width: 75px;
     max-width: 110px;
 
-    ${({ $isPresenter }) => $isPresenter
-      && `
+    @media (orientation: landscape) {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      height: auto !important;
+    }
+
+    ${({ $isPresenter }) =>
+      $isPresenter &&
+      `
       width: clamp(90px, min(18vw, 20%), 130px); /* Giảm kích thước presenter */
       min-width: 90px;
       max-width: 130px;
@@ -377,8 +414,16 @@ const VideoStripItem = styled.div<{
     min-width: 80px;
     max-width: 100px;
 
-    ${({ $isPresenter }) => $isPresenter
-      && `
+    @media (orientation: landscape) {
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      height: auto !important;
+    }
+
+    ${({ $isPresenter }) =>
+      $isPresenter &&
+      `
       width: clamp(90px, min(24vw, 28%), 120px); /* Giảm kích thước presenter */
       min-width: 90px;
       max-width: 120px;
@@ -437,7 +482,11 @@ const MainStage = styled.div`
     border-radius: 16px;
     border: none;
     box-shadow: none;
-    background: linear-gradient(180deg, rgba(5, 17, 35, 0.96) 0%, rgba(3, 14, 29, 0.98) 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(5, 17, 35, 0.96) 0%,
+      rgba(3, 14, 29, 0.98) 100%
+    );
   }
 `;
 
@@ -494,7 +543,11 @@ const PresenterStageVideo = styled.div<{
 
   body.bbb-one-to-one-call & {
     border-radius: 20px;
-    background: linear-gradient(180deg, rgba(6, 20, 40, 0.95) 0%, rgba(4, 14, 30, 0.98) 100%);
+    background: linear-gradient(
+      180deg,
+      rgba(6, 20, 40, 0.95) 0%,
+      rgba(4, 14, 30, 0.98) 100%
+    );
     aspect-ratio: auto;
     width: 100%;
     height: 100%;
@@ -518,7 +571,7 @@ const StagePlaceholder = styled.div`
 `;
 
 // Wrapper cho VideoStrip và scroll arrows
-const VideoStripWrapper = styled.div`
+const VideoStripWrapper = styled.div<{ $isLandscape?: boolean }>`
   position: fixed !important;
   top: 12px !important;
   left: 10px !important;
@@ -533,19 +586,45 @@ const VideoStripWrapper = styled.div`
 
   /* Mobile responsive */
   @media ${smallOnly} {
-    top: 16px !important;
-    left: 8px !important;
-    right: 8px !important;
-    width: calc(100vw - 16px) !important;
-    max-width: calc(100vw - 16px) !important;
+    ${({ $isLandscape }) =>
+      $isLandscape
+        ? `
+      top: 16px !important;
+      bottom: 80px !important;
+      left: 8px !important;
+      right: auto !important;
+      width: clamp(80px, 12vw, 110px) !important;
+      max-width: 110px !important;
+      flex-direction: column !important;
+    `
+        : `
+      top: 16px !important;
+      left: 8px !important;
+      right: 8px !important;
+      width: calc(100vw - 16px) !important;
+      max-width: calc(100vw - 16px) !important;
+    `}
   }
 
   @media ${hasPhoneWidth} {
-    top: 14px !important;
-    left: 6px !important;
-    right: 6px !important;
-    width: calc(100vw - 12px) !important;
-    max-width: calc(100vw - 12px) !important;
+    ${({ $isLandscape }) =>
+      $isLandscape
+        ? `
+      top: 14px !important;
+      bottom: 80px !important;
+      left: 6px !important;
+      right: auto !important;
+      width: clamp(70px, 12vw, 90px) !important;
+      max-width: 90px !important;
+      flex-direction: column !important;
+    `
+        : `
+      top: 14px !important;
+      left: 6px !important;
+      right: 6px !important;
+      width: calc(100vw - 12px) !important;
+      max-width: calc(100vw - 12px) !important;
+    `}
   }
 
   body.bbb-one-to-one-call & {
@@ -564,7 +643,7 @@ const VideoStripWrapper = styled.div`
 
 // Mũi tên scroll (trái/phải) - nằm 2 bên của dải camera
 const ScrollArrow = styled.button<{
-  $position: 'left' | 'right';
+  $position: "left" | "right";
 }>`
   position: relative;
   z-index: 12; /* Above VideoStrip */

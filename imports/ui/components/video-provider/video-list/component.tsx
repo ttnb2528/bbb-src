@@ -1,35 +1,35 @@
-import React, { Component } from 'react';
-import { createPortal } from 'react-dom';
-import { IntlShape, defineMessages, injectIntl } from 'react-intl';
-import { UpdatedDataForUserCameraDomElement } from 'bigbluebutton-html-plugin-sdk/dist/cjs/dom-element-manipulation/user-camera/types';
-import { throttle } from '/imports/utils/throttle';
-import { range } from '/imports/utils/array-utils';
-import Styled from './styles';
-import VideoListItemContainer from './video-list-item/container';
-import AutoplayOverlay from '/imports/ui/components/media/autoplay-overlay/component';
-import logger from '/imports/startup/client/logger';
-import playAndRetry from '/imports/utils/mediaElementPlayRetry';
-import VideoService from '/imports/ui/components/video-provider/service';
-import Auth from '/imports/ui/services/auth';
-import { ACTIONS } from '/imports/ui/components/layout/enums';
-import { Output } from '/imports/ui/components/layout/layoutTypes';
-import { VideoItem } from '/imports/ui/components/video-provider/types';
-import { VIDEO_TYPES } from '/imports/ui/components/video-provider/enums';
-import { UserCameraHelperAreas } from '../../plugins-engine/extensible-areas/components/user-camera-helper/types';
-import Icon from '/imports/ui/components/common/icon/component';
+import React, { Component } from "react";
+import { createPortal } from "react-dom";
+import { IntlShape, defineMessages, injectIntl } from "react-intl";
+import { UpdatedDataForUserCameraDomElement } from "bigbluebutton-html-plugin-sdk/dist/cjs/dom-element-manipulation/user-camera/types";
+import { throttle } from "/imports/utils/throttle";
+import { range } from "/imports/utils/array-utils";
+import Styled from "./styles";
+import VideoListItemContainer from "./video-list-item/container";
+import AutoplayOverlay from "/imports/ui/components/media/autoplay-overlay/component";
+import logger from "/imports/startup/client/logger";
+import playAndRetry from "/imports/utils/mediaElementPlayRetry";
+import VideoService from "/imports/ui/components/video-provider/service";
+import Auth from "/imports/ui/services/auth";
+import { ACTIONS } from "/imports/ui/components/layout/enums";
+import { Output } from "/imports/ui/components/layout/layoutTypes";
+import { VideoItem } from "/imports/ui/components/video-provider/types";
+import { VIDEO_TYPES } from "/imports/ui/components/video-provider/enums";
+import { UserCameraHelperAreas } from "../../plugins-engine/extensible-areas/components/user-camera-helper/types";
+import Icon from "/imports/ui/components/common/icon/component";
 
 const intlMessages = defineMessages({
   autoplayBlockedDesc: {
-    id: 'app.videoDock.autoplayBlockedDesc',
+    id: "app.videoDock.autoplayBlockedDesc",
   },
   autoplayAllowLabel: {
-    id: 'app.videoDock.autoplayAllowLabel',
+    id: "app.videoDock.autoplayAllowLabel",
   },
   nextPageLabel: {
-    id: 'app.video.pagination.nextPage',
+    id: "app.video.pagination.nextPage",
   },
   prevPageLabel: {
-    id: 'app.video.pagination.prevPage',
+    id: "app.video.pagination.prevPage",
   },
 });
 
@@ -71,13 +71,13 @@ const ASPECT_RATIO = 4 / 3;
 // const ACTION_NAME_BACKGROUND = 'blurBackground';
 
 const isOneToOneMode = () => {
-  if (typeof window === 'undefined') return false;
+  if (typeof window === "undefined") return false;
 
-  const fromFlag = (
-    window as Window & { isOneToOneCall?: boolean }
-  ).isOneToOneCall === true;
-  const fromBody = typeof document !== 'undefined'
-    && document.body.classList.contains('bbb-one-to-one-call');
+  const fromFlag =
+    (window as Window & { isOneToOneCall?: boolean }).isOneToOneCall === true;
+  const fromBody =
+    typeof document !== "undefined" &&
+    document.body.classList.contains("bbb-one-to-one-call");
 
   return fromFlag || fromBody;
 };
@@ -89,14 +89,13 @@ const isPresenterItem = (item: VideoItem) => {
 };
 
 const isModeratorItem = (item: VideoItem) => {
-  if (item.type === VIDEO_TYPES.STREAM) return item.user?.role === 'MODERATOR';
-  if (item.type === VIDEO_TYPES.GRID) return item.role === 'MODERATOR';
+  if (item.type === VIDEO_TYPES.STREAM) return item.user?.role === "MODERATOR";
+  if (item.type === VIDEO_TYPES.GRID) return item.role === "MODERATOR";
   return false;
 };
 
-const getItemKey = (item: VideoItem) => (
-  item.type !== VIDEO_TYPES.GRID ? item.stream : item.userId
-);
+const getItemKey = (item: VideoItem) =>
+  item.type !== VIDEO_TYPES.GRID ? item.stream : item.userId;
 
 interface VideoListProps {
   pluginUserCameraHelperPerPosition: UserCameraHelperAreas;
@@ -104,8 +103,8 @@ interface VideoListProps {
   layoutContextDispatch: (...args: unknown[]) => void;
   numberOfPages: number;
   currentVideoPageIndex: number;
-  cameraDock: Output['cameraDock'];
-  mediaArea: Output['mediaArea'];
+  cameraDock: Output["cameraDock"];
+  mediaArea: Output["mediaArea"];
   focusedId: string;
   handleVideoFocus: (id: string) => void;
   isGridEnabled: boolean;
@@ -132,6 +131,7 @@ interface VideoListState {
   autoplayBlocked: boolean;
   canScrollLeft: boolean;
   canScrollRight: boolean;
+  isLandscape: boolean;
 }
 
 class VideoList extends Component<VideoListProps, VideoListState> {
@@ -160,6 +160,10 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       autoplayBlocked: false,
       canScrollLeft: false,
       canScrollRight: false,
+      isLandscape:
+        typeof window !== "undefined"
+          ? window.innerWidth > window.innerHeight
+          : false,
     };
 
     this.ticking = false;
@@ -190,11 +194,11 @@ class VideoList extends Component<VideoListProps, VideoListState> {
 
   componentDidMount() {
     this.handleCanvasResize();
-    window.addEventListener('resize', this.handleCanvasResize, false);
-    window.addEventListener('videoPlayFailed', this.handlePlayElementFailed);
+    window.addEventListener("resize", this.handleCanvasResize, false);
+    window.addEventListener("videoPlayFailed", this.handlePlayElementFailed);
     // Thêm global mouse event listeners cho drag scroll (dùng capture phase để bắt sớm)
-    document.addEventListener('mousemove', this.handleGlobalMouseMove, true);
-    document.addEventListener('mouseup', this.handleGlobalMouseUp, true);
+    document.addEventListener("mousemove", this.handleGlobalMouseMove);
+    document.addEventListener("mouseup", this.handleGlobalMouseUp);
     // Update scroll buttons sau khi mount
     setTimeout(() => {
       this.updateScrollButtons();
@@ -202,9 +206,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   }
 
   componentDidUpdate(prevProps: VideoListProps) {
-    const {
-      layoutType, cameraDock, streams, focusedId,
-    } = this.props;
+    const { layoutType, cameraDock, streams, focusedId } = this.props;
     const { width: cameraDockWidth, height: cameraDockHeight } = cameraDock;
     const {
       layoutType: prevLayoutType,
@@ -212,14 +214,15 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       streams: prevStreams,
       focusedId: prevFocusedId,
     } = prevProps;
-    const { width: prevCameraDockWidth, height: prevCameraDockHeight } = prevCameraDock;
+    const { width: prevCameraDockWidth, height: prevCameraDockHeight } =
+      prevCameraDock;
 
     if (
-      layoutType !== prevLayoutType
-      || focusedId !== prevFocusedId
-      || cameraDockWidth !== prevCameraDockWidth
-      || cameraDockHeight !== prevCameraDockHeight
-      || streams.length !== prevStreams.length
+      layoutType !== prevLayoutType ||
+      focusedId !== prevFocusedId ||
+      cameraDockWidth !== prevCameraDockWidth ||
+      cameraDockHeight !== prevCameraDockHeight ||
+      streams.length !== prevStreams.length
     ) {
       this.handleCanvasResize();
       // Update scroll buttons khi streams thay đổi
@@ -230,11 +233,11 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.handleCanvasResize, false);
-    window.removeEventListener('videoPlayFailed', this.handlePlayElementFailed);
+    window.removeEventListener("resize", this.handleCanvasResize, false);
+    window.removeEventListener("videoPlayFailed", this.handlePlayElementFailed);
     // Xóa global mouse event listeners
-    document.removeEventListener('mousemove', this.handleGlobalMouseMove, true);
-    document.removeEventListener('mouseup', this.handleGlobalMouseUp, true);
+    document.removeEventListener("mousemove", this.handleGlobalMouseMove);
+    document.removeEventListener("mouseup", this.handleGlobalMouseUp);
   }
 
   handleAllowAutoplay() {
@@ -242,13 +245,13 @@ class VideoList extends Component<VideoListProps, VideoListState> {
 
     logger.info(
       {
-        logCode: 'video_provider_autoplay_allowed',
+        logCode: "video_provider_autoplay_allowed",
       },
-      'Video media autoplay allowed by the user',
+      "Video media autoplay allowed by the user",
     );
 
     this.autoplayWasHandled = true;
-    window.removeEventListener('videoPlayFailed', this.handlePlayElementFailed);
+    window.removeEventListener("videoPlayFailed", this.handlePlayElementFailed);
     while (this.failedMediaElements.length) {
       const mediaElement = this.failedMediaElements.shift();
       if (mediaElement) {
@@ -256,16 +259,16 @@ class VideoList extends Component<VideoListProps, VideoListState> {
         if (!played) {
           logger.error(
             {
-              logCode: 'video_provider_autoplay_handling_failed',
+              logCode: "video_provider_autoplay_handling_failed",
             },
-            'Video autoplay handling failed to play media',
+            "Video autoplay handling failed to play media",
           );
         } else {
           logger.info(
             {
-              logCode: 'video_provider_media_play_success',
+              logCode: "video_provider_media_play_success",
             },
-            'Video media played successfully',
+            "Video media played successfully",
           );
         }
       }
@@ -284,15 +287,23 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     if (!autoplayBlocked && !this.autoplayWasHandled) {
       logger.info(
         {
-          logCode: 'video_provider_autoplay_prompt',
+          logCode: "video_provider_autoplay_prompt",
         },
-        'Prompting user for action to play video media',
+        "Prompting user for action to play video media",
       );
       this.setState({ autoplayBlocked: true });
     }
   }
 
   handleCanvasResize() {
+    const isLandscape =
+      typeof window !== "undefined"
+        ? window.innerWidth > window.innerHeight
+        : false;
+    if (this.state.isLandscape !== isLandscape) {
+      this.setState({ isLandscape });
+    }
+
     if (!this.ticking) {
       window.requestAnimationFrame(() => {
         this.ticking = false;
@@ -363,16 +374,17 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     const canvasHeight = cameraDock?.height;
 
     const gridGutter = parseInt(
-      window.getComputedStyle(this.grid).getPropertyValue('grid-row-gap'),
+      window.getComputedStyle(this.grid).getPropertyValue("grid-row-gap"),
       10,
     );
 
     // Ki?m tra xem có presenter không
     const hasPresenter = streams.some((s) => isPresenterItem(s));
 
-    const hasFocusedItem = streams.filter(
-      (s) => s.type !== VIDEO_TYPES.GRID && s.stream === focusedId,
-    ).length && numItems > 2;
+    const hasFocusedItem =
+      streams.filter(
+        (s) => s.type !== VIDEO_TYPES.GRID && s.stream === focusedId,
+      ).length && numItems > 2;
 
     // N?u có presenter, tính grid riêng: presenter chi?m 2x2, các cam còn l?i x?p bên c?nh
     let optimalGrid;
@@ -426,7 +438,8 @@ class VideoList extends Component<VideoListProps, VideoListState> {
           const focusedConstraint = hasFocusedItem
             ? testGrid.rows > 1 && testGrid.columns > 1
             : true;
-          const betterThanCurrent = testGrid.filledArea > currentGrid.filledArea;
+          const betterThanCurrent =
+            testGrid.filledArea > currentGrid.filledArea;
           return focusedConstraint && betterThanCurrent
             ? testGrid
             : currentGrid;
@@ -448,9 +461,9 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     const { width: cameraDockWidth } = cameraDock;
 
     if (
-      !VideoService.isPaginationEnabled()
-      || numberOfPages <= 1
-      || cameraDockWidth === 0
+      !VideoService.isPaginationEnabled() ||
+      numberOfPages <= 1 ||
+      cameraDockWidth === 0
     ) {
       return false;
     }
@@ -459,9 +472,8 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   }
 
   renderNextPageButton() {
-    const {
-      intl, numberOfPages, currentVideoPageIndex, cameraDock,
-    } = this.props;
+    const { intl, numberOfPages, currentVideoPageIndex, cameraDock } =
+      this.props;
     const { position } = cameraDock;
 
     if (!this.displayPageButtons()) return null;
@@ -487,9 +499,8 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   }
 
   renderPreviousPageButton() {
-    const {
-      intl, currentVideoPageIndex, numberOfPages, cameraDock,
-    } = this.props;
+    const { intl, currentVideoPageIndex, numberOfPages, cameraDock } =
+      this.props;
     const { position } = cameraDock;
 
     if (!this.displayPageButtons()) return null;
@@ -582,7 +593,11 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   handleStripWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     const strip = e.currentTarget;
     e.preventDefault();
-    strip.scrollLeft += e.deltaY;
+    if (this.state.isLandscape) {
+      strip.scrollTop += e.deltaY;
+    } else {
+      strip.scrollLeft += e.deltaY;
+    }
     // Update scroll buttons sau khi scroll
     setTimeout(() => {
       this.updateScrollButtons();
@@ -597,25 +612,27 @@ class VideoList extends Component<VideoListProps, VideoListState> {
 
     // Không drag nếu click vào video, button, hoặc các element tương tác
     if (
-      target.tagName === 'VIDEO'
-      || target.tagName === 'BUTTON'
-      || target.closest('video')
-      || target.closest('button')
-      || target.closest('[data-test="webcamItem"]')
-      || target.closest('[data-test="webcamItemTalkingUser"]')
+      target.tagName === "VIDEO" ||
+      target.tagName === "BUTTON" ||
+      target.closest("video") ||
+      target.closest("button") ||
+      target.closest('[data-test="webcamItem"]') ||
+      target.closest('[data-test="webcamItemTalkingUser"]')
     ) {
       return;
     }
 
     // Bắt đầu drag
     this.isDragging = true;
-    this.dragStartX = e.pageX;
-    this.dragStartScrollLeft = this.stripRef.current.scrollLeft;
+    this.dragStartX = this.state.isLandscape ? e.pageY : e.pageX;
+    this.dragStartScrollLeft = this.state.isLandscape
+      ? this.stripRef.current.scrollTop
+      : this.stripRef.current.scrollLeft;
 
     // Thay đổi cursor và prevent text selection
     if (this.stripRef.current) {
-      this.stripRef.current.style.cursor = 'grabbing';
-      this.stripRef.current.style.userSelect = 'none';
+      this.stripRef.current.style.cursor = "grabbing";
+      this.stripRef.current.style.userSelect = "none";
     }
 
     e.preventDefault();
@@ -627,9 +644,14 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     if (!this.isDragging || !this.stripRef.current) return;
 
     e.preventDefault();
-    const x = e.pageX;
+    const x = this.state.isLandscape ? e.pageY : e.pageX;
     const walk = (x - this.dragStartX) * 1.5; // Tốc độ scroll (có thể điều chỉnh)
-    this.stripRef.current.scrollLeft = this.dragStartScrollLeft - walk;
+
+    if (this.state.isLandscape) {
+      this.stripRef.current.scrollTop = this.dragStartScrollLeft - walk;
+    } else {
+      this.stripRef.current.scrollLeft = this.dragStartScrollLeft - walk;
+    }
 
     // Update scroll buttons
     this.updateScrollButtons();
@@ -643,8 +665,8 @@ class VideoList extends Component<VideoListProps, VideoListState> {
 
     // Khôi phục cursor
     if (this.stripRef.current) {
-      this.stripRef.current.style.cursor = 'grab';
-      this.stripRef.current.style.userSelect = '';
+      this.stripRef.current.style.cursor = "grab";
+      this.stripRef.current.style.userSelect = "";
     }
   }
 
@@ -654,9 +676,14 @@ class VideoList extends Component<VideoListProps, VideoListState> {
 
     e.preventDefault();
     e.stopPropagation();
-    const x = e.pageX;
+    const x = this.state.isLandscape ? e.pageY : e.pageX;
     const walk = (x - this.dragStartX) * 1.5; // Tốc độ scroll (có thể điều chỉnh)
-    this.stripRef.current.scrollLeft = this.dragStartScrollLeft - walk;
+
+    if (this.state.isLandscape) {
+      this.stripRef.current.scrollTop = this.dragStartScrollLeft - walk;
+    } else {
+      this.stripRef.current.scrollLeft = this.dragStartScrollLeft - walk;
+    }
 
     // Update scroll buttons
     this.updateScrollButtons();
@@ -674,8 +701,19 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     if (!this.stripRef.current) return;
 
     const strip = this.stripRef.current;
-    const canScrollLeft = strip.scrollLeft > 0;
-    const canScrollRight = strip.scrollLeft < strip.scrollWidth - strip.clientWidth - 1;
+
+    let canScrollLeft = false;
+    let canScrollRight = false;
+
+    if (this.state.isLandscape) {
+      canScrollLeft = strip.scrollTop > 0;
+      canScrollRight =
+        strip.scrollTop < strip.scrollHeight - strip.clientHeight - 1;
+    } else {
+      canScrollLeft = strip.scrollLeft > 0;
+      canScrollRight =
+        strip.scrollLeft < strip.scrollWidth - strip.clientWidth - 1;
+    }
 
     this.setState({
       canScrollLeft,
@@ -690,7 +728,11 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     const strip = this.stripRef.current;
     // Scroll qua 1 cam (khoảng 140px + gap) - scroll sang trái
     const scrollAmount = 150;
-    strip.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    if (this.state.isLandscape) {
+      strip.scrollBy({ top: -scrollAmount, behavior: "smooth" });
+    } else {
+      strip.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+    }
 
     setTimeout(() => {
       this.updateScrollButtons();
@@ -704,7 +746,11 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     const strip = this.stripRef.current;
     // Scroll qua 1 cam (khoảng 140px + gap) - scroll sang phải
     const scrollAmount = 150;
-    strip.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    if (this.state.isLandscape) {
+      strip.scrollBy({ top: scrollAmount, behavior: "smooth" });
+    } else {
+      strip.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    }
 
     setTimeout(() => {
       this.updateScrollButtons();
@@ -717,7 +763,10 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     const effectiveHasSharedContent = !isOneToOne && hasSharedContent;
     const stageStream = VideoList.getStageStream(streams, focusedId);
     return (
-      <Styled.CustomLayoutContainer $hasSharedContent={effectiveHasSharedContent}>
+      <Styled.CustomLayoutContainer
+        $hasSharedContent={effectiveHasSharedContent}
+        $isLandscape={this.state.isLandscape}
+      >
         {!effectiveHasSharedContent && (
           <Styled.MainStage>
             {stageStream && this.renderVideoItem(stageStream, false)}
@@ -733,9 +782,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   }
 
   renderVideoStrip() {
-    const {
-      streams, hasSharedContent, hasSidebarOpen, focusedId,
-    } = this.props;
+    const { streams, hasSharedContent, hasSidebarOpen, focusedId } = this.props;
     const { canScrollLeft, canScrollRight } = this.state;
     const isOneToOne = isOneToOneMode();
     const effectiveHasSharedContent = !isOneToOne && hasSharedContent;
@@ -757,7 +804,10 @@ class VideoList extends Component<VideoListProps, VideoListState> {
         return 0;
       });
     return (
-      <Styled.VideoStripWrapper data-test="videoStripWrapper">
+      <Styled.VideoStripWrapper
+        data-test="videoStripWrapper"
+        $isLandscape={this.state.isLandscape}
+      >
         {canScrollLeft && (
           <Styled.ScrollArrow
             $position="left"
@@ -772,6 +822,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
           ref={this.stripRef}
           $hasSharedContent={effectiveHasSharedContent}
           $hasSidebarOpen={hasSidebarOpen}
+          $isLandscape={this.state.isLandscape}
           onWheel={this.handleStripWheel}
           onScroll={this.updateScrollButtons}
           onMouseDown={this.handleStripMouseDown}
@@ -793,21 +844,20 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   }
 
   render() {
-    const {
-      streams, intl, cameraDock, mediaArea, isGridEnabled,
-    } = this.props;
+    const { streams, intl, cameraDock, mediaArea, isGridEnabled } = this.props;
     const { autoplayBlocked } = this.state;
     const { position, width: cameraDockWidth } = cameraDock;
     const mediaWidth = mediaArea?.width || cameraDockWidth || undefined;
 
     // Render VideoStrip bằng React Portal ra ngoài DOM tree (vào body)
     // để không bị ảnh hưởng bởi container width khi sidebar mở
-    const videoStripElement = !streams.length && !isGridEnabled
-      ? null
-      : createPortal(
-        this.renderVideoStrip(),
-        document.body, // Render trực tiếp vào body để không bị ảnh hưởng bởi bất kỳ container nào
-      );
+    const videoStripElement =
+      !streams.length && !isGridEnabled
+        ? null
+        : createPortal(
+            this.renderVideoStrip(),
+            document.body, // Render trực tiếp vào body để không bị ảnh hưởng bởi bất kỳ container nào
+          );
 
     return (
       <>
@@ -820,7 +870,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
             this.canvas = ref;
           }}
           style={{
-            minHeight: 'inherit',
+            minHeight: "inherit",
             // Ràng buộc chiều rộng khung video theo media area mà layout đã tính
             // để khi sidebar mở/zoom, MainStage + dropdown cam luôn co lại theo
             maxWidth: mediaWidth,

@@ -797,19 +797,29 @@ const CustomLayout = (props) => {
         cameraDockInput.position === CAMERADOCK_POSITION.CONTENT_RIGHT;
 
       if (isCameraTop) {
-        // Camera ở trên (VideoStrip): External video nằm dưới VideoStrip
-        // Đồng bộ top với sidebar để external video và sidebar cùng một mức
-        const videoStripReserve = 120; // Chiều cao dự phòng cho strip cam nhỏ (khớp với CSS)
+        // Detect landscape to place video strip on the left instead of top
+        const isLandscape = windowWidth() > windowHeight();
+        const isMobileLandscape = isMobile && isLandscape;
+
+        // Chiều cao/rộng dự phòng cho strip cam nhỏ (khớp với CSS)
+        const videoStripReserve = isMobileLandscape ? 100 : 120;
         const gap = 12; // Gap giữa strip và content (khớp với sidebar)
-        mediaBounds.width = mediaAreaWidth;
-        // External video chiếm height còn lại sau khi trừ phần dành cho strip
-        mediaBounds.height = mediaAreaHeight - videoStripReserve - gap;
-        // External video top đồng bộ với sidebar top: bannerHeight + videoStripReserve + gap
-        // Để external video và sidebar cùng một mức (giống presenter)
-        // QUAN TRỌNG: Đảm bảo external video luôn nằm dưới VideoStrip, không nhảy lên trên
-        mediaBounds.top = bannerHeight + videoStripReserve + gap;
-        mediaBounds.left = !isRTL ? 0 : null;
-        mediaBounds.right = isRTL ? 0 : null;
+
+        if (isMobileLandscape) {
+          mediaBounds.width = mediaAreaWidth - videoStripReserve - gap;
+          mediaBounds.height = mediaAreaHeight;
+          mediaBounds.top = bannerHeight + gap; // Align with top, small gap
+          mediaBounds.left = !isRTL ? videoStripReserve + gap : null;
+          mediaBounds.right = isRTL ? videoStripReserve + gap : null;
+        } else {
+          mediaBounds.width = mediaAreaWidth;
+          // External video chiếm height còn lại sau khi trừ phần dành cho strip
+          mediaBounds.height = mediaAreaHeight - videoStripReserve - gap;
+          // External video top đồng bộ với sidebar top: bannerHeight + videoStripReserve + gap
+          mediaBounds.top = bannerHeight + videoStripReserve + gap;
+          mediaBounds.left = !isRTL ? 0 : null;
+          mediaBounds.right = isRTL ? 0 : null;
+        }
 
         // Z-index thấp hơn VideoStrip để VideoStrip overlay lên trên
         // VideoStrip có z-index cao hơn (được set trong cameraDockBounds z-index: 10)
