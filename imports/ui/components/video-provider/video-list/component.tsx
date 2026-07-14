@@ -17,6 +17,7 @@ import { VideoItem } from "/imports/ui/components/video-provider/types";
 import { VIDEO_TYPES } from "/imports/ui/components/video-provider/enums";
 import { UserCameraHelperAreas } from "../../plugins-engine/extensible-areas/components/user-camera-helper/types";
 import Icon from "/imports/ui/components/common/icon/component";
+import deviceInfo from "/imports/utils/deviceInfo";
 
 const intlMessages = defineMessages({
   autoplayBlockedDesc: {
@@ -132,6 +133,7 @@ interface VideoListState {
   canScrollLeft: boolean;
   canScrollRight: boolean;
   isLandscape: boolean;
+  isStripCollapsed: boolean;
 }
 
 class VideoList extends Component<VideoListProps, VideoListState> {
@@ -162,8 +164,9 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       canScrollRight: false,
       isLandscape:
         typeof window !== "undefined"
-          ? window.innerWidth > window.innerHeight
+          ? window.innerWidth > window.innerHeight && deviceInfo.isMobile
           : false,
+      isStripCollapsed: false,
     };
 
     this.ticking = false;
@@ -190,6 +193,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     this.handleStripMouseUp = this.handleStripMouseUp.bind(this);
     this.handleGlobalMouseMove = this.handleGlobalMouseMove.bind(this);
     this.handleGlobalMouseUp = this.handleGlobalMouseUp.bind(this);
+    this.toggleStripCollapsed = this.toggleStripCollapsed.bind(this);
   }
 
   componentDidMount() {
@@ -229,6 +233,49 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       setTimeout(() => {
         this.updateScrollButtons();
       }, 100);
+
+      // Auto expand/collapse based on streams
+      const stageStream = VideoList.getStageStream(streams, focusedId);
+      const stageStreamKey = stageStream
+        ? stageStream.type === VIDEO_TYPES.STREAM
+          ? stageStream.stream
+          : stageStream.userId
+        : null;
+      const sortedStripStreamsCount = streams.filter((item) => {
+        if (layoutType !== "videoFocus" && stageStreamKey) {
+          const itemKey =
+            item.type === VIDEO_TYPES.STREAM ? item.stream : item.userId;
+          return itemKey !== stageStreamKey;
+        }
+        return true;
+      }).length;
+
+      const prevStageStream = VideoList.getStageStream(
+        prevStreams,
+        prevFocusedId,
+      );
+      const prevStageStreamKey = prevStageStream
+        ? prevStageStream.type === VIDEO_TYPES.STREAM
+          ? prevStageStream.stream
+          : prevStageStream.userId
+        : null;
+      const prevSortedStripStreamsCount = prevStreams.filter((item) => {
+        if (prevLayoutType !== "videoFocus" && prevStageStreamKey) {
+          const itemKey =
+            item.type === VIDEO_TYPES.STREAM ? item.stream : item.userId;
+          return itemKey !== prevStageStreamKey;
+        }
+        return true;
+      }).length;
+
+      if (sortedStripStreamsCount > 0 && prevSortedStripStreamsCount === 0) {
+        this.setState({ isStripCollapsed: false });
+      } else if (
+        sortedStripStreamsCount === 0 &&
+        prevSortedStripStreamsCount > 0
+      ) {
+        this.setState({ isStripCollapsed: true });
+      }
     }
   }
 
@@ -298,10 +345,13 @@ class VideoList extends Component<VideoListProps, VideoListState> {
   handleCanvasResize() {
     const isLandscape =
       typeof window !== "undefined"
-        ? window.innerWidth > window.innerHeight
+        ? window.innerWidth > window.innerHeight && deviceInfo.isMobile
         : false;
     if (this.state.isLandscape !== isLandscape) {
-      this.setState({ isLandscape });
+      this.setState({
+        isLandscape,
+        isStripCollapsed: !isLandscape ? false : this.state.isStripCollapsed,
+      });
     }
 
     if (!this.ticking) {
@@ -574,7 +624,11 @@ class VideoList extends Component<VideoListProps, VideoListState> {
     // N?u trong strip, b?c v?i VideoStripItem
     if (isInStrip) {
       return (
-        <Styled.VideoStripItem key={key} $isPresenter={isPresenter}>
+        <Styled.VideoStripItem
+          key={key}
+          $isPresenter={isPresenter}
+          $isLandscape={this.state.isLandscape}
+        >
           {videoItem}
         </Styled.VideoStripItem>
       );
@@ -587,6 +641,12 @@ class VideoList extends Component<VideoListProps, VideoListState> {
         {videoItem}
       </Styled.PresenterStageVideo>
     );
+  }
+
+  toggleStripCollapsed() {
+    this.setState((prevState) => ({
+      isStripCollapsed: !prevState.isStripCollapsed,
+    }));
   }
 
   // Handler cho wheel scroll trên strip
@@ -766,6 +826,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       <Styled.CustomLayoutContainer
         $hasSharedContent={effectiveHasSharedContent}
         $isLandscape={this.state.isLandscape}
+        $isStripCollapsed={this.state.isStripCollapsed}
       >
         {!effectiveHasSharedContent && (
           <Styled.MainStage>
@@ -807,10 +868,25 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       <Styled.VideoStripWrapper
         data-test="videoStripWrapper"
         $isLandscape={this.state.isLandscape}
+        $isStripCollapsed={this.state.isStripCollapsed}
       >
+        {this.state.isLandscape && sortedStripStreams.length > 0 && (
+          <Styled.StripToggleButton
+            $isStripCollapsed={this.state.isStripCollapsed}
+            onClick={this.toggleStripCollapsed}
+            aria-label="Toggle camera strip"
+          >
+            <Icon
+              iconName={
+                this.state.isStripCollapsed ? "right_arrow" : "left_arrow"
+              }
+            />
+          </Styled.StripToggleButton>
+        )}
         {canScrollLeft && (
           <Styled.ScrollArrow
             $position="left"
+            $isLandscape={this.state.isLandscape}
             onClick={this.handleScrollLeft}
             role="button"
             aria-label="Scroll left to see more"
@@ -832,6 +908,7 @@ class VideoList extends Component<VideoListProps, VideoListState> {
         {canScrollRight && (
           <Styled.ScrollArrow
             $position="right"
+            $isLandscape={this.state.isLandscape}
             onClick={this.handleScrollRight}
             role="button"
             aria-label="Scroll right to see more"

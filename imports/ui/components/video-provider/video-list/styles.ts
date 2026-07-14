@@ -174,12 +174,15 @@ const CustomLayoutContainer = styled.div<{
   height: 100%;
   /* Chừa không gian phía trên cho dải cam nhỏ + tạo khoảng cách với cam lớn */
   /* Khi share content thì không cần padding vì MainStage đã bị ẩn */
-  padding: ${({ $hasSharedContent, $isLandscape }) =>
+  padding: ${({ $hasSharedContent, $isLandscape, $isStripCollapsed }) =>
     $hasSharedContent
       ? "0"
       : $isLandscape
-        ? "15px 15px 15px clamp(110px, 15vw, 130px)"
+        ? $isStripCollapsed
+          ? "15px"
+          : "15px 15px 15px clamp(110px, 15vw, 130px)"
         : "clamp(120px, 10vh, 150px) 15px 25px 15px"};
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden; /* Prevent overflow */
   min-width: 0; /* Allow flex shrinking */
   min-height: 0; /* Allow flex shrinking */
@@ -223,14 +226,22 @@ const VideoStrip = styled.div<{
   gap: clamp(6px, 0.65vw, 10px); /* Tăng gap giữa các cam nhỏ */
   padding: ${({ $hasSharedContent }) =>
     $hasSharedContent ? "6px 10px 10px 10px" : "8px 10px 10px 10px"};
-  backdrop-filter: blur(8px); /* Blur effect like Google Meet */
+  backdrop-filter: ${({ $isLandscape }) =>
+    $isLandscape ? "none" : "blur(8px)"};
+  background-color: ${({ $isLandscape }) =>
+    $isLandscape ? "transparent" : "rgba(0,0,0,0.2)"};
   border-radius: 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  /* Use viewport-relative height for better zoom handling, smaller to avoid overlap when zoom 150%+ */
-  height: clamp(108px, 9vh, 132px) !important; /* Nhỏ gọn hơn */
-  min-height: 108px !important; /* Ensure minimum usable height */
-  max-height: 132px !important; /* Maximum height */
+  overflow-x: ${({ $isLandscape }) => ($isLandscape ? "hidden" : "auto")};
+  overflow-y: ${({ $isLandscape }) => ($isLandscape ? "auto" : "hidden")};
+  /* Use viewport-relative height for better zoom handling */
+  height: ${({ $isLandscape }) =>
+    $isLandscape ? "100%" : "clamp(108px, 9vh, 132px)"} !important;
+  min-height: ${({ $isLandscape }) =>
+    $isLandscape ? "0" : "108px"} !important;
+  max-height: ${({ $isLandscape }) =>
+    $isLandscape ? "100%" : "132px"} !important;
+  flex-direction: ${({ $isLandscape }) =>
+    $isLandscape ? "column" : "row"} !important;
   /* Width sẽ được tính từ flex container */
   width: 100%;
   max-width: 100%;
@@ -336,6 +347,7 @@ const VideoStrip = styled.div<{
 // Item trong d?i cam (nh?, chi?u r?ng c? d?nh)
 const VideoStripItem = styled.div<{
   $isPresenter?: boolean;
+  $isLandscape?: boolean;
 }>`
   position: relative;
   /* Use viewport-relative units for better zoom handling */
@@ -367,6 +379,16 @@ const VideoStripItem = styled.div<{
     min-width: 110px;
     max-width: 160px;
     /* Bỏ scale để video hiển thị đủ nội dung, không bị zoom */
+  `}
+
+  /* Áp dụng 100% width cho landscape mobile mà không bị bọc trong media query smallOnly */
+  ${({ $isLandscape }) =>
+    $isLandscape &&
+    `
+      width: 100% !important;
+      max-width: 100% !important;
+      min-width: 0 !important;
+      height: auto !important;
   `}
 
   /* Thu nh? font name + status cho g?n nhung KHÔNG ?n */
@@ -571,7 +593,10 @@ const StagePlaceholder = styled.div`
 `;
 
 // Wrapper cho VideoStrip và scroll arrows
-const VideoStripWrapper = styled.div<{ $isLandscape?: boolean }>`
+const VideoStripWrapper = styled.div<{
+  $isLandscape?: boolean;
+  $isStripCollapsed?: boolean;
+}>`
   position: fixed !important;
   top: 12px !important;
   left: 10px !important;
@@ -583,21 +608,30 @@ const VideoStripWrapper = styled.div<{ $isLandscape?: boolean }>`
   gap: 4px;
   width: calc(100vw - 20px) !important; /* Full width minus padding */
   max-width: calc(100vw - 20px) !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Mobile responsive */
+  /* Áp dụng logic Landscape luôn mà không phụ thuộc viewport width (vì deviceInfo.isMobile đã chặn desktop) */
+  ${({ $isLandscape, $isStripCollapsed }) =>
+    $isLandscape &&
+    `
+      top: 14px !important;
+      bottom: 80px !important;
+      left: 6px !important;
+      right: auto !important;
+      width: clamp(70px, 12vw, 95px) !important; /* Thu nhỏ box cam lại một xíu */
+      max-width: 95px !important;
+      flex-direction: column !important;
+      transform: ${
+        $isStripCollapsed ? "translateX(calc(-100% - 10px))" : "translateX(0)"
+      };
+      height: calc(100vh - 100px); /* Cho phép chiều cao dài ra để chứa nhiều cam */
+  `}
+
+  /* Mobile responsive (chỉ áp dụng khi KHÔNG landscape) */
   @media ${smallOnly} {
     ${({ $isLandscape }) =>
-      $isLandscape
-        ? `
-      top: 16px !important;
-      bottom: 80px !important;
-      left: 8px !important;
-      right: auto !important;
-      width: clamp(80px, 12vw, 110px) !important;
-      max-width: 110px !important;
-      flex-direction: column !important;
-    `
-        : `
+      !$isLandscape &&
+      `
       top: 16px !important;
       left: 8px !important;
       right: 8px !important;
@@ -608,17 +642,8 @@ const VideoStripWrapper = styled.div<{ $isLandscape?: boolean }>`
 
   @media ${hasPhoneWidth} {
     ${({ $isLandscape }) =>
-      $isLandscape
-        ? `
-      top: 14px !important;
-      bottom: 80px !important;
-      left: 6px !important;
-      right: auto !important;
-      width: clamp(70px, 12vw, 90px) !important;
-      max-width: 90px !important;
-      flex-direction: column !important;
-    `
-        : `
+      !$isLandscape &&
+      `
       top: 14px !important;
       left: 6px !important;
       right: 6px !important;
@@ -644,7 +669,10 @@ const VideoStripWrapper = styled.div<{ $isLandscape?: boolean }>`
 // Mũi tên scroll (trái/phải) - nằm 2 bên của dải camera
 const ScrollArrow = styled.button<{
   $position: "left" | "right";
+  $isLandscape?: boolean;
 }>`
+  display: ${({ $isLandscape }) =>
+    $isLandscape ? "none !important" : "block"};
   position: relative;
   z-index: 12; /* Above VideoStrip */
   width: 32px;
@@ -708,6 +736,37 @@ const ScrollArrow = styled.button<{
   }
 `;
 
+const StripToggleButton = styled.button<{ $isStripCollapsed?: boolean }>`
+  position: absolute;
+  top: 50%;
+  right: -24px;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 48px;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: white;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 20;
+  pointer-events: auto;
+  backdrop-filter: blur(4px);
+  transition:
+    background-color 0.2s,
+    right 0.3s;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+
+  i {
+    font-size: 14px;
+  }
+`;
+
 export default {
   NextPageButton,
   PreviousPageButton,
@@ -723,4 +782,5 @@ export default {
   PresenterStageVideo,
   StagePlaceholder,
   ScrollArrow,
+  StripToggleButton,
 };

@@ -806,11 +806,13 @@ const CustomLayout = (props) => {
         const gap = 12; // Gap giữa strip và content (khớp với sidebar)
 
         if (isMobileLandscape) {
-          mediaBounds.width = mediaAreaWidth - videoStripReserve - gap;
+          // Camera strip overlays the presentation in landscape mobile,
+          // so we don't reduce mediaBounds width or shift it right.
+          mediaBounds.width = mediaAreaWidth;
           mediaBounds.height = mediaAreaHeight;
-          mediaBounds.top = bannerHeight + gap; // Align with top, small gap
-          mediaBounds.left = !isRTL ? videoStripReserve + gap : null;
-          mediaBounds.right = isRTL ? videoStripReserve + gap : null;
+          mediaBounds.top = mediaAreaTop; // Align with top
+          mediaBounds.left = !isRTL ? 0 : null;
+          mediaBounds.right = isRTL ? 0 : null;
         } else {
           mediaBounds.width = mediaAreaWidth;
           // External video chiếm height còn lại sau khi trừ phần dành cho strip
