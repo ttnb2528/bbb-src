@@ -1,31 +1,31 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { defineMessages, useIntl } from 'react-intl';
-import { UserCameraHelperButton } from 'bigbluebutton-html-plugin-sdk';
-import { UpdatedDataForUserCameraDomElement } from 'bigbluebutton-html-plugin-sdk/dist/cjs/dom-element-manipulation/user-camera/types';
-import Session from '/imports/ui/services/storage/in-memory';
-import UserActions from '/imports/ui/components/video-provider/video-list/video-list-item/user-actions/component';
-import UserStatus from '/imports/ui/components/video-provider/video-list/video-list-item/user-status/component';
-import PinArea from '/imports/ui/components/video-provider/video-list/video-list-item/pin-area/component';
-import UserAvatarVideo from '/imports/ui/components/video-provider/video-list/video-list-item/user-avatar/component';
+import React, { useEffect, useRef, useState } from "react";
+import { defineMessages, useIntl } from "react-intl";
+import { UserCameraHelperButton } from "bigbluebutton-html-plugin-sdk";
+import { UpdatedDataForUserCameraDomElement } from "bigbluebutton-html-plugin-sdk/dist/cjs/dom-element-manipulation/user-camera/types";
+import Session from "/imports/ui/services/storage/in-memory";
+import UserActions from "/imports/ui/components/video-provider/video-list/video-list-item/user-actions/component";
+import UserStatus from "/imports/ui/components/video-provider/video-list/video-list-item/user-status/component";
+import PinArea from "/imports/ui/components/video-provider/video-list/video-list-item/pin-area/component";
+import UserAvatarVideo from "/imports/ui/components/video-provider/video-list/video-list-item/user-avatar/component";
 import {
   isStreamStateUnhealthy,
   subscribeToStreamStateChange,
   unsubscribeFromStreamStateChange,
-} from '/imports/ui/services/bbb-webrtc-sfu/stream-state-service';
-import { getSettingsSingletonInstance } from '/imports/ui/services/settings';
-import VideoService from '/imports/ui/components/video-provider/service';
-import Styled from './styles';
-import withDragAndDrop from './drag-and-drop/component';
-import Auth from '/imports/ui/services/auth';
-import { VideoItem } from '/imports/ui/components/video-provider/types';
-import useCurrentUser from '/imports/ui/core/hooks/useCurrentUser';
-import { VIDEO_TYPES } from '/imports/ui/components/video-provider/enums';
-import PluginButtonContainer from '../../../plugins/plugin-button/container';
-import { UserCameraHelperAreas } from '../../../plugins-engine/extensible-areas/components/user-camera-helper/types';
+} from "/imports/ui/services/bbb-webrtc-sfu/stream-state-service";
+import { getSettingsSingletonInstance } from "/imports/ui/services/settings";
+import VideoService from "/imports/ui/components/video-provider/service";
+import Styled from "./styles";
+import withDragAndDrop from "./drag-and-drop/component";
+import Auth from "/imports/ui/services/auth";
+import { VideoItem } from "/imports/ui/components/video-provider/types";
+import useCurrentUser from "/imports/ui/core/hooks/useCurrentUser";
+import { VIDEO_TYPES } from "/imports/ui/components/video-provider/enums";
+import PluginButtonContainer from "../../../plugins/plugin-button/container";
+import { UserCameraHelperAreas } from "../../../plugins-engine/extensible-areas/components/user-camera-helper/types";
 
 const intlMessages = defineMessages({
   disableDesc: {
-    id: 'app.videoDock.webcamDisableDesc',
+    id: "app.videoDock.webcamDisableDesc",
   },
 });
 
@@ -34,7 +34,9 @@ const VIDEO_CONTAINER_WIDTH_BOUND = 125;
 interface VideoListItemProps {
   pluginUserCameraHelperPerPosition: UserCameraHelperAreas;
   isFullscreenContext: boolean;
-  setUserCamerasRequestedFromPlugin: React.Dispatch<React.SetStateAction<UpdatedDataForUserCameraDomElement[]>>;
+  setUserCamerasRequestedFromPlugin: React.Dispatch<
+    React.SetStateAction<UpdatedDataForUserCameraDomElement[]>
+  >;
   layoutContextDispatch: (...args: unknown[]) => void;
   isRTL: boolean;
   amIModerator: boolean;
@@ -50,9 +52,9 @@ interface VideoListItemProps {
   settingsSelfViewDisable: boolean;
   stream: VideoItem;
   makeDragOperations: (userId?: string) => {
-    onDragOver: (e: DragEvent) => void,
-    onDrop: (e: DragEvent) => void,
-    onDragLeave: (e: DragEvent) => void,
+    onDragOver: (e: DragEvent) => void;
+    onDrop: (e: DragEvent) => void;
+    onDragLeave: (e: DragEvent) => void;
   };
   dragging: boolean;
   draggingOver: boolean;
@@ -66,17 +68,21 @@ interface VideoListItemProps {
 }
 
 const renderPluginItems = (
-  streamId: string, userId: string,
+  streamId: string,
+  userId: string,
   pluginItems: UserCameraHelperButton[],
-  bottom: boolean, right: boolean,
+  bottom: boolean,
+  right: boolean,
 ) => {
   if (pluginItems !== undefined) {
     return (
       <>
-        {
-          pluginItems.filter(
-            (pluginItem) => (pluginItem.displayFunction?.({ userId, streamId }) ?? true),
-          ).map((pluginItem) => {
+        {pluginItems
+          .filter(
+            (pluginItem) =>
+              pluginItem.displayFunction?.({ userId, streamId }) ?? true,
+          )
+          .map((pluginItem) => {
             const pluginButton = pluginItem;
             const returnComponent = (
               <PluginButtonContainer
@@ -86,24 +92,41 @@ const renderPluginItems = (
                 right={right}
                 icon={pluginButton.icon}
                 label={pluginButton.label}
-                onClick={({ browserClickEvent }) => pluginButton.onClick({ browserClickEvent, streamId, userId })}
+                onClick={({ browserClickEvent }) =>
+                  pluginButton.onClick({ browserClickEvent, streamId, userId })
+                }
               />
             );
             return returnComponent;
-          })
-        }
+          })}
       </>
     );
   }
-  return (<></>);
+  return <></>;
 };
 
 const VideoListItem: React.FC<VideoListItemProps> = (props) => {
   const {
-    name, voiceUser, isFullscreenContext, layoutContextDispatch, onHandleVideoFocus,
-    cameraId, numOfStreams, focused, onVideoItemMount, onVideoItemUnmount,
-    makeDragOperations, dragging, draggingOver, isRTL, isStream, settingsSelfViewDisable,
-    disabledCams, amIModerator, stream, setUserCamerasRequestedFromPlugin,
+    name,
+    voiceUser,
+    isFullscreenContext,
+    layoutContextDispatch,
+    onHandleVideoFocus,
+    cameraId,
+    numOfStreams,
+    focused,
+    onVideoItemMount,
+    onVideoItemUnmount,
+    makeDragOperations,
+    dragging,
+    draggingOver,
+    isRTL,
+    isStream,
+    settingsSelfViewDisable,
+    disabledCams,
+    amIModerator,
+    stream,
+    setUserCamerasRequestedFromPlugin,
     pluginUserCameraHelperPerPosition,
   } = props;
 
@@ -115,7 +138,9 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
   const [isStreamHealthy, setIsStreamHealthy] = useState(
     stream.type === VIDEO_TYPES.STREAM,
   );
-  const [isMirrored, setIsMirrored] = useState<boolean>(VideoService.mirrorOwnWebcam(stream.userId));
+  const [isMirrored, setIsMirrored] = useState<boolean>(
+    VideoService.mirrorOwnWebcam(stream.userId),
+  );
   const [isVideoSqueezed, setIsVideoSqueezed] = useState(false);
   const [isSelfViewDisabled, setIsSelfViewDisabled] = useState(false);
 
@@ -131,7 +156,10 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
 
   useEffect(() => {
     setUserCamerasRequestedFromPlugin((userCamera) => {
-      if (videoContainer.current && !userCamera.some((uc) => uc.streamId === cameraId)) {
+      if (
+        videoContainer.current &&
+        !userCamera.some((uc) => uc.streamId === cameraId)
+      ) {
         userCamera.push({
           streamId: cameraId,
           userCameraDomElement: videoContainer.current,
@@ -141,12 +169,14 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
     });
   }, [videoContainer]);
 
-  const videoIsReady = isStreamHealthy && videoDataLoaded && !isSelfViewDisabled;
+  const videoIsReady =
+    isStreamHealthy && videoDataLoaded && !isSelfViewDisabled;
   const Settings = getSettingsSingletonInstance();
   const { animations, webcamBorderHighlightColor } = Settings.application;
   const talking = voiceUser?.talking;
-  const raiseHand = (stream.type === VIDEO_TYPES.GRID && stream?.raiseHand)
-    || (stream.type === VIDEO_TYPES.STREAM && stream.user?.raiseHand);
+  const raiseHand =
+    (stream.type === VIDEO_TYPES.GRID && stream?.raiseHand) ||
+    (stream.type === VIDEO_TYPES.STREAM && stream.user?.raiseHand);
   const { data: currentUser } = useCurrentUser((u) => ({
     userId: u.userId,
     pinned: u.pinned,
@@ -165,7 +195,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
   }));
 
   let user;
-  let streamId = '';
+  let streamId = "";
   switch (stream.type) {
     case VIDEO_TYPES.STREAM: {
       user = stream.user;
@@ -193,13 +223,13 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
 
   const onLoadedData = () => {
     setVideoDataLoaded(true);
-    window.dispatchEvent(new Event('resize'));
+    window.dispatchEvent(new Event("resize"));
 
     /* used when re-sharing cameras after leaving a breakout room.
     it is needed in cases where the user has more than one active camera
     so we only share the second camera after the first
     has finished loading (can't share more than one at the same time) */
-    Session.setItem('canConnect', true);
+    Session.setItem("canConnect", true);
   };
 
   // component did mount
@@ -208,10 +238,10 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
 
     if (videoElement) {
       // Register listeners before attaching stream to avoid missing early media-ready events.
-      videoElement.addEventListener('loadeddata', onLoadedData);
-      videoElement.addEventListener('loadedmetadata', onLoadedData);
-      videoElement.addEventListener('canplay', onLoadedData);
-      videoElement.addEventListener('playing', onLoadedData);
+      videoElement.addEventListener("loadeddata", onLoadedData);
+      videoElement.addEventListener("loadedmetadata", onLoadedData);
+      videoElement.addEventListener("canplay", onLoadedData);
+      videoElement.addEventListener("playing", onLoadedData);
       onVideoItemMount(videoElement);
       // Fallback for races where media is already ready when listeners are attached.
       if (videoElement.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
@@ -222,10 +252,10 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
     if (videoContainer.current) resizeObserver.observe(videoContainer.current);
 
     return () => {
-      videoElement?.removeEventListener('loadeddata', onLoadedData);
-      videoElement?.removeEventListener('loadedmetadata', onLoadedData);
-      videoElement?.removeEventListener('canplay', onLoadedData);
-      videoElement?.removeEventListener('playing', onLoadedData);
+      videoElement?.removeEventListener("loadeddata", onLoadedData);
+      videoElement?.removeEventListener("loadedmetadata", onLoadedData);
+      videoElement?.removeEventListener("canplay", onLoadedData);
+      videoElement?.removeEventListener("playing", onLoadedData);
       resizeObserver.disconnect();
     };
   }, []);
@@ -249,8 +279,10 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
       if (elem.paused) {
         elem.play().catch((error) => {
           // NotAllowedError equals autoplay issues, fire autoplay handling event
-          if (error.name === 'NotAllowedError') {
-            const tagFailedEvent = new CustomEvent('videoPlayFailed', { detail: { mediaElement: elem } });
+          if (error.name === "NotAllowedError") {
+            const tagFailedEvent = new CustomEvent("videoPlayFailed", {
+              detail: { mediaElement: elem },
+            });
             window.dispatchEvent(tagFailedEvent);
           }
         });
@@ -259,26 +291,34 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
     if (!isSelfViewDisabled && videoDataLoaded) {
       playElement(videoTag.current!);
     }
-    if ((isSelfViewDisabled && stream.userId === Auth.userID) || disabledCams?.includes(cameraId)) {
+    if (
+      (isSelfViewDisabled && stream.userId === Auth.userID) ||
+      disabledCams?.includes(cameraId)
+    ) {
       videoTag.current?.pause?.();
     }
   }, [isSelfViewDisabled, videoDataLoaded]);
 
   // component will unmount
-  useEffect(() => () => {
-    onVideoItemUnmount(cameraId);
-  }, []);
+  useEffect(
+    () => () => {
+      onVideoItemUnmount(cameraId);
+    },
+    [],
+  );
 
   useEffect(() => {
     setIsSelfViewDisabled(settingsSelfViewDisable);
   }, [settingsSelfViewDisable]);
 
-  const isOneToOneCall = (typeof window !== 'undefined'
-    && (window as Window & { isOneToOneCall?: boolean }).isOneToOneCall === true)
-    || (typeof document !== 'undefined'
-      && document.body.classList.contains('bbb-one-to-one-call'));
+  const isOneToOneCall =
+    (typeof window !== "undefined" &&
+      (window as Window & { isOneToOneCall?: boolean }).isOneToOneCall ===
+        true) ||
+    (typeof document !== "undefined" &&
+      document.body.classList.contains("bbb-one-to-one-call"));
 
-  const renderSqueezedButton = () => (
+  const renderSqueezedButton = () =>
     isOneToOneCall ? null : (
       <UserActions
         name={name}
@@ -300,8 +340,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
         layoutContextDispatch={layoutContextDispatch}
         isPresenter={isPresenter}
       />
-    )
-  );
+    );
 
   const renderWebcamConnecting = () => (
     <Styled.WebcamConnecting
@@ -316,7 +355,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
         squeezed={false}
       />
       <Styled.TopBar>
-        {raiseHand && <Styled.RaiseHand>âœ‹</Styled.RaiseHand>}
+        {raiseHand && <Styled.RaiseHand>{"\u270b"}</Styled.RaiseHand>}
       </Styled.TopBar>
       <Styled.BottomBar $isPresenter={isPresenter}>
         {!isOneToOneCall && (
@@ -340,11 +379,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
             isPresenter={isPresenter}
           />
         )}
-        <UserStatus
-          voiceUser={voiceUser}
-          user={user}
-          stream={stream}
-        />
+        <UserStatus voiceUser={voiceUser} user={user} stream={stream} />
       </Styled.BottomBar>
     </Styled.WebcamConnecting>
   );
@@ -378,25 +413,49 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
           positionYAxis="top"
           positionXAxis="left"
         >
-          {renderPluginItems(cameraId, userId, topLeftPluginItems, false, false)}
+          {renderPluginItems(
+            cameraId,
+            userId,
+            topLeftPluginItems,
+            false,
+            false,
+          )}
         </Styled.UserCameraButtonsContainterWrapper>
         <Styled.UserCameraButtonsContainterWrapper
           positionYAxis="top"
           positionXAxis="right"
         >
-          {renderPluginItems(cameraId, userId, topRightPluginItems, false, true)}
+          {renderPluginItems(
+            cameraId,
+            userId,
+            topRightPluginItems,
+            false,
+            true,
+          )}
         </Styled.UserCameraButtonsContainterWrapper>
         <Styled.UserCameraButtonsContainterWrapper
           positionYAxis="bottom"
           positionXAxis="left"
         >
-          {renderPluginItems(cameraId, userId, bottomLeftPluginItems, true, false)}
+          {renderPluginItems(
+            cameraId,
+            userId,
+            bottomLeftPluginItems,
+            true,
+            false,
+          )}
         </Styled.UserCameraButtonsContainterWrapper>
         <Styled.UserCameraButtonsContainterWrapper
           positionYAxis="bottom"
           positionXAxis="right"
         >
-          {renderPluginItems(cameraId, userId, bottomRightPluginItems, true, true)}
+          {renderPluginItems(
+            cameraId,
+            userId,
+            bottomRightPluginItems,
+            true,
+            true,
+          )}
         </Styled.UserCameraButtonsContainterWrapper>
       </>
     );
@@ -405,11 +464,8 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
   const renderDefaultButtons = () => (
     <>
       <Styled.TopBar>
-        {raiseHand && <Styled.RaiseHand>âœ‹</Styled.RaiseHand>}
-        <PinArea
-          stream={stream}
-          amIModerator={amIModerator}
-        />
+        {raiseHand && <Styled.RaiseHand>{"\u270b"}</Styled.RaiseHand>}
+        <PinArea stream={stream} amIModerator={amIModerator} />
       </Styled.TopBar>
       <Styled.BottomBar $isPresenter={isPresenter}>
         {!isOneToOneCall && (
@@ -433,20 +489,12 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
             isPresenter={isPresenter}
           />
         )}
-        <UserStatus
-          voiceUser={voiceUser}
-          user={user}
-          stream={stream}
-        />
+        <UserStatus voiceUser={voiceUser} user={user} stream={stream} />
       </Styled.BottomBar>
     </>
   );
 
-  const {
-    onDragLeave,
-    onDragOver,
-    onDrop,
-  } = makeDragOperations(stream.userId);
+  const { onDragLeave, onDragOver, onDrop } = makeDragOperations(stream.userId);
 
   // Kiá»ƒm tra xem user cÃ³ pháº£i presenter khÃ´ng
   let isPresenter = false;
@@ -463,7 +511,7 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
       talking={talking}
       customHighlight={webcamBorderHighlightColor}
       fullscreen={isFullscreenContext}
-      data-test={talking ? 'webcamItemTalkingUser' : 'webcamItem'}
+      data-test={talking ? "webcamItemTalkingUser" : "webcamItem"}
       animations={animations}
       isStream={isStream}
       isPresenter={isPresenter}
@@ -479,16 +527,22 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
       <Styled.VideoContainer
         className="videoContainer"
         data-stream={streamId}
-        $selfViewDisabled={(isSelfViewDisabled && stream.userId === Auth.userID)
-          || disabledCams.includes(cameraId)}
+        $selfViewDisabled={
+          (isSelfViewDisabled && stream.userId === Auth.userID) ||
+          disabledCams.includes(cameraId)
+        }
       >
         <Styled.Video
           mirrored={isMirrored}
           unhealthyStream={videoDataLoaded && !isStreamHealthy}
           $isPresenter={isPresenter}
-          data-test={isMirrored ? 'mirroredVideoContainer' : 'videoContainer'}
-          data-current-user-stream={stream.userId === Auth.userID ? 'true' : 'false'}
-          data-local-stream={VideoService.isLocalStream(cameraId) ? 'true' : 'false'}
+          data-test={isMirrored ? "mirroredVideoContainer" : "videoContainer"}
+          data-current-user-stream={
+            stream.userId === Auth.userID ? "true" : "false"
+          }
+          data-local-stream={
+            VideoService.isLocalStream(cameraId) ? "true" : "false"
+          }
           ref={videoTag}
           muted
           autoPlay
@@ -496,23 +550,28 @@ const VideoListItem: React.FC<VideoListItemProps> = (props) => {
         />
       </Styled.VideoContainer>
 
-      {isStream && ((isSelfViewDisabled && stream.userId === Auth.userID)
-      || disabledCams.includes(cameraId)) && (
-        <Styled.VideoDisabled>
-          {intl.formatMessage(intlMessages.disableDesc)}
-        </Styled.VideoDisabled>
-      )}
+      {isStream &&
+        ((isSelfViewDisabled && stream.userId === Auth.userID) ||
+          disabledCams.includes(cameraId)) && (
+          <Styled.VideoDisabled>
+            {intl.formatMessage(intlMessages.disableDesc)}
+          </Styled.VideoDisabled>
+        )}
 
       {/* eslint-disable-next-line no-nested-ternary */}
 
-      {(videoIsReady || (isSelfViewDisabled || disabledCams.includes(cameraId))) && (
-        isVideoSqueezed ? renderSqueezedButton() : renderDefaultButtons()
-      )}
-      {!videoIsReady && (!isSelfViewDisabled || !isStream) && (
-        isVideoSqueezed ? renderWebcamConnectingSqueezed() : renderWebcamConnecting()
-      )}
-      {((isSelfViewDisabled && stream.userId === Auth.userID) || disabledCams.includes(cameraId))
-      && renderWebcamConnecting()}
+      {(videoIsReady ||
+        isSelfViewDisabled ||
+        disabledCams.includes(cameraId)) &&
+        (isVideoSqueezed ? renderSqueezedButton() : renderDefaultButtons())}
+      {!videoIsReady &&
+        (!isSelfViewDisabled || !isStream) &&
+        (isVideoSqueezed
+          ? renderWebcamConnectingSqueezed()
+          : renderWebcamConnecting())}
+      {((isSelfViewDisabled && stream.userId === Auth.userID) ||
+        disabledCams.includes(cameraId)) &&
+        renderWebcamConnecting()}
     </Styled.Content>
   );
 };

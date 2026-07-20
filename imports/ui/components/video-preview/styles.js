@@ -1,4 +1,4 @@
-import styled, { css, keyframes } from 'styled-components';
+import styled, { css, keyframes } from "styled-components";
 import {
   borderSizeSmall,
   borderSize,
@@ -6,7 +6,7 @@ import {
   mdPaddingX,
   titlePositionLeft,
   lgPaddingY,
-} from '/imports/ui/stylesheets/styled-components/general';
+} from "/imports/ui/stylesheets/styled-components/general";
 import {
   colorGrayLabel,
   colorWhite,
@@ -15,20 +15,22 @@ import {
   colorGrayLightest,
   colorPrimary,
   colorText,
-} from '/imports/ui/stylesheets/styled-components/palette';
+} from "/imports/ui/stylesheets/styled-components/palette";
 import {
   fontSizeLarge,
   lineHeightComputed,
   headingsFontWeight,
   fontSizeLarger,
-} from '/imports/ui/stylesheets/styled-components/typography';
-import { smallOnly, mediumOnly, landscape } from '/imports/ui/stylesheets/styled-components/breakpoints';
-import ModalSimple from '/imports/ui/components/common/modal/simple/component';
-import ModalStyles from '/imports/ui/components/common/modal/simple/styles';
-import Button from '/imports/ui/components/common/button/component';
+} from "/imports/ui/stylesheets/styled-components/typography";
 import {
-  Tab, Tabs, TabList,
-} from 'react-tabs';
+  smallOnly,
+  mediumOnly,
+  landscape,
+} from "/imports/ui/stylesheets/styled-components/breakpoints";
+import ModalSimple from "/imports/ui/components/common/modal/simple/component";
+import ModalStyles from "/imports/ui/components/common/modal/simple/styles";
+import Button from "/imports/ui/components/common/button/component";
+import { Tab, Tabs, TabList } from "react-tabs";
 
 const Warning = styled.div`
   text-align: center;
@@ -107,8 +109,8 @@ const VideoCol = styled(Col)`
   align-items: center;
 
   @media ${landscape} {
-     width: 50%;
-   }
+    width: 50%;
+  }
 `;
 
 const Label = styled.label`
@@ -131,7 +133,9 @@ const Select = styled.select`
   &:focus {
     outline: none;
     border-radius: ${borderSize};
-    box-shadow: 0 0 0 ${borderSize} ${colorPrimary}, inset 0 0 0 1px ${colorPrimary};
+    box-shadow:
+      0 0 0 ${borderSize} ${colorPrimary},
+      inset 0 0 0 1px ${colorPrimary};
   }
 
   &:hover,
@@ -146,7 +150,7 @@ const Content = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  
+
   color: ${colorText};
   font-weight: normal;
 
@@ -175,7 +179,8 @@ const Footer = styled.div`
 const FooterContainer = styled.div`
   display: flex;
   align-items: center;
-  justify-content: ${({ showStopAllButton }) => (showStopAllButton ? 'flex-start' : 'flex-end')};
+  justify-content: ${({ showStopAllButton }) =>
+    showStopAllButton ? "flex-start" : "flex-end"};
 
   @media ${smallOnly} {
     display: flex;
@@ -189,7 +194,7 @@ const Actions = styled.div`
 
   [dir="rtl"] & {
     margin-right: auto;
-    background:red;
+    background: red;
     margin-left: ${borderSizeLarge};
   }
 
@@ -226,15 +231,23 @@ const ExtraActions = styled.div`
 
 const VideoPreviewModal = styled(ModalSimple)`
   padding: 1rem;
-  min-height: 25rem;
+  min-height: min(25rem, 95vh); /* Đảm bảo không vượt quá chiều cao màn hình */
   max-height: 100vh;
 
   @media ${smallOnly} {
     height: unset;
-    min-height: 22.5rem;
+    min-height: min(22.5rem, 95vh);
   }
 
-  ${({ isPhone }) => isPhone && `
+  @media ${landscape} {
+    min-height: auto;
+    max-height: 95vh;
+    overflow-y: auto;
+  }
+
+  ${({ isPhone }) =>
+    isPhone &&
+    `
     min-height: 100%;
     min-width: 100%;
     border-radius: 0;
@@ -246,7 +259,9 @@ const VideoPreviewModal = styled(ModalSimple)`
     flex-direction: column;
     justify-content: space-between;
   }
-  ${({ isBlurred }) => isBlurred && `
+  ${({ isBlurred }) =>
+    isBlurred &&
+    `
     overlay: {
       position: 'fixed',
       top: 0,
@@ -278,9 +293,11 @@ const FetchingAnimation = styled.span`
     width: 0;
     margin-left: 0.25em;
 
-    ${({ animations }) => animations && css`
-      animation: ${ellipsis} steps(4, end) 900ms infinite;
-    `}
+    ${({ animations }) =>
+      animations &&
+      css`
+        animation: ${ellipsis} steps(4, end) 900ms infinite;
+      `}
   }
 `;
 
@@ -292,7 +309,9 @@ const VideoPreview = styled.video`
     height: 10rem;
   }
 
-  ${({ mirroredVideo }) => mirroredVideo && `
+  ${({ mirroredVideo }) =>
+    mirroredVideo &&
+    `
     transform: scale(-1, 1);
   `}
 `;
@@ -338,7 +357,6 @@ const WebcamTabs = styled(Tabs)`
   &:hover {
     cursor: pointer;
   }
-
 `;
 
 const WebcamTabList = styled(TabList)`
@@ -364,8 +382,8 @@ const WebcamTabSelector = styled(Tab)`
 
 const HeaderSeparator = styled.div`
   border-left: 1px solid ${colorText};
-  content: '|';
-  margin: 0 1.5rem; 
+  content: "|";
+  margin: 0 1.5rem;
   height: 1.5rem;
   align-self: center;
   opacity: 0.75;
@@ -385,10 +403,11 @@ const IconSvg = styled.img`
   border-radius: 5px;
   margin: 5px;
 
-  ${({ darkThemeState }) => darkThemeState && css`
+  ${({ darkThemeState }) =>
+    darkThemeState &&
+    css`
       filter: invert(1);
     `}
-
 `;
 
 const SharingButton = styled(Button)`

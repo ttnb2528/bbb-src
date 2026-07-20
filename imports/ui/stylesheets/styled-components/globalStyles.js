@@ -20,7 +20,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   // BBBMenu - Mobile improvements
-  @media ${smallOnly} {
+  @media ${smallOnly}, (max-height: 500px) and (orientation: landscape) {
     .MuiPopover-root {
       top: 0 !important;
       left: 0 !important;

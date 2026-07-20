@@ -348,6 +348,8 @@ class BBBMenu extends React.Component {
     const paperStyle = {
       ...(hasRoundedCorners ? roundedCornersStyles : {}),
       ...(minContent ? { "max-width": "min-content" } : {}),
+      maxHeight: "calc(100vh - 80px)",
+      overflowY: "auto",
     };
 
     return (
@@ -400,7 +402,8 @@ class BBBMenu extends React.Component {
           {!overrideMobileStyles &&
             !modernActionSheet &&
             anchorEl &&
-            window.innerWidth < SMALL_VIEWPORT_BREAKPOINT && (
+            (window.innerWidth < SMALL_VIEWPORT_BREAKPOINT ||
+              window.innerHeight <= 500) && (
               <Styled.CloseButton
                 label={intl.formatMessage(intlMessages.close)}
                 size="lg"

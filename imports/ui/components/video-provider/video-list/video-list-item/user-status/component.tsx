@@ -1,6 +1,6 @@
-import React from 'react';
-import Styled from './styles';
-import { User, VideoItem } from '/imports/ui/components/video-provider/types';
+import React from "react";
+import Styled from "./styles";
+import { User, VideoItem } from "/imports/ui/components/video-provider/types";
 
 interface UserStatusProps {
   user: Partial<User>;
@@ -26,12 +26,12 @@ const UserStatus: React.FC<UserStatusProps> = (props) => {
 
   return (
     <div>
-      {away && <span>⏰</span>}
-      {(emoji && emoji !== 'none' && !away) && <span>{emoji}</span>}
+      {away && <span>{"\u23f0"}</span>}
+      {emoji && emoji !== "none" && !away && <span>{emoji}</span>}
 
       {voiceUserJoined && (
         <>
-          {(muted && !listenOnly) && <Styled.Muted iconName="unmute_filled" />}
+          {muted && !listenOnly && <Styled.Muted iconName="unmute_filled" />}
           {listenOnly && <Styled.Voice iconName="listen" />}
           {!muted && <Styled.Voice iconName="unmute" />}
         </>

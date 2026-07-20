@@ -27,6 +27,22 @@ const Content = styled.div`
   color: white;
   padding: calc(${lineHeightComputed} / 2);
 
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+
+  /* Fancy scroll cho Desktop/Landscape mobile */
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+  }
+
   [dir="rtl"] & {
     right: 10.75rem;
   }
