@@ -1,27 +1,27 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 import {
   smallOnly,
   hasPhoneWidth,
-} from '/imports/ui/stylesheets/styled-components/breakpoints';
+} from "/imports/ui/stylesheets/styled-components/breakpoints";
 import {
   smPaddingX,
   smPaddingY,
   barsPadding,
   xsPadding,
   borderSize,
-} from '/imports/ui/stylesheets/styled-components/general';
+} from "/imports/ui/stylesheets/styled-components/general";
 import {
   colorWhite,
   colorBackground,
   colorDanger,
   colorGrayLight,
   colorGrayDark,
-} from '/imports/ui/stylesheets/styled-components/palette';
+} from "/imports/ui/stylesheets/styled-components/palette";
 import {
   fontSizeBase,
   fontSizeSmall,
-} from '/imports/ui/stylesheets/styled-components/typography';
-import Button from '/imports/ui/components/common/button/component';
+} from "/imports/ui/stylesheets/styled-components/typography";
+import Button from "/imports/ui/components/common/button/component";
 
 const ActionsBar = styled.div`
   display: flex;
@@ -54,12 +54,6 @@ const ActionsBarWrapper = styled.section`
   transition:
     transform 0.35s cubic-bezier(0.25, 1, 0.5, 1),
     opacity 0.35s ease;
-  ${(props) => props.$isUIHidden
-    && `
-      transform: translateX(120vw) !important;
-      opacity: 0;
-      pointer-events: none;
-    `}
 
   /* Mobile: tăng padding và min-height để buttons có không gian và không bị thụt */
   @media ${smallOnly} {
@@ -420,8 +414,9 @@ const Right = styled.div`
 `;
 
 const RaiseHandButton = styled(Button)`
-  ${({ ghost }) => ghost
-    && `
+  ${({ ghost }) =>
+    ghost &&
+    `
     & > span {
       box-shadow: none;
       background-color: transparent !important;

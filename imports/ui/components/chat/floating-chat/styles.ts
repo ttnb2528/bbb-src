@@ -35,7 +35,7 @@ export const FloatingChatContainer = styled.div<{
   ${(props: any) =>
     props.$isUIHidden &&
     `
-      transform: translateX(120vw) !important;
+      transform: translateX(100%) !important;
       opacity: 0;
     `}
 
@@ -44,8 +44,8 @@ export const FloatingChatContainer = styled.div<{
     left: 0 !important;
     /* Đẩy khung chat trượt khuất ra ngoài màn hình trên mobile khi có Sidebar (User List) đang mở, hoặc khi quẹt ẩn UI */
     transform: ${(props: any) => {
-      if (props.$isUIHidden) return "translateX(-100vw) !important";
-      if (props.$isSidebarOpen) return "translateX(-100vw) !important";
+      if (props.$isUIHidden) return "translateX(100%) !important";
+      if (props.$isSidebarOpen) return "translateX(100%) !important";
       return "translateX(0) !important";
     }};
     opacity: ${(props: any) =>
@@ -132,10 +132,8 @@ export const ChatContentWrapper = styled.div<{ $chatState?: string }>`
   pointer-events: ${(props: any) =>
     props.$chatState !== "collapsed" ? "auto" : "none"};
   max-height: ${(props: any) => {
-    if (props.$chatState === "expanded")
-      return "25vh"; /* Hạ xuống 25vh */
-    if (props.$chatState === "preview")
-      return "100px"; /* Hạ xuống 100px */
+    if (props.$chatState === "expanded") return "25vh"; /* Hạ xuống 25vh */
+    if (props.$chatState === "preview") return "100px"; /* Hạ xuống 100px */
     return "0px";
   }};
   overflow: ${(props: any) =>
