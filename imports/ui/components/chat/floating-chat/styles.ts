@@ -1,6 +1,9 @@
 import styled, { keyframes, css } from "styled-components";
 import { smallOnly } from "/imports/ui/stylesheets/styled-components/breakpoints";
 
+const landscapeMobile =
+  "screen and (max-height: 500px) and (orientation: landscape)";
+
 const fadeIn = keyframes`
   0% { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -39,7 +42,7 @@ export const FloatingChatContainer = styled.div<{
       opacity: 0;
     `}
 
-  @media ${smallOnly} {
+  @media ${smallOnly}, ${landscapeMobile} {
     right: 0 !important;
     left: 0 !important;
     /* Đẩy khung chat trượt khuất ra ngoài màn hình trên mobile khi có Sidebar (User List) đang mở, hoặc khi quẹt ẩn UI */
@@ -210,7 +213,7 @@ export const FloatingMessageItem = styled.div<{ $chatState?: string }>`
       }
     `}
 
-  @media ${smallOnly} {
+  @media ${smallOnly}, ${landscapeMobile} {
     padding: 0; /* Xóa padding vì container đã có padding */
     margin-top: 0.3rem;
   }
@@ -224,7 +227,7 @@ export const SenderName = styled.span`
   color: rgba(255, 255, 255, 0.7);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 
-  @media ${smallOnly} {
+  @media ${smallOnly}, ${landscapeMobile} {
     font-size: 0.75rem; /* Giảm nhẹ thêm chút nữa cho gọn */
     margin-bottom: 2px;
   }
@@ -242,7 +245,7 @@ export const MessageContent = styled.div`
     padding: 0;
   }
 
-  @media ${smallOnly} {
+  @media ${smallOnly}, ${landscapeMobile} {
     font-size: 0.85rem; /* Giảm nhẹ thêm chút nữa cho thanh thoát */
     line-height: 1.25;
   }
@@ -308,14 +311,14 @@ export const EmojiPickerWrapper = styled.div`
   border-radius: 8px;
   overflow: hidden;
 
-  @media ${smallOnly} {
+  @media ${smallOnly}, ${landscapeMobile} {
     max-height: 220px;
     overflow-y: hidden;
   }
 
   /* Cố gắng giới hạn các thành phần con của EmojiPicker (như emoji-mart) để không bị bung ra */
   & > * {
-    @media ${smallOnly} {
+    @media ${smallOnly}, ${landscapeMobile} {
       max-height: 220px !important;
     }
   }
