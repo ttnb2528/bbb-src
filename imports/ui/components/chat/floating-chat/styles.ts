@@ -40,18 +40,20 @@ export const FloatingChatContainer = styled.div<{
     `}
 
   @media ${smallOnly} {
-    right: auto !important;
-    left: 50% !important;
+    right: 0 !important;
+    left: 0 !important;
     /* Đẩy khung chat trượt khuất ra ngoài màn hình trên mobile khi có Sidebar (User List) đang mở, hoặc khi quẹt ẩn UI */
     transform: ${(props: any) => {
-    if (props.$isUIHidden) return "translateX(120vw) !important";
-    if (props.$isSidebarOpen) return "translateX(-150vw) !important";
-    return "translateX(-50%) !important";
-  }};
+      if (props.$isUIHidden) return "translateX(-100vw) !important";
+      if (props.$isSidebarOpen) return "translateX(-100vw) !important";
+      return "translateX(0) !important";
+    }};
     opacity: ${(props: any) =>
-    props.$isUIHidden || props.$isSidebarOpen ? "0 !important" : "1"};
-    width: 95vw !important;
-    max-width: 400px !important;
+      props.$isUIHidden || props.$isSidebarOpen ? "0 !important" : "1"};
+    width: 100vw !important;
+    max-width: 100vw !important;
+    padding: 0 12px;
+    box-sizing: border-box;
   }
 
   ${(props: any) =>
@@ -94,18 +96,18 @@ export const ChatHeader = styled.div<{ $chatState?: string }>`
 
   &:hover {
     background-color: ${(props: any) =>
-    props.$chatState !== "collapsed"
-      ? "rgba(255,255,255,0.1)"
-      : "rgba(255, 255, 255, 0.2)"};
+      props.$chatState !== "collapsed"
+        ? "rgba(255,255,255,0.1)"
+        : "rgba(255, 255, 255, 0.2)"};
     color: white;
   }
 
   i {
     font-size: ${(props: any) =>
-    props.$chatState !== "collapsed" ? "1.1rem" : "1.3rem"};
+      props.$chatState !== "collapsed" ? "1.1rem" : "1.3rem"};
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     transform: ${(props: any) =>
-    props.$chatState === "expanded" ? "rotate(180deg)" : "rotate(0deg)"};
+      props.$chatState === "expanded" ? "rotate(180deg)" : "rotate(0deg)"};
     display: flex;
     align-items: center;
     justify-content: center;
@@ -130,8 +132,10 @@ export const ChatContentWrapper = styled.div<{ $chatState?: string }>`
   pointer-events: ${(props: any) =>
     props.$chatState !== "collapsed" ? "auto" : "none"};
   max-height: ${(props: any) => {
-    if (props.$chatState === "expanded") return "60vh";
-    if (props.$chatState === "preview") return "120px";
+    if (props.$chatState === "expanded")
+      return "25vh"; /* Hạ xuống 25vh */
+    if (props.$chatState === "preview")
+      return "100px"; /* Hạ xuống 100px */
     return "0px";
   }};
   overflow: ${(props: any) =>
@@ -173,25 +177,21 @@ export const MessageScrollArea = styled.div<{ $chatState?: string }>`
 `;
 
 export const FloatingMessageItem = styled.div<{ $chatState?: string }>`
-  margin-top: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.5rem;
   border-radius: 0.5rem;
-  background-color: rgba(
-    0,
-    0,
-    0,
-    0.55
-  ); /* Tăng opacity xíu thay vì dùng blur để tránh lỗi render webkit */
-  /* Loại bỏ backdrop-filter vì khi text quá dài (mask-image), Webkit iOS/Chrome sẽ drop filter làm biến mất background */
+  background-color: transparent; /* Xóa hoàn toàn background */
   color: white;
   animation: ${fadeIn} 0.3s ease-out forwards;
   will-change: transform, opacity;
   display: flex;
   flex-direction: column;
   flex-shrink: 0; /* Quan trọng: Ngăn không cho Flexbox tự động bóp nhỏ các khung tin nhắn lại khi bị tràn chiều cao (overflow) */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: none; /* Bỏ shadow viền ngoài */
   pointer-events: ${(props: any) =>
     props.$chatState === "preview" ? "auto" : "none"};
+  align-self: flex-start; /* Không để tin nhắn bị kéo giãn (stretch) theo chiều ngang của màn hình */
+  max-width: 85%; /* Tin nhắn không chiếm hết màn hình */
 
   /* Cài đặt gốc cho CSS transition accordion */
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -213,27 +213,27 @@ export const FloatingMessageItem = styled.div<{ $chatState?: string }>`
     `}
 
   @media ${smallOnly} {
-    padding: 1rem 0.75rem 0.2rem;
-    margin-top: 0.4rem;
+    padding: 0; /* Xóa padding vì container đã có padding */
+    margin-top: 0.3rem;
   }
 `;
 
 export const SenderName = styled.span`
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.85rem;
   margin-bottom: 2px;
   /* Bỏ màu mặc định của BigBlueButton vì nó toàn màu tối (tím, xanh đậm) gây khó đọc trên nền đen mờ */
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.7);
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 
   @media ${smallOnly} {
-    font-size: 0.85rem;
+    font-size: 0.75rem; /* Giảm nhẹ thêm chút nữa cho gọn */
     margin-bottom: 2px;
   }
 `;
 
 export const MessageContent = styled.div`
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   line-height: 1.3;
   word-break: break-word;
   overflow-wrap: break-word;
@@ -245,32 +245,9 @@ export const MessageContent = styled.div`
   }
 
   @media ${smallOnly} {
-    font-size: 0.95rem;
-    line-height: 1.35;
+    font-size: 0.85rem; /* Giảm nhẹ thêm chút nữa cho thanh thoát */
+    line-height: 1.25;
   }
-
-  /* Cắt chuỗi nếu ở chế độ preview */
-  ${(props: any) =>
-    props.$chatState === "preview" &&
-    css`
-      display: -webkit-box;
-      -webkit-line-clamp: 2; /* Chỉ hiển thị tối đa 2 dòng */
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
-
-      /* Cắt chìm cả p tag bên trong Markdown sinh ra */
-      p {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin: 0;
-        word-break: break-all; /* Bắt buộc bẻ chuỗi liên tục để tránh lỗi kẹt clamp */
-        max-height: 2.7em; /* Ép giới hạn tuyệt đối chiều cao 2 dòng */
-      }
-    `}
 `;
 
 export const ChatInputForm = styled.form<{ $chatState?: string }>`
@@ -287,7 +264,8 @@ export const ChatInputForm = styled.form<{ $chatState?: string }>`
   pointer-events: auto; /* Cho phép tương tác vào input */
   transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   max-height: 120px;
-  overflow: ${(props: any) => props.$chatState === "collapsed" ? "hidden" : "visible"};
+  overflow: ${(props: any) =>
+    props.$chatState === "collapsed" ? "hidden" : "visible"};
 
   /* Rút siêu mượt input form khi ở chế độ collapsed */
   ${(props: any) =>
