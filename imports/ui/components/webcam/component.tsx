@@ -92,7 +92,9 @@ const WebcamComponent: React.FC<WebcamComponentProps> = ({
   useEffect(() => {
     const handleVisibility = () => {
       if (document.hidden) {
-        document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+        document.body.dispatchEvent(
+          new MouseEvent("mouseup", { bubbles: true }),
+        );
       }
     };
 

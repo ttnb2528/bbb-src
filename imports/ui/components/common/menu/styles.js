@@ -31,6 +31,13 @@ const MenuWrapper = styled(Menu)`
     }
   }
 
+  & .override-mobile-styles {
+    width: fit-content !important;
+    max-width: fit-content !important;
+    min-width: 0 !important;
+    margin: 0 auto;
+  }
+
   ${({ isMobile, $isHorizontal }) =>
     isMobile &&
     !$isHorizontal &&
