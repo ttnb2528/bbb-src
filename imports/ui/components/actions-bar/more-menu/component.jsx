@@ -96,8 +96,20 @@ class MoreMenu extends PureComponent {
       isOptionsMenuModalOpen: false,
       isConnectionStatusModalOpen: false,
       isFullscreen: false,
-    };
     this.onFullscreenChange = this.onFullscreenChange.bind(this);
+
+    // Cache menu options to prevent recreating the object on every render,
+    // which breaks the Material-UI exit transition and leaves hidden items clickable.
+    this.menuOpts = {
+      id: 'actions-bar-more-menu',
+      keepMounted: false,
+      transitionDuration: 120,
+      elevation: 3,
+      getcontentanchorel: null,
+      fullwidth: 'true',
+      anchorOrigin: { vertical: 'bottom', horizontal: 'right' },
+      transformorigin: { vertical: 'top', horizontal: 'right' },
+    };
   }
 
   componentDidMount() {
@@ -339,16 +351,7 @@ class MoreMenu extends PureComponent {
             </Styled.BadgeWrapper>
           )}
           actions={this.renderMenuItems()}
-          opts={{
-            id: 'actions-bar-more-menu',
-            keepMounted: true,
-            transitionDuration: 120, // mượt hơn khi mở
-            elevation: 3,
-            getcontentanchorel: null,
-            fullwidth: 'true',
-            anchorOrigin: { vertical: 'bottom', horizontal: 'right' },
-            transformorigin: { vertical: 'top', horizontal: 'right' },
-          }}
+          opts={this.menuOpts}
           onCloseCallback={() => {
             this.setState({ isDropdownOpen: false });
           }}

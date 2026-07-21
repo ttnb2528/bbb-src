@@ -220,6 +220,29 @@ class OptionsDropdown extends PureComponent {
       this.setConnectionStatusModalIsOpen.bind(this);
     this.setLeaveSessionConfirmationModalIsOpen =
       this.setLeaveSessionConfirmationModalIsOpen.bind(this);
+
+    // Cache menu options to prevent recreating the object on every render,
+    // which breaks the Material-UI exit transition and leaves hidden items clickable.
+    this.menuOpts = {
+      id: "app-settings-dropdown-menu",
+      keepMounted: false,
+      transitionDuration: {
+        appear: 180,
+        enter: 180,
+        exit: 140,
+      },
+      elevation: 3,
+      getcontentanchorel: null,
+      fullwidth: "true",
+      anchorOrigin: {
+        vertical: "bottom",
+        horizontal: props.isRTL ? "left" : "right",
+      },
+      transformorigin: {
+        vertical: "top",
+        horizontal: props.isRTL ? "left" : "right",
+      },
+    };
   }
 
   componentDidMount() {
@@ -658,27 +681,7 @@ class OptionsDropdown extends PureComponent {
             />
           }
           actions={this.renderMenuItems()}
-          opts={{
-            id: "app-settings-dropdown-menu",
-            keepMounted: true,
-            // Cho phép Material-UI handle animation để mở/đóng mượt hơn
-            transitionDuration: {
-              appear: 180,
-              enter: 180,
-              exit: 140,
-            },
-            elevation: 3,
-            getcontentanchorel: null,
-            fullwidth: "true",
-            anchorOrigin: {
-              vertical: "bottom",
-              horizontal: isRTL ? "left" : "right",
-            },
-            transformorigin: {
-              vertical: "top",
-              horizontal: isRTL ? "left" : "right",
-            },
-          }}
+          opts={this.menuOpts}
           onCloseCallback={() => {
             // Set dropdownOpen = false khi đóng menu để có thể tắt được
             Session.setItem("dropdownOpen", false);
