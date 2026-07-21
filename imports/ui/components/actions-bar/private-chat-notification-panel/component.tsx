@@ -100,8 +100,8 @@ const PrivateChatNotificationPanel: React.FC<
   useEffect(() => {
     if (!isOpen || !panelRef.current) return;
 
-    // Trên mobile: để CSS định vị (full width bar phía trên actions bar)
-    if (deviceInfo.isMobile || deviceInfo.isPhone) {
+    // Trên mobile (Phone): để CSS định vị (full width bar phía trên actions bar)
+    if (deviceInfo.isPhone) {
       panelRef.current.style.top = "";
       panelRef.current.style.left = "";
       return;
@@ -123,9 +123,9 @@ const PrivateChatNotificationPanel: React.FC<
 
   if (!isOpen) return null;
 
-  // Desktop: giới hạn width để chỉ hiển thị tối đa 4 icon (scroll để xem thêm)
-  // Mobile: hiển thị full màn hình, scroll để xem thêm
-  const isMobile = deviceInfo.isMobile || deviceInfo.isPhone;
+  // Desktop/Tablet: giới hạn width để chỉ hiển thị tối đa 4 icon (scroll để xem thêm)
+  // Mobile (Phone): hiển thị full màn hình, scroll để xem thêm
+  const isMobile = deviceInfo.isPhone;
 
   return (
     <Styled.Panel ref={panelRef} $isMobile={isMobile}>

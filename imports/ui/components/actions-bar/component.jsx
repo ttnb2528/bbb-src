@@ -70,7 +70,8 @@ class ActionsBar extends PureComponent {
     this.handleResize = this.handleResize.bind(this);
 
     this.state = {
-      isMobileDevice: deviceInfo.isMobile,
+      // Tablet có đủ không gian để hiển thị như Desktop, nên chỉ bật layout Mobile khi là Phone
+      isMobileDevice: deviceInfo.isPhone,
       isModalOpen: false,
       // Quản lý nhiều popup chat: { [chatId]: { isOpen, isMinimized, position, savedPosition } }
       openPrivateChats: {},
@@ -180,8 +181,8 @@ class ActionsBar extends PureComponent {
   }
 
   handleResize() {
-    if (this.state.isMobileDevice !== deviceInfo.isMobile) {
-      this.setState({ isMobileDevice: deviceInfo.isMobile });
+    if (this.state.isMobileDevice !== deviceInfo.isPhone) {
+      this.setState({ isMobileDevice: deviceInfo.isPhone });
     }
   }
 
@@ -722,9 +723,7 @@ class ActionsBar extends PureComponent {
       ["one-to-one", "one_to_one", "1-1", "1v1", "one2one"].includes(
         queryLayout,
       ) ||
-      ["one-to-one", "one_to_one", "1-1", "1v1", "one2one"].includes(
-        queryMode,
-      );
+      ["one-to-one", "one_to_one", "1-1", "1v1", "one2one"].includes(queryMode);
 
     const byTitle =
       normalizedTitle.includes(" 1-1 ") ||
@@ -910,35 +909,37 @@ class ActionsBar extends PureComponent {
                   )
                 ) : (
                   <>
-                {/* Mobile: Chỉ hiển thị More menu và Leave button */}
-                {this.state.isMobileDevice ? (
-                  <>
-                    <MoreMenu
-                      onOpenSettings={() => this.setModalIsOpen(true)}
-                      onToggleUserList={this.handleToggleUserList}
-                      onTogglePrivateChat={this.handleTogglePrivateChat}
-                      sidebarContent={sidebarContent}
-                      amIPresenter={amIPresenter}
-                      onOpenActivities={() => this.setActivitiesModalOpen(true)}
-                      handleToggleFullscreen={() =>
-                        FullscreenService.toggleFullScreen()
-                      }
-                      showConnectionStatus={ConnectionStatusService.isEnabled()}
-                      isMeteorConnected={isMeteorConnected}
-                      privateUnreadCount={privateUnreadCount}
-                    />
+                    {/* Mobile: Chỉ hiển thị More menu và Leave button */}
+                    {this.state.isMobileDevice ? (
+                      <>
+                        <MoreMenu
+                          onOpenSettings={() => this.setModalIsOpen(true)}
+                          onToggleUserList={this.handleToggleUserList}
+                          onTogglePrivateChat={this.handleTogglePrivateChat}
+                          sidebarContent={sidebarContent}
+                          amIPresenter={amIPresenter}
+                          onOpenActivities={() =>
+                            this.setActivitiesModalOpen(true)
+                          }
+                          handleToggleFullscreen={() =>
+                            FullscreenService.toggleFullScreen()
+                          }
+                          showConnectionStatus={ConnectionStatusService.isEnabled()}
+                          isMeteorConnected={isMeteorConnected}
+                          privateUnreadCount={privateUnreadCount}
+                        />
 
-                    {/* Leave Meeting button - rõ ràng, màu đỏ */}
-                    {isDirectLeaveButtonEnabled && isMeteorConnected && (
-                      <LeaveMeetingButtonContainer
-                        amIModerator={amIModerator}
-                      />
-                    )}
-                  </>
-                ) : (
-                  <>
-                    {/* Desktop: Hiển thị tất cả các nút */}
-                    {/* ĐÃ ẨN: Nút Info (!) dư thừa, tính năng đã gộp vào click tên Room
+                        {/* Leave Meeting button - rõ ràng, màu đỏ */}
+                        {isDirectLeaveButtonEnabled && isMeteorConnected && (
+                          <LeaveMeetingButtonContainer
+                            amIModerator={amIModerator}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {/* Desktop: Hiển thị tất cả các nút */}
+                        {/* ĐÃ ẨN: Nút Info (!) dư thừa, tính năng đã gộp vào click tên Room
                     <Button
                       label={intl.formatMessage({
                         id: "app.navBar.openDetailsTooltip",
@@ -954,86 +955,90 @@ class ActionsBar extends PureComponent {
                     />
                     */}
 
-                    {/* Toggle User List Sidebar */}
-                    <div style={{ position: "relative" }}>
-                      <Button
-                        label={intl.formatMessage({
-                          id: "app.userList.label",
-                          defaultMessage: "User List",
-                        })}
-                        icon="user"
-                        color="default"
-                        size="md"
-                        onClick={this.handleToggleUserList}
-                        hideLabel
-                        circle
-                        data-test="toggleUserList"
-                        aria-expanded={
-                          sidebarContent?.isOpen &&
-                          sidebarContent?.sidebarContentPanel ===
-                            PANELS.USERLIST
-                        }
-                      />
-                    </div>
-
-                    {/* Private Chats Button */}
-                    <div style={{ position: "relative" }}>
-                      <Button
-                        label={intl.formatMessage({
-                          id: "app.chat.privateChatLabel",
-                          defaultMessage: "Private Chats",
-                        })}
-                        icon="chat"
-                        color="default"
-                        size="md"
-                        onClick={this.handleTogglePrivateChat}
-                        hideLabel
-                        circle
-                        data-test="togglePrivateChats"
-                      />
-                      {privateUnreadCount > 0 && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: -4,
-                            right: -4,
-                            backgroundColor: "#ff3b30",
-                            color: "white",
-                            fontSize: "0.75rem",
-                            fontWeight: 600,
-                            padding: "2px 6px",
-                            minWidth: "18px",
-                            height: "18px",
-                            borderRadius: "9px",
-                            border: "2px solid #1c1c1e",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            pointerEvents: "none",
-                            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-                          }}
-                        >
-                          {privateUnreadCount > 99 ? "99+" : privateUnreadCount}
+                        {/* Toggle User List Sidebar */}
+                        <div style={{ position: "relative" }}>
+                          <Button
+                            label={intl.formatMessage({
+                              id: "app.userList.label",
+                              defaultMessage: "User List",
+                            })}
+                            icon="user"
+                            color="default"
+                            size="md"
+                            onClick={this.handleToggleUserList}
+                            hideLabel
+                            circle
+                            data-test="toggleUserList"
+                            aria-expanded={
+                              sidebarContent?.isOpen &&
+                              sidebarContent?.sidebarContentPanel ===
+                                PANELS.USERLIST
+                            }
+                          />
                         </div>
-                      )}
-                    </div>
 
-                    {/* Options dropdown */}
-                    <OptionsDropdownContainer
-                      amIModerator={amIModerator}
-                      isDirectLeaveButtonEnabled={isDirectLeaveButtonEnabled}
-                      showConnectionStatus={ConnectionStatusService.isEnabled()}
-                      showLeaveButton={false}
-                    />
+                        {/* Private Chats Button */}
+                        <div style={{ position: "relative" }}>
+                          <Button
+                            label={intl.formatMessage({
+                              id: "app.chat.privateChat",
+                              defaultMessage: "Private Chats",
+                            })}
+                            icon="chat"
+                            color="default"
+                            size="md"
+                            onClick={this.handleTogglePrivateChat}
+                            hideLabel
+                            circle
+                            data-test="togglePrivateChats"
+                          />
+                          {privateUnreadCount > 0 && (
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: -4,
+                                right: -4,
+                                backgroundColor: "#ff3b30",
+                                color: "white",
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                                padding: "2px 6px",
+                                minWidth: "18px",
+                                height: "18px",
+                                borderRadius: "9px",
+                                border: "2px solid #1c1c1e",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                pointerEvents: "none",
+                                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+                              }}
+                            >
+                              {privateUnreadCount > 99
+                                ? "99+"
+                                : privateUnreadCount}
+                            </div>
+                          )}
+                        </div>
 
-                    {/* Leave Meeting button - rõ ràng, màu đỏ */}
-                    {isDirectLeaveButtonEnabled && isMeteorConnected && (
-                      <LeaveMeetingButtonContainer
-                        amIModerator={amIModerator}
-                      />
+                        {/* Options dropdown */}
+                        <OptionsDropdownContainer
+                          amIModerator={amIModerator}
+                          isDirectLeaveButtonEnabled={
+                            isDirectLeaveButtonEnabled
+                          }
+                          showConnectionStatus={ConnectionStatusService.isEnabled()}
+                          showLeaveButton={false}
+                        />
+
+                        {/* Leave Meeting button - rõ ràng, màu đỏ */}
+                        {isDirectLeaveButtonEnabled && isMeteorConnected && (
+                          <LeaveMeetingButtonContainer
+                            amIModerator={amIModerator}
+                          />
+                        )}
+                      </>
                     )}
-                  </>
-                )}
                   </>
                 )}
               </Styled.Gap>
@@ -1054,93 +1059,95 @@ class ActionsBar extends PureComponent {
 
               {/* Render nhiều PrivateChatModal - mỗi chatId một popup hoặc icon */}
               {(() => {
-            // Lấy tất cả chat minimized
-            const allMinimizedChats = Object.keys(
-              this.state.openPrivateChats,
-            ).filter(
-              (chatId) => this.state.openPrivateChats[chatId]?.isMinimized,
-            );
+                // Lấy tất cả chat minimized
+                const allMinimizedChats = Object.keys(
+                  this.state.openPrivateChats,
+                ).filter(
+                  (chatId) => this.state.openPrivateChats[chatId]?.isMinimized,
+                );
 
-            // CHỈ hiển thị 1 icon minimized độc lập (icon mới nhất)
-            // Các icon còn lại sẽ chỉ hiển thị trong dock bar khi mở
-            const lastMinimizedChatId =
-              allMinimizedChats.length > 0
-                ? allMinimizedChats[allMinimizedChats.length - 1]
-                : null;
+                // CHỈ hiển thị 1 icon minimized độc lập (icon mới nhất)
+                // Các icon còn lại sẽ chỉ hiển thị trong dock bar khi mở
+                const lastMinimizedChatId =
+                  allMinimizedChats.length > 0
+                    ? allMinimizedChats[allMinimizedChats.length - 1]
+                    : null;
 
-            // Track các chatId đã render để tránh duplicate
-            const renderedChatIds = new Set();
-            const renderedChats = [];
+                // Track các chatId đã render để tránh duplicate
+                const renderedChatIds = new Set();
+                const renderedChats = [];
 
-            // Render tất cả chats (mở và minimized)
-            const allChats = Object.keys(this.state.openPrivateChats);
+                // Render tất cả chats (mở và minimized)
+                const allChats = Object.keys(this.state.openPrivateChats);
 
-            for (const chatId of allChats) {
-              // Đảm bảo mỗi chatId chỉ render 1 lần
-              if (renderedChatIds.has(chatId)) {
-                continue;
-              }
+                for (const chatId of allChats) {
+                  // Đảm bảo mỗi chatId chỉ render 1 lần
+                  if (renderedChatIds.has(chatId)) {
+                    continue;
+                  }
 
-              const chatState = this.state.openPrivateChats[chatId];
-              if (!chatState?.isOpen) continue;
+                  const chatState = this.state.openPrivateChats[chatId];
+                  if (!chatState?.isOpen) continue;
 
-              // Nếu chat đang minimized
-              if (chatState.isMinimized) {
-                // CHỈ render icon nếu nó là icon mới nhất (cuối cùng)
-                // Các icon cũ hơn sẽ KHÔNG được render ở đây, chỉ hiển thị trong dock bar
-                if (chatId !== lastMinimizedChatId) {
-                  // Không render icon cho các chat minimized cũ hơn
-                  // Chúng sẽ được hiển thị trong dock bar khi mở
-                  continue;
+                  // Nếu chat đang minimized
+                  if (chatState.isMinimized) {
+                    // CHỈ render icon nếu nó là icon mới nhất (cuối cùng)
+                    // Các icon cũ hơn sẽ KHÔNG được render ở đây, chỉ hiển thị trong dock bar
+                    if (chatId !== lastMinimizedChatId) {
+                      // Không render icon cho các chat minimized cũ hơn
+                      // Chúng sẽ được hiển thị trong dock bar khi mở
+                      continue;
+                    }
+
+                    // Đánh dấu đã render
+                    renderedChatIds.add(chatId);
+
+                    renderedChats.push(
+                      <PrivateChatModal
+                        key={`minimized-${chatId}`}
+                        chatId={chatId}
+                        isOpen={true}
+                        isMinimized={true}
+                        initialPosition={
+                          chatState.dockPosition || chatState.position
+                        }
+                        onRequestClose={() =>
+                          this.handleClosePrivateChat(chatId)
+                        }
+                        onMinimize={(position) =>
+                          this.handleMinimizePrivateChat(chatId, position)
+                        }
+                        onExpand={() => this.handleExpandPrivateChat(chatId)}
+                        onPositionUpdate={(position) =>
+                          this.handleUpdateChatPosition(chatId, position)
+                        }
+                      />,
+                    );
+                    continue;
+                  }
+
+                  // Nếu chat đang mở (không minimized), render popup
+                  renderedChatIds.add(chatId);
+                  renderedChats.push(
+                    <PrivateChatModal
+                      key={`open-${chatId}`}
+                      chatId={chatId}
+                      isOpen={chatState.isOpen}
+                      isMinimized={false}
+                      initialPosition={chatState.position}
+                      onRequestClose={() => this.handleClosePrivateChat(chatId)}
+                      onMinimize={(position) =>
+                        this.handleMinimizePrivateChat(chatId, position)
+                      }
+                      onExpand={() => this.handleExpandPrivateChat(chatId)}
+                      onPositionUpdate={(position) =>
+                        this.handleUpdateChatPosition(chatId, position)
+                      }
+                    />,
+                  );
                 }
 
-                // Đánh dấu đã render
-                renderedChatIds.add(chatId);
-
-                renderedChats.push(
-                  <PrivateChatModal
-                    key={`minimized-${chatId}`}
-                    chatId={chatId}
-                    isOpen={true}
-                    isMinimized={true}
-                    initialPosition={
-                      chatState.dockPosition || chatState.position
-                    }
-                    onRequestClose={() => this.handleClosePrivateChat(chatId)}
-                    onMinimize={(position) =>
-                      this.handleMinimizePrivateChat(chatId, position)
-                    }
-                    onExpand={() => this.handleExpandPrivateChat(chatId)}
-                    onPositionUpdate={(position) =>
-                      this.handleUpdateChatPosition(chatId, position)
-                    }
-                  />,
-                );
-                continue;
-              }
-
-              // Nếu chat đang mở (không minimized), render popup
-              renderedChatIds.add(chatId);
-              renderedChats.push(
-                <PrivateChatModal
-                  key={`open-${chatId}`}
-                  chatId={chatId}
-                  isOpen={chatState.isOpen}
-                  isMinimized={false}
-                  initialPosition={chatState.position}
-                  onRequestClose={() => this.handleClosePrivateChat(chatId)}
-                  onMinimize={(position) =>
-                    this.handleMinimizePrivateChat(chatId, position)
-                  }
-                  onExpand={() => this.handleExpandPrivateChat(chatId)}
-                  onPositionUpdate={(position) =>
-                    this.handleUpdateChatPosition(chatId, position)
-                  }
-                />,
-              );
-            }
-
-            return renderedChats;
+                return renderedChats;
               })()}
             </>
           )}
@@ -1148,38 +1155,40 @@ class ActionsBar extends PureComponent {
           {/* Render dock bar khi có nhiều chat minimized */}
           {!isOneToOneMode &&
             (() => {
-            const minimizedChats = Object.keys(
-              this.state.openPrivateChats,
-            ).filter(
-              (chatId) => this.state.openPrivateChats[chatId]?.isMinimized,
-            );
+              const minimizedChats = Object.keys(
+                this.state.openPrivateChats,
+              ).filter(
+                (chatId) => this.state.openPrivateChats[chatId]?.isMinimized,
+              );
 
-            if (minimizedChats.length <= 1) return null; // Chỉ hiển thị dock khi có nhiều hơn 1 chat
+              if (minimizedChats.length <= 1) return null; // Chỉ hiển thị dock khi có nhiều hơn 1 chat
 
-            // Loại bỏ giới hạn 3 icon, hiển thị tất cả và dùng scroll trong dock
-            const dockChats = minimizedChats;
+              // Loại bỏ giới hạn 3 icon, hiển thị tất cả và dùng scroll trong dock
+              const dockChats = minimizedChats;
 
-            // Lấy vị trí của icon minimized cuối cùng (icon mới nhất, đang hiển thị trên cùng)
-            const lastMinimizedChatId =
-              minimizedChats[minimizedChats.length - 1];
-            const lastChatState =
-              this.state.openPrivateChats[lastMinimizedChatId];
-            // Ưu tiên dùng dockPosition (vị trí đã kéo), nếu không có thì dùng position
-            const anchorPosition =
-              lastChatState?.dockPosition || lastChatState?.position || null;
+              // Lấy vị trí của icon minimized cuối cùng (icon mới nhất, đang hiển thị trên cùng)
+              const lastMinimizedChatId =
+                minimizedChats[minimizedChats.length - 1];
+              const lastChatState =
+                this.state.openPrivateChats[lastMinimizedChatId];
+              // Ưu tiên dùng dockPosition (vị trí đã kéo), nếu không có thì dùng position
+              const anchorPosition =
+                lastChatState?.dockPosition || lastChatState?.position || null;
 
-            return (
-              <PrivateChatDock
-                isOpen={this.state.isPrivateChatDockOpen}
-                minimizedChats={dockChats}
-                onClose={() => this.setState({ isPrivateChatDockOpen: false })}
-                onSelectChat={(chatId, iconPosition) =>
-                  this.handleExpandPrivateChat(chatId, iconPosition)
-                }
-                onCloseChat={(chatId) => this.handleClosePrivateChat(chatId)}
-                anchorPosition={anchorPosition || undefined}
-              />
-            );
+              return (
+                <PrivateChatDock
+                  isOpen={this.state.isPrivateChatDockOpen}
+                  minimizedChats={dockChats}
+                  onClose={() =>
+                    this.setState({ isPrivateChatDockOpen: false })
+                  }
+                  onSelectChat={(chatId, iconPosition) =>
+                    this.handleExpandPrivateChat(chatId, iconPosition)
+                  }
+                  onCloseChat={(chatId) => this.handleClosePrivateChat(chatId)}
+                  anchorPosition={anchorPosition || undefined}
+                />
+              );
             })()}
 
           {/* Activities Drawer cho mobile presenter */}
