@@ -616,11 +616,12 @@ const VideoStripWrapper = styled.div<{
     $isLandscape &&
     `
       top: 14px !important;
-      bottom: 80px !important;
+      bottom: auto !important;
+      height: calc(100dvh - 100px) !important; /* Dùng dvh để fix lỗi bị che bởi thanh URL trên iOS/Android */
       left: max(6px, env(safe-area-inset-left)) !important;
       right: auto !important;
-      width: clamp(55px, 9vw, 75px) !important; /* Thu nhỏ box cam lại để không đè nhiều lên màn hình share */
-      max-width: 75px !important;
+      width: clamp(85px, 14vw, 120px) !important; /* Thu nhỏ box cam lại để không đè nhiều lên màn hình share */
+      max-width: 120px !important;
       flex-direction: column !important;
       transform: ${
         $isStripCollapsed
