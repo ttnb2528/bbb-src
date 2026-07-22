@@ -293,7 +293,7 @@ const LayoutEngine = () => {
       top,
       left: !isRTL ? sidebarNavLeft : null,
       right: isRTL ? sidebarNavLeft : null,
-      zIndex: isMobile ? 11 : 20,
+      zIndex: isMobile ? 1011 : 1001,
     };
   };
 
@@ -339,7 +339,7 @@ const LayoutEngine = () => {
     let left = null;
     let right = 0;
 
-    const zIndex = isMobile ? 11 : 20;
+    const zIndex = isMobile ? 1011 : 1001;
 
     return {
       top,

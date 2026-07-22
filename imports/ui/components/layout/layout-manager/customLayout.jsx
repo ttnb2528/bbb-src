@@ -1145,7 +1145,7 @@ const CustomLayout = (props) => {
         right: sidebarContentRight,
         tabOrder: DEFAULT_VALUES.sidebarNavTabOrder,
         isResizable: false, // Tắt tính năng resize sidebar
-        zIndex: 20,
+        zIndex: 1001,
       },
     });
 
@@ -1164,11 +1164,19 @@ const CustomLayout = (props) => {
     // Dùng lại bannerHeight đã được khai báo ở trên (dòng 749)
     // Trên mobile: sidebar bắt đầu từ top = 0 (full screen), không cần reserve cho video strip
     // Trên desktop: đặt sidebar xuống sát dưới videoStrip Reserve Space chính xác
-    const sidebarContentTop = isMobile
+    // Nếu là Mobile hoặc màn hình xoay ngang có chiều cao quá thấp (< 600px) thì dùng full screen
+    const isLandscapeSmall =
+      windowWidth() > windowHeight() && windowHeight() < 600;
+    const forceFullScreenSidebar = isMobile || isLandscapeSmall;
+
+    const sidebarContentTop = forceFullScreenSidebar
       ? 0
-      : bannerHeight + videoStripReserveSpace + 24; // Mobile: top = 0, desktop: Floating effect top gap
-    const sidebarContentNewHeight = isMobile
-      ? windowHeight() - actionBarHeight // Mobile: full height trừ action bar
+      : bannerHeight + videoStripReserveSpace + 24; // Desktop: Floating effect top gap
+
+    const sidebarContentNewHeight = forceFullScreenSidebar
+      ? windowWidth() > windowHeight()
+        ? windowHeight()
+        : windowHeight() - actionBarHeight // Landscape: full screen height
       : windowHeight() - sidebarContentTop - actionBarHeight - 24; // Desktop: Floating effect bottom gap
     // Chat panel nằm ở bên phải màn hình, tách biệt với user panel
     const sidebarContentLeft = isMobile ? 0 : null; // Desktop: đặt từ right edge
@@ -1208,8 +1216,8 @@ const CustomLayout = (props) => {
         currentPanelType,
         tabOrder: DEFAULT_VALUES.sidebarContentTabOrder,
         isResizable: false, // Tắt tính năng resize sidebar
-        // QUAN TRỌNG: Nâng Z-Index lên 20 (cao hơn CameraDock zIndex: 10) để thả nổi gọn gàng trên mọi loại webcam layout
-        zIndex: 20,
+        // QUAN TRỌNG: Nâng Z-Index lên 1001 để thả nổi gọn gàng trên mọi loại webcam layout và navbar
+        zIndex: 1001,
       },
     });
 
