@@ -723,8 +723,7 @@ const CustomLayout = (props) => {
     const { element: fullscreenElement } = fullscreen;
     const { camerasMargin } = DEFAULT_VALUES;
 
-    const hasPresentation =
-      (isPresentationEnabled && slidesLength !== 0) || isOpen;
+    const hasPresentation = isPresentationEnabled && slidesLength !== 0;
     const isGeneralMediaOff =
       !hasPresentation &&
       !hasExternalVideo &&
@@ -978,7 +977,6 @@ const CustomLayout = (props) => {
 
     const sharedContentOpen =
       (isPresentationEnabled && presentationInput.slidesLength !== 0) ||
-      presentationInput.isOpen ||
       externalVideoInput.hasExternalVideo ||
       screenShareInput.hasScreenShare ||
       genericMainContentInput.genericContentId ||
