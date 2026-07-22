@@ -807,6 +807,13 @@ const CustomLayout = (props) => {
         const gap = 12; // Gap giữa strip và content (khớp với sidebar)
 
         if (isMobileLandscape) {
+          // Fix Rnd wrapper blocking video player clicks: limit wrapper to left edge
+          cameraDockBounds.width = 140; // covers the max 120px width of the camera strip
+          cameraDockBounds.minWidth = 140;
+          cameraDockBounds.maxWidth = 140;
+          cameraDockBounds.height = windowHeight();
+          cameraDockBounds.maxHeight = windowHeight();
+
           // Camera strip overlays the presentation in landscape mobile,
           // so we don't reduce mediaBounds width or shift it right.
           mediaBounds.width = mediaAreaWidth;

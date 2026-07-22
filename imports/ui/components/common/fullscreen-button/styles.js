@@ -1,10 +1,10 @@
-import styled from 'styled-components';
-import Button from '/imports/ui/components/common/button/component';
+import styled from "styled-components";
+import Button from "/imports/ui/components/common/button/component";
 import {
   colorTransparent,
   colorWhite,
   colorBlack,
-} from '/imports/ui/stylesheets/styled-components/palette';
+} from "/imports/ui/stylesheets/styled-components/palette";
 
 const FullscreenButtonWrapper = styled.div`
   position: absolute;
@@ -13,19 +13,21 @@ const FullscreenButtonWrapper = styled.div`
   background-color: ${colorTransparent};
   cursor: pointer;
   border: 0;
-  z-index: 2;
+  z-index: 10;
   margin: 2px;
 
   [dir="rtl"] & {
     right: auto;
-    left :0;
+    left: 0;
   }
 
   [class*="presentationZoomControls"] & {
     position: relative !important;
   }
 
-  ${({ theme }) => theme === 'dark' && `
+  ${({ theme }) =>
+    theme === "dark" &&
+    `
     background-color: rgba(0,0,0,.3);
 
     & button i {
@@ -33,7 +35,9 @@ const FullscreenButtonWrapper = styled.div`
     }
   `}
 
-  ${({ theme }) => theme === 'light' && `
+  ${({ theme }) =>
+    theme === "light" &&
+    `
     background-color: ${colorTransparent};
 
     & button i {
@@ -41,17 +45,23 @@ const FullscreenButtonWrapper = styled.div`
     }
   `}
 
-  ${({ position }) => position === 'bottom' && `
+  ${({ position }) =>
+    position === "bottom" &&
+    `
     bottom: 0;
   `}
 
-  ${({ position }) => position === 'top' && `
+  ${({ position }) =>
+    position === "top" &&
+    `
     top: 0;
   `}
 `;
 
 const FullscreenButton = styled(Button)`
-  ${({ isStyled }) => isStyled && `
+  ${({ isStyled }) =>
+    isStyled &&
+    `
     &,
     &:active,
     &:hover,
