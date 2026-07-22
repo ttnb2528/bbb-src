@@ -51,6 +51,7 @@ import VoiceActivityAdapter from '../../core/adapters/voice-activity';
 import LayoutObserver from '../layout/observer';
 import BBBLiveKitRoomContainer from '/imports/ui/components/livekit/component';
 import EcommerceLayout from '/imports/ui/components/ecommerce-layout/component';
+import AuctionLayout from '/imports/ui/components/auction-layout/component';
 import OneToOneLayoutModule from '/imports/ui/components/one-to-one-layout/component';
 
 const OneToOneLayout = OneToOneLayoutModule?.default || OneToOneLayoutModule;
@@ -563,8 +564,19 @@ class App extends Component {
         || (typeof window !== 'undefined'
           && window.location.href.includes('ecommerce=true')));
 
+    const isAuctionMode = !isOneToOneMode
+      && !isEcommerceMode
+      && ((this.props.meetingName
+          && this.props.meetingName.includes('[OVCAR]'))
+        || (metadata
+          && (metadata.meta_roomType === 'auction'
+            || metadata.roomType === 'auction'))
+        || (typeof window !== 'undefined'
+          && window.location.href.includes('auction=true')));
+
     if (typeof window !== 'undefined') {
       window.isEcommerceLive = isEcommerceMode;
+      window.isAuctionLive = isAuctionMode;
       window.isOneToOneCall = isOneToOneMode;
       try {
         if (isOneToOneMode) {
@@ -593,6 +605,16 @@ class App extends Component {
 
         {isEcommerceMode ? (
           <EcommerceLayout
+            {...this.props}
+            isAudioModalOpen={isAudioModalOpen}
+            setAudioModalIsOpen={this.setAudioModalIsOpen}
+            isVideoPreviewModalOpen={isVideoPreviewModalOpen}
+            setVideoPreviewModalIsOpen={this.setVideoPreviewModalIsOpen}
+            presentationFitToWidth={presentationFitToWidth}
+            setPresentationFitToWidth={this.setPresentationFitToWidth}
+          />
+        ) : isAuctionMode ? (
+          <AuctionLayout
             {...this.props}
             isAudioModalOpen={isAudioModalOpen}
             setAudioModalIsOpen={this.setAudioModalIsOpen}
