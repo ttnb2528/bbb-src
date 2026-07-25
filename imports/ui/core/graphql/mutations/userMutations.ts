@@ -114,6 +114,15 @@ export const SWAP_SCREENSHARE = gql`
   }
 `;
 
+export const SET_SPOTLIGHT = gql`
+  mutation SetSpotlight($userId: String!, $isSpotlighted: Boolean!) {
+    userSetSpotlight(
+      userId: $userId,
+      isSpotlighted: $isSpotlighted,
+    )
+  }
+`;
+
 export default {
   SET_CAMERA_PINNED,
   SET_RAISE_HAND,
@@ -127,4 +136,5 @@ export default {
   SET_SPEECH_LOCALE,
   USER_LEAVE_MEETING,
   SET_USER_CHAT_LOCKED,
+  SET_SPOTLIGHT,
 };

@@ -109,6 +109,7 @@ export interface User {
   sessionCurrent: sessionCurrent;
   livekit?: Livekit;
   meeting: UserMeeting;
+  isSpotlighted?: boolean;
 }
 
 export interface UserBasicInfo {
@@ -120,4 +121,5 @@ export interface UserBasicInfo {
   color: string;
   avatar: string;
   presenter?: boolean;
+  isSpotlighted?: boolean;
 }

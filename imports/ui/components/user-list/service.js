@@ -115,8 +115,16 @@ const sortUsersByCurrent = (a, b) => {
   return 0;
 };
 
+const sortUsersBySpotlight = (a, b) => {
+  if (a.isSpotlighted && b.isSpotlighted) return 0;
+  if (a.isSpotlighted) return -1;
+  if (b.isSpotlighted) return 1;
+  return 0;
+};
+
 const sortUsers = (a, b) => {
   let sort = sortUsersByCurrent(a, b);
+  if (sort === 0) sort = sortUsersBySpotlight(a, b);
   if (sort === 0) sort = sortUsersByModerator(a, b);
   if (sort === 0) sort = sortUsersByRaiseHand(a, b);
   if (sort === 0) sort = sortUsersByAway(a, b);

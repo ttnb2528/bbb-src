@@ -1,1 +1,0 @@
-left: max(-10px, env(safe-area-inset-left)) !important;

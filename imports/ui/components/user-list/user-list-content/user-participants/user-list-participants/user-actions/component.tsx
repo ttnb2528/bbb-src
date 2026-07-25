@@ -17,6 +17,7 @@ import {
   SET_PRESENTER,
   SET_LOCKED,
   SET_USER_CHAT_LOCKED,
+  SET_SPOTLIGHT,
 } from '/imports/ui/core/graphql/mutations/userMutations';
 import {
   isVideoPinEnabledForCurrentUser,
@@ -73,6 +74,16 @@ interface Writer {
 }
 
 const messages = defineMessages({
+  SpotlightUser: {
+    id: 'app.userList.menu.spotlightUser.label',
+    description: 'label for spotlight user',
+    defaultMessage: 'Spotlight user',
+  },
+  UnspotlightUser: {
+    id: 'app.userList.menu.unspotlightUser.label',
+    description: 'label for unspotlight user',
+    defaultMessage: 'Unspotlight user',
+  },
   UnpinUserWebcam: {
     id: 'app.userList.menu.webcamUnpin.label',
     description: 'label for pin user webcam',
@@ -326,6 +337,7 @@ const UserActions: React.FC<UserActionsProps> = ({
   const [setLocked] = useMutation(SET_LOCKED);
   const [setUserChatLocked] = useMutation(SET_USER_CHAT_LOCKED);
   const [userEjectCameras] = useMutation(USER_EJECT_CAMERAS);
+  const [setSpotlight] = useMutation(SET_SPOTLIGHT);
 
   const removeUser = (userId: string, banUser: boolean) => {
     if (isVoiceOnlyUser(user.userId)) {
@@ -364,6 +376,23 @@ const UserActions: React.FC<UserActionsProps> = ({
           && (item as PluginSdk.UserListDropdownSeparator)?.position
           === PluginSdk.UserListDropdownSeparatorPosition.BEFORE)),
     )),
+    {
+      allowed: currentUser.isModerator,
+      key: 'spotlightUser',
+      label: user?.isSpotlighted
+        ? intl.formatMessage(messages.UnspotlightUser)
+        : intl.formatMessage(messages.SpotlightUser),
+      onClick: () => {
+        setSpotlight({
+          variables: {
+            userId: user.userId,
+            isSpotlighted: !user?.isSpotlighted,
+          },
+        });
+        setOpenUserAction(null);
+      },
+      icon: user?.isSpotlighted ? 'unstar' : 'star',
+    },
     {
       allowed: user?.cameras?.length > 0
         && isVideoPinEnabledForCurrentUser(currentUser, isBreakout),
