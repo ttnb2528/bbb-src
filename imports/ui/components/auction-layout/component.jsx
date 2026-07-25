@@ -32,6 +32,35 @@ const shouldUseMobileShell = () => {
 const readMeta = (metadata, key) =>
   metadata?.[`meta_${key}`] ?? metadata?.[key] ?? null;
 
+/** Rewrite loopback hosts so BBB clients (Tailscale / phone) can reach OVCar. */
+const rewritePublicHost = (urlString) => {
+  if (!urlString || typeof window === "undefined") return urlString;
+  try {
+    const url = new URL(urlString);
+    const pageHost = window.location.hostname;
+    const isPageLocal =
+      pageHost === "localhost" || pageHost === "127.0.0.1";
+    const isApiLocal =
+      url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    if (isApiLocal && !isPageLocal) {
+      url.hostname = "100.125.154.13";
+    }
+    return url.origin;
+  } catch (_e) {
+    return urlString;
+  }
+};
+
+const uniqueBases = (candidates) => {
+  const out = [];
+  candidates.forEach((raw) => {
+    if (!raw) return;
+    const base = String(raw).replace(/\/$/, "");
+    if (base && !out.includes(base)) out.push(base);
+  });
+  return out;
+};
+
 const resolveOvcarToken = () => {
   try {
     const params = new URLSearchParams(window.location.search);
@@ -160,7 +189,7 @@ const AuctionLayout = (props) => {
     if (!currentMeeting) return;
 
     const metadata = currentMeeting.metadata || {};
-    const baseApiUrl =
+    const metaApi =
       readMeta(metadata, "apiUrl") ||
       (() => {
         try {
@@ -168,11 +197,10 @@ const AuctionLayout = (props) => {
         } catch (_e) {
           return null;
         }
-      })() ||
-      "http://localhost:8000";
+      })();
 
     const sfUrl =
-      readMeta(metadata, "storefrontUrl") || "http://localhost:3000";
+      readMeta(metadata, "storefrontUrl") || "http://localhost:3001";
     const mId =
       readMeta(metadata, "meetingId") ||
       currentMeeting.extId ||
@@ -180,8 +208,20 @@ const AuctionLayout = (props) => {
       Auth.meetingID;
     const lId = readMeta(metadata, "listingId");
 
-    setApiBase(String(baseApiUrl).replace(/\/$/, ""));
-    setStorefrontUrl(String(sfUrl).replace(/\/$/, ""));
+    const storefront = rewritePublicHost(sfUrl) || String(sfUrl).replace(/\/$/, "");
+    const apiCandidates = uniqueBases([
+      rewritePublicHost(metaApi),
+      metaApi,
+      storefront,
+      rewritePublicHost("http://localhost:3001"),
+      rewritePublicHost("http://localhost:8000"),
+      "http://100.125.154.13:3001",
+      "http://100.125.154.13:8000",
+      "http://localhost:3001",
+      "http://localhost:8000",
+    ]);
+
+    setStorefrontUrl(storefront);
     setMeetingId(mId);
     if (lId) setListingId(Number(lId) || lId);
 
@@ -189,16 +229,22 @@ const AuctionLayout = (props) => {
 
     let cancelled = false;
     const load = async () => {
-      try {
-        const res = await fetch(
-          `${String(baseApiUrl).replace(/\/$/, "")}/api/livestream/${mId}/details`,
-        );
-        if (!res.ok) return;
-        const json = await res.json();
-        if (!cancelled && json.success) applyDetails(json.data);
-      } catch (err) {
-        console.error("OVCAR livestream details error:", err);
+      for (const base of apiCandidates) {
+        if (cancelled) return;
+        try {
+          const res = await fetch(`${base}/api/livestream/${mId}/details`);
+          if (!res.ok) continue;
+          const json = await res.json();
+          if (!cancelled && json.success) {
+            setApiBase(base);
+            applyDetails(json.data);
+            return;
+          }
+        } catch (_err) {
+          // try next base
+        }
       }
+      console.error("OVCAR livestream details: all API bases failed", apiCandidates);
     };
     load();
 
@@ -409,6 +455,7 @@ const AuctionLayout = (props) => {
 
         <AuctionVehicleCard
           listing={listing}
+          auctionLive={auctionLive}
           storefrontUrl={storefrontUrl}
           isMobile={isMobile}
         />

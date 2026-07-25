@@ -1,6 +1,15 @@
 import React from "react";
 
-const AuctionVehicleCard = ({ listing, storefrontUrl, isMobile }) => {
+const formatMoney = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return null;
+  return `$${num.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
+};
+
+const AuctionVehicleCard = ({ listing, auctionLive, storefrontUrl, isMobile }) => {
   if (!listing) return null;
 
   const href = listing.href
@@ -17,6 +26,9 @@ const AuctionVehicleCard = ({ listing, storefrontUrl, isMobile }) => {
     .filter(Boolean)
     .join(" · ");
 
+  const currentBid = formatMoney(auctionLive?.current_bid);
+  const minNext = formatMoney(auctionLive?.min_next_bid);
+
   return (
     <a
       href={href}
@@ -31,7 +43,7 @@ const AuctionVehicleCard = ({ listing, storefrontUrl, isMobile }) => {
         display: "flex",
         gap: "10px",
         alignItems: "center",
-        maxWidth: isMobile ? "calc(100% - 24px)" : "360px",
+        maxWidth: isMobile ? "calc(100% - 24px)" : "380px",
         padding: "10px 12px",
         borderRadius: "14px",
         background: "rgba(0,0,0,0.55)",
@@ -72,7 +84,7 @@ const AuctionVehicleCard = ({ listing, storefrontUrl, isMobile }) => {
             marginBottom: "2px",
           }}
         >
-          Pinned vehicle
+          Auction vehicle
         </div>
         <div
           style={{
@@ -98,6 +110,28 @@ const AuctionVehicleCard = ({ listing, storefrontUrl, isMobile }) => {
             }}
           >
             {meta}
+          </div>
+        ) : null}
+        {currentBid ? (
+          <div
+            style={{
+              marginTop: "6px",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "8px",
+              alignItems: "baseline",
+              fontSize: "12px",
+            }}
+          >
+            <span style={{ fontWeight: 800, color: "#fff" }}>
+              {currentBid}
+            </span>
+            <span style={{ color: "rgba(255,255,255,0.55)" }}>current</span>
+            {minNext ? (
+              <span style={{ color: "rgba(255,255,255,0.55)" }}>
+                · next {minNext}
+              </span>
+            ) : null}
           </div>
         ) : null}
       </div>

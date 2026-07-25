@@ -564,15 +564,23 @@ class App extends Component {
         || (typeof window !== 'undefined'
           && window.location.href.includes('ecommerce=true')));
 
+    const meetingIdHint = String(
+      this.props.meetingId
+        || metadata?.meta_meetingId
+        || metadata?.meetingId
+        || '',
+    );
     const isAuctionMode = !isOneToOneMode
       && !isEcommerceMode
       && ((this.props.meetingName
           && this.props.meetingName.includes('[OVCAR]'))
+        || meetingIdHint.startsWith('ovcar_')
         || (metadata
           && (metadata.meta_roomType === 'auction'
             || metadata.roomType === 'auction'))
         || (typeof window !== 'undefined'
-          && window.location.href.includes('auction=true')));
+          && (window.location.href.includes('auction=true')
+            || window.location.href.includes('ovcar_'))));
 
     if (typeof window !== 'undefined') {
       window.isEcommerceLive = isEcommerceMode;
