@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useMutation } from "@apollo/client";
 import Styled from "../app/styles";
 import WebcamContainer from "../webcam/component";
 import AudioContainer from "../audio/container";
@@ -8,6 +9,9 @@ import Notifications from "../notifications/component";
 import AudioControlsContainer from "../audio/audio-graphql/audio-controls/component";
 import JoinVideoOptionsContainer from "../video-provider/video-button/container";
 import Auth from "/imports/ui/services/auth";
+import Session from "/imports/ui/services/storage/in-memory";
+import { USER_LEAVE_MEETING } from "/imports/ui/core/graphql/mutations/userMutations";
+import { MEETING_END } from "/imports/ui/components/end-meeting-confirmation/mutations";
 import useMeeting from "/imports/ui/core/hooks/useMeeting";
 import useCurrentUser from "/imports/ui/core/hooks/useCurrentUser";
 import AuctionVehicleCard from "./auction-vehicle-card";
@@ -61,12 +65,47 @@ const uniqueBases = (candidates) => {
   return out;
 };
 
+const OVCAR_TOKEN_STORAGE_KEY = "ovcar-auth-token";
+
+const persistOvcarToken = (token) => {
+  if (!token || typeof window === "undefined") return;
+  window.ovcarAuthToken = token;
+  try {
+    sessionStorage.setItem(OVCAR_TOKEN_STORAGE_KEY, token);
+  } catch (_e) {
+    // ignore
+  }
+  try {
+    localStorage.setItem(OVCAR_TOKEN_STORAGE_KEY, token);
+  } catch (_e) {
+    // ignore
+  }
+};
+
+const extractOvcarTokenFromUrl = (href) => {
+  if (!href) return null;
+  try {
+    const url = new URL(href);
+    return (
+      url.searchParams.get("userdata-ovcar_token") ||
+      url.searchParams.get("ovcar_token") ||
+      url.searchParams.get("userdata-ovcarToken") ||
+      null
+    );
+  } catch (_e) {
+    return null;
+  }
+};
+
 const resolveOvcarToken = () => {
   try {
     const params = new URLSearchParams(window.location.search);
     const fromQuery =
       params.get("userdata-ovcar_token") || params.get("ovcar_token");
-    if (fromQuery) return fromQuery;
+    if (fromQuery) {
+      persistOvcarToken(fromQuery);
+      return fromQuery;
+    }
   } catch (_e) {
     // ignore
   }
@@ -76,7 +115,24 @@ const resolveOvcarToken = () => {
   }
 
   try {
-    if (Auth?.userdata?.ovcar_token) return Auth.userdata.ovcar_token;
+    const fromSession = sessionStorage.getItem(OVCAR_TOKEN_STORAGE_KEY);
+    if (fromSession) return fromSession;
+  } catch (_e) {
+    // ignore
+  }
+
+  try {
+    const fromLocal = localStorage.getItem(OVCAR_TOKEN_STORAGE_KEY);
+    if (fromLocal) return fromLocal;
+  } catch (_e) {
+    // ignore
+  }
+
+  try {
+    if (Auth?.userdata?.ovcar_token) {
+      persistOvcarToken(Auth.userdata.ovcar_token);
+      return Auth.userdata.ovcar_token;
+    }
   } catch (_e) {
     // ignore
   }
@@ -126,6 +182,21 @@ const AuctionLayout = (props) => {
   const [nowTick, setNowTick] = useState(Date.now());
   const lastBidAtRef = useRef(null);
   const pusherRef = useRef(null);
+  const [userLeaveMeeting] = useMutation(USER_LEAVE_MEETING);
+  const [meetingEnd] = useMutation(MEETING_END);
+
+  const handleExitLive = async () => {
+    try {
+      if (isHost) {
+        await meetingEnd();
+        return;
+      }
+      await userLeaveMeeting();
+      Session.setItem("codeError", "680");
+    } catch (error) {
+      console.error("Không thể thoát phiên auction:", error);
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => setIsRealDesktop(!shouldUseMobileShell());
@@ -142,6 +213,33 @@ const AuctionLayout = (props) => {
 
   useEffect(() => {
     setAuthToken(resolveOvcarToken());
+
+    const syncToken = () => {
+      const token = resolveOvcarToken();
+      if (token) setAuthToken(token);
+    };
+
+    const onMessage = (event) => {
+      const data = event?.data;
+      if (!data || typeof data !== "object") return;
+      if (
+        (data.type === "ovcar:auth" || data.type === "OVCAR_AUTH") &&
+        typeof data.token === "string" &&
+        data.token
+      ) {
+        persistOvcarToken(data.token);
+        setAuthToken(data.token);
+      }
+    };
+
+    window.addEventListener("focus", syncToken);
+    document.addEventListener("visibilitychange", syncToken);
+    window.addEventListener("message", onMessage);
+    return () => {
+      window.removeEventListener("focus", syncToken);
+      document.removeEventListener("visibilitychange", syncToken);
+      window.removeEventListener("message", onMessage);
+    };
   }, []);
 
   useEffect(() => {
@@ -355,10 +453,59 @@ const AuctionLayout = (props) => {
   ]);
 
   const handleLogin = () => {
-    const redirect = `${storefrontUrl}/login?redirect=${encodeURIComponent(
-      `${storefrontUrl}/live/${meetingId || ""}`,
+    const redirectTarget = `${storefrontUrl}/live/${meetingId || ""}`;
+    const loginUrl = `${storefrontUrl}/login?redirect=${encodeURIComponent(
+      redirectTarget,
     )}`;
-    window.open(redirect, "_blank", "noopener,noreferrer");
+
+    // Không dùng noopener để tab meeting có thể đọc join URL (cùng origin BBB)
+    // sau khi storefront login xong và redirect sang bigbluebutton/api/join?...&userdata-ovcar_token=
+    const popup = window.open(
+      loginUrl,
+      "ovcar_login",
+      "width=480,height=720,menubar=no,toolbar=no,noopener=no",
+    );
+
+    if (!popup) {
+      window.location.href = loginUrl;
+      return;
+    }
+
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      if (!popup || popup.closed) {
+        window.clearInterval(timer);
+        const token = resolveOvcarToken();
+        if (token) setAuthToken(token);
+        return;
+      }
+
+      // Timeout 3 phút
+      if (Date.now() - startedAt > 180000) {
+        window.clearInterval(timer);
+        return;
+      }
+
+      try {
+        const href = popup.location.href;
+        if (!href || href === "about:blank") return;
+
+        const tokenFromUrl = extractOvcarTokenFromUrl(href);
+        if (tokenFromUrl) {
+          persistOvcarToken(tokenFromUrl);
+          setAuthToken(tokenFromUrl);
+          window.clearInterval(timer);
+          try {
+            popup.close();
+          } catch (_e) {
+            // ignore
+          }
+          return;
+        }
+      } catch (_err) {
+        // Cross-origin (đang ở storefront) — chờ tới khi nhảy sang BBB join URL
+      }
+    }, 400);
   };
 
   const handleBid = async (amount) => {
@@ -422,18 +569,154 @@ const AuctionLayout = (props) => {
           dangerouslySetInnerHTML={{
             __html: `
           body.ovcar-auction-live-active { overflow: hidden !important; }
+
+          /* Ẩn tooltip/toast "Click Unmute..." trong OVCar */
+          body.ovcar-auction-live-active [data-debug="live-watcher"],
+          .ovcar-auction-controls [data-debug="live-watcher"] {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            overflow: hidden !important;
+          }
+
           .ovcar-auction-video-wrapper [data-test="videoStripWrapper"],
           .ovcar-auction-video-wrapper [data-test="videoStrip"] {
             display: none !important;
           }
-          .ovcar-auction-video-wrapper video {
-            object-fit: contain !important;
+
+          /* Ép webcam/avatar phủ toàn màn hình trong layout OVCar */
+          .ovcar-auction-video-wrapper,
+          .ovcar-auction-video-wrapper > div {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: none !important;
+            max-height: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            transform: none !important;
+          }
+
+          .ovcar-auction-video-wrapper #cameraDock,
+          .ovcar-auction-video-wrapper #cameraDock > div,
+          .ovcar-auction-video-wrapper #cameraDock div {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: none !important;
+            max-height: none !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            overflow: hidden !important;
+            transform: none !important;
+            gap: 0 !important;
+            row-gap: 0 !important;
+            column-gap: 0 !important;
+            grid-gap: 0 !important;
+          }
+
+          .ovcar-auction-video-wrapper #cameraDock,
+          .ovcar-auction-video-wrapper #cameraDock > div {
+            position: absolute !important;
+            inset: 0 !important;
+          }
+
+          .ovcar-auction-video-wrapper [data-test="webcamItem"],
+          .ovcar-auction-video-wrapper [data-test="webcamItemTalkingUser"],
+          .ovcar-auction-video-wrapper .videoContainer,
+          .ovcar-auction-video-wrapper [data-test="videoContainer"],
+          .ovcar-auction-video-wrapper [data-test="mirroredVideoContainer"],
+          .ovcar-auction-video-wrapper [data-test="webcamItem"] > div,
+          .ovcar-auction-video-wrapper [data-test="webcamItemTalkingUser"] > div {
+            position: absolute !important;
+            inset: 0 !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: none !important;
+            max-height: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+          }
+
+          .ovcar-auction-video-wrapper video,
+          .ovcar-auction-video-wrapper [data-test="videoContainer"] video,
+          .ovcar-auction-video-wrapper [data-test="mirroredVideoContainer"] video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
             object-position: center center !important;
             background: transparent !important;
           }
-          body.ovcar-auction-live-active .ReactModalPortal,
+
+          .ovcar-auction-video-wrapper [class*="videoInfo"],
+          .ovcar-auction-video-wrapper [class*="dropdown"],
+          .ovcar-auction-video-wrapper [data-test="videoListItem"] span,
+          .ovcar-auction-video-wrapper [data-test="videoListItem"] button {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+          }
+
+          body.ovcar-auction-live-active .ReactModalPortal {
+            position: relative;
+            z-index: 20000 !important;
+          }
+          body.ovcar-auction-live-active .ReactModalPortal .ReactModal__Overlay,
+          body.ovcar-auction-live-active .ReactModalPortal .modalOverlay {
+            z-index: 20000 !important;
+          }
+          body.ovcar-auction-live-active .ReactModalPortal .ReactModal__Content {
+            z-index: 20001 !important;
+          }
+          body.ovcar-auction-live-active .ReactModalPortal [data-test="audioModal"],
+          body.ovcar-auction-live-active .ReactModalPortal [data-test="webcamSettingsModal"] {
+            z-index: 20001 !important;
+          }
+
           body.ovcar-auction-live-active #modals-container {
+            position: relative !important;
             z-index: 25000 !important;
+          }
+          body.ovcar-auction-live-active #modals-container .modal-low,
+          body.ovcar-auction-live-active #modals-container .modal-medium,
+          body.ovcar-auction-live-active #modals-container .modal-high {
+            display: block !important;
+            z-index: 25001 !important;
+          }
+          body.ovcar-auction-live-active #modals-container .ReactModal__Overlay,
+          body.ovcar-auction-live-active #modals-container .modalOverlay {
+            z-index: 25001 !important;
+          }
+          body.ovcar-auction-live-active #modals-container [data-test="webcamSettingsModal"],
+          body.ovcar-auction-live-active #modals-container [data-test="audioModal"] {
+            display: block !important;
+            position: relative !important;
+            z-index: 25002 !important;
+            pointer-events: auto !important;
+          }
+
+          #app[aria-hidden="true"] #ovcar-auction-layout {
+            pointer-events: none !important;
+          }
+          #app[aria-hidden="true"] #ovcar-auction-layout * {
+            pointer-events: none !important;
           }
         `,
           }}
@@ -453,22 +736,41 @@ const AuctionLayout = (props) => {
           <WebcamContainer />
         </div>
 
-        <AuctionVehicleCard
-          listing={listing}
-          auctionLive={auctionLive}
-          storefrontUrl={storefrontUrl}
-          isMobile={isMobile}
-        />
+        <div
+          className="ovcar-auction-left-stack"
+          style={{
+            position: "absolute",
+            bottom: isMobile ? "240px" : "24px",
+            left: isMobile ? "12px" : "20px",
+            zIndex: 20,
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            alignItems: "stretch",
+            width: isMobile ? "min(260px, calc(100% - 24px))" : "280px",
+            maxWidth: isMobile ? "calc(100% - 24px)" : "280px",
+            pointerEvents: "none",
+          }}
+        >
+          <AuctionVehicleCard
+            listing={listing}
+            auctionLive={auctionLive}
+            storefrontUrl={storefrontUrl}
+            isMobile={isMobile}
+          />
 
-        <AuctionBidPanel
-          auctionLive={auctionLive}
-          isMobile={isMobile}
-          isLoggedIn={Boolean(authToken)}
-          isSubmitting={isSubmittingBid}
-          onBid={handleBid}
-          onLogin={handleLogin}
-          serverNowMs={serverNowMs}
-        />
+          {!isHost && (
+            <AuctionBidPanel
+              auctionLive={auctionLive}
+              isMobile={isMobile}
+              isLoggedIn={Boolean(authToken)}
+              isSubmitting={isSubmittingBid}
+              onBid={handleBid}
+              onLogin={handleLogin}
+              serverNowMs={serverNowMs}
+            />
+          )}
+        </div>
 
         <AuctionChat
           isMobile={isMobile}
@@ -485,19 +787,52 @@ const AuctionLayout = (props) => {
 
         {!hideActionsBar && (
           <div
+            className="ovcar-auction-controls"
             style={{
               position: "absolute",
-              right: isMobile ? "10px" : "20px",
+              ...(isMobile
+                ? { left: "10px", right: "auto" }
+                : { right: "392px" }),
               bottom: isMobile ? "10px" : "24px",
-              zIndex: 30,
+              zIndex: 50,
               display: "flex",
-              flexDirection: "column",
+              flexDirection: "row",
               gap: "10px",
               alignItems: "center",
             }}
           >
-            <AudioControlsContainer />
-            {isHost ? <JoinVideoOptionsContainer /> : null}
+            {isHost && (
+              <>
+                <AudioControlsContainer />
+                <JoinVideoOptionsContainer />
+              </>
+            )}
+            <button
+              type="button"
+              className="ovcar-auction-exit-btn"
+              onClick={handleExitLive}
+              aria-label={isHost ? "Kết thúc phiên" : "Thoát phiên"}
+              title={isHost ? "Kết thúc phiên" : "Thoát phiên"}
+              style={{
+                width: isMobile ? "40px" : "44px",
+                height: isMobile ? "40px" : "44px",
+                borderRadius: "50%",
+                border: "1px solid rgba(239,68,68,0.45)",
+                background: "rgba(239, 68, 68, 0.88)",
+                color: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: isMobile ? "18px" : "22px",
+                fontWeight: 700,
+                lineHeight: 1,
+                cursor: "pointer",
+                boxShadow: "0 10px 28px rgba(239,68,68,0.28)",
+                flexShrink: 0,
+              }}
+            >
+              ✕
+            </button>
           </div>
         )}
       </Styled.Layout>

@@ -128,11 +128,11 @@ const AuctionChat = ({ isMobile, isHost, bidEvents = [] }) => {
       style={{
         position: "absolute",
         bottom: isMobile ? "10px" : "24px",
-        left: isMobile ? "10px" : "auto",
-        right: isMobile ? (isHost ? "112px" : "64px") : isHost ? "190px" : "80px",
+        left: isMobile ? "62px" : "auto",
+        right: isMobile ? "10px" : "20px",
         width: isMobile ? "auto" : "360px",
-        height: isMobile ? "220px" : "34%",
-        zIndex: 10,
+        height: isMobile ? "320px" : "55%",
+        zIndex: 40,
         pointerEvents: "auto",
         display: "flex",
         flexDirection: "column",
@@ -280,7 +280,7 @@ const AuctionChat = ({ isMobile, isHost, bidEvents = [] }) => {
         onSubmit={handleSend}
         style={{
           display: "flex",
-          marginLeft: isMobile ? "52px" : "0",
+          marginLeft: "0",
           marginRight: "0",
           maxWidth: "none",
           boxSizing: "border-box",

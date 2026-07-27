@@ -20,6 +20,7 @@ coverage
 .browserslistrc
 
 # IDE/system
+.cursor
 .vscode
 .idea
 .DS_Store

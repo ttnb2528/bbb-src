@@ -36,14 +36,12 @@ const AuctionVehicleCard = ({ listing, auctionLive, storefrontUrl, isMobile }) =
       rel="noopener noreferrer"
       className="ovcar-auction-vehicle-card"
       style={{
-        position: "absolute",
-        top: isMobile ? "12px" : "20px",
-        left: isMobile ? "12px" : "20px",
-        zIndex: 20,
+        position: "relative",
         display: "flex",
         gap: "10px",
         alignItems: "center",
-        maxWidth: isMobile ? "calc(100% - 24px)" : "380px",
+        width: "100%",
+        maxWidth: "100%",
         padding: "10px 12px",
         borderRadius: "14px",
         background: "rgba(0,0,0,0.55)",
@@ -53,6 +51,8 @@ const AuctionVehicleCard = ({ listing, auctionLive, storefrontUrl, isMobile }) =
         textDecoration: "none",
         color: "white",
         boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+        pointerEvents: "auto",
+        boxSizing: "border-box",
       }}
     >
       <div

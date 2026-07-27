@@ -57,11 +57,9 @@ const AuctionBidPanel = ({
     <div
       className="ovcar-auction-bid-panel"
       style={{
-        position: "absolute",
-        top: isMobile ? "78px" : "96px",
-        right: isMobile ? "12px" : "20px",
-        zIndex: 20,
-        width: isMobile ? "min(220px, calc(100% - 24px))" : "260px",
+        position: "relative",
+        width: "100%",
+        maxWidth: "100%",
         padding: "12px",
         borderRadius: "14px",
         background: "rgba(0,0,0,0.58)",
@@ -70,6 +68,8 @@ const AuctionBidPanel = ({
         border: "1px solid rgba(255,255,255,0.18)",
         color: "white",
         boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+        pointerEvents: "auto",
+        boxSizing: "border-box",
       }}
     >
       <div style={{ fontSize: "11px", fontWeight: 700, opacity: 0.7 }}>
