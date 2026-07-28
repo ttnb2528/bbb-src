@@ -11,6 +11,7 @@ const USERS_BASIC_INFO_SUBSCRIPTION = gql`
       role
       avatar
       presenter
+      isSpotlighted
     }
   }
 `;

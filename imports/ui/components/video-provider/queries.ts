@@ -73,6 +73,7 @@ export const GRID_USERS_SUBSCRIPTION = gql`
       userId
       nameSortable
       pinned
+      isSpotlighted
       away
       disconnected
       role

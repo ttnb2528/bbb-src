@@ -396,6 +396,8 @@ class VideoList extends Component<VideoListProps, VideoListState> {
       (item) => item.type !== VIDEO_TYPES.GRID && item.stream === focusedId,
     );
 
+
+
     if (!stageStream) {
       stageStream = streams.find((item) => isPresenterItem(item));
     }
@@ -862,6 +864,11 @@ class VideoList extends Component<VideoListProps, VideoListState> {
         return true;
       })
       .sort((a, b) => {
+        const aIsSpotlighted = (a as any).user?.isSpotlighted || (a as any).isSpotlighted;
+        const bIsSpotlighted = (b as any).user?.isSpotlighted || (b as any).isSpotlighted;
+        if (aIsSpotlighted && !bIsSpotlighted) return -1;
+        if (!aIsSpotlighted && bIsSpotlighted) return 1;
+
         const aIsPresenter = isPresenterItem(a) || isModeratorItem(a);
         const bIsPresenter = isPresenterItem(b) || isModeratorItem(b);
         if (aIsPresenter && !bIsPresenter) return -1;

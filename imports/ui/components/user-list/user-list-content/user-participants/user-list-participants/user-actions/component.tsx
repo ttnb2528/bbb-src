@@ -391,7 +391,7 @@ const UserActions: React.FC<UserActionsProps> = ({
         });
         setOpenUserAction(null);
       },
-      icon: user?.isSpotlighted ? 'unstar' : 'star',
+      icon: user?.isSpotlighted ? 'presentation' : 'presentation',
     },
     {
       allowed: user?.cameras?.length > 0

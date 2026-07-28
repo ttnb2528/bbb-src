@@ -49,6 +49,11 @@ const messages = defineMessages({
     id: "app.userList.you",
     description: "Text for identifying your user",
   },
+  spotlighted: {
+    id: "app.userList.spotlighted",
+    description: "Text for identifying spotlighted user",
+    defaultMessage: "Spotlighted",
+  },
 });
 
 const { isChrome, isFirefox, isEdge } = browserInfo;
@@ -215,6 +220,15 @@ const UserListItem: React.FC<UserListItemProps> = ({
         )}
         &nbsp;
         {intl.formatMessage(messages.sharingWebcam)}
+      </span>,
+    );
+  }
+  if (user?.isSpotlighted) {
+    subs.push(
+      <span key={uniqueId("spotlight-")}>
+        <Icon iconName="pin-video_on" />
+        &nbsp;
+        {intl.formatMessage(messages.spotlighted)}
       </span>,
     );
   }

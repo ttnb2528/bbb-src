@@ -22,6 +22,7 @@ import { Output } from "/imports/ui/components/layout/layoutTypes";
 import { VideoItem } from "./types";
 import { debounce } from "/imports/utils/debounce";
 import useSettings from "/imports/ui/services/settings/hooks/useSettings";
+import { sortVideoStreams } from "./stream-sorting";
 import { SETTINGS } from "/imports/ui/services/settings/enums";
 // import { useStorageKey } removed
 import ConnectionStatus from "/imports/ui/core/graphql/singletons/connectionStatus";
@@ -106,6 +107,10 @@ const VideoProviderContainer: React.FC<VideoProviderContainerProps> = (
       (gu: any) => !streams.some((s: any) => s.userId === gu.userId),
     );
     usersVideo = usersVideo.concat(gridUsersFiltered);
+    
+    // Sort again to ensure GridItems are ordered correctly (e.g. if a GridItem is spotlighted)
+    const { defaultSorting: DEFAULT_SORTING } = window.meetingClientSettings.public.kurento.cameraSortingModes;
+    usersVideo = sortVideoStreams(usersVideo, DEFAULT_SORTING);
   }
 
   if (

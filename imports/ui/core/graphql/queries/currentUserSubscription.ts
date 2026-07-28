@@ -39,6 +39,7 @@ subscription userCurrentSubscription {
     speechLocale
     captionLocale
     userId
+    isSpotlighted
     meeting {
       ended
       endedReasonCode

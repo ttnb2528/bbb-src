@@ -46,6 +46,7 @@ export const USER_LIST_SUBSCRIPTION = gql`
       pinned
       locked
       authed
+      isSpotlighted
       mobile
       bot
       guest

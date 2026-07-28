@@ -44,6 +44,7 @@ import {
   DesktopPageSizes,
   MobilePageSizes,
 } from '/imports/ui/Types/meetingClientSettings';
+import useUsersBasicInfo from '/imports/ui/core/hooks/useUsersBasicInfo';
 import logger from '/imports/startup/client/logger';
 import useDeduplicatedSubscription from '/imports/ui/core/hooks/useDeduplicatedSubscription';
 import { useMeetingIsBreakout } from '/imports/ui/components/app/service';
@@ -62,6 +63,7 @@ const useVideoStreamsSubscription = createUseSubscription(
 
 export const useStreams = () => {
   const { data, loading, errors } = useVideoStreamsSubscription();
+  const { data: usersInfo } = useUsersBasicInfo((u) => ({ userId: u.userId, isSpotlighted: u.isSpotlighted }));
 
   if (loading) return [];
 
@@ -101,7 +103,10 @@ export const useStreams = () => {
         name: user?.name || '',
         nameSortable: user?.nameSortable || '',
         userId: user?.userId || '',
-        user,
+        user: {
+          ...user,
+          isSpotlighted: usersInfo?.find((u) => u.userId === user?.userId)?.isSpotlighted ?? user?.isSpotlighted ?? false,
+        },
         floor: voice?.floor ?? false,
         lastFloorTime: voice?.lastFloorTime ?? '0',
         voice,
@@ -438,11 +443,11 @@ export const useVideoStreams = () => {
     const [filtered, others] = partition(
       streams,
       (vs: StreamItem) => videoService.isLocalStream(vs.stream)
-        || (vs.type === VIDEO_TYPES.STREAM && vs.user?.pinned),
+        || (vs.type === VIDEO_TYPES.STREAM && (vs.user?.pinned || vs.user?.isSpotlighted)),
     );
     const [pin, mine] = partition(
       filtered,
-      (vs: StreamItem) => vs.type === VIDEO_TYPES.STREAM && vs.user?.pinned,
+      (vs: StreamItem) => vs.type === VIDEO_TYPES.STREAM && (vs.user?.pinned || vs.user?.isSpotlighted),
     );
 
     totalNumberOfOtherStreams = others.length;

@@ -3,6 +3,7 @@ import { VIDEO_TYPES } from './enums';
 export type User = {
   userId: string;
   pinned: boolean;
+  isSpotlighted: boolean;
   nameSortable: string;
   name: string;
   away: boolean;
