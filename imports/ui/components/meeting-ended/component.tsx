@@ -383,6 +383,59 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
   }, [endedBy]);
 
   const isOneToOneSession = isOneToOneCall || oneToOneRole === 'caller' || oneToOneRole === 'callee';
+  const isOvcarAuction = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    if (isOneToOneSession) return false;
+
+    const win = window as Window & { isAuctionLive?: boolean };
+    if (win.isAuctionLive === true) return true;
+    if (document.body?.classList?.contains('ovcar-auction-live-active')) return true;
+
+    const meetingIdHint = String(meetingId || '').toLowerCase();
+    if (meetingIdHint.startsWith('ovcar_')) return true;
+
+    const name = String(meetingName || '');
+    if (name.includes('[OVCAR]')) return true;
+
+    const meta = meetingMetadata as {
+      meta_roomType?: string;
+      roomType?: string;
+    } | null;
+    const roomType = String(meta?.meta_roomType || meta?.roomType || '')
+      .toLowerCase()
+      .trim();
+    if (roomType === 'auction') return true;
+
+    try {
+      const href = window.location.href.toLowerCase();
+      if (href.includes('auction=true') || href.includes('ovcar_')) return true;
+    } catch {
+      // ignore
+    }
+
+    return false;
+  }, [isOneToOneSession, meetingId, meetingMetadata, meetingName]);
+
+  useEffect(() => {
+    if (!isOvcarAuction || typeof document === 'undefined') return undefined;
+
+    document.body.classList.add('ovcar-auction-ended');
+    const linkId = 'ovcar-auction-ended-fonts';
+    let link = document.getElementById(linkId) as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement('link');
+      link.id = linkId;
+      link.rel = 'stylesheet';
+      link.href =
+        'https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap';
+      document.head.appendChild(link);
+    }
+
+    return () => {
+      document.body.classList.remove('ovcar-auction-ended');
+    };
+  }, [isOvcarAuction]);
+
   const isMobileDevice = useMemo(() => {
     if (typeof window === 'undefined') return false;
     const userAgent = window.navigator.userAgent || '';
@@ -560,6 +613,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
 
   const shouldShowOkayButton = useMemo(() => (
     isOneToOneSession
+    || isOvcarAuction
     || hasPopupParent
     || isMobileDevice
     || isURL(logoutUrl, {
@@ -568,7 +622,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
       // @ts-ignore
       allow_numeric_tld: true,
     })
-  ), [hasPopupParent, isMobileDevice, isOneToOneSession, logoutUrl]);
+  ), [hasPopupParent, isMobileDevice, isOneToOneSession, isOvcarAuction, logoutUrl]);
   const shouldCloseOnlyOnOkay = isOneToOneSession || hasPopupParent || isMobileDevice;
   const handleOkayPressStart = useCallback(() => {
     if (!shouldCloseOnlyOnOkay || immediateCloseTriggeredRef.current) return;
@@ -580,6 +634,10 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
   }, [attemptImmediatePopupClose, shouldCloseOnlyOnOkay]);
 
   const endDescription = useMemo(() => {
+    if (isOvcarAuction) {
+      return 'You can return to the listing to rejoin or keep browsing.';
+    }
+
     if (!isOneToOneSession) {
       return intl.formatMessage(intlMessage.messageEnded);
     }
@@ -597,10 +655,28 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
     }
 
     return intl.formatMessage(intlMessage.oneToOneRejectedMessage);
-  }, [intl, isOneToOneSession, oneToOneEndReason, oneToOneEverConnected, oneToOneRole]);
+  }, [intl, isOneToOneSession, isOvcarAuction, oneToOneEndReason, oneToOneEverConnected, oneToOneRole]);
+
+  const ovcarEndTitle = useMemo(() => {
+    if (!isOvcarAuction) return null;
+    if (!isEmpty(normalizedEndedBy)) {
+      return `${normalizedEndedBy} ended this live session`;
+    }
+    const code = String(meetingEndedCode || joinErrorCode || '');
+    if (code === '430' || code === '403' || code === 'acl-not-allowed') {
+      return "You've left the live auction";
+    }
+    if (code === '410' || code === 'end-meeting' || !code) {
+      return 'Live auction ended';
+    }
+    return "You've left the live auction";
+  }, [isOvcarAuction, joinErrorCode, meetingEndedCode, normalizedEndedBy]);
 
   const logoutButton = useMemo(() => {
     const { locale } = intl;
+    const okayLabel = isOvcarAuction
+      ? 'Back to OVCAR'
+      : intl.formatMessage(intlMessage.buttonOkay);
 
     return (
       (
@@ -611,11 +687,12 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
             && setLearningDashboardCookie(learningDashboardAccessToken, meetingId, learningDashboardBase) === true
               ? (
                 <>
-                  <Styled.Text>
+                  <Styled.Text $ovcarAuction={isOvcarAuction}>
                     {intl.formatMessage(intlMessage.open_activity_report_btn)}
                   </Styled.Text>
 
                   <Styled.MeetingEndedButton
+                    $ovcarAuction={isOvcarAuction}
                     color="default"
                     onClick={() => openLearningDashboardUrl(learningDashboardAccessToken,
                       meetingId,
@@ -631,12 +708,13 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
                 </>
               ) : null
           }
-          <Styled.Text>
+          <Styled.Text $ovcarAuction={isOvcarAuction}>
             {endDescription}
           </Styled.Text>
           {
             shouldShowOkayButton ? (
               <Styled.MeetingEndedButton
+                $ovcarAuction={isOvcarAuction}
                 color="primary"
                 onMouseDown={handleOkayPressStart}
                 onTouchStart={handleOkayPressStart}
@@ -645,7 +723,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
                 aria-details={intl.formatMessage(intlMessage.confirmDesc)}
                 data-test="redirectButton"
               >
-                {intl.formatMessage(intlMessage.buttonOkay)}
+                {okayLabel}
               </Styled.MeetingEndedButton>
             ) : null
           }
@@ -662,6 +740,7 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
     intl,
     isBreakout,
     isModerator,
+    isOvcarAuction,
     learningDashboardAccessToken,
     learningDashboardBase,
     meetingId,
@@ -734,13 +813,13 @@ const MeetingEnded: React.FC<MeetingEndedProps> = ({
   }
 
   return (
-    <Styled.Parent>
-      <Styled.Modal data-test="meetingEndedModal">
+    <Styled.Parent $ovcarAuction={isOvcarAuction}>
+      <Styled.Modal data-test="meetingEndedModal" $ovcarAuction={isOvcarAuction}>
         <Styled.Content>
-          <Styled.Title>
-            {generateEndMessage(joinErrorCode, meetingEndedCode, endedBy)}
+          <Styled.Title $ovcarAuction={isOvcarAuction}>
+            {ovcarEndTitle || generateEndMessage(joinErrorCode, meetingEndedCode)}
           </Styled.Title>
-          {(allowRedirect || isOneToOneSession) ? logoutButton : null}
+          {(allowRedirect || isOneToOneSession || isOvcarAuction) ? logoutButton : null}
         </Styled.Content>
       </Styled.Modal>
     </Styled.Parent>

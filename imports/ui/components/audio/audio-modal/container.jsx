@@ -89,7 +89,7 @@ const AudioModalContainer = (props) => {
     window.meetingClientSettings.public.media.localEchoTest
   );
 
-  const { isEcommerceLive } = window;
+  const { isEcommerceLive, isAuctionLive } = window;
   const isOneToOneCall = (() => {
     if (typeof window === 'undefined') return false;
     const queryParams = new URLSearchParams(window.location.search);
@@ -102,7 +102,9 @@ const AudioModalContainer = (props) => {
       || ['one-to-one', 'one_to_one', '1-1', '1v1', 'one2one'].includes(queryMode)
     );
   })();
-  const forceListenOnlyAttendee = (forceListenOnly || isEcommerceLive) && !isModerator;
+  // OVCAR auction + OVBAY ecommerce: viewers receive audio only (no mic publish).
+  const forceListenOnlyAttendee = (forceListenOnly || isEcommerceLive || isAuctionLive)
+    && !isModerator;
   const reactiveInputDeviceId = useReactiveVar(
     AudioManager._inputDeviceId.value,
   );
