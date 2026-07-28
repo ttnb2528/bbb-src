@@ -39,7 +39,11 @@ const shouldUseMobileShell = () => {
 const readMeta = (metadata, key) =>
   metadata?.[`meta_${key}`] ?? metadata?.[key] ?? null;
 
-/** Rewrite loopback hosts so BBB clients (Tailscale / phone) can reach OVCar. */
+/** Public OVCar deploy (no domain yet). BBB clients must reach this origin. */
+const OVCAR_PUBLIC_ORIGIN = "http://159.198.42.40:8082";
+const OVCAR_PUBLIC_HOST = "159.198.42.40";
+
+/** Rewrite loopback / old Tailscale hosts so BBB clients can reach OVCar. */
 const rewritePublicHost = (urlString) => {
   if (!urlString || typeof window === "undefined") return urlString;
   try {
@@ -49,8 +53,9 @@ const rewritePublicHost = (urlString) => {
       pageHost === "localhost" || pageHost === "127.0.0.1";
     const isApiLocal =
       url.hostname === "localhost" || url.hostname === "127.0.0.1";
-    if (isApiLocal && !isPageLocal) {
-      url.hostname = "100.125.154.13";
+    const isLegacyTailscale = url.hostname === "100.125.154.13";
+    if ((isApiLocal && !isPageLocal) || isLegacyTailscale) {
+      return OVCAR_PUBLIC_ORIGIN;
     }
     return url.origin;
   } catch (_e) {
@@ -68,13 +73,14 @@ const uniqueBases = (candidates) => {
   return out;
 };
 
-/** Prefer Laravel :8000 for cross-origin BBB clients (Next :3001 has no CORS). */
+/**
+ * Resolve OVCar API bases for livestream bid/deposit calls.
+ * Prefer meeting metadata, then the public deploy origin.
+ */
 const buildApiCandidates = (metaApi, storefront) => {
   const pageHost =
     typeof window !== "undefined" ? window.location.hostname : "localhost";
   const onLoopback = pageHost === "localhost" || pageHost === "127.0.0.1";
-  const tailscaleFe = "http://100.125.154.13:3001";
-  const tailscaleBe = "http://100.125.154.13:8000";
 
   if (onLoopback) {
     return uniqueBases([
@@ -84,21 +90,17 @@ const buildApiCandidates = (metaApi, storefront) => {
       "http://localhost:8000",
       "http://127.0.0.1:8000",
       "http://localhost:3001",
-      tailscaleBe,
-      tailscaleFe,
+      OVCAR_PUBLIC_ORIGIN,
     ]);
   }
 
-  // Browser is on BBB / Tailscale host — hit Laravel directly first.
+  // Browser is on BBB / phone / public host — prefer public OVCar.
   return uniqueBases([
-    tailscaleBe,
-    rewritePublicHost("http://localhost:8000"),
     rewritePublicHost(metaApi),
     metaApi,
     rewritePublicHost(storefront),
     storefront,
-    tailscaleFe,
-    rewritePublicHost("http://localhost:3001"),
+    OVCAR_PUBLIC_ORIGIN,
   ]);
 };
 
@@ -233,8 +235,8 @@ const AuctionLayout = (props) => {
   );
   const isMobile = !isRealDesktop;
 
-  const [apiBase, setApiBase] = useState("http://localhost:8000");
-  const [storefrontUrl, setStorefrontUrl] = useState("http://localhost:3000");
+  const [apiBase, setApiBase] = useState(OVCAR_PUBLIC_ORIGIN);
+  const [storefrontUrl, setStorefrontUrl] = useState(OVCAR_PUBLIC_ORIGIN);
   const [meetingId, setMeetingId] = useState(null);
   const [listingId, setListingId] = useState(null);
   const [listing, setListing] = useState(null);
@@ -570,7 +572,7 @@ const AuctionLayout = (props) => {
 
     const metadata = currentMeeting.metadata || {};
     const sfUrl =
-      readMeta(metadata, "storefrontUrl") || "http://localhost:3001";
+      readMeta(metadata, "storefrontUrl") || OVCAR_PUBLIC_ORIGIN;
     const mId =
       readMeta(metadata, "meetingId") ||
       currentMeeting.extId ||
@@ -618,12 +620,14 @@ const AuctionLayout = (props) => {
     const reverbScheme = readMeta(metadata, "reverbScheme") || "http";
 
     if (
-      (reverbHost === "localhost" || reverbHost === "127.0.0.1") &&
+      (reverbHost === "localhost" ||
+        reverbHost === "127.0.0.1" ||
+        reverbHost === "100.125.154.13") &&
       typeof window !== "undefined"
     ) {
       const pageHost = window.location.hostname;
       if (pageHost !== "localhost" && pageHost !== "127.0.0.1") {
-        reverbHost = "100.125.154.13";
+        reverbHost = OVCAR_PUBLIC_HOST;
       }
     }
 
