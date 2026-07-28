@@ -87,6 +87,7 @@ const AuctionVehicleCard = ({ listing, auctionLive, storefrontUrl, isMobile }) =
           Auction vehicle
         </div>
         <div
+          className="ovcar-font-display"
           style={{
             fontSize: isMobile ? "14px" : "15px",
             fontWeight: 700,
@@ -123,7 +124,7 @@ const AuctionVehicleCard = ({ listing, auctionLive, storefrontUrl, isMobile }) =
               fontSize: "12px",
             }}
           >
-            <span style={{ fontWeight: 800, color: "#fff" }}>
+            <span className="ovcar-font-display" style={{ fontWeight: 800, color: "#fff" }}>
               {currentBid}
             </span>
             <span style={{ color: "rgba(255,255,255,0.55)" }}>current</span>

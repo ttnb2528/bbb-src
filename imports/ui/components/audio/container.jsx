@@ -10,6 +10,7 @@ import VideoPreviewContainer from '/imports/ui/components/video-preview/containe
 import lockContextContainer from '/imports/ui/components/lock-viewers/context/container';
 import {
   joinMicrophone,
+  joinListenOnly,
 } from '/imports/ui/components/audio/audio-modal/service';
 
 import Service from './service';
@@ -80,6 +81,41 @@ const intlMessages = defineMessages({
 });
 
 let didMountAutoJoin = false;
+
+const isOvcarOrEcommerceAudienceSession = () => {
+  if (typeof window !== 'undefined') {
+    if (window.isAuctionLive === true || window.isEcommerceLive === true) {
+      return true;
+    }
+    if (
+      document.body.classList.contains('ovcar-auction-live-active')
+      || document.body.classList.contains('ovbay-ecommerce-live-active')
+    ) {
+      return true;
+    }
+  }
+  try {
+    const meetingId = String(Auth.meetingID || '');
+    if (meetingId.startsWith('ovcar_') || meetingId.startsWith('ovbay_')) {
+      return true;
+    }
+    const confName = String(Auth.confname || '');
+    if (confName.includes('[OVCAR]') || confName.includes('[OVBAY]')) {
+      return true;
+    }
+  } catch (_err) {
+    // ignore
+  }
+  return false;
+};
+
+const shouldForceListenOnlyViewer = (isModerator) => {
+  if (isModerator) return false;
+  const forceFromSettings = !!getFromUserSettings('bbb_force_listen_only', false);
+  const listenOnlyMode = !!getFromUserSettings('bbb_listen_only_mode', false)
+    || !!getFromUserSettings('bbb_listenOnlyMode', false);
+  return forceFromSettings || listenOnlyMode || isOvcarOrEcommerceAudienceSession();
+};
 
 const webRtcError = range(1001, 1011).reduce(
   (acc, value) => ({
@@ -157,7 +193,16 @@ const AudioContainer = (props) => {
     name: u.name,
     speechLocale: u.speechLocale,
     breakoutRoomsSummary: u.breakoutRoomsSummary,
+    isModerator: u.isModerator,
+    role: u.role,
   }));
+
+  const isModerator = Boolean(
+    currentUser?.isModerator || currentUser?.role === 'MODERATOR',
+  );
+  const forceListenOnlyViewer = shouldForceListenOnlyViewer(isModerator);
+  const isConnected = useIsAudioConnected();
+  const prevIsConnected = usePreviousValue(isConnected);
 
   const hasBreakoutRooms = (currentUser?.breakoutRoomsSummary?.totalOfBreakoutRooms ?? 0) > 0;
 
@@ -190,19 +235,34 @@ const AudioContainer = (props) => {
       bridges,
     );
 
-    // Force microphone-first behavior on auto-join sessions.
-    // If a prior runtime state left inputDeviceId as listen-only, reset it
-    // before rendering audio controls to avoid flashing the listen icon.
-    if (Service.inputDeviceId() === 'listen-only') {
+    // Force microphone-first behavior on auto-join sessions — except auction /
+    // ecommerce viewers, who must stay listen-only (no mic publish to host).
+    if (!forceListenOnlyViewer && Service.inputDeviceId() === 'listen-only') {
       Service.changeInputDevice('');
     }
-    AudioService.setUserSelectedListenOnly(false);
+    if (forceListenOnlyViewer) {
+      AudioService.setUserSelectedListenOnly(true);
+    } else {
+      AudioService.setUserSelectedListenOnly(false);
+    }
 
     if (!autoJoin || didMountAutoJoin) {
-      if (enableVideo && autoShareWebcam) {
+      if (enableVideo && autoShareWebcam && !forceListenOnlyViewer) {
         openVideoPreviewModal();
       }
       return Promise.resolve(false);
+    }
+
+    if (autoJoin && forceListenOnlyViewer) {
+      joinListenOnly().catch(() => {
+        setTimeout(() => {
+          joinListenOnly().catch(() => {
+            Service.forceExitAudio();
+          });
+        }, 1500);
+      });
+      didMountAutoJoin = true;
+      return Promise.resolve(true);
     }
 
     // Nếu autoJoin = true, tự động join microphone với mic tắt (muted)
@@ -302,6 +362,12 @@ const AudioContainer = (props) => {
   const joinAudio = useCallback(() => {
     if (Service.isConnected()) return;
 
+    if (forceListenOnlyViewer) {
+      AudioService.setUserSelectedListenOnly(true);
+      joinListenOnly();
+      return;
+    }
+
     // Mặc định join microphone ở trạng thái muted
     // User có thể bật mic khi cần nói
     AudioService.setUserSelectedListenOnly(false);
@@ -310,20 +376,45 @@ const AudioContainer = (props) => {
       skipEchoTest: true,
       muted: true, // Mặc định mic tắt, user sẽ bật khi cần
     });
-  }, [userSelectedMicrophone]);
+  }, [userSelectedMicrophone, forceListenOnlyViewer]);
 
   useEffect(() => {
     // Data is not loaded yet.
     // We don't know whether the meeting is a breakout or not.
     // So, postpone the decision.
     if (meetingIsBreakout === undefined) return;
+    // Wait for role when possible so auction viewers don't briefly join as mic.
+    if (currentUser == null) return;
 
     init().then(() => {
       if (meetingIsBreakout && !Service.isUsingAudio()) {
         joinAudio();
       }
     });
-  }, [meetingIsBreakout]);
+  }, [meetingIsBreakout, currentUser?.userId, forceListenOnlyViewer]);
+
+  // If a viewer somehow joined with a mic (race / old session), drop to listen-only.
+  useEffect(() => {
+    if (!forceListenOnlyViewer) return undefined;
+    if (!isConnected) return undefined;
+    if (Service.isListenOnly()) return undefined;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        await Service.forceExitAudio();
+        if (cancelled) return;
+        AudioService.setUserSelectedListenOnly(true);
+        await joinListenOnly();
+      } catch (_err) {
+        // ignore — next poll / rejoin will retry
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [forceListenOnlyViewer, isConnected]);
 
   useEffect(() => {
     if (userIsReturningFromBreakoutRoom) {
@@ -354,8 +445,6 @@ const AudioContainer = (props) => {
 
   // Đảm bảo mic được mute khi auto join với muted: true
   // Listen vào isConnected để mute ngay khi connected
-  const isConnected = useIsAudioConnected();
-  const prevIsConnected = usePreviousValue(isConnected);
   useEffect(() => {
     // Chỉ áp dụng khi auto join và chưa có user selection (mặc định join với mic tắt)
     const wasAutoJoin = Session.getItem('audioModalIsOpen') === null && didMountAutoJoin;

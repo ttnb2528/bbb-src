@@ -714,9 +714,9 @@ const AudioModal = ({
       // - forceListenOnlyAttendee/audioLocked: will hide microphone button
       // - listenOnlyMode: will show/hide listen only button
       // - joinFullAudioImmediately: will determine if echo test is skipped
-      const isEcommerceLive = window.isEcommerceLive;
+      const isListenOnlyLive = window.isEcommerceLive || window.isAuctionLive;
 
-      if (isEcommerceLive && forceListenOnlyAttendee && !initialJoinExecuted) {
+      if (isListenOnlyLive && forceListenOnlyAttendee && !initialJoinExecuted) {
         setInitialJoinExecuted(true);
         handleJoinListenOnly();
         return;

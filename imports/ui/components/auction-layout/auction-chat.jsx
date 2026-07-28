@@ -18,8 +18,81 @@ const formatBidAmount = (amount) => {
   })}`;
 };
 
+const AuctionChatRow = ({ name, children, isBid = false }) => {
+  const initial = name ? String(name).charAt(0).toUpperCase() : "U";
+  return (
+    <div
+      className={
+        isBid
+          ? "ovcar-auction-chat-message ovcar-auction-chat-bid"
+          : "ovcar-auction-chat-message"
+      }
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "8px",
+        padding: "2px 0",
+      }}
+    >
+      <div
+        style={{
+          width: "28px",
+          height: "28px",
+          borderRadius: "50%",
+          background: "linear-gradient(135deg, #e10600 0%, #7a0000 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+          color: "white",
+          fontWeight: "bold",
+          fontSize: "12px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.4)",
+        }}
+      >
+        {initial}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "2px",
+          minWidth: 0,
+        }}
+      >
+        <span
+          style={{
+            fontSize: "13px",
+            color: "rgba(255,255,255,0.95)",
+            fontWeight: 800,
+            letterSpacing: "0.01em",
+            textShadow:
+              "1px 1px 3px rgba(0,0,0,0.95), 0px 0px 4px rgba(0,0,0,0.75)",
+            fontFamily: "var(--font-nav), system-ui, sans-serif",
+          }}
+        >
+          {name || "User"}
+        </span>
+        <div
+          style={{
+            fontSize: isBid ? "11px" : "15px",
+            color: isBid ? "#ffb4b0" : "white",
+            fontWeight: isBid ? 700 : 400,
+            textShadow:
+              "1px 1px 4px rgba(0,0,0,1), 0px 0px 2px rgba(0,0,0,0.8)",
+            wordBreak: "break-word",
+            lineHeight: "1.3",
+          }}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /**
- * Dual feed: BBB public chat + synthetic bid lines from Reverb.
+ * Dual feed: BBB public chat + synthetic bid lines from Reverb / poll.
  */
 const AuctionChat = ({ isMobile, isHost, bidEvents = [] }) => {
   const scrollRef = useRef(null);
@@ -117,7 +190,14 @@ const AuctionChat = ({ isMobile, isHost, bidEvents = [] }) => {
         chatMessageInMarkdownFormat: inputValue.trim(),
       },
     })
-      .then(() => setInputValue(""))
+      .then(() => {
+        setInputValue("");
+        if (
+          document.activeElement?.classList?.contains("ovcar-auction-chat-input")
+        ) {
+          document.activeElement.blur();
+        }
+      })
       .catch(console.error)
       .finally(() => setIsSending(false));
   };
@@ -128,12 +208,12 @@ const AuctionChat = ({ isMobile, isHost, bidEvents = [] }) => {
       style={{
         position: "absolute",
         bottom: isMobile ? "10px" : "24px",
-        left: isMobile ? "62px" : "auto",
+        left: isMobile ? "292px" : "auto",
         right: isMobile ? "10px" : "20px",
         width: isMobile ? "auto" : "360px",
-        height: isMobile ? "320px" : "55%",
+        maxHeight: isMobile ? "320px" : "55%",
         zIndex: 40,
-        pointerEvents: "auto",
+        pointerEvents: "none",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
@@ -144,17 +224,18 @@ const AuctionChat = ({ isMobile, isHost, bidEvents = [] }) => {
         ref={scrollRef}
         className="ovcar-auction-chat-scroll"
         style={{
-          flex: 1,
           width: "100%",
           boxSizing: "border-box",
           overflowY: "auto",
           overflowX: "hidden",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-start",
+          justifyContent: "flex-end",
           gap: "8px",
           paddingTop: "16px",
           paddingBottom: "10px",
+          maxHeight: isMobile ? "260px" : "100%",
+          pointerEvents: "none",
           maskImage: "linear-gradient(to bottom, transparent, black 15%, black)",
           WebkitMaskImage:
             "linear-gradient(to bottom, transparent, black 15%, black)",
@@ -163,120 +244,38 @@ const AuctionChat = ({ isMobile, isHost, bidEvents = [] }) => {
         <style>{`
           .ovcar-auction-chat-scroll::-webkit-scrollbar { width: 0px; }
           .ovcar-auction-chat-scroll p { margin: 0; }
+          .ovcar-auction-chat-scroll > * { pointer-events: auto; }
         `}</style>
         {feedItems.map((item) => {
           if (item.type === "bid") {
-            const text = `${item.bid.bidder_display || "us***"} · ${formatBidAmount(item.bid.amount)}`;
+            const name = item.bid.bidder_display || "us***";
             return (
-              <div
-                key={item.key}
-                className="ovcar-auction-chat-bid"
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "4px 8px",
-                  borderRadius: "10px",
-                  background: "rgba(225, 6, 0, 0.22)",
-                  border: "1px solid rgba(225, 6, 0, 0.35)",
-                  width: "fit-content",
-                  maxWidth: "100%",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 800,
-                    color: "#ffb4b0",
-                    textShadow: "1px 1px 3px rgba(0,0,0,0.9)",
-                  }}
-                >
-                  BID
-                </span>
-                <span
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: 700,
-                    color: "white",
-                    textShadow: "1px 1px 3px rgba(0,0,0,0.9)",
-                  }}
-                >
-                  {text}
-                </span>
-              </div>
+              <AuctionChatRow key={item.key} name={name} isBid>
+                {`Bid ${formatBidAmount(item.bid.amount)}`}
+              </AuctionChatRow>
             );
           }
 
           const msg = item.msg;
           return (
-            <div
-              key={item.key}
-              className="ovcar-auction-chat-message"
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "8px",
-                padding: "2px 0",
-              }}
-            >
-              <div
-                style={{
-                  width: "28px",
-                  height: "28px",
-                  borderRadius: "50%",
-                  background: "linear-gradient(135deg, #e10600 0%, #7a0000 100%)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  color: "white",
-                  fontWeight: "bold",
-                  fontSize: "12px",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.4)",
-                }}
+            <AuctionChatRow key={item.key} name={msg.senderName || "User"}>
+              <ReactMarkdown
+                linkTarget="_blank"
+                allowedElements={
+                  window.meetingClientSettings?.public?.chat
+                    ?.allowedElements || []
+                }
+                unwrapDisallowed
               >
-                {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : "U"}
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                <span
-                  style={{
-                    fontSize: "13px",
-                    color: "rgba(255,255,255,0.6)",
-                    fontWeight: "bold",
-                    textShadow:
-                      "1px 1px 3px rgba(0,0,0,0.9), 0px 0px 2px rgba(0,0,0,0.8)",
-                  }}
-                >
-                  {msg.senderName || "User"}
-                </span>
-                <div
-                  style={{
-                    fontSize: "15px",
-                    color: "white",
-                    textShadow:
-                      "1px 1px 4px rgba(0,0,0,1), 0px 0px 2px rgba(0,0,0,0.8)",
-                    wordBreak: "break-word",
-                    lineHeight: "1.3",
-                  }}
-                >
-                  <ReactMarkdown
-                    linkTarget="_blank"
-                    allowedElements={
-                      window.meetingClientSettings?.public?.chat
-                        ?.allowedElements || []
-                    }
-                    unwrapDisallowed
-                  >
-                    {messageToMarkdown(msg.message || "")}
-                  </ReactMarkdown>
-                </div>
-              </div>
-            </div>
+                {messageToMarkdown(msg.message || "")}
+              </ReactMarkdown>
+            </AuctionChatRow>
           );
         })}
       </div>
 
       <form
+        className="ovcar-auction-chat-form"
         onSubmit={handleSend}
         style={{
           display: "flex",
@@ -293,13 +292,15 @@ const AuctionChat = ({ isMobile, isHost, bidEvents = [] }) => {
           alignItems: "center",
           gap: "8px",
           minHeight: "44px",
+          pointerEvents: "auto",
+          flexShrink: 0,
         }}
       >
         <input
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Add a comment..."
+          placeholder={isHost ? "Message viewers…" : "Add a comment..."}
           className="ovcar-auction-chat-input"
           style={{
             flex: 1,
