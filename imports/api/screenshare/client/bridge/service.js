@@ -56,14 +56,9 @@ const getScreenStream = async () => {
           ? videoTrack.getSettings().displaySurface
           : null);
 
-      // [TỰ ĐỘNG FIX LỖI 1305 PEER_NEGOTIATION_FAILED TRÊN BACKEND CŨ]
-      // Backend SFU hiện tại đang crash nếu Share Tab ép kèm thẻ Audio.
+      // (Antigravity): Removed the audio track stripping hack since the SFU backend now supports audio sharing!
       if (displaySurface === "browser") {
-        const audioTracks = stream.getAudioTracks();
-        audioTracks.forEach((track) => {
-          track.stop();
-          stream.removeTrack(track);
-        });
+        logger.info({ logCode: "screenshare_audio_test" }, "Keeping audio track for screenshare testing");
       }
 
       // Apply constraints cho video tracks

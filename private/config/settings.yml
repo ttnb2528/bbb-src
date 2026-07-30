@@ -375,7 +375,7 @@ public:
       # Default is undefined, which means the default setting in bbb-webrtc-sfu
       # prevails (screenshareMediaServer).
       #mediaServer: Kurento
-      bitrate: 1500
+      bitrate: 2500
       mediaTimeouts:
         maxConnectionAttempts: 2
         # Base screen media timeout (send|recv) - first connections
@@ -389,12 +389,12 @@ public:
       constraints:
         video:
           frameRate:
-            ideal: 5
-            max: 10
+            ideal: 15
+            max: 30
           width:
-            max: 2560
+            max: 1920
           height:
-            max: 1600
+            max: 1080
         audio: true
     # cameraProfiles is an array of:
     # - id: profile identifier
@@ -444,7 +444,7 @@ public:
         bitrate: 100
       - id: medium
         name: Medium
-        default: true
+        default: false
         bitrate: 200
       - id: high
         name: High
@@ -456,8 +456,8 @@ public:
           frameRate: 15
       - id: hd
         name: High definition
-        default: false
-        bitrate: 800
+        default: true
+        bitrate: 1200
         constraints:
           width: 1280
           height: 720
